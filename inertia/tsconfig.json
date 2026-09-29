@@ -1,0 +1,22 @@
+{
+  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "module": "ESNext",
+    "jsxImportSource": "vue",
+    "paths": {
+      "~/*": ["./*"],
+      "@generated/*": ["../.adonisjs/client/*"],
+      "#build/ui": ["../node_modules/.nuxt-ui/ui/index.ts"],
+      "#build/ui/*": ["../node_modules/.nuxt-ui/ui/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.vue",
+    "../auto-imports.d.ts",
+    "../components.d.ts",
+    "../.adonisjs/client/**/*.ts",
+    "../.adonisjs/server/**/*.ts"
+  ]
+}

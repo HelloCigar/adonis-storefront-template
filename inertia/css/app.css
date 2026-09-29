@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/**
+ * Monochrome brand: black in light mode, white in dark mode.
+ * Everything else derives from the neutral palette (zinc) configured
+ * in vite.config.ts, so the kit stays intentionally minimal.
+ */
+:root {
+  --ui-primary: black;
+  --ui-radius: 0.5rem;
+}
+
+.dark {
+  --ui-primary: white;
+}

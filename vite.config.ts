@@ -1,0 +1,64 @@
+import ui from '@nuxt/ui/vite'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import adonisjs from '@adonisjs/vite/client'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    ui({
+      router: 'inertia',
+      components: {
+        dirs: ['inertia/components'],
+      },
+      ui: {
+        colors: {
+          primary: 'orange',
+          secondary: 'yellow',
+          neutral: 'taupe',
+        },
+        card: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        alert: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        empty: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        button: {
+          compoundVariants: [
+            {
+              color: 'primary',
+              variant: 'solid',
+              class: 'shadow-md shadow-primary/30',
+            },
+          ],
+        },
+      },
+    }),
+    adonisjs({
+      entryPoints: ['inertia/app.ts'],
+      reload: ['resources/views/**/*.edge'],
+    }),
+  ],
+
+  resolve: {
+    alias: {
+      '~/': `${import.meta.dirname}/inertia/`,
+      '@generated': `${import.meta.dirname}/.adonisjs/client/`,
+    },
+  },
+
+  server: {
+    watch: {
+      ignored: ['**/storage/**', '**/tmp/**'],
+    },
+  },
+})

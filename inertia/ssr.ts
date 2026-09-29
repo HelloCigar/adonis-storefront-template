@@ -1,0 +1,31 @@
+import './css/app.css'
+import { client } from '~/client'
+import ui from '@nuxt/ui/vue-plugin'
+import UApp from '@nuxt/ui/components/App.vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+import { TuyauProvider } from '@adonisjs/inertia/vue'
+import { renderToString } from '@vue/server-renderer'
+import { createSSRApp, h, type DefineComponent } from 'vue'
+import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { resolveLayout } from './layouts/resolve'
+
+export default function render(page: any) {
+  return createInertiaApp({
+    page,
+    render: renderToString,
+    resolve: (name) => {
+      return resolvePageComponent(
+        `./pages/${name}.vue`,
+        import.meta.glob<DefineComponent>('./pages/**/*.vue', { eager: true }),
+        resolveLayout(name)
+      )
+    },
+    setup: ({ App, props, plugin }) => {
+      return createSSRApp({
+        render: () => h(UApp, () => h(TuyauProvider, { client }, { default: () => h(App, props) })),
+      })
+        .use(plugin)
+        .use(ui)
+    },
+  })
+}
