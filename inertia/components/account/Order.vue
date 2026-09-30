@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
+import { Link } from '@adonisjs/inertia/vue'
 import { useLocalization } from '~/composables/localization'
 import type { BadgeProps } from '@nuxt/ui'
 
@@ -10,8 +11,6 @@ const props = defineProps<{
 }>()
 
 const { locale } = useLocalization()
-
-const to = computed(() => localePath(`/account/orders/${props.order.id}`))
 
 const items = computed(() => props.order.lineItems ?? [])
 
@@ -81,14 +80,23 @@ const colors: Record<string, BadgeProps['color']> = {
         {{ total }}
       </span>
 
-      <UButton
-        :to="to"
-        variant="ghost"
-        color="neutral"
-        :label="t('account.orders.view')"
-        trailing-icon="i-lucide-arrow-right"
-        :ui="{ trailingIcon: 'size-4' }"
-      />
+      <Link
+        route="orders.show"
+        view-transition
+        :params="{ id: order.id }"
+        component="account/orders/[id]"
+        :page-props="{ order }"
+        class="rounded-md focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        <UButton
+          as="span"
+          variant="ghost"
+          color="neutral"
+          :label="t('account.orders.view')"
+          trailing-icon="i-lucide-arrow-right"
+          :ui="{ trailingIcon: 'size-4' }"
+        />
+      </Link>
     </div>
   </UCard>
 </template>

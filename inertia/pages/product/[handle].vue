@@ -85,7 +85,7 @@ watch(selectedVariant, (variant) => {
           arrows
           loop
         >
-          <ProductCard :product="item" />
+          <ProductCard :product="item" :recommendations="recommendations" />
         </UCarousel>
       </div>
     </div>

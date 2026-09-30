@@ -44,7 +44,15 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 
     <p class="mt-5 text-center text-sm text-muted">
       New here?
-      <Link route="new_account.create" class="text-primary">Create an account</Link>
+      <Link
+        route="new_account.create"
+        view-transition
+        component="auth/signup"
+        :page-props="{}"
+        class="text-primary"
+      >
+        Create an account
+      </Link>
     </p>
   </AuthLayout>
 </template>

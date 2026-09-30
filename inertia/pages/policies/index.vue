@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
+import { Link } from '@adonisjs/inertia/vue'
 defineProps<{ policies: Data.Content[] }>()
 </script>
 <template>
@@ -21,13 +22,18 @@ defineProps<{ policies: Data.Content[] }>()
       v-if="policies?.length"
       class="sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-2 lg:grid-cols-3"
     >
-      <UPageCard
+      <Link
         v-for="policy in policies"
         :key="policy.id"
-        class="mb-4"
-        :title="policy.title"
-        :to="localePath(`/policies/${policy.handle}`)"
-      />
+        route="policies.show"
+        view-transition
+        :params="{ handle: policy.handle }"
+        component="policies/[handle]"
+        :page-props="{ policy }"
+        class="block mb-4 rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        <UPageCard :title="policy.title" />
+      </Link>
     </div>
 
     <div v-else class="flex items-center gap-2">

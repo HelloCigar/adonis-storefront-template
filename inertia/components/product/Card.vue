@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
+import { Link } from '@adonisjs/inertia/vue'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import {
   hasPriceRange,
   displayPrice,
@@ -15,11 +16,17 @@ import ProductImage from '~/components/product/Image.vue'
 import ProductPrice from '~/components/product/Price.vue'
 const props = defineProps<{
   product: Data.Product
+  recommendations: Data.Product[]
   carousel?: boolean
   loading?: 'eager' | 'lazy'
 }>()
 
-const url = computed(() => localePath(`/product/${props.product.handle}`))
+const pageProps = computed(() => ({
+  product: props.product,
+  recommendations: props.recommendations
+    .filter((product) => product.id !== props.product.id)
+    .slice(0, 4),
+}))
 const images = computed(() => props.product.images ?? [])
 const variants = computed(() => props.product.variants ?? [])
 
@@ -73,16 +80,31 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
         arrows
         loop
       >
-        <ULink :to="url" :aria-label="`${t('product.view')}: '${props.product.title}'`">
+        <Link
+          route="products.show"
+          :params="{ handle: product.handle }"
+          view-transition
+          component="product/[handle]"
+          :page-props="pageProps"
+          v-bind="{ 'aria-label': `${t('product.view')}: '${props.product.title}'` }"
+        >
           <ProductImage
             :image="item"
             :loading="index === 0 ? props.loading : 'lazy'"
             :title="`${props.product.title}${index !== 0 ? ` (${index})` : ''}`"
           />
-        </ULink>
+        </Link>
       </UCarousel>
 
-      <ULink v-else :to="url" :aria-label="`${t('product.view')}: '${props.product.title}'`">
+      <Link
+        v-else
+        route="products.show"
+        :params="{ handle: product.handle }"
+        component="product/[handle]"
+        view-transition
+        :page-props="pageProps"
+        v-bind="{ 'aria-label': `${t('product.view')}: '${props.product.title}'` }"
+      >
         <ProductImage
           :image="images?.[0] ?? undefined"
           :loading="props.loading"
@@ -95,11 +117,18 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
           :title="`${props.product.title} (1)`"
           class="hidden absolute inset-0 bg-default group-hover:block"
         />
-      </ULink>
+      </Link>
     </div>
 
     <div class="flex justify-end flex-wrap items-center relative">
-      <ULink :to="url" class="grow">
+      <Link
+        class="grow"
+        route="products.show"
+        view-transition
+        :params="{ handle: product.handle }"
+        component="product/[handle]"
+        :page-props="pageProps"
+      >
         <p class="font-headings text-xl me-12">
           {{ props.product.title }}
         </p>
@@ -111,7 +140,7 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
           :from="range"
           class="grow text-right"
         />
-      </ULink>
+      </Link>
 
       <CartChoose v-if="variants.length > 1 && !soldOut" :product="props.product" />
 

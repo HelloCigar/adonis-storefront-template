@@ -3,6 +3,7 @@ import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { t, storePath as localePath } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
+import { Link } from '@adonisjs/inertia/vue'
 const props = defineProps<{ blog: Data.Content; articles: Data.Content[] }>()
 const handle = computed(() => props.blog.handle)
 </script>
@@ -22,14 +23,22 @@ const handle = computed(() => props.blog.handle)
     </h1>
 
     <UBlogPosts>
-      <UBlogPost
+      <Link
         v-for="article in articles"
         :key="article.id"
-        :title="article.title"
-        :date="article.publishedAt"
-        :description="article.excerpt ?? undefined"
-        :to="localePath(`/blog/${handle}/${article.handle}`)"
-      />
+        route="articles.show"
+        view-transition
+        :params="{ handle, article: article.handle }"
+        component="blog/[handle]/[article]"
+        :page-props="{ blog, articleData: article }"
+        class="block rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+      >
+        <UBlogPost
+          :title="article.title"
+          :date="article.publishedAt"
+          :description="article.excerpt ?? undefined"
+        />
+      </Link>
     </UBlogPosts>
   </UContainer>
 </template>

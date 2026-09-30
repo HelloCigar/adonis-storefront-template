@@ -102,6 +102,7 @@ const clear = () => set([])
           v-for="(product, index) in displayedProducts"
           :key="product.id"
           :product="product"
+          :recommendations="products"
           class="pb-14 border-b border-b-default"
           :loading="index < 3 ? 'eager' : 'lazy'"
           carousel

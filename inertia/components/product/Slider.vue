@@ -17,6 +17,10 @@ const products = computed(() => props.products.slice(0, props.first ?? 12))
     :ui="{ item: 'md:basis-1/2 lg:basis-1/3' }"
     arrows
   >
-    <ProductCard :product="product" :loading="index < 3 ? props.loading : 'lazy'" />
+    <ProductCard
+      :product="product"
+      :recommendations="props.products"
+      :loading="index < 3 ? props.loading : 'lazy'"
+    />
   </UCarousel>
 </template>

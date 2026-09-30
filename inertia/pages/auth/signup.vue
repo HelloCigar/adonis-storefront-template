@@ -72,7 +72,15 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 
     <p class="mt-5 text-center text-sm text-muted">
       Already have an account?
-      <Link route="session.create" class="text-primary">Sign in</Link>
+      <Link
+        route="session.create"
+        view-transition
+        component="auth/login"
+        :page-props="{}"
+        class="text-primary"
+      >
+        Sign in
+      </Link>
     </p>
   </AuthLayout>
 </template>
