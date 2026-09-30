@@ -7,9 +7,150 @@ import User from '#models/user'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
+import storefront from '#config/storefront'
 
 test.group('Storefront', (group) => {
   group.each.setup(() => testUtils.db().truncate())
+
+  test('renders authored content through the focused resource controllers', async ({
+    client,
+    assert,
+    cleanup,
+  }) => {
+    storefront.pages.push({
+      id: 'about',
+      handle: 'about',
+      title: 'About us',
+      body: '<p>Our store.</p>',
+    })
+    storefront.policies.push({
+      id: 'returns',
+      handle: 'returns',
+      title: 'Returns',
+      body: '<p>Returns policy.</p>',
+    })
+    storefront.blogs.push({
+      id: 'journal',
+      handle: 'journal',
+      title: 'Journal',
+      articles: [
+        { id: 'welcome', handle: 'welcome', title: 'Welcome', contentHtml: '<p>Hello.</p>' },
+      ],
+    })
+    cleanup(() => {
+      storefront.pages.splice(0)
+      storefront.policies.splice(0)
+      storefront.blogs.splice(0)
+    })
+
+    const page = await client.get('/pages/about').withInertia()
+    page.assertStatus(200)
+    page.assertInertiaComponent('pages/[handle]')
+    assert.equal(page.inertiaProps.page.title, 'About us')
+    const policies = await client.get('/policies').withInertia()
+    policies.assertStatus(200)
+    policies.assertInertiaComponent('policies/index')
+    assert.equal(policies.inertiaProps.policies[0].handle, 'returns')
+    const policy = await client.get('/policies/returns').withInertia()
+    policy.assertStatus(200)
+    policy.assertInertiaComponent('policies/[handle]')
+    assert.equal(policy.inertiaProps.policy.body, '<p>Returns policy.</p>')
+    const blog = await client.get('/blog/journal').withInertia()
+    blog.assertStatus(200)
+    blog.assertInertiaComponent('blog/[handle]/index')
+    assert.equal(blog.inertiaProps.articles[0].handle, 'welcome')
+    const article = await client.get('/blog/journal/welcome').withInertia()
+    article.assertStatus(200)
+    article.assertInertiaComponent('blog/[handle]/[article]')
+    assert.equal(article.inertiaProps.blog.handle, 'journal')
+    assert.equal(article.inertiaProps.articleData.contentHtml, '<p>Hello.</p>')
+
+    for (const url of [
+      '/pages/missing',
+      '/policies/missing',
+      '/blog/missing',
+      '/blog/journal/missing',
+    ]) {
+      const missing = await client.get(url).withInertia()
+      missing.assertStatus(404)
+    }
+  })
+
+  test('updates account profiles and manages only the signed-in customer addresses', async ({
+    client,
+    assert,
+  }) => {
+    const user = await User.create({ email: 'addresses@example.com', password: 'secret-password' })
+    const otherUser = await User.create({
+      email: 'other-addresses@example.com',
+      password: 'secret-password',
+    })
+    const profile = await client
+      .patch('/account/profile')
+      .loginAs(user)
+      .withCsrfToken()
+      .json({ firstName: 'Mina', lastName: 'Bunny' })
+    profile.assertRedirectsTo('/account')
+    await user.refresh()
+    assert.equal(user.fullName, 'Mina Bunny')
+
+    const payload = { address1: 'First Street', city: 'Manila', zip: '1000', territoryCode: 'ph' }
+    const created = await client
+      .post('/account/addresses')
+      .loginAs(user)
+      .withCsrfToken()
+      .json(payload)
+    created.assertRedirectsTo('/account')
+    const first = await user.related('addresses').query().firstOrFail()
+    await user.refresh()
+    assert.equal(user.defaultAddressId, first.id)
+    assert.equal(first.countryCode, 'PH')
+    assert.equal(first.postalCode, '1000')
+
+    const updated = await client
+      .patch(`/account/addresses/${first.id}`)
+      .loginAs(user)
+      .withCsrfToken()
+      .json({ ...payload, address1: 'Updated Street' })
+    updated.assertRedirectsTo('/account')
+    await first.refresh()
+    assert.equal(first.address1, 'Updated Street')
+
+    const secondCreated = await client
+      .post('/account/addresses')
+      .loginAs(user)
+      .withCsrfToken()
+      .json({ ...payload, address1: 'Second Street', defaultAddress: true })
+    secondCreated.assertRedirectsTo('/account')
+    const second = await user.related('addresses').query().whereNot('id', first.id).firstOrFail()
+    await user.refresh()
+    assert.equal(user.defaultAddressId, second.id)
+    const defaulted = await client
+      .post(`/account/addresses/${first.id}/default`)
+      .loginAs(user)
+      .withCsrfToken()
+    defaulted.assertRedirectsTo('/account')
+    await user.refresh()
+    assert.equal(user.defaultAddressId, first.id)
+
+    for (const method of ['patch', 'post', 'delete'] as const) {
+      const url = `/account/addresses/${first.id}${method === 'post' ? '/default' : ''}`
+      const denied = await client[method](url).loginAs(otherUser).withCsrfToken().json(payload)
+      denied.assertStatus(404)
+    }
+    await first.refresh()
+    assert.equal(first.address1, 'Updated Street')
+
+    const deleted = await client
+      .delete(`/account/addresses/${first.id}`)
+      .loginAs(user)
+      .withCsrfToken()
+    deleted.assertRedirectsTo('/account')
+    await user.refresh()
+    assert.isNull(user.defaultAddressId)
+    assert.isNull(await user.related('addresses').query().where('id', first.id).first())
+    assert.isNotNull(await user.related('addresses').query().where('id', second.id).first())
+  })
 
   test('renders published catalogue data through Inertia', async ({ client, assert }) => {
     const product = await Product.create({

@@ -4,17 +4,36 @@
  */
 
 export const controllers = {
-  Account: () => import('#controllers/account_controller'),
+  account: {
+    Account: () => import('#controllers/account/account_controller'),
+    Addresses: () => import('#controllers/account/addresses_controller'),
+    DefaultAddress: () => import('#controllers/account/default_address_controller'),
+    Logout: () => import('#controllers/account/logout_controller'),
+    Orders: () => import('#controllers/account/orders_controller'),
+    Profile: () => import('#controllers/account/profile_controller'),
+  },
+  auth: {
+    NewAccount: () => import('#controllers/auth/new_account_controller'),
+    Session: () => import('#controllers/auth/session_controller'),
+  },
   Cart: () => import('#controllers/cart_controller'),
   Collections: () => import('#controllers/collections_controller'),
-  Content: () => import('#controllers/content_controller'),
+  content: {
+    Articles: () => import('#controllers/content/articles_controller'),
+    Blogs: () => import('#controllers/content/blogs_controller'),
+    Pages: () => import('#controllers/content/pages_controller'),
+    Policies: () => import('#controllers/content/policies_controller'),
+  },
   Customers: () => import('#controllers/customers_controller'),
   Dashboard: () => import('#controllers/dashboard_controller'),
   Inbox: () => import('#controllers/inbox_controller'),
-  NewAccount: () => import('#controllers/new_account_controller'),
-  Orders: () => import('#controllers/orders_controller'),
   Products: () => import('#controllers/products_controller'),
-  Session: () => import('#controllers/session_controller'),
-  Settings: () => import('#controllers/settings_controller'),
+  settings: {
+    Avatar: () => import('#controllers/settings/avatar_controller'),
+    Members: () => import('#controllers/settings/members_controller'),
+    Notifications: () => import('#controllers/settings/notifications_controller'),
+    Security: () => import('#controllers/settings/security_controller'),
+    Settings: () => import('#controllers/settings/settings_controller'),
+  },
   Storefront: () => import('#controllers/storefront_controller'),
 }
