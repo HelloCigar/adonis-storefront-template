@@ -9,8 +9,16 @@ type ExtractProps<T> = Omit<
 
 declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
+    'account/index': ExtractProps<(typeof import('../../inertia/pages/account/index.vue'))['default']>
+    'account/logout': ExtractProps<(typeof import('../../inertia/pages/account/logout.vue'))['default']>
+    'account/orders/[id]': ExtractProps<(typeof import('../../inertia/pages/account/orders/[id].vue'))['default']>
+    'account/orders/index': ExtractProps<(typeof import('../../inertia/pages/account/orders/index.vue'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.vue'))['default']>
     'auth/signup': ExtractProps<(typeof import('../../inertia/pages/auth/signup.vue'))['default']>
+    'blog/[handle]/[article]': ExtractProps<(typeof import('../../inertia/pages/blog/[handle]/[article].vue'))['default']>
+    'blog/[handle]/index': ExtractProps<(typeof import('../../inertia/pages/blog/[handle]/index.vue'))['default']>
+    'collection/[handle]': ExtractProps<(typeof import('../../inertia/pages/collection/[handle].vue'))['default']>
+    'collections/index': ExtractProps<(typeof import('../../inertia/pages/collections/index.vue'))['default']>
     'customers': ExtractProps<(typeof import('../../inertia/pages/customers.vue'))['default']>
     'dashboard': ExtractProps<(typeof import('../../inertia/pages/dashboard.vue'))['default']>
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.vue'))['default']>
@@ -18,6 +26,10 @@ declare module '@adonisjs/inertia/types' {
     'home': ExtractProps<(typeof import('../../inertia/pages/home.vue'))['default']>
     'inbox': ExtractProps<(typeof import('../../inertia/pages/inbox.vue'))['default']>
     'index': ExtractProps<(typeof import('../../inertia/pages/index.vue'))['default']>
+    'pages/[handle]': ExtractProps<(typeof import('../../inertia/pages/pages/[handle].vue'))['default']>
+    'policies/[handle]': ExtractProps<(typeof import('../../inertia/pages/policies/[handle].vue'))['default']>
+    'policies/index': ExtractProps<(typeof import('../../inertia/pages/policies/index.vue'))['default']>
+    'product/[handle]': ExtractProps<(typeof import('../../inertia/pages/product/[handle].vue'))['default']>
     'settings/index': ExtractProps<(typeof import('../../inertia/pages/settings/index.vue'))['default']>
     'settings/members': ExtractProps<(typeof import('../../inertia/pages/settings/members.vue'))['default']>
     'settings/notifications': ExtractProps<(typeof import('../../inertia/pages/settings/notifications.vue'))['default']>

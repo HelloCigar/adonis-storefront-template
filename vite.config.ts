@@ -10,36 +10,14 @@ export default defineConfig({
       router: 'inertia',
       components: {
         dirs: ['inertia/components'],
+        directoryAsNamespace: true,
+        collapseSamePrefixes: true,
       },
       ui: {
         colors: {
-          primary: 'orange',
+          primary: 'green',
           secondary: 'yellow',
-          neutral: 'taupe',
-        },
-        card: {
-          defaultVariants: {
-            variant: 'subtle',
-          },
-        },
-        alert: {
-          defaultVariants: {
-            variant: 'subtle',
-          },
-        },
-        empty: {
-          defaultVariants: {
-            variant: 'subtle',
-          },
-        },
-        button: {
-          compoundVariants: [
-            {
-              color: 'primary',
-              variant: 'solid',
-              class: 'shadow-md shadow-primary/30',
-            },
-          ],
+          neutral: 'slate',
         },
       },
     }),

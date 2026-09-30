@@ -1,9 +1,17 @@
-import DashboardLayout from './default.vue'
+import DashboardLayout from './admin.vue'
 import SettingsLayout from './settings.vue'
+import StorefrontLayout from './default.vue'
 
-const dashboardPages = new Set(['index', 'inbox', 'customers'])
+const dashboardPages = new Set(['inbox', 'customers'])
 
 export function resolveLayout(name: string) {
+  if (
+    name === 'index' ||
+    /^(account|collection|collections|product|pages|policies|blog)\//.test(name)
+  ) {
+    return StorefrontLayout
+  }
+
   if (name.startsWith('settings/')) {
     return [DashboardLayout, SettingsLayout]
   }

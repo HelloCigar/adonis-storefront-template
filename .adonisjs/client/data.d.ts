@@ -6,10 +6,70 @@
 /// <reference path="./manifest.d.ts" />
 import type { InferData, InferVariants } from '@adonisjs/core/types/transformers'
 import type { InferSharedProps, InferFlashData } from '@adonisjs/inertia/types'
+import type CartLineTransformer from '#transformers/cart_line_transformer'
+import type CartTransformer from '#transformers/cart_transformer'
+import type CollectionTransformer from '#transformers/collection_transformer'
+import type ContentTransformer from '#transformers/content_transformer'
+import type CustomerAddressTransformer from '#transformers/customer_address_transformer'
+import type MediaTransformer from '#transformers/media_transformer'
+import type OrderAddressTransformer from '#transformers/order_address_transformer'
+import type OrderLineItemTransformer from '#transformers/order_line_item_transformer'
+import type OrderTransformer from '#transformers/order_transformer'
+import type ProductTransformer from '#transformers/product_transformer'
+import type ProductVariantTransformer from '#transformers/product_variant_transformer'
+import type SearchResultTransformer from '#transformers/search_result_transformer'
 import type UserTransformer from '#transformers/user_transformer'
 import type InertiaMiddleware from '#middleware/inertia_middleware'
 
 export namespace Data {
+  export type CartLine = InferData<CartLineTransformer>
+  export namespace CartLine {
+    export type Variants = InferVariants<CartLineTransformer>
+  }
+  export type Cart = InferData<CartTransformer>
+  export namespace Cart {
+    export type Variants = InferVariants<CartTransformer>
+  }
+  export type Collection = InferData<CollectionTransformer>
+  export namespace Collection {
+    export type Variants = InferVariants<CollectionTransformer>
+  }
+  export type Content = InferData<ContentTransformer>
+  export namespace Content {
+    export type Variants = InferVariants<ContentTransformer>
+  }
+  export type CustomerAddress = InferData<CustomerAddressTransformer>
+  export namespace CustomerAddress {
+    export type Variants = InferVariants<CustomerAddressTransformer>
+  }
+  export type Media = InferData<MediaTransformer>
+  export namespace Media {
+    export type Variants = InferVariants<MediaTransformer>
+  }
+  export type OrderAddress = InferData<OrderAddressTransformer>
+  export namespace OrderAddress {
+    export type Variants = InferVariants<OrderAddressTransformer>
+  }
+  export type OrderLineItem = InferData<OrderLineItemTransformer>
+  export namespace OrderLineItem {
+    export type Variants = InferVariants<OrderLineItemTransformer>
+  }
+  export type Order = InferData<OrderTransformer>
+  export namespace Order {
+    export type Variants = InferVariants<OrderTransformer>
+  }
+  export type Product = InferData<ProductTransformer>
+  export namespace Product {
+    export type Variants = InferVariants<ProductTransformer>
+  }
+  export type ProductVariant = InferData<ProductVariantTransformer>
+  export namespace ProductVariant {
+    export type Variants = InferVariants<ProductVariantTransformer>
+  }
+  export type SearchResult = InferData<SearchResultTransformer>
+  export namespace SearchResult {
+    export type Variants = InferVariants<SearchResultTransformer>
+  }
   export type User = InferData<UserTransformer>
   export namespace User {
     export type Variants = InferVariants<UserTransformer>

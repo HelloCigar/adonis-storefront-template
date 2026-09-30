@@ -2,6 +2,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import type { InferSharedProps as InferMiddlewareSharedProps } from '@adonisjs/inertia/types'
 import UserTransformer from '#transformers/user_transformer'
+import ContentTransformer from '#transformers/content_transformer'
+import storefront from '#config/storefront'
+import { loadCart, loadSearch } from '#services/storefront_data'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
 
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
@@ -15,6 +18,9 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
     return {
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
+      policies: ContentTransformer.transform(storefront.policies),
+      cart: () => loadCart(ctx),
+      searchResults: ctx.inertia.optional(() => loadSearch(ctx)),
     }
   }
 

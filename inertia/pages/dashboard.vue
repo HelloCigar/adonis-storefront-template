@@ -5,7 +5,7 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 import { useDashboard } from '../composables/useDashboard'
 import type { Period, Range } from '../types'
 import { urlFor } from '~/client'
-import Default from '~/layouts/default.vue'
+import Default from '~/layouts/admin.vue'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 

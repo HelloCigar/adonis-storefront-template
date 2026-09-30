@@ -1,0 +1,123 @@
+import { urlFor } from '~/client'
+
+// Paths are no longer locale-prefixed; route generation belongs to Adonis.
+export const storePath = (path: string) => {
+  if (path === '/') return urlFor('home')
+  if (path === '/collections') return urlFor('collections.index')
+  if (path === '/account') return urlFor('account.show')
+  if (path === '/account/orders') return urlFor('orders.index')
+  if (path === '/account/logout') return urlFor('account.logout')
+  if (path === '/policies') return urlFor('policies.index')
+  const [, section, handle, article] = path.split('/')
+  if (section === 'product' && handle) return urlFor('products.show', { handle })
+  if (section === 'collection' && handle) return urlFor('collections.show', { handle })
+  if (section === 'pages' && handle) return urlFor('pages.show', { handle })
+  if (section === 'policies' && handle) return urlFor('policies.show', { handle })
+  if (section === 'blog' && handle && article) return urlFor('articles.show', { handle, article })
+  if (section === 'blog' && handle) return urlFor('blogs.show', { handle })
+  if (section === 'account' && handle === 'orders' && article)
+    return urlFor('orders.show', { id: article })
+  return path
+}
+
+const messages: Record<string, string> = {
+  'home.title': 'Welcome to our store',
+  'home.description': 'Discover our products and collections.',
+  'home.products.bestsellers': 'Bestselling products',
+  'home.products.newest': 'Newest products',
+  'collection.all': 'All collections',
+  'collection.description': 'Explore our collections and find something you love.',
+  'collection.products.notFound': 'No products found',
+  'collection.products.loading': 'Loading products…',
+  'product.recommendations': 'You may also like',
+  'product.add': 'Add to cart',
+  'product.choose': 'Choose options',
+  'product.view': 'View product',
+  'product.soldOut': 'Sold out',
+  'product.giftCard': 'Gift card',
+  'product.subscription': 'Subscription',
+  'product.quantity': 'Quantity',
+  'product.lowStock': 'Only {count} left',
+  'product.priceFrom': 'From {price}',
+  'product.discount': '-{percentage}%',
+  'product.options.title': 'Choose your options',
+  'product.options.description': 'Select a variant and add it to your cart.',
+  'cart.title': 'Your cart',
+  'cart.description': 'Review the items in your cart.',
+  'cart.open': 'Open cart',
+  'cart.empty': 'Your cart is empty.',
+  'cart.subtotal': 'Subtotal',
+  'cart.checkout': 'Checkout',
+  'account.label': 'Account',
+  'account.description': 'Manage your profile, addresses and orders.',
+  'account.greeting': 'Hello, {name}',
+  'account.welcome': 'Welcome',
+  'account.logout': 'Log out',
+  'account.recommended': 'Recommended for you',
+  'account.profile.title': 'Your profile',
+  'account.profile.empty': 'Not provided',
+  'account.profile.managedByStore': 'Your profile is managed by this store.',
+  'account.profile.save': 'Save changes',
+  'account.signIn.title': 'Sign in to your account',
+  'account.signIn.action': 'Sign in',
+  'account.menu.title': 'Your account',
+  'account.menu.profile': 'Your profile',
+  'account.menu.orders': 'Your orders',
+  'account.menu.close': 'Close menu',
+  'account.subscribeNewsletter': 'Subscribe to our newsletter',
+  'account.orders.title': 'Your orders',
+  'account.orders.empty': 'You have no orders yet.',
+  'account.orders.browse': 'Continue shopping',
+  'account.orders.items': '{count} items',
+  'account.orders.view': 'View order',
+  'account.orders.viewAll': 'View all orders',
+  'account.orders.detail.placed': 'Placed on {date}',
+  'account.orders.detail.quantity': 'Quantity: {count}',
+  'account.orders.detail.items': 'Order items',
+  'account.orders.detail.summary': 'Order summary',
+  'account.addresses.title': 'Your addresses',
+  'account.addresses.default': 'Default',
+  'account.addresses.empty': 'You have no saved addresses.',
+  'account.addresses.add': 'Add address',
+  'account.addresses.edit': 'Edit address',
+  'account.addresses.delete': 'Delete address',
+  'account.addresses.setDefault': 'Set as default',
+  'account.addresses.save': 'Save address',
+  'account.addresses.description': 'Manage your delivery address.',
+  'account.addresses.confirm.title': 'Delete address?',
+  'account.addresses.confirm.description': 'This address will be removed from your account.',
+  'account.addresses.fields.address1': 'Address',
+  'account.addresses.fields.address2': 'Apartment, suite, etc.',
+  'account.addresses.fields.zip': 'Postal code',
+  'account.addresses.fields.zone': 'State / Province',
+  'account.addresses.fields.zoneHint': 'Optional',
+  'search.label': 'Search',
+  'search.description': 'Search products and collections.',
+  'search.placeholder': 'Search our store…',
+  'policies.title': 'Store policies',
+  'policies.description': 'Read our store policies.',
+  'policies.empty': 'No policies have been published yet.',
+  'localization.title': 'Country and language',
+  'localization.description': 'Choose your country and language.',
+  'footer.message': 'A demo storefront built with Nuxt UI.',
+  'footer.builtWith': 'Built with',
+  'footer.github': 'View source',
+  'footer.cookies': 'Cookie preferences',
+  'footer.links.github': 'GitHub',
+  'footer.links.module': 'Nuxt UI',
+  'footer.links.documentation': 'Documentation',
+  'footer.links.npm': 'npm',
+  'filters.clear': 'Clear filters',
+  'price.from': 'From',
+  'price.to': 'To',
+}
+export const t = (key: string, values: Record<string, unknown> = {}) => {
+  const fallback = key
+    .split('.')
+    .at(-1)!
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll('_', ' ')
+    .toLowerCase()
+  const label = messages[key] ?? fallback.charAt(0).toUpperCase() + fallback.slice(1)
+  return label.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''))
+}

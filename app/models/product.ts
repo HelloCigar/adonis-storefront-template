@@ -2,10 +2,16 @@ import { ProductSchema } from '#database/schema'
 import Collection from '#models/collection'
 import ProductVariant from '#models/product_variant'
 import { attachments, type AttachmentCollectionRelation } from '@jrmc/adonis-attachment/lucid'
-import { hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import { column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 
 export default class Product extends ProductSchema {
+  @column({
+    prepare: (value) => (value === null ? null : JSON.stringify(value)),
+    consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),
+  })
+  declare tags: string[] | null
+
   @attachments({ folder: 'products' })
   declare media: AttachmentCollectionRelation
 
