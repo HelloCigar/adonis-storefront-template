@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{ policy: Data.Content }>()
 const handle = computed(() => props.policy.handle)
@@ -11,8 +12,8 @@ const handle = computed(() => props.policy.handle)
   <UContainer class="py-6 lg:py-8">
     <UBreadcrumb
       :items="[
-        { label: t('policies.title'), to: localePath('/policies') },
-        { label: policy?.title, to: localePath(`/policies/${handle}`) },
+        { label: t('policies.title'), to: urlFor('policies.index') },
+        { label: policy?.title, to: urlFor('policies.show', { handle }) },
       ]"
       class="mb-6 lg:mb-8"
     />

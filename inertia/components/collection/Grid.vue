@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { storePath as localePath } from '~/utils/store'
 const props = defineProps<{ collections: Data.Collection[]; first?: number }>()
 const collections = computed(() => props.collections.slice(0, props.first ?? 50))
 </script>
@@ -13,7 +13,7 @@ const collections = computed(() => props.collections.slice(0, props.first ?? 50)
       class="mb-4"
       :title="collection.title"
       :description="collection.description ?? undefined"
-      :to="localePath(`/collection/${collection.handle}`)"
+      :to="urlFor('collections.show', { handle: collection.handle })"
       reverse
     >
       <img

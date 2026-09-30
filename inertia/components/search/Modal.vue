@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import { debounce } from '~/utils/debounce'
+import { urlFor } from '~/client'
 const page = usePage()
 const query = ref('')
 const open = ref(false)
@@ -46,7 +47,7 @@ const groups = computed(() => [
     items: data.value.products.map((product) => ({
       label: product.title,
       suffix: product.description ?? undefined,
-      to: localePath('/product/' + product.handle),
+      to: urlFor('products.show', { handle: product.handle }),
       avatar: product.featuredImage
         ? { src: product.featuredImage.url, alt: product.featuredImage.altText ?? undefined }
         : undefined,
@@ -61,7 +62,7 @@ const groups = computed(() => [
     items: data.value.collections.map((collection) => ({
       label: collection.title,
       suffix: collection.description ?? undefined,
-      to: localePath('/collection/' + collection.handle),
+      to: urlFor('collections.show', { handle: collection.handle }),
       avatar: collection.image
         ? { src: collection.image.url, alt: collection.image.altText ?? undefined }
         : undefined,

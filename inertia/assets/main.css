@@ -1,8 +1,29 @@
-@import 'tailwindcss';
-@import '@nuxt/ui';
-
-@plugin '@tailwindcss/typography';
+@import url("https://fonts.googleapis.com/css2?family=Bricolage%20Grotesque:wght@300;400;500;600;700;800&display=swap");
+@import "tailwindcss";
+@import "@nuxt/ui";
 
 @theme {
-  --font-sans: 'Source Sans 3', sans-serif;
+  --font-sans: 'Bricolage Grotesque', sans-serif;
+}
+
+:root {
+  --ui-radius: 0.625rem;
+}
+
+:root,
+.light {
+  --ui-bg: var(--ui-color-neutral-50);
+  --ui-bg-muted: var(--ui-color-neutral-100);
+  --ui-text-inverted: var(--ui-color-neutral-50);
+  --ui-primary: var(--ui-color-primary-600);
+}
+
+.dark {
+  --ui-text-highlighted: var(--ui-color-neutral-50);
+  --ui-bg-inverted: var(--ui-color-neutral-50);
+  --ui-border-inverted: var(--ui-color-neutral-50);
+  --ui-bg: var(--ui-color-neutral-900);
+  --ui-bg-muted: var(--ui-color-neutral-800);
+  --ui-text-inverted: var(--ui-color-neutral-900);
+  --ui-primary: var(--ui-color-primary-400);
 }

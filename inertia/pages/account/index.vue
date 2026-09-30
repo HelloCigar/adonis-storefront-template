@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import AccountAddresses from '~/components/account/Addresses.vue'
 import AccountOrders from '~/components/account/Orders.vue'
 import AccountProfile from '~/components/account/Profile.vue'
@@ -30,7 +31,7 @@ const name = computed(() =>
         </h1>
 
         <UButton
-          :to="localePath('/account/logout')"
+          :to="urlFor('account.logout')"
           variant="outline"
           color="neutral"
           size="lg"
@@ -53,7 +54,7 @@ const name = computed(() =>
 
           <div v-if="orders?.length" class="mt-6 flex justify-center">
             <UButton
-              :to="localePath('/account/orders')"
+              :to="urlFor('orders.index')"
               variant="soft"
               size="lg"
               :label="t('account.orders.viewAll')"

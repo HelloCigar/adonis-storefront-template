@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{ blog: Data.Content; articleData: Data.Content }>()
 const handle = computed(() => props.blog.handle)
@@ -13,8 +14,8 @@ const article = computed(() => props.articleData.handle)
     <UBreadcrumb
       :items="[
         { label: t('breadcrumb.blog') },
-        { label: blog?.title, to: localePath(`/blog/${handle}`) },
-        { label: articleData?.title, to: localePath(`/blog/${handle}/${article}`) },
+        { label: blog?.title, to: urlFor('blogs.show', { handle }) },
+        { label: articleData?.title, to: urlFor('articles.show', { handle, article }) },
       ]"
       class="mb-8"
     />

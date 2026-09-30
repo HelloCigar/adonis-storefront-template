@@ -15,9 +15,33 @@ export default defineConfig({
       },
       ui: {
         colors: {
-          primary: 'green',
+          primary: 'emerald',
           secondary: 'yellow',
-          neutral: 'slate',
+          neutral: 'taupe',
+        },
+        card: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        alert: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        empty: {
+          defaultVariants: {
+            variant: 'subtle',
+          },
+        },
+        button: {
+          compoundVariants: [
+            {
+              color: 'primary',
+              variant: 'solid',
+              class: 'shadow-md shadow-primary/30',
+            },
+          ],
         },
       },
     }),

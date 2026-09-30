@@ -1,8 +1,8 @@
+import { urlFor } from '~/client'
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { storePath } from '~/utils/store'
 
 export const useMenu = (name: 'main-menu' | 'footer') => {
   const page = usePage<{ policies?: Data.Content[] }>()
@@ -10,12 +10,12 @@ export const useMenu = (name: 'main-menu' | 'footer') => {
     data: computed<NavigationMenuItem[]>(() =>
       name === 'main-menu'
         ? [
-            { label: 'Home', to: storePath('/') },
-            { label: 'Collections', to: storePath('/collections') },
+            { label: 'Home', to: urlFor('home') },
+            { label: 'Collections', to: urlFor('collections.index') },
           ]
         : (page.props.policies ?? []).map((policy) => ({
             label: policy.title,
-            to: storePath('/policies/' + policy.handle),
+            to: urlFor('policies.show', { handle: policy.handle }),
           }))
     ),
   }

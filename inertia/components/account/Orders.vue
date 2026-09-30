@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import AccountOrder from '~/components/account/Order.vue'
 defineProps<{
   orders: Data.Order[]
@@ -24,7 +25,7 @@ defineProps<{
       </p>
 
       <UButton
-        :to="localePath('/')"
+        :to="urlFor('home')"
         :label="t('account.orders.browse')"
         trailing-icon="i-lucide-arrow-right"
       />

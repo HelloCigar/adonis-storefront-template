@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import type { Money } from '~/types/store'
 import { useLocalization } from '~/composables/localization'
 import type { BadgeProps } from '@nuxt/ui'
@@ -60,8 +61,8 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
   <UContainer class="py-6 lg:py-8">
     <UBreadcrumb
       :items="[
-        { label: t('account.label'), to: localePath('/account') },
-        { label: t('account.orders.title'), to: localePath('/account/orders') },
+        { label: t('account.label'), to: urlFor('account.show') },
+        { label: t('account.orders.title'), to: urlFor('orders.index') },
         { label: order?.name },
       ]"
       class="mb-6 lg:mb-8"

@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import { reactive } from 'vue'
 import type { Data } from '@generated/data'
 import { computed, watch } from 'vue'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import { useCart } from '~/composables/cart'
 import ProductPrice from '~/components/product/Price.vue'
 import { z } from 'zod'
@@ -14,7 +15,7 @@ const props = defineProps<{
 const { update, remove, loading } = useCart()
 
 const variant = computed(() => props.line.merchandise!)
-const to = computed(() => localePath(`/product/${variant.value.product!.handle}`))
+const to = computed(() => urlFor('products.show', { handle: variant.value.product!.handle }))
 
 const schema = z.object({
   quantity: z.number().min(1).max(10),

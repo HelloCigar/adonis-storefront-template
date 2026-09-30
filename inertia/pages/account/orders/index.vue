@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import AccountOrders from '~/components/account/Orders.vue'
 import { Head } from '@inertiajs/vue3'
 defineProps<{ orders: Data.Order[] }>()
@@ -10,7 +11,7 @@ defineProps<{ orders: Data.Order[] }>()
   <UContainer class="py-6 lg:py-8">
     <UBreadcrumb
       :items="[
-        { label: t('account.label'), to: localePath('/account') },
+        { label: t('account.label'), to: urlFor('account.show') },
         { label: t('account.orders.title') },
       ]"
       class="mb-6 lg:mb-8"

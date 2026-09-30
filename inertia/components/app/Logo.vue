@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { storePath as localePath } from '~/utils/store'
+import { urlFor } from '~/client'
 const logo = { url: '/store-logo.svg', altText: 'Nuxt Shopify Store Logo' }
 </script>
 <template>
-  <ULink :to="localePath('/')" class="flex items-center gap-1 mr-4 shrink-0 font-bold">
+  <ULink :to="urlFor('home')" class="flex items-center gap-1 mr-4 shrink-0 font-bold">
     <img
       :src="logo?.url"
       :alt="logo?.altText || 'Nuxt Shopify Store Logo'"

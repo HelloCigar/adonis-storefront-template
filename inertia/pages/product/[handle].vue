@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import { ref } from 'vue'
 import type { Data } from '@generated/data'
 import { computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import type { Variant } from '~/types/store'
 import ProductCard from '~/components/product/Card.vue'
 import ProductConfigurator from '~/components/product/Configurator.vue'
@@ -30,7 +31,7 @@ watch(selectedVariant, (variant) => {
   if (query.get('variantId') === String(variant.id)) return
   query.set('variantId', String(variant.id))
   router.replace({
-    url: localePath('/product/' + props.product.handle) + '?' + query,
+    url: urlFor('products.show', { handle: props.product.handle }) + '?' + query,
     preserveState: true,
     preserveScroll: true,
   })
@@ -42,7 +43,7 @@ watch(selectedVariant, (variant) => {
     <UBreadcrumb
       :items="[
         { label: t('breadcrumb.products') },
-        { label: product?.title, to: localePath(`/product/${handle}`) },
+        { label: product?.title, to: urlFor('products.show', { handle }) },
       ]"
       class="mb-6 lg:mb-8"
     />

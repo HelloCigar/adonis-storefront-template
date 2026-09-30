@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed, ref } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import type { Filter } from '~/types/store'
 import { useFilters } from '~/composables/filters'
 import { useCollection } from '~/composables/collection'
@@ -74,7 +75,11 @@ const status = ref<string>('success')
 const visit = (value: number) => {
   const query = new URLSearchParams(page.url.split('?')[1])
   query.set('page', String(value))
-  router.get(localePath('/collection/' + props.handle) + '?' + query, {}, { preserveState: true })
+  router.get(
+    urlFor('collections.show', { handle: props.handle }) + '?' + query,
+    {},
+    { preserveState: true }
+  )
 }
 const loadPrevious = () => visit(currentPage.value - 1)
 const loadNext = () => visit(currentPage.value + 1)

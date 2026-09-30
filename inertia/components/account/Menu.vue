@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import { urlFor } from '~/client'
-import { t, storePath as localePath } from '~/utils/store'
+import { t } from '~/utils/store'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 const page = usePage()
@@ -126,7 +126,7 @@ watch(
 
         <template v-else>
           <UButton
-            :to="localePath('/account')"
+            :to="urlFor('account.show')"
             size="xl"
             class="w-full justify-center mb-4"
             :label="t('account.menu.profile')"
@@ -134,7 +134,7 @@ watch(
           />
 
           <UButton
-            :to="localePath('/account/orders')"
+            :to="urlFor('orders.index')"
             variant="soft"
             size="xl"
             class="w-full justify-center text-center mb-4"
@@ -143,7 +143,7 @@ watch(
           />
 
           <UButton
-            :to="localePath('/account/logout')"
+            :to="urlFor('account.logout')"
             variant="outline"
             size="xl"
             class="w-full justify-center text-center"

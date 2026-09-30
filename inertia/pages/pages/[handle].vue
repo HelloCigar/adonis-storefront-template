@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
-import { storePath as localePath } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{ page: Data.Content }>()
 const handle = computed(() => props.page.handle)
@@ -10,7 +10,7 @@ const handle = computed(() => props.page.handle)
   <Head :title="page.title" />
   <UContainer class="py-6 lg:py-8">
     <UBreadcrumb
-      :items="[{ label: page?.title, to: localePath(`/pages/${handle}`) }]"
+      :items="[{ label: page?.title, to: urlFor('pages.show', { handle }) }]"
       class="mb-6 lg:mb-8"
     />
 

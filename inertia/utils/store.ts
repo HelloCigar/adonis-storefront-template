@@ -1,25 +1,3 @@
-import { urlFor } from '~/client'
-
-// Paths are no longer locale-prefixed; route generation belongs to Adonis.
-export const storePath = (path: string) => {
-  if (path === '/') return urlFor('home')
-  if (path === '/collections') return urlFor('collections.index')
-  if (path === '/account') return urlFor('account.show')
-  if (path === '/account/orders') return urlFor('orders.index')
-  if (path === '/account/logout') return urlFor('account.logout')
-  if (path === '/policies') return urlFor('policies.index')
-  const [, section, handle, article] = path.split('/')
-  if (section === 'product' && handle) return urlFor('products.show', { handle })
-  if (section === 'collection' && handle) return urlFor('collections.show', { handle })
-  if (section === 'pages' && handle) return urlFor('pages.show', { handle })
-  if (section === 'policies' && handle) return urlFor('policies.show', { handle })
-  if (section === 'blog' && handle && article) return urlFor('articles.show', { handle, article })
-  if (section === 'blog' && handle) return urlFor('blogs.show', { handle })
-  if (section === 'account' && handle === 'orders' && article)
-    return urlFor('orders.show', { id: article })
-  return path
-}
-
 const messages: Record<string, string> = {
   'home.title': 'Welcome to our store',
   'home.description': 'Discover our products and collections.',
