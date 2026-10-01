@@ -1,20 +1,31 @@
 <script setup lang="ts">
-import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
+import { useRouter } from '@adonisjs/inertia/vue'
 const props = defineProps<{ collections: Data.Collection[]; first?: number }>()
 const collections = computed(() => props.collections.slice(0, props.first ?? 50))
+const router = useRouter()
+
+function showCollections(handle: string) {
+  router.visit(
+    {
+      route: 'collections.show',
+      routeParams: { handle },
+    },
+    { viewTransition: true }
+  )
+}
 </script>
 <template>
   <div class="sm:grid sm:grid-cols-2 sm:gap-x-6 sm:gap-y-2 lg:grid-cols-3">
     <UPageCard
       v-for="(collection, index) in collections"
       :key="`collection-${index}`"
-      class="mb-4"
+      class="mb-4 cursor-pointer"
       :title="collection.title"
       :description="collection.description ?? undefined"
-      :to="urlFor('collections.show', { handle: collection.handle })"
       reverse
+      @click="showCollections(collection.handle)"
     >
       <img
         v-if="collection.image"

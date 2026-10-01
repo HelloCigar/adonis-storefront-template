@@ -1,35 +1,25 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { t } from '~/utils/store'
-import type { Filter } from '~/types/store'
-import { useFilters } from '~/composables/filters'
+import { useCollection } from '~/composables/collection'
 import FilterTypeBoolean from '~/components/filter/type/Boolean.vue'
 import FilterTypeList from '~/components/filter/type/List.vue'
 import FilterTypePriceRange from '~/components/filter/type/PriceRange.vue'
-const props = defineProps<{ filters?: Filter[] }>()
-const { filters: applied, set } = useFilters()
-const filters = computed(() =>
-  props.filters?.map((filter) => ({
-    label: filter.label,
-    component:
-      filter.type === 'PRICE_RANGE'
-        ? FilterTypePriceRange
-        : filter.type === 'BOOLEAN'
-          ? FilterTypeBoolean
-          : FilterTypeList,
-    props: { filter },
-  }))
+
+const props = defineProps<{ vendors: string[] }>()
+const { query, clearFilters } = useCollection()
+const filters = computed(() => [
+  { label: 'Availability', slot: 'availability' as const },
+  { label: 'Price', slot: 'price' as const },
+  ...(props.vendors.length ? [{ label: 'Vendor', slot: 'vendor' as const }] : []),
+])
+const quantity = computed(
+  () =>
+    Number(query.value.available !== undefined) +
+    query.value.vendor.length +
+    Number(query.value.minPrice !== undefined || query.value.maxPrice !== undefined)
 )
-const quantity = computed(() => applied.value.length)
-const filtersKey = ref(0)
-const resetFilters = () => {
-  filtersKey.value += 1
-  set([])
-}
-watch(applied, (value) => {
-  if (!value.length) filtersKey.value += 1
-})
-defineExpose({ reset: resetFilters })
+defineExpose({ reset: clearFilters })
 </script>
 <template>
   <div class="lg:mt-14 lg:me-16">
@@ -45,7 +35,7 @@ defineExpose({ reset: resetFilters })
             color="primary"
             class="ms-4"
             :label="t('filters.clear')"
-            @click="resetFilters"
+            @click="clearFilters"
           />
 
           <UBadge
@@ -57,9 +47,15 @@ defineExpose({ reset: resetFilters })
         </div>
       </div>
 
-      <UAccordion :key="filtersKey" :items="filters" type="multiple">
-        <template #body="{ item }">
-          <component :is="item.component" v-bind="item.props" />
+      <UAccordion :items="filters" type="multiple">
+        <template #availability-body>
+          <FilterTypeBoolean />
+        </template>
+        <template #price-body>
+          <FilterTypePriceRange />
+        </template>
+        <template #vendor-body>
+          <FilterTypeList :vendors="vendors" />
         </template>
       </UAccordion>
     </div>

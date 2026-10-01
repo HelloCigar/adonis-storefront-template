@@ -206,7 +206,7 @@ test.group('Storefront', (group) => {
     collectionPage.assertStatus(200)
     collectionPage.assertInertiaComponent('collection/[handle]')
     assert.equal(collectionPage.inertiaProps.collection.handle, 'desk-friends')
-    assert.equal(collectionPage.inertiaProps.products[0].handle, 'bunny-lamp')
+    assert.equal(collectionPage.inertiaProps.catalogue.products[0].handle, 'bunny-lamp')
 
     const productPage = await client.get('/product/bunny-lamp').withInertia()
     productPage.assertStatus(200)

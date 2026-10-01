@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3'
-import { urlFor } from '~/client'
+import { useRouter } from '@adonisjs/inertia/vue'
 import { onMounted } from 'vue'
-onMounted(() => router.post(urlFor('session.destroy')))
+const router = useRouter()
+onMounted(() => router.visit({ route: 'session.destroy' }))
 </script>
 <template>
   <div class="flex justify-center py-16">

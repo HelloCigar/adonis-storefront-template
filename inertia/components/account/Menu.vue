@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { computed, ref, watch } from 'vue'
-import { usePage, router } from '@inertiajs/vue3'
+import { usePage } from '@inertiajs/vue3'
+import { useRouter } from '@adonisjs/inertia/vue'
 import { urlFor } from '~/client'
 import { t } from '~/utils/store'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 const page = usePage()
+const router = useRouter()
 const isLoggedIn = computed(() => !!page.props.user)
 const schema = z.object({
   email: z.email().optional(),
@@ -16,11 +18,14 @@ type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({ email: undefined, subscribeNewsletter: false })
 const open = ref(false)
 const onSubmit = (event: FormSubmitEvent<Schema>) =>
-  router.get(urlFor('session.create'), {
-    email: event.data.email,
-    returnTo: event.submitter?.hasAttribute('data-return-to-orders')
-      ? '/account/orders'
-      : '/account',
+  router.visit({
+    route: 'session.create',
+    qs: {
+      email: event.data.email,
+      returnTo: event.submitter?.hasAttribute('data-return-to-orders')
+        ? urlFor('orders.index')
+        : urlFor('account.show'),
+    },
   })
 watch(
   () => page.url,

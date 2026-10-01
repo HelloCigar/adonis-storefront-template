@@ -103,6 +103,7 @@ const onSubmit = async (event: FormSubmitEvent<typeof state>) => {
       <ProductOptionGroup
         v-model="state.selectedOptions"
         :options="product.options"
+        :variants="product.variants ?? []"
         class="order-1 lg:order-2 mb-6 lg:mb-8"
       />
 
@@ -117,6 +118,7 @@ const onSubmit = async (event: FormSubmitEvent<typeof state>) => {
             v-model="state.quantity"
             :min="1"
             :max="maxQuantity"
+            :disabled="unavailable || loading"
             class="w-24 lg:w-28"
             size="xl"
           />

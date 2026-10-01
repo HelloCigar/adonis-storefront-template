@@ -12,6 +12,12 @@ const state = defineModel<string>()
     variant="card"
     indicator="hidden"
     :ui="{ fieldset: 'flex-row flex-wrap gap-2' }"
-    :items="props.option.optionValues.map((value) => ({ label: value.name, value: value.name }))"
+    :items="
+      props.option.optionValues.map((value) => ({
+        label: value.name,
+        value: value.name,
+        disabled: value.disabled,
+      }))
+    "
   />
 </template>

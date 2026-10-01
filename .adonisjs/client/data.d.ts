@@ -8,6 +8,7 @@ import type { InferData, InferVariants } from '@adonisjs/core/types/transformers
 import type { InferSharedProps, InferFlashData } from '@adonisjs/inertia/types'
 import type CartLineTransformer from '#transformers/cart_line_transformer'
 import type CartTransformer from '#transformers/cart_transformer'
+import type CollectionCatalogueTransformer from '#transformers/collection_catalogue_transformer'
 import type CollectionTransformer from '#transformers/collection_transformer'
 import type ContentTransformer from '#transformers/content_transformer'
 import type CustomerAddressTransformer from '#transformers/customer_address_transformer'
@@ -29,6 +30,10 @@ export namespace Data {
   export type Cart = InferData<CartTransformer>
   export namespace Cart {
     export type Variants = InferVariants<CartTransformer>
+  }
+  export type CollectionCatalogue = InferData<CollectionCatalogueTransformer>
+  export namespace CollectionCatalogue {
+    export type Variants = InferVariants<CollectionCatalogueTransformer>
   }
   export type Collection = InferData<CollectionTransformer>
   export namespace Collection {

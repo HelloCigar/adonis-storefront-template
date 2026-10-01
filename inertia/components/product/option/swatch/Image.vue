@@ -15,7 +15,13 @@ const state = defineModel<string>()
       fieldset: 'flex-row flex-wrap gap-2',
       item: 'p-0 overflow-hidden',
     }"
-    :items="props.option.optionValues.map((value) => ({ label: value.name, value: value.name }))"
+    :items="
+      props.option.optionValues.map((value) => ({
+        label: value.name,
+        value: value.name,
+        disabled: value.disabled,
+      }))
+    "
   >
     <template #label="{ item }">
       <img

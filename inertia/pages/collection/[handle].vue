@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
+import type { CollectionCatalogue } from '~/types/collection'
 import { computed } from 'vue'
 import { t } from '~/utils/store'
 import CollectionProducts from '~/components/collection/Products.vue'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ collection: Data.Collection; products: Data.Product[] }>()
+const props = defineProps<{ collection: Data.Collection; catalogue: CollectionCatalogue }>()
 const handle = computed(() => props.collection.handle)
 </script>
 <template>
@@ -27,6 +28,6 @@ const handle = computed(() => props.collection.handle)
       {{ collection?.description }}
     </p>
 
-    <CollectionProducts :handle="handle" :products="products" />
+    <CollectionProducts :handle="handle" :catalogue="catalogue" />
   </UContainer>
 </template>

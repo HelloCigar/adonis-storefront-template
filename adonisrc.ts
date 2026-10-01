@@ -31,6 +31,7 @@ export default defineConfig({
     () => import('@adonisjs/session/commands'),
     () => import('@adonisjs/inertia/commands'),
     () => import('@jrmc/adonis-attachment/commands'),
+    () => import('@shamar/adonis/commands')
   ],
 
   /*
@@ -61,6 +62,7 @@ export default defineConfig({
     () => import('@adonisjs/auth/auth_provider'),
     () => import('#providers/api_provider'),
     () => import('@jrmc/adonis-attachment/attachment_provider'),
+    () => import('@shamar/adonis/provider')
   ],
 
   /*

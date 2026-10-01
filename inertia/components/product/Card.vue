@@ -51,13 +51,13 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
     }"
   >
     <div class="group relative rounded-md overflow-hidden mb-4">
-      <div class="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+      <div class="absolute top-2 left-2 flex flex-col items-start gap-1">
         <UBadge v-if="soldOut" color="neutral" variant="solid" :label="t('product.soldOut')" />
 
         <UBadge
           v-else-if="discount"
           color="error"
-          variant="solid"
+          variant="soft"
           :label="t('product.discount', { percentage: discount })"
         />
 

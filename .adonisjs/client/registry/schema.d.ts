@@ -38,9 +38,9 @@ export interface Registry {
       body: {}
       paramsTuple: [ParamValue]
       params: { handle: ParamValue }
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/collection').collectionQueryValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/collections_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/collections_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/collections_controller').default['show']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'products.show': {

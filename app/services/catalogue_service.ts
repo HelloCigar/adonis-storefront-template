@@ -1,5 +1,6 @@
 import Collection from '#models/collection'
 import Product from '#models/product'
+import type { CollectionQuery } from '#validators/collection'
 
 export default class CatalogueService {
   private publishedProducts() {
@@ -29,26 +30,72 @@ export default class CatalogueService {
     return Collection.query().whereNotNull('published_at').orderBy('published_at', 'desc').limit(6)
   }
 
-  collectionProducts(collection: Collection) {
-    return collection
+  async collectionProducts(collection: Collection, params: CollectionQuery) {
+    const query = collection
       .related('products')
       .query()
       .where('status', 'active')
       .whereNotNull('published_at')
-      .preload('variants', (query) => query.orderBy('position', 'asc'))
+      .orderBy('collection_products.position', 'asc')
+      .orderBy('products.id', 'asc')
+
+    if (params.available === true) {
+      query.whereHas('variants', (variants) => variants.where('available_for_sale', true))
+    } else if (params.available === false) {
+      query.whereDoesntHave('variants', (variants) => variants.where('available_for_sale', true))
+    }
+    if (params.vendor?.length) query.whereIn('vendor', params.vendor)
+
+    // Filter the displayed "from" price, rather than any single matching variant.
+    const minimumPrice =
+      '(select coalesce(min(price_amount), 0) from product_variants where product_variants.product_id = products.id)'
+    if (params.minPrice !== undefined) query.whereRaw(`${minimumPrice} >= ?`, [params.minPrice])
+    if (params.maxPrice !== undefined) query.whereRaw(`${minimumPrice} <= ?`, [params.maxPrice])
+
+    const loadPage = (page: number) =>
+      query
+        .clone()
+        .preload('variants', (variants) => variants.orderBy('position', 'asc'))
+        .paginate(page, 12)
+    const [requestedPage, vendors] = await Promise.all([
+      loadPage(params.page ?? 1),
+      Product.query()
+        .where('status', 'active')
+        .whereNotNull('published_at')
+        .whereHas('collections', (collections) =>
+          collections.where('collections.id', collection.id)
+        )
+        .whereNotNull('vendor')
+        .whereNot('vendor', '')
+        .distinct('vendor')
+        .orderBy('vendor', 'asc'),
+    ])
+    const lastPage = Math.max(1, requestedPage.lastPage)
+    const products = requestedPage.currentPage > lastPage ? await loadPage(lastPage) : requestedPage
+
+    return {
+      products,
+      query: { ...params, page: products.currentPage, vendor: params.vendor ?? [] },
+      vendors: vendors.map((product) => product.vendor!),
+      pageInfo: {
+        currentPage: products.currentPage,
+        lastPage,
+        total: products.total,
+        perPage: products.perPage,
+        hasPreviousPage: products.currentPage > 1,
+        hasNextPage: products.hasMorePages,
+      },
+    }
   }
 
   async search(search?: string) {
     if (!search) return { products: [], collections: [] }
     const pattern = '%' + search.replace(/[\\%_]/g, '\\$&') + '%'
     const [products, collections] = await Promise.all([
-      this.publishedProducts()
-        .whereRaw("title like ? escape '\\'", [pattern])
-        .orderBy('title')
-        .limit(8),
+      this.publishedProducts().whereILike('title', pattern).orderBy('title').limit(8),
       Collection.query()
         .whereNotNull('published_at')
-        .whereRaw("title like ? escape '\\'", [pattern])
+        .whereILike('title', pattern)
         .orderBy('title')
         .limit(8),
     ])

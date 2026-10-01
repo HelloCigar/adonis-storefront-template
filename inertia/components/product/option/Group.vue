@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import type { ProductOption } from '~/types/store'
+import { computed, reactive, watch } from 'vue'
+import type { ProductOption, Variant } from '~/types/store'
 import ProductOptionSwatchColor from '~/components/product/option/swatch/Color.vue'
 import ProductOptionSwatchImage from '~/components/product/option/swatch/Image.vue'
 import ProductOptionSwatchText from '~/components/product/option/swatch/Text.vue'
 const props = defineProps<{
   options: ProductOption[]
+  variants: Variant[]
 }>()
 
 const selectedOptions = defineModel<{ name: string; value: string }[]>()
@@ -20,16 +21,47 @@ const optionsToState = (options?: { name: string; value: string }[]) =>
     {} as Record<string, string>
   ) ?? {}
 
-const stateToOptions = (state: Record<string, string>) =>
-  Object.entries(state).map(([name, value]) => ({ name, value }))
-
 const state = reactive(optionsToState(selectedOptions.value))
 watch(selectedOptions, (options) => {
   for (const key of Object.keys(state)) delete state[key]
   Object.assign(state, optionsToState(options))
 })
 
-const onChange = () => (selectedOptions.value = stateToOptions(state))
+const availableVariants = (name: string, value: string) => {
+  const index = props.options.findIndex((option) => option.name === name)
+  const prefix = props.options.slice(0, index + 1)
+  return props.variants.filter(
+    (variant) =>
+      variant.availableForSale &&
+      prefix.every((option) =>
+        variant.selectedOptions.some(
+          (selected) =>
+            selected.name === option.name &&
+            selected.value === (option.name === name ? value : state[option.name])
+        )
+      )
+  )
+}
+
+const options = computed(() =>
+  props.options.map((option) => ({
+    ...option,
+    optionValues: option.optionValues.map((value) => ({
+      ...value,
+      disabled: availableVariants(option.name, value.name).length === 0,
+    })),
+  }))
+)
+
+const onChange = (name: string, value: string | undefined) => {
+  if (value === undefined) return
+  const candidates = availableVariants(name, value)
+  const variant =
+    candidates.find((candidate) =>
+      candidate.selectedOptions.every((option) => state[option.name] === option.value)
+    ) ?? candidates[0]
+  if (variant) selectedOptions.value = [...variant.selectedOptions]
+}
 
 const isColorSwatchOption = (option?: (typeof props.options)[number]) =>
   !!option?.optionValues?.every((value) => value.swatch?.color)
@@ -47,7 +79,7 @@ const getFilterComponent = (option: (typeof props.options)[number]) => {
 <template>
   <div>
     <UFormField
-      v-for="option in props.options.filter((option) => option.optionValues.length > 1)"
+      v-for="option in options.filter((option) => option.optionValues.length > 1)"
       :key="option.id"
       :label="option.name"
       :name="option.name"
@@ -57,7 +89,7 @@ const getFilterComponent = (option: (typeof props.options)[number]) => {
         :is="getFilterComponent(option)"
         v-model="state[option.name]"
         :option="option"
-        @update:model-value="onChange"
+        @update:model-value="(value: string | undefined) => onChange(option.name, value)"
       />
     </UFormField>
   </div>

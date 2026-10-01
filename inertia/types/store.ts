@@ -8,18 +8,7 @@ export type Variant = NonNullable<Data.Product['variants']>[number] & {
 export type ProductOption = Omit<Data.Product['options'][number], 'optionValues'> & {
   optionValues: Array<{
     name: string
+    disabled?: boolean
     swatch?: { color?: string; image?: { previewImage?: { url: string } } }
   }>
-}
-export type ProductFilter = {
-  available?: boolean
-  vendor?: string
-  productType?: string
-  price?: { min?: number; max?: number }
-}
-export type Filter = {
-  id: string
-  label: string
-  type: 'PRICE_RANGE' | 'LIST' | 'BOOLEAN'
-  values: Array<{ id: string; label: string; input: string }>
 }
