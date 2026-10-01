@@ -21,9 +21,9 @@ const showPreferences = () =>
 <template>
   <UFooter
     :ui="{
-      root: 'border-t border-neutral-200',
+      root: 'border-t border-default',
       top: 'pb-0 lg:pb-0',
-      bottom: 'border-t border-neutral-200',
+      bottom: 'border-t border-default',
       container: 'pb-6 lg:pb-10',
     }"
   >
@@ -31,7 +31,7 @@ const showPreferences = () =>
       <UContainer class="flex flex-col sm:flex-row sm:items-end">
         <AppVersion />
 
-        <span class="hidden mx-4 mb-2 h-6 w-px bg-neutral-200 sm:block sm:mb-4 sm:mx-6" />
+        <span class="hidden mx-4 mb-2 h-6 w-px bg-(--ui-border) sm:block sm:mb-4 sm:mx-6" />
 
         <UNavigationMenu
           :items="items"

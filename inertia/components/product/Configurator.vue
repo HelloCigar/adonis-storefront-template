@@ -59,7 +59,7 @@ const onSubmit = async (event: FormSubmitEvent<typeof state>) => {
 <template>
   <div>
     <div class="flex-col lg:flex pb-6 lg:pb-8">
-      <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
+      <h1 class="text-4xl lg:text-5xl font-extrabold mb-4">
         {{ selectedVariant?.product?.title }}
       </h1>
 

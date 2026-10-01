@@ -9,7 +9,7 @@ defineProps<{
 </script>
 <template>
   <section>
-    <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold mb-6 lg:mb-8">
+    <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6 lg:mb-8">
       {{ t('account.orders.title') }}
     </h2>
 

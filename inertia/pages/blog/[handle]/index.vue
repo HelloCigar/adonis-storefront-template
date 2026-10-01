@@ -19,7 +19,7 @@ const handle = computed(() => props.blog.handle)
       class="mb-6 lg:mb-8"
     />
 
-    <h1 class="text-4xl lg:text-5xl text-gray-900 font-extrabold mb-6 lg:mb-8">
+    <h1 class="text-4xl lg:text-5xl text-highlighted font-extrabold mb-6 lg:mb-8">
       {{ blog?.title }}
     </h1>
 

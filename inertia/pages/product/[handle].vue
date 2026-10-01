@@ -73,7 +73,7 @@ watch(selectedVariant, (variant) => {
     </div>
 
     <div v-if="recommendations">
-      <h2 class="text-3xl text-gray-900 font-bold mb-6 lg:mb-8 lg:text-4xl">
+      <h2 class="text-3xl text-highlighted font-bold mb-6 lg:mb-8 lg:text-4xl">
         {{ t('product.recommendations') }}
       </h2>
 

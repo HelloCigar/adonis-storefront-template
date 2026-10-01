@@ -35,6 +35,8 @@ const { data: items } = useMenu('main-menu')
       </AppLocaleSelect>
 
       <CartModal />
+
+      <UColorModeButton />
     </template>
   </UHeader>
 </template>

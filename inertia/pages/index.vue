@@ -13,7 +13,7 @@ const props = defineProps<{
 <template>
   <Head :title="'Home'" />
   <UContainer class="py-12 lg:py-16">
-    <h1 class="text-4xl lg:text-5xl text-gray-900 font-extrabold mb-6 lg:mb-8">
+    <h1 class="text-4xl lg:text-5xl text-highlighted font-extrabold mb-6 lg:mb-8">
       {{ t('home.title') }}
     </h1>
 
@@ -21,7 +21,7 @@ const props = defineProps<{
       {{ t('home.description') }}
     </p>
 
-    <h2 class="text-3xl lg:text-4xl text-gray-900 font-bold mb-6 lg:mb-8">
+    <h2 class="text-3xl lg:text-4xl text-highlighted font-bold mb-6 lg:mb-8">
       {{ t('home.products.bestsellers') }}
     </h2>
 
@@ -29,7 +29,7 @@ const props = defineProps<{
       <ProductSlider :first="12" :products="props.bestsellingProducts" loading="eager" />
     </div>
 
-    <h2 class="text-3xl lg:text-4xl text-gray-900 font-bold mb-6 lg:mb-8">
+    <h2 class="text-3xl lg:text-4xl text-highlighted font-bold mb-6 lg:mb-8">
       {{ t('home.products.newest') }}
     </h2>
 
@@ -37,7 +37,7 @@ const props = defineProps<{
       <ProductSlider :first="12" :products="props.newestProducts" loading="eager" />
     </div>
 
-    <h2 class="text-3xl lg:text-4xl text-gray-900 font-bold mb-6 lg:mb-8">
+    <h2 class="text-3xl lg:text-4xl text-highlighted font-bold mb-6 lg:mb-8">
       {{ t('collection.all') }}
     </h2>
 

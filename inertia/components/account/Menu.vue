@@ -50,7 +50,7 @@ watch(
     <template #content>
       <div class="p-5">
         <div class="flex justify-between">
-          <p class="text-lg lg:text-xl text-gray-900 font-semibold pe-10 mb-6">
+          <p class="text-lg lg:text-xl text-highlighted font-semibold pe-10 mb-6">
             <span v-if="!isLoggedIn">
               {{ t('account.signIn.title') }}
             </span>

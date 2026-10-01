@@ -70,7 +70,7 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
 
     <div class="flex flex-wrap items-start justify-between gap-4 mb-8 lg:mb-10">
       <div>
-        <h1 class="text-4xl lg:text-5xl text-gray-900 font-extrabold mb-3">
+        <h1 class="text-4xl lg:text-5xl text-highlighted font-extrabold mb-3">
           {{ order?.name }}
         </h1>
 
@@ -100,7 +100,7 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
 
     <div class="grid gap-8 lg:grid-cols-3 lg:gap-10">
       <section class="lg:col-span-2">
-        <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold mb-6">
+        <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6">
           {{ t('account.orders.detail.items') }}
         </h2>
 
@@ -141,7 +141,7 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
 
       <div class="flex flex-col gap-8">
         <section>
-          <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold mb-6">
+          <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6">
             {{ t('account.orders.detail.summary') }}
           </h2>
 
@@ -159,7 +159,7 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
         </section>
 
         <section v-for="address in addresses" :key="address.label">
-          <h2 class="text-lg text-gray-900 font-bold mb-3">
+          <h2 class="text-lg text-highlighted font-bold mb-3">
             {{ address.label }}
           </h2>
 

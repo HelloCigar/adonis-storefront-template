@@ -26,7 +26,7 @@ const name = computed(() =>
 
     <template v-if="customer">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-8 lg:mb-10">
-        <h1 class="text-4xl lg:text-5xl text-gray-900 font-extrabold">
+        <h1 class="text-4xl lg:text-5xl text-highlighted font-extrabold">
           {{ name ? t('account.greeting', { name }) : t('account.welcome') }}
         </h1>
 
@@ -42,7 +42,7 @@ const name = computed(() =>
 
       <div class="flex flex-col gap-10 lg:gap-14">
         <section>
-          <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold mb-6 lg:mb-8">
+          <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6 lg:mb-8">
             {{ t('account.profile.title') }}
           </h2>
 
@@ -69,7 +69,7 @@ const name = computed(() =>
         />
 
         <section>
-          <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold mb-6 lg:mb-8">
+          <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6 lg:mb-8">
             {{ t('account.recommended') }}
           </h2>
 

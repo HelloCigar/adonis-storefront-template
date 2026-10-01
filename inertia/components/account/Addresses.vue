@@ -24,7 +24,7 @@ const addresses = computed(() =>
 <template>
   <section>
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6 lg:mb-8">
-      <h2 class="text-2xl lg:text-3xl text-gray-900 font-bold">
+      <h2 class="text-2xl lg:text-3xl text-highlighted font-bold">
         {{ t('account.addresses.title') }}
       </h2>
 
