@@ -1,15 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
+import StatusForm from '~/components/seller/orders/StatusForm.vue'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
-import { urlFor } from '~/client'
 const props = defineProps<{ order: Data.Seller.Order }>()
-const form = useForm({
-  financialStatus: props.order.financialStatus,
-  fulfillmentStatus: props.order.fulfillmentStatus,
-  note: props.order.note || '',
-})
 const money = (amount: number) =>
   new Intl.NumberFormat('en', { style: 'currency', currency: props.order.currencyCode }).format(
     amount
@@ -30,11 +25,6 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
     cell: ({ row }) => money(row.original.totalAmount),
   },
 ]
-function save() {
-  form
-    .transform((data) => ({ ...data, note: data.note || null }))
-    .patch(urlFor('seller.orders.update', { id: props.order.id }), { preserveScroll: true })
-}
 </script>
 
 <template>
@@ -117,45 +107,7 @@ function save() {
             ><template #header
               ><h2 class="font-semibold text-highlighted">Manage order</h2></template
             >
-            <form class="space-y-4" @submit.prevent="save">
-              <UFormField
-                name="financialStatus"
-                label="Payment status"
-                :error="form.errors.financialStatus"
-                ><USelect
-                  v-model="form.financialStatus"
-                  :items="[
-                    'pending',
-                    'authorized',
-                    'paid',
-                    'partially_refunded',
-                    'refunded',
-                    'voided',
-                  ]"
-                  class="w-full"
-              /></UFormField>
-              <UFormField
-                name="fulfillmentStatus"
-                label="Fulfillment status"
-                :error="form.errors.fulfillmentStatus"
-                ><USelect
-                  v-model="form.fulfillmentStatus"
-                  :items="['unfulfilled', 'partial', 'fulfilled']"
-                  class="w-full"
-              /></UFormField>
-              <UFormField name="note" label="Note" :error="form.errors.note"
-                ><UTextarea v-model="form.note" class="w-full" :rows="4"
-              /></UFormField>
-              <p class="text-xs text-muted">
-                Status changes record your manual payment and fulfillment updates.
-              </p>
-              <UButton
-                type="submit"
-                label="Save changes"
-                :loading="form.processing"
-                :disabled="form.processing"
-              />
-            </form>
+            <StatusForm :order="order" />
           </UCard>
         </div>
       </div>

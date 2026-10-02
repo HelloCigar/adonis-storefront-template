@@ -1,47 +1,85 @@
-<script setup lang="ts" generic="T extends { id: number }">
+<script setup lang="ts">
 import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
+import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
-
-const props = defineProps<{
-  title: string
-  singular: string
-  description: string
-  rows: T[]
-  columns: TableColumn<T>[]
-  searchText: (row: T) => string
-  status?: (row: T) => string
-  filters?: { label: string; value: string }[]
-  actions?: (row: T) => DropdownMenuItem[]
-  canCreate?: boolean
-  canEdit?: boolean
-  canDelete?: (row: T) => boolean
-}>()
-const emit = defineEmits<{ create: []; edit: [row: T]; delete: [row: T] }>()
+import { useRouter } from '@adonisjs/inertia/vue'
+const router = useRouter()
+const props = defineProps<{ orders: Data.Seller.Order[] }>()
+const title = 'Orders'
+const description = 'Review purchases and manage payment and fulfillment statuses.'
+const filters = ['unfulfilled', 'partial', 'fulfilled'].map((value) => ({
+  label: value[0].toUpperCase() + value.slice(1),
+  value,
+}))
+const searchText = (row: Data.Seller.Order) => `${row.number} ${row.email}`
+const status = (row: Data.Seller.Order) => row.fulfillmentStatus
+const badge = resolveComponent('UBadge')
+const resourceColumns: TableColumn<Data.Seller.Order>[] = [
+  { accessorKey: 'number', header: 'Order' },
+  { accessorKey: 'email', header: 'Customer' },
+  {
+    accessorKey: 'financialStatus',
+    header: 'Payment',
+    cell: ({ row }) =>
+      h(badge, {
+        label: row.original.financialStatus.replaceAll('_', ' '),
+        color: row.original.financialStatus === 'paid' ? 'success' : 'warning',
+        variant: 'subtle',
+        class: 'capitalize',
+      }),
+  },
+  {
+    accessorKey: 'fulfillmentStatus',
+    header: 'Fulfillment',
+    cell: ({ row }) =>
+      h(badge, {
+        label: row.original.fulfillmentStatus,
+        color: row.original.fulfillmentStatus === 'fulfilled' ? 'success' : 'neutral',
+        variant: 'subtle',
+        class: 'capitalize',
+      }),
+  },
+  {
+    accessorKey: 'totalAmount',
+    header: 'Total',
+    cell: ({ row }) =>
+      new Intl.NumberFormat('en', {
+        style: 'currency',
+        currency: row.original.currencyCode,
+      }).format(row.original.totalAmount),
+  },
+  {
+    accessorKey: 'processedAt',
+    header: 'Date',
+    cell: ({ row }) =>
+      row.original.processedAt ? new Date(row.original.processedAt).toLocaleDateString() : '—',
+  },
+]
 const table = useTemplateRef('table')
 const search = ref('')
 const statusFilter = ref('all')
 const pagination = ref({ pageIndex: 0, pageSize: 10 })
 const columnVisibility = ref({})
 const rows = computed(() =>
-  props.rows.filter(
+  props.orders.filter(
     (row) =>
-      props.searchText(row).toLowerCase().includes(search.value.toLowerCase()) &&
-      (statusFilter.value === 'all' || props.status?.(row) === statusFilter.value)
+      searchText(row).toLowerCase().includes(search.value.toLowerCase()) &&
+      (statusFilter.value === 'all' || status(row) === statusFilter.value)
   )
 )
-watch([search, statusFilter, () => props.rows], () => {
+watch([search, statusFilter, () => props.orders], () => {
   pagination.value.pageIndex = 0
 })
 const UButton = resolveComponent('UButton')
-const columns = computed<TableColumn<T>[]>(() =>
-  props.columns
+const columns = computed<TableColumn<Data.Seller.Order>[]>(() =>
+  resourceColumns
     .map((column) => {
       if ('accessorKey' in column && typeof column.header === 'string') {
         const label = column.header
         return {
           ...column,
-          header: ({ column: item }: HeaderContext<T, unknown>) =>
+          header: ({ column: item }: HeaderContext<Data.Seller.Order, unknown>) =>
             h(UButton, {
               label,
               color: 'neutral',
@@ -61,28 +99,13 @@ const columns = computed<TableColumn<T>[]>(() =>
     })
     .concat([{ id: 'actions', enableHiding: false }])
 )
-function rowActions(row: T): DropdownMenuItem[] {
+function rowActions(row: Data.Seller.Order): DropdownMenuItem[] {
   return [
-    ...(props.actions?.(row) || []),
-    ...(props.canEdit
-      ? [
-          {
-            label: `Edit ${props.singular}`,
-            icon: 'i-lucide-pencil',
-            onSelect: () => emit('edit', row),
-          },
-        ]
-      : []),
-    ...(props.canDelete?.(row)
-      ? [
-          {
-            label: `Delete ${props.singular}`,
-            icon: 'i-lucide-trash',
-            color: 'error' as const,
-            onSelect: () => emit('delete', row),
-          },
-        ]
-      : []),
+    {
+      label: 'View order',
+      icon: 'i-lucide-eye',
+      onSelect: () => router.visit({ route: 'seller.orders.show', routeParams: { id: row.id } }),
+    },
   ]
 }
 </script>
@@ -92,20 +115,10 @@ function rowActions(row: T): DropdownMenuItem[] {
     <template #header>
       <UDashboardNavbar :title="title">
         <template #leading><UDashboardSidebarCollapse /></template>
-        <template #right>
-          <slot name="header" />
-          <UButton
-            v-if="canCreate"
-            :label="`Add ${singular}`"
-            icon="i-lucide-plus"
-            @click="emit('create')"
-          />
-        </template>
       </UDashboardNavbar>
     </template>
     <template #body>
       <div>
-        <slot name="breadcrumb" />
         <p class="text-sm text-muted">{{ description }}</p>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -118,7 +131,6 @@ function rowActions(row: T): DropdownMenuItem[] {
         />
         <div class="flex items-center gap-2">
           <USelect
-            v-if="filters"
             v-model="statusFilter"
             :items="[{ label: 'All', value: 'all' }, ...filters]"
             aria-label="Filter status"
@@ -189,9 +201,7 @@ function rowActions(row: T): DropdownMenuItem[] {
               {{
                 search || statusFilter !== 'all'
                   ? 'Try changing your search or filters.'
-                  : canCreate
-                    ? `Add your first ${singular} to get started.`
-                    : 'Orders will appear here when customers place them.'
+                  : 'Orders will appear here when customers place them.'
               }}
             </p>
           </div>
@@ -208,7 +218,6 @@ function rowActions(row: T): DropdownMenuItem[] {
           @update:page="table?.tableApi.setPageIndex($event - 1)"
         />
       </div>
-      <slot />
     </template>
   </UDashboardPanel>
 </template>

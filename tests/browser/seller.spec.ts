@@ -50,6 +50,17 @@ test.group('Seller pages', (group) => {
     assert.equal(variant.priceAmount, 499)
     assert.equal(variant.inventoryQuantity, 10)
     await page.getByRole('button', { name: 'Images', exact: true }).click()
+    await page.assertDisabled(page.getByRole('button', { name: 'Upload images', exact: true }))
+    await page.getByLabel('Choose images', { exact: true }).setInputFiles({
+      name: 'invalid.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('Not an image'),
+    })
+    await page.getByRole('button', { name: 'Upload images', exact: true }).click()
+    await page
+      .getByRole('dialog', { name: 'Product images', exact: true })
+      .locator('[data-slot="error"]')
+      .waitFor()
     await page.getByLabel('Choose images', { exact: true }).setInputFiles({
       name: 'lamp.png',
       mimeType: 'image/png',
@@ -60,6 +71,8 @@ test.group('Seller pages', (group) => {
     })
     await page.getByRole('button', { name: 'Upload images', exact: true }).click()
     await page.getByRole('img', { name: 'lamp.png', exact: true }).waitFor()
+    await page.assertDisabled(page.getByRole('button', { name: 'Upload images', exact: true }))
+    assert.equal(await page.getByLabel('Choose images', { exact: true }).inputValue(), '')
     await page.getByRole('button', { name: 'Remove image 1', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await page.getByRole('img', { name: 'lamp.png', exact: true }).waitFor({ state: 'detached' })
@@ -74,6 +87,11 @@ test.group('Seller pages', (group) => {
     await page.getByRole('dialog').waitFor({ state: 'detached' })
     await variant.refresh()
     assert.equal(variant.priceAmount, 599)
+    await page.getByRole('link', { name: 'Products', exact: true }).last().click()
+    await page.getByRole('button', { name: /Actions for Browser Lamp/ }).click()
+    await page.getByRole('menuitem', { name: 'Manage variants', exact: true }).click()
+    await page.getByRole('cell', { name: 'Default', exact: true }).first().waitFor()
+    await page.assertPath(`/seller/products/${product.id}/variants`)
     await page.getByRole('button', { name: 'Actions for Default', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Delete variant', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
@@ -180,8 +198,20 @@ test.group('Seller pages', (group) => {
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
     await page.getByText('Order updated', { exact: true }).waitFor()
     await order.refresh()
+    assert.equal(order.financialStatus, 'paid')
     assert.equal(order.fulfillmentStatus, 'fulfilled')
+    assert.equal(order.note, 'Shipped')
     assert.equal(order.totalAmount, 499)
+    await page.getByLabel('Note', { exact: true }).fill('')
+    const clearedNote = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PATCH' &&
+        new URL(response.url()).pathname === `/seller/orders/${order.id}`
+    )
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+    await clearedNote
+    await order.refresh()
+    assert.isNull(order.note)
     await page.screenshot({ path: 'tmp/seller-order.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
