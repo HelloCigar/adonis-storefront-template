@@ -104,7 +104,11 @@ function rowActions(row: Data.Seller.Order): DropdownMenuItem[] {
     {
       label: 'View order',
       icon: 'i-lucide-eye',
-      onSelect: () => router.visit({ route: 'seller.orders.show', routeParams: { id: row.id } }),
+      onSelect: () =>
+        router.visit(
+          { route: 'seller.orders.show', routeParams: { id: row.id } },
+          { viewTransition: true }
+        ),
     },
   ]
 }

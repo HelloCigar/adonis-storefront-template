@@ -4,7 +4,6 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { useRouter } from '@adonisjs/inertia/vue'
-import { urlFor } from '~/client'
 const router = useRouter()
 const props = defineProps<{ products: Data.Seller.Product[] }>()
 const emit = defineEmits<{
@@ -108,14 +107,20 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
       label: 'Manage variants',
       icon: 'i-lucide-boxes',
       onSelect: () =>
-        router.visit({ route: 'seller.variants.index', routeParams: { productId: row.id } }),
+        router.visit(
+          { route: 'seller.variants.index', routeParams: { productId: row.id } },
+          {
+            viewTransition: true,
+          }
+        ),
     },
     ...(row.status === 'active'
       ? [
           {
             label: 'View in storefront',
             icon: 'i-lucide-external-link',
-            to: urlFor('products.show', { handle: row.handle }),
+            onSelect: () =>
+              router.visit({ route: 'products.show', routeParams: { handle: row.handle } }),
           },
         ]
       : []),

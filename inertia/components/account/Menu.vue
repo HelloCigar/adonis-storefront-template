@@ -18,15 +18,18 @@ type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({ email: undefined, subscribeNewsletter: false })
 const open = ref(false)
 const onSubmit = (event: FormSubmitEvent<Schema>) =>
-  router.visit({
-    route: 'session.create',
-    qs: {
-      email: event.data.email,
-      returnTo: event.submitter?.hasAttribute('data-return-to-orders')
-        ? urlFor('orders.index')
-        : urlFor('account.show'),
+  router.visit(
+    {
+      route: 'session.create',
+      qs: {
+        email: event.data.email,
+        returnTo: event.submitter?.hasAttribute('data-return-to-orders')
+          ? urlFor('orders.index')
+          : urlFor('account.show'),
+      },
     },
-  })
+    { viewTransition: true }
+  )
 watch(
   () => page.url,
   () => {
