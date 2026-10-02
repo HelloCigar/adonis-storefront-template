@@ -1,5 +1,5 @@
 import { inject } from '@adonisjs/core'
-import ProfileService from '#services/profile_service'
+import ProfileService from '#services/settings/profile_service'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

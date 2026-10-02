@@ -9,9 +9,9 @@ import AccountProfile from '~/components/account/Profile.vue'
 import ProductSlider from '~/components/product/Slider.vue'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{
-  customer: Data.User
-  recentOrders: Data.Order[]
-  recommendedProducts: Data.Product[]
+  customer: Data.Account.User
+  recentOrders: Data.Checkout.Order[]
+  recommendedProducts: Data.Catalog.Product[]
 }>()
 const orders = computed(() => props.recentOrders)
 const addresses = computed(() => props.customer.addresses ?? [])

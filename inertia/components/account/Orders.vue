@@ -4,7 +4,7 @@ import type { Data } from '@generated/data'
 import { t } from '~/utils/store'
 import AccountOrder from '~/components/account/Order.vue'
 defineProps<{
-  orders: Data.Order[]
+  orders: Data.Checkout.Order[]
 }>()
 </script>
 <template>

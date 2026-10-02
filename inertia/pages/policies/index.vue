@@ -3,7 +3,7 @@ import type { Data } from '@generated/data'
 import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
-defineProps<{ policies: Data.Content[] }>()
+defineProps<{ policies: Data.Content.Content[] }>()
 </script>
 <template>
   <Head :title="t('policies.title')" />

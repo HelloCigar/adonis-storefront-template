@@ -11,18 +11,20 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
-router.get('/', [controllers.Storefront, 'index']).as('home')
-router.get('/collections', [controllers.Collections, 'index']).as('collections.index')
-router.get('/collection/:handle', [controllers.Collections, 'show']).as('collections.show')
-router.get('/product/:handle', [controllers.Products, 'show']).as('products.show')
+router.get('/', [controllers.storefront.Storefront, 'index']).as('home')
+router.get('/collections', [controllers.storefront.Collections, 'index']).as('collections.index')
+router
+  .get('/collection/:handle', [controllers.storefront.Collections, 'show'])
+  .as('collections.show')
+router.get('/product/:handle', [controllers.storefront.Products, 'show']).as('products.show')
 router.get('/pages/:handle', [controllers.content.Pages, 'show']).as('pages.show')
 router.get('/policies', [controllers.content.Policies, 'index']).as('policies.index')
 router.get('/policies/:handle', [controllers.content.Policies, 'show']).as('policies.show')
 router.get('/blog/:handle', [controllers.content.Blogs, 'show']).as('blogs.show')
 router.get('/blog/:handle/:article', [controllers.content.Articles, 'show']).as('articles.show')
-router.post('/store/cart', [controllers.Cart, 'store']).as('cart.add')
-router.patch('/store/cart/:id', [controllers.Cart, 'update']).as('cart.update')
-router.delete('/store/cart/:id', [controllers.Cart, 'destroy']).as('cart.remove')
+router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')
+router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
+router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
 
 router
   .group(() => {
@@ -55,9 +57,12 @@ router
       .as('account.addresses.delete')
     router.get('/account/orders', [controllers.account.Orders, 'index']).as('orders.index')
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
-    router.get('/dashboard', [controllers.Dashboard, 'index']).as('dashboard')
-    router.get('/inbox', [controllers.Inbox, 'index']).as('inbox')
-    router.get('/customers', [controllers.Customers, 'index']).as('customers')
+    router.get('/dashboard', [controllers.dashboard.Dashboard, 'index']).as('dashboard')
+    router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox')
+    router
+      .get('/customers', [controllers.seller.Customers, 'index'])
+      .as('customers')
+      .use(middleware.seller())
     router.get('/settings', [controllers.settings.Settings, 'index']).as('settings')
     router.post('/settings', [controllers.settings.Settings, 'update']).as('settings.update')
     router
@@ -76,3 +81,47 @@ router
     router.post('logout', [controllers.auth.Session, 'destroy']).as('session.destroy')
   })
   .use(middleware.auth())
+
+router
+  .group(() => {
+    router.get('/products', [controllers.seller.Products, 'index']).as('products.index')
+    router.post('/products', [controllers.seller.Products, 'store']).as('products.store')
+    router.patch('/products/:id', [controllers.seller.Products, 'update']).as('products.update')
+    router.delete('/products/:id', [controllers.seller.Products, 'destroy']).as('products.destroy')
+    router
+      .get('/products/:productId/variants', [controllers.seller.Variants, 'index'])
+      .as('variants.index')
+    router
+      .post('/products/:productId/variants', [controllers.seller.Variants, 'store'])
+      .as('variants.store')
+    router
+      .patch('/products/:productId/variants/:id', [controllers.seller.Variants, 'update'])
+      .as('variants.update')
+    router
+      .delete('/products/:productId/variants/:id', [controllers.seller.Variants, 'destroy'])
+      .as('variants.destroy')
+    router
+      .post('/products/:productId/images', [controllers.seller.Images, 'store'])
+      .as('images.store')
+    router
+      .delete('/products/:productId/images/:id', [controllers.seller.Images, 'destroy'])
+      .as('images.destroy')
+    router.get('/collections', [controllers.seller.Collections, 'index']).as('collections.index')
+    router.post('/collections', [controllers.seller.Collections, 'store']).as('collections.store')
+    router
+      .patch('/collections/:id', [controllers.seller.Collections, 'update'])
+      .as('collections.update')
+    router
+      .delete('/collections/:id', [controllers.seller.Collections, 'destroy'])
+      .as('collections.destroy')
+    router.get('/orders', [controllers.seller.Orders, 'index']).as('orders.index')
+    router.get('/orders/:id', [controllers.seller.Orders, 'show']).as('orders.show')
+    router.patch('/orders/:id', [controllers.seller.Orders, 'update']).as('orders.update')
+    router.get('/users', [controllers.seller.Users, 'index']).as('users.index')
+    router.post('/users', [controllers.seller.Users, 'store']).as('users.store')
+    router.patch('/users/:id', [controllers.seller.Users, 'update']).as('users.update')
+    router.delete('/users/:id', [controllers.seller.Users, 'destroy']).as('users.destroy')
+  })
+  .prefix('/seller')
+  .as('seller')
+  .use([middleware.auth(), middleware.seller()])

@@ -5,9 +5,9 @@ import CollectionGrid from '~/components/collection/Grid.vue'
 import ProductSlider from '~/components/product/Slider.vue'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{
-  bestsellingProducts: Data.Product[]
-  newestProducts: Data.Product[]
-  collections: Data.Collection[]
+  bestsellingProducts: Data.Catalog.Product[]
+  newestProducts: Data.Catalog.Product[]
+  collections: Data.Catalog.Collection[]
 }>()
 </script>
 <template>

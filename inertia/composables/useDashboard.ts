@@ -12,7 +12,9 @@ const _useDashboard = () => {
   defineShortcuts({
     'g-h': () => router.visit({ route: 'dashboard' }),
     'g-i': () => router.visit({ route: 'inbox' }),
-    'g-c': () => router.visit({ route: 'customers' }),
+    'g-u': () => {
+      if (page.props.user?.role === 'seller') router.visit({ route: 'seller.users.index' })
+    },
     'g-s': () => router.visit({ route: 'settings' }),
     'n': () => (isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value),
   })

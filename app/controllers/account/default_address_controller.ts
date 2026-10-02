@@ -1,5 +1,5 @@
 import { inject } from '@adonisjs/core'
-import CustomerAddressService from '#services/customer_address_service'
+import CustomerAddressService from '#services/account/customer_address_service'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

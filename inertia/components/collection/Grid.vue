@@ -2,7 +2,7 @@
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { useRouter } from '@adonisjs/inertia/vue'
-const props = defineProps<{ collections: Data.Collection[]; first?: number }>()
+const props = defineProps<{ collections: Data.Catalog.Collection[]; first?: number }>()
 const collections = computed(() => props.collections.slice(0, props.first ?? 50))
 const router = useRouter()
 

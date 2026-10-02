@@ -1,5 +1,5 @@
-import Order from '#models/order'
-import OrderTransformer from '#transformers/order_transformer'
+import Order from '#models/checkout/order'
+import OrderTransformer from '#transformers/checkout/order_transformer'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class OrdersController {

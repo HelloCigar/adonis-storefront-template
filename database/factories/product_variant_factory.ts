@@ -1,5 +1,5 @@
 import factory from '@adonisjs/lucid/factories'
-import ProductVariant from '#models/product_variant'
+import ProductVariant from '#models/catalog/product_variant'
 import { ProductFactory } from './product_factory.js'
 
 export const ProductVariantFactory = factory

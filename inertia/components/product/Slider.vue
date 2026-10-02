@@ -3,7 +3,7 @@ import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import ProductCard from '~/components/product/Card.vue'
 const props = defineProps<{
-  products: Data.Product[]
+  products: Data.Catalog.Product[]
   first?: number
   loading?: 'eager' | 'lazy'
 }>()

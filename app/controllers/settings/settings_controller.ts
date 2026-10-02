@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import ProfileService from '#services/profile_service'
-import { updateProfileValidator } from '#validators/user'
+import ProfileService from '#services/settings/profile_service'
+import { updateProfileValidator } from '#validators/settings/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

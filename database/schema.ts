@@ -370,7 +370,7 @@ export class ProductSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'updatedAt'] as const
+  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column()
   declare acceptsMarketing: boolean
@@ -394,6 +394,8 @@ export class UserSchema extends BaseModel {
   declare password: string
   @column()
   declare phoneNumber: string | null
+  @column()
+  declare role: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

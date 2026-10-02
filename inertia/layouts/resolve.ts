@@ -2,7 +2,7 @@ import DashboardLayout from './admin.vue'
 import SettingsLayout from './settings.vue'
 import StorefrontLayout from './default.vue'
 
-const dashboardPages = new Set(['inbox', 'customers'])
+const dashboardPages = new Set(['inbox'])
 
 export function resolveLayout(name: string) {
   if (
@@ -16,7 +16,7 @@ export function resolveLayout(name: string) {
     return [DashboardLayout, SettingsLayout]
   }
 
-  if (dashboardPages.has(name)) {
+  if (dashboardPages.has(name) || name.startsWith('seller/')) {
     return DashboardLayout
   }
 }

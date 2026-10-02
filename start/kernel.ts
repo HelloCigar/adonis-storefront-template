@@ -14,11 +14,11 @@ import server from '@adonisjs/core/services/server'
 server.errorHandler(() => import('#exceptions/handler'))
 
 server.use([
-  () => import('#middleware/container_bindings_middleware'),
+  () => import('#middleware/http/container_bindings_middleware'),
   () => import('@adonisjs/static/static_middleware'),
   () => import('@adonisjs/cors/cors_middleware'),
   () => import('@adonisjs/vite/vite_middleware'),
-  () => import('#middleware/inertia_middleware'),
+  () => import('#middleware/http/inertia_middleware'),
 ])
 
 router.use([
@@ -26,10 +26,11 @@ router.use([
   () => import('@adonisjs/session/session_middleware'),
   () => import('@adonisjs/shield/shield_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
-  () => import('#middleware/silent_auth_middleware'),
+  () => import('#middleware/auth/silent_auth_middleware'),
 ])
 
 export const middleware = router.named({
-  guest: () => import('#middleware/guest_middleware'),
-  auth: () => import('#middleware/auth_middleware'),
+  guest: () => import('#middleware/auth/guest_middleware'),
+  auth: () => import('#middleware/auth/auth_middleware'),
+  seller: () => import('#middleware/seller/seller_middleware'),
 })

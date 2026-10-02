@@ -4,7 +4,7 @@ import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ policy: Data.Content }>()
+const props = defineProps<{ policy: Data.Content.Content }>()
 const handle = computed(() => props.policy.handle)
 </script>
 <template>

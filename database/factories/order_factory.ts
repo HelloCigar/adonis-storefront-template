@@ -1,5 +1,5 @@
 import factory from '@adonisjs/lucid/factories'
-import Order from '#models/order'
+import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
 import { OrderAddressFactory } from './order_address_factory.js'
 import { OrderLineItemFactory } from './order_line_item_factory.js'

@@ -3,98 +3,132 @@ import { computed, ref } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
+import { usePage } from '@inertiajs/vue3'
+import FlashToasts from '~/components/flash_toasts.vue'
 
 const toast = useToast()
 
 const open = ref(false)
 
-const links = [
-  [
-    {
-      label: 'Home',
-      icon: 'i-lucide-house',
-      to: urlFor('dashboard'),
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Inbox',
-      icon: 'i-lucide-inbox',
-      to: urlFor('inbox'),
-      badge: '4',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Customers',
-      icon: 'i-lucide-users',
-      to: urlFor('customers'),
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Settings',
-      to: urlFor('settings'),
-      icon: 'i-lucide-settings',
-      defaultOpen: true,
-      type: 'trigger',
-      children: [
+const page = usePage()
+const links = computed(
+  () =>
+    [
+      [
         {
-          label: 'General',
+          label: 'Home',
+          icon: 'i-lucide-house',
+          to: urlFor('dashboard'),
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: 'Inbox',
+          icon: 'i-lucide-inbox',
+          to: urlFor('inbox'),
+          badge: '4',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        ...(page.props.user?.role === 'seller'
+          ? [
+              {
+                label: 'Products',
+                icon: 'i-lucide-package',
+                to: urlFor('seller.products.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+              {
+                label: 'Collections',
+                icon: 'i-lucide-folders',
+                to: urlFor('seller.collections.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+              {
+                label: 'Orders',
+                icon: 'i-lucide-shopping-bag',
+                to: urlFor('seller.orders.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+              {
+                label: 'Users',
+                icon: 'i-lucide-users',
+                to: urlFor('seller.users.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+            ]
+          : []),
+        {
+          label: 'Settings',
           to: urlFor('settings'),
-          exact: true,
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Members',
-          to: urlFor('settings.members'),
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Notifications',
-          to: urlFor('settings.notifications'),
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Security',
-          to: urlFor('settings.security'),
-          onSelect: () => {
-            open.value = false
-          },
+          icon: 'i-lucide-settings',
+          defaultOpen: true,
+          type: 'trigger',
+          children: [
+            {
+              label: 'General',
+              to: urlFor('settings'),
+              exact: true,
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: 'Members',
+              to: urlFor('settings.members'),
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: 'Notifications',
+              to: urlFor('settings.notifications'),
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: 'Security',
+              to: urlFor('settings.security'),
+              onSelect: () => {
+                open.value = false
+              },
+            },
+          ],
         },
       ],
-    },
-  ],
-  [
-    {
-      label: 'Feedback',
-      icon: 'i-lucide-message-circle',
-      to: 'https://github.com/nuxt-ui-templates/dashboard-vue',
-      target: '_blank',
-    },
-    {
-      label: 'Help & Support',
-      icon: 'i-lucide-info',
-      to: 'https://github.com/nuxt/ui',
-      target: '_blank',
-    },
-  ],
-] satisfies NavigationMenuItem[][]
+      [
+        {
+          label: 'Feedback',
+          icon: 'i-lucide-message-circle',
+          to: 'https://github.com/nuxt-ui-templates/dashboard-vue',
+          target: '_blank',
+        },
+        {
+          label: 'Help & Support',
+          icon: 'i-lucide-info',
+          to: 'https://github.com/nuxt/ui',
+          target: '_blank',
+        },
+      ],
+    ] satisfies NavigationMenuItem[][]
+)
 
 const groups = computed(() => [
   {
     id: 'links',
     label: 'Go to',
-    items: links.flat(),
+    items: links.value.flat(),
   },
   {
     id: 'code',
@@ -179,5 +213,6 @@ if (cookie.value !== 'accepted') {
     <slot />
 
     <NotificationsSlideover />
+    <FlashToasts />
   </UDashboardGroup>
 </template>

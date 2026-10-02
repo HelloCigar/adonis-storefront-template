@@ -5,7 +5,7 @@ import type { Variant } from '~/types/store'
 import ProductImage from '~/components/product/Image.vue'
 import ProductMedia from '~/components/product/Media.vue'
 const props = defineProps<{
-  product: Data.Product
+  product: Data.Catalog.Product
   selectedVariant?: Variant
   thumbnails?: boolean
 }>()

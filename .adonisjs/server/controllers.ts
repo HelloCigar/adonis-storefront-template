@@ -16,18 +16,25 @@ export const controllers = {
     NewAccount: () => import('#controllers/auth/new_account_controller'),
     Session: () => import('#controllers/auth/session_controller'),
   },
-  Cart: () => import('#controllers/cart_controller'),
-  Collections: () => import('#controllers/collections_controller'),
   content: {
     Articles: () => import('#controllers/content/articles_controller'),
     Blogs: () => import('#controllers/content/blogs_controller'),
     Pages: () => import('#controllers/content/pages_controller'),
     Policies: () => import('#controllers/content/policies_controller'),
   },
-  Customers: () => import('#controllers/customers_controller'),
-  Dashboard: () => import('#controllers/dashboard_controller'),
-  Inbox: () => import('#controllers/inbox_controller'),
-  Products: () => import('#controllers/products_controller'),
+  dashboard: {
+    Dashboard: () => import('#controllers/dashboard/dashboard_controller'),
+    Inbox: () => import('#controllers/dashboard/inbox_controller'),
+  },
+  seller: {
+    Collections: () => import('#controllers/seller/collections_controller'),
+    Customers: () => import('#controllers/seller/customers_controller'),
+    Images: () => import('#controllers/seller/images_controller'),
+    Orders: () => import('#controllers/seller/orders_controller'),
+    Products: () => import('#controllers/seller/products_controller'),
+    Users: () => import('#controllers/seller/users_controller'),
+    Variants: () => import('#controllers/seller/variants_controller'),
+  },
   settings: {
     Avatar: () => import('#controllers/settings/avatar_controller'),
     Members: () => import('#controllers/settings/members_controller'),
@@ -35,5 +42,10 @@ export const controllers = {
     Security: () => import('#controllers/settings/security_controller'),
     Settings: () => import('#controllers/settings/settings_controller'),
   },
-  Storefront: () => import('#controllers/storefront_controller'),
+  storefront: {
+    Cart: () => import('#controllers/storefront/cart_controller'),
+    Collections: () => import('#controllers/storefront/collections_controller'),
+    Products: () => import('#controllers/storefront/products_controller'),
+    Storefront: () => import('#controllers/storefront/storefront_controller'),
+  },
 }

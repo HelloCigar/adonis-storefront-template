@@ -1,7 +1,7 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 import app from '@adonisjs/core/services/app'
 import { attachmentManager } from '@jrmc/adonis-attachment'
-import User from '#models/user'
+import User from '#models/account/user'
 import { relative, resolve, sep } from 'node:path'
 
 export async function backfillUserAvatars(storageRoot = app.makePath('storage')) {

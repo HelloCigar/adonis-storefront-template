@@ -1,10 +1,10 @@
 import { inject } from '@adonisjs/core'
-import AccountService from '#services/account_service'
-import CatalogueService from '#services/catalogue_service'
-import OrderTransformer from '#transformers/order_transformer'
-import ProductTransformer from '#transformers/product_transformer'
-import UserTransformer from '#transformers/user_transformer'
-import type User from '#models/user'
+import AccountService from '#services/account/account_service'
+import CatalogueService from '#services/catalog/catalogue_service'
+import OrderTransformer from '#transformers/checkout/order_transformer'
+import ProductTransformer from '#transformers/catalog/product_transformer'
+import UserTransformer from '#transformers/account/user_transformer'
+import type User from '#models/account/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

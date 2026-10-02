@@ -4,7 +4,7 @@ import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ blog: Data.Content; articleData: Data.Content }>()
+const props = defineProps<{ blog: Data.Content.Content; articleData: Data.Content.Content }>()
 const handle = computed(() => props.blog.handle)
 const article = computed(() => props.articleData.handle)
 </script>

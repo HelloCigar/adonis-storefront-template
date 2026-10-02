@@ -7,7 +7,7 @@ import { useLocalization } from '~/composables/localization'
 import type { BadgeProps } from '@nuxt/ui'
 
 const props = defineProps<{
-  order: Data.Order
+  order: Data.Checkout.Order
 }>()
 
 const { locale } = useLocalization()

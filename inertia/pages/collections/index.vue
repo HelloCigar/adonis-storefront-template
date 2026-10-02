@@ -3,7 +3,7 @@ import type { Data } from '@generated/data'
 import { t } from '~/utils/store'
 import CollectionGrid from '~/components/collection/Grid.vue'
 import { Head } from '@inertiajs/vue3'
-defineProps<{ collections: Data.Collection[] }>()
+defineProps<{ collections: Data.Catalog.Collection[] }>()
 </script>
 <template>
   <Head :title="t('collection.all')" />

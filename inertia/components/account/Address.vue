@@ -5,7 +5,7 @@ import { t } from '~/utils/store'
 import { useAccount } from '~/composables/account'
 import AccountAddressForm from '~/components/account/AddressForm.vue'
 const props = defineProps<{
-  address: Data.CustomerAddress
+  address: Data.Account.CustomerAddress
   isDefault?: boolean
 }>()
 

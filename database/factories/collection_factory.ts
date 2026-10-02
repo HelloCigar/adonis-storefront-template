@@ -1,5 +1,5 @@
 import factory from '@adonisjs/lucid/factories'
-import Collection from '#models/collection'
+import Collection from '#models/catalog/collection'
 import { DateTime } from 'luxon'
 import { ProductFactory } from './product_factory.js'
 import { createFixtureImage } from '../fixtures/image.js'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
 import ProductImage from '~/components/product/Image.vue'
-defineProps<{ media: Data.Media; title?: string; loading?: 'eager' | 'lazy' }>()
+defineProps<{ media: Data.Shared.Media; title?: string; loading?: 'eager' | 'lazy' }>()
 </script>
 <template>
   <video

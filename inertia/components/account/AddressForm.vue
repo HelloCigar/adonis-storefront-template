@@ -10,7 +10,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import * as z from 'zod'
 
 const props = defineProps<{
-  address?: Data.CustomerAddress
+  address?: Data.Account.CustomerAddress
   isDefault?: boolean
 }>()
 

@@ -6,16 +6,16 @@ export const discountPercentage = (price?: Money | null, compareAtPrice?: Money 
   isDiscounted(price, compareAtPrice)
     ? Math.round((1 - Number(price!.amount) / Number(compareAtPrice!.amount)) * 100)
     : 0
-export const hasPriceRange = (product: Data.Product) =>
+export const hasPriceRange = (product: Data.Catalog.Product) =>
   !!product.priceRange &&
   product.priceRange.minVariantPrice.amount !== product.priceRange.maxVariantPrice.amount
-export const displayPrice = (product: Data.Product, variant?: Variant) =>
+export const displayPrice = (product: Data.Catalog.Product, variant?: Variant) =>
   !hasPriceRange(product) && variant ? variant.price : product.priceRange?.minVariantPrice
-export const displayCompareAtPrice = (product: Data.Product, variant?: Variant) =>
+export const displayCompareAtPrice = (product: Data.Catalog.Product, variant?: Variant) =>
   !hasPriceRange(product) && variant
     ? variant.compareAtPrice
     : product.compareAtPriceRange?.minVariantPrice
-export const isSoldOut = (product: Data.Product) => !product.availableForSale
+export const isSoldOut = (product: Data.Catalog.Product) => !product.availableForSale
 export const isLowStock = (variant?: Variant) =>
   !!variant?.availableForSale &&
   variant.quantityAvailable !== null &&

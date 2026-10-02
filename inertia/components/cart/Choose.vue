@@ -6,7 +6,7 @@ import type { Variant } from '~/types/store'
 import ProductConfigurator from '~/components/product/Configurator.vue'
 import ProductGallery from '~/components/product/Gallery.vue'
 const props = defineProps<{
-  product: Data.Product
+  product: Data.Catalog.Product
 }>()
 
 const selectedVariant = ref<Variant | undefined>(

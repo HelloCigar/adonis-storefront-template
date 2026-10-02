@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import ContentService from '#services/content_service'
-import ContentTransformer from '#transformers/content_transformer'
+import ContentService from '#services/content/content_service'
+import ContentTransformer from '#transformers/content/content_transformer'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

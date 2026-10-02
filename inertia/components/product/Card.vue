@@ -15,8 +15,8 @@ import CartChoose from '~/components/cart/Choose.vue'
 import ProductImage from '~/components/product/Image.vue'
 import ProductPrice from '~/components/product/Price.vue'
 const props = defineProps<{
-  product: Data.Product
-  recommendations: Data.Product[]
+  product: Data.Catalog.Product
+  recommendations: Data.Catalog.Product[]
   carousel?: boolean
   loading?: 'eager' | 'lazy'
 }>()

@@ -1,6 +1,6 @@
 import factory from '@adonisjs/lucid/factories'
-import CartLine from '#models/cart_line'
-import ProductVariant from '#models/product_variant'
+import CartLine from '#models/checkout/cart_line'
+import ProductVariant from '#models/catalog/product_variant'
 import { CartFactory } from './cart_factory.js'
 import { ProductVariantFactory } from './product_variant_factory.js'
 

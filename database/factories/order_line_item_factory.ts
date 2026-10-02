@@ -1,6 +1,6 @@
 import factory from '@adonisjs/lucid/factories'
-import OrderLineItem from '#models/order_line_item'
-import ProductVariant from '#models/product_variant'
+import OrderLineItem from '#models/checkout/order_line_item'
+import ProductVariant from '#models/catalog/product_variant'
 import { OrderFactory } from './order_factory.js'
 
 export const OrderLineItemFactory = factory

@@ -9,7 +9,7 @@ import ProductPrice from '~/components/product/Price.vue'
 import { z } from 'zod'
 
 const props = defineProps<{
-  line: Data.CartLine
+  line: Data.Checkout.CartLine
 }>()
 
 const { update, remove, loading } = useCart()

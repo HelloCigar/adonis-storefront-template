@@ -7,7 +7,7 @@ import type { Money } from '~/types/store'
 import { useLocalization } from '~/composables/localization'
 import type { BadgeProps } from '@nuxt/ui'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ order: Data.Order }>()
+const props = defineProps<{ order: Data.Checkout.Order }>()
 const { locale } = useLocalization()
 const items = computed(() => props.order.lineItems ?? [])
 const date = computed(() =>

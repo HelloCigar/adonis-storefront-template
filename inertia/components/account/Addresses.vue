@@ -5,7 +5,7 @@ import { t } from '~/utils/store'
 import AccountAddress from '~/components/account/Address.vue'
 import AccountAddressForm from '~/components/account/AddressForm.vue'
 const props = defineProps<{
-  addresses: Data.CustomerAddress[]
+  addresses: Data.Account.CustomerAddress[]
   defaultAddressId?: number
 }>()
 

@@ -2,7 +2,7 @@
 import type { Data } from '@generated/data'
 import { computed, ref } from 'vue'
 const props = defineProps<{
-  image?: Partial<Pick<Data.Media, 'url' | 'altText' | 'width' | 'height'>>
+  image?: Partial<Pick<Data.Shared.Media, 'url' | 'altText' | 'width' | 'height'>>
   title?: string
   loading?: 'eager' | 'lazy'
 }>()

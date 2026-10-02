@@ -10,7 +10,10 @@ import ProductCard from '~/components/product/Card.vue'
 import ProductConfigurator from '~/components/product/Configurator.vue'
 import ProductGallery from '~/components/product/Gallery.vue'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ product: Data.Product; recommendations: Data.Product[] }>()
+const props = defineProps<{
+  product: Data.Catalog.Product
+  recommendations: Data.Catalog.Product[]
+}>()
 const page = usePage()
 const handle = computed(() => props.product.handle)
 const selectedVariant = ref<Variant>()

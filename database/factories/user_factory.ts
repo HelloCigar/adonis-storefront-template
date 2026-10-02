@@ -1,5 +1,5 @@
 import factory from '@adonisjs/lucid/factories'
-import User from '#models/user'
+import User from '#models/account/user'
 import { CustomerAddressFactory } from './customer_address_factory.js'
 import { CartFactory } from './cart_factory.js'
 import { OrderFactory } from './order_factory.js'

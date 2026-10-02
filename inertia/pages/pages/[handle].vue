@@ -3,7 +3,7 @@ import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ page: Data.Content }>()
+const props = defineProps<{ page: Data.Content.Content }>()
 const handle = computed(() => props.page.handle)
 </script>
 <template>

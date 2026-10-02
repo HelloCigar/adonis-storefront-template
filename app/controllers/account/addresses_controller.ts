@@ -1,6 +1,6 @@
 import { inject } from '@adonisjs/core'
-import CustomerAddressService from '#services/customer_address_service'
-import { addressValidator } from '#validators/storefront'
+import CustomerAddressService from '#services/account/customer_address_service'
+import { addressValidator } from '#validators/account/address'
 import type { HttpContext } from '@adonisjs/core/http'
 
 @inject()

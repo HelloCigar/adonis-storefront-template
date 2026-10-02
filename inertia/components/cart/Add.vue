@@ -7,7 +7,7 @@ import { useCart } from '~/composables/cart'
 const { add } = useCart()
 
 const props = defineProps<{
-  product: Data.Product
+  product: Data.Catalog.Product
 }>()
 
 const soldOut = computed(() => isSoldOut(props.product))

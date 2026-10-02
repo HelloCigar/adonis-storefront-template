@@ -8,7 +8,7 @@ import { useCart } from '~/composables/cart'
 import ProductPrice from '~/components/product/Price.vue'
 import ProductOptionGroup from '~/components/product/option/Group.vue'
 import type { FormSubmitEvent } from '@nuxt/ui'
-const props = defineProps<{ product?: Data.Product }>()
+const props = defineProps<{ product?: Data.Catalog.Product }>()
 const selectedVariant = defineModel<Variant>()
 const emit = defineEmits<{ submit: [FormSubmitEvent<typeof state>] }>()
 const { add } = useCart()

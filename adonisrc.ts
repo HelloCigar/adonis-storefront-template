@@ -132,7 +132,11 @@ export default defineConfig({
   hooks: {
     init: [
       indexEntities({
-        transformers: { enabled: true, withSharedProps: true },
+        transformers: {
+          enabled: true,
+          withSharedProps: true,
+          inertiaMiddlewareImportPath: '#middleware/http/inertia_middleware',
+        },
       }),
       indexPages({ framework: 'vue3' }),
       generateRegistry(),

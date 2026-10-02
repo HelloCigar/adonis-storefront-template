@@ -1,7 +1,7 @@
-import Product from '#models/product'
-import ProductVariant from '#models/product_variant'
-import Collection from '#models/collection'
-import User from '#models/user'
+import Product from '#models/catalog/product'
+import ProductVariant from '#models/catalog/product_variant'
+import Collection from '#models/catalog/collection'
+import User from '#models/account/user'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
@@ -60,7 +60,7 @@ test.group('Reference port', (group) => {
     await page.getByRole('heading', { name: 'Bestselling products' }).waitFor()
     await page.getByRole('link', { name: 'Collections', exact: true }).first().click()
     await page.assertPath('/collections')
-    await page.getByRole('link', { name: 'Lighting' }).locator('span').click()
+    await page.getByText('Lighting', { exact: true }).click()
     await page.assertPath('/collection/lighting')
     await page.getByRole('link', { name: 'Desk Lamp' }).last().click()
     await page.assertPath('/product/desk-lamp')

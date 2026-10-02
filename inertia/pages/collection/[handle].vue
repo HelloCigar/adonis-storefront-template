@@ -6,7 +6,7 @@ import { computed } from 'vue'
 import { t } from '~/utils/store'
 import CollectionProducts from '~/components/collection/Products.vue'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ collection: Data.Collection; catalogue: CollectionCatalogue }>()
+const props = defineProps<{ collection: Data.Catalog.Collection; catalogue: CollectionCatalogue }>()
 const handle = computed(() => props.collection.handle)
 </script>
 <template>

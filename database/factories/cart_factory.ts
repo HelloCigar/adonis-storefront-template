@@ -1,5 +1,5 @@
 import factory from '@adonisjs/lucid/factories'
-import Cart from '#models/cart'
+import Cart from '#models/checkout/cart'
 import { DateTime } from 'luxon'
 import { CartLineFactory } from './cart_line_factory.js'
 

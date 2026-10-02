@@ -69,4 +69,39 @@ export interface ApiDefinition {
       update: typeof routes['settings.password.update']
     }
   }
+  seller: {
+    products: {
+      index: typeof routes['seller.products.index']
+      store: typeof routes['seller.products.store']
+      update: typeof routes['seller.products.update']
+      destroy: typeof routes['seller.products.destroy']
+    }
+    variants: {
+      index: typeof routes['seller.variants.index']
+      store: typeof routes['seller.variants.store']
+      update: typeof routes['seller.variants.update']
+      destroy: typeof routes['seller.variants.destroy']
+    }
+    images: {
+      store: typeof routes['seller.images.store']
+      destroy: typeof routes['seller.images.destroy']
+    }
+    collections: {
+      index: typeof routes['seller.collections.index']
+      store: typeof routes['seller.collections.store']
+      update: typeof routes['seller.collections.update']
+      destroy: typeof routes['seller.collections.destroy']
+    }
+    orders: {
+      index: typeof routes['seller.orders.index']
+      show: typeof routes['seller.orders.show']
+      update: typeof routes['seller.orders.update']
+    }
+    users: {
+      index: typeof routes['seller.users.index']
+      store: typeof routes['seller.users.store']
+      update: typeof routes['seller.users.update']
+      destroy: typeof routes['seller.users.destroy']
+    }
+  }
 }

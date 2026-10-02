@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { sub } from 'date-fns'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useDashboard } from '../composables/useDashboard'
@@ -9,20 +10,28 @@ import Default from '~/layouts/admin.vue'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 
-const items = [
-  [
-    {
-      label: 'New mail',
-      icon: 'i-lucide-send',
-      to: urlFor('inbox'),
-    },
-    {
-      label: 'New customer',
-      icon: 'i-lucide-user-plus',
-      to: urlFor('customers'),
-    },
-  ],
-] satisfies DropdownMenuItem[][]
+const page = usePage()
+const items = computed(
+  () =>
+    [
+      [
+        {
+          label: 'New mail',
+          icon: 'i-lucide-send',
+          to: urlFor('inbox'),
+        },
+        ...(page.props.user?.role === 'seller'
+          ? [
+              {
+                label: 'Manage users',
+                icon: 'i-lucide-user-plus',
+                to: urlFor('seller.users.index'),
+              },
+            ]
+          : []),
+      ],
+    ] satisfies DropdownMenuItem[][]
+)
 
 const range = shallowRef<Range>({
   start: sub(new Date(), { days: 14 }),

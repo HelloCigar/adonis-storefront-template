@@ -5,7 +5,7 @@ import type { Data } from '@generated/data'
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 export const useMenu = (name: 'main-menu' | 'footer') => {
-  const page = usePage<{ policies?: Data.Content[] }>()
+  const page = usePage<{ policies?: Data.Content.Content[] }>()
   return {
     data: computed<NavigationMenuItem[]>(() =>
       name === 'main-menu'
