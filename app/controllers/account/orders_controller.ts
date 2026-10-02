@@ -3,7 +3,8 @@ import OrderTransformer from '#transformers/checkout/order_transformer'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class OrdersController {
-  async index({ auth, inertia }: HttpContext) {
+  async index({ auth, inertia, bouncer }: HttpContext) {
+    await bouncer.with('AccountOrderPolicy').authorize('viewAny', auth.getUserOrFail())
     return inertia.render('account/orders/index', {
       orders: async () =>
         OrderTransformer.transform(
@@ -16,13 +17,14 @@ export default class OrdersController {
     })
   }
 
-  async show({ auth, params, inertia }: HttpContext) {
+  async show({ auth, params, inertia, bouncer }: HttpContext) {
     const order = await Order.query()
       .where('id', params.id)
       .where('user_id', auth.user!.id)
       .preload('lineItems')
       .preload('addresses')
       .firstOrFail()
+    await bouncer.with('AccountOrderPolicy').authorize('view', order)
 
     return inertia.render('account/orders/[id]', {
       order: OrderTransformer.transform(order),

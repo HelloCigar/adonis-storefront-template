@@ -13,7 +13,7 @@ const _useDashboard = () => {
     'g-h': () => router.visit({ route: 'dashboard' }, { viewTransition: true }),
     'g-i': () => router.visit({ route: 'inbox' }, { viewTransition: true }),
     'g-u': () => {
-      if (page.props.user?.role === 'seller')
+      if (page.props.permissions.manageUsers)
         router.visit({ route: 'seller.users.index' }, { viewTransition: true })
     },
     'g-s': () => router.visit({ route: 'settings' }, { viewTransition: true }),

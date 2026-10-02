@@ -32,6 +32,14 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
     return {
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
+      permissions: async () => ({
+        manageSeller: ctx.bouncer
+          ? await ctx.bouncer.with('SellerAccessPolicy').allows('access')
+          : false,
+        manageUsers: ctx.bouncer
+          ? await ctx.bouncer.with('SellerUserPolicy').allows('viewAny')
+          : false,
+      }),
       policies: ContentTransformer.transform(this.contentService.policies()),
       cart: async () => {
         const cart = await this.cartService.load(ctx.session?.get('store_cart_token'))

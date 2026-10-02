@@ -1,8 +1,19 @@
 import { BaseTransformer } from '@adonisjs/core/transformers'
 import type User from '#models/account/user'
+import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 
 export default class SellerUserTransformer extends BaseTransformer<User> {
-  toObject() {
-    return this.pick(this.resource, ['id', 'fullName', 'email', 'role', 'createdAt'])
+  @inject()
+  async toObject({ bouncer, auth }: HttpContext) {
+    return {
+      ...this.pick(this.resource, ['id', 'fullName', 'email', 'role', 'createdAt']),
+      can: {
+        edit: await bouncer.with('SellerUserPolicy').allows('update', this.resource),
+        delete:
+          auth.user?.id !== this.resource.id &&
+          (await bouncer.with('SellerUserPolicy').allows('delete', this.resource)),
+      },
+    }
   }
 }

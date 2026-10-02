@@ -2,6 +2,7 @@ import { indexPages } from '@adonisjs/inertia'
 import { indexEntities } from '@adonisjs/core'
 import { defineConfig } from '@adonisjs/core/app'
 import { generateRegistry } from '@tuyau/core/hooks'
+import { indexPolicies } from '@adonisjs/bouncer'
 
 export default defineConfig({
   /*
@@ -31,7 +32,7 @@ export default defineConfig({
     () => import('@adonisjs/session/commands'),
     () => import('@adonisjs/inertia/commands'),
     () => import('@jrmc/adonis-attachment/commands'),
-    () => import('@shamar/adonis/commands')
+    () => import('@adonisjs/bouncer/commands')
   ],
 
   /*
@@ -62,7 +63,7 @@ export default defineConfig({
     () => import('@adonisjs/auth/auth_provider'),
     () => import('#providers/api_provider'),
     () => import('@jrmc/adonis-attachment/attachment_provider'),
-    () => import('@shamar/adonis/provider')
+    () => import('@adonisjs/bouncer/bouncer_provider')
   ],
 
   /*
@@ -140,6 +141,7 @@ export default defineConfig({
       }),
       indexPages({ framework: 'vue3' }),
       generateRegistry(),
+      indexPolicies()
     ],
     buildStarting: [() => import('@adonisjs/vite/build_hook')],
   },

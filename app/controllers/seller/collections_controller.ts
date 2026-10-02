@@ -11,33 +11,50 @@ import { collectionCreateValidator, collectionUpdateValidator } from '#validator
 export default class CollectionsController {
   constructor(private catalogue: SellerCatalogueService) {}
 
-  async index({ inertia }: HttpContext) {
+  async index({ inertia, bouncer, auth }: HttpContext) {
+    await bouncer.with('SellerCollectionPolicy').authorize('viewAny')
     return inertia.render('seller/collections', {
       collections: SellerCollectionTransformer.transform(
-        await Collection.query().preload('products').orderBy('id', 'desc')
+        await Collection.query()
+          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
+          .preload('products', (query) =>
+            query.withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
+          )
+          .orderBy('id', 'desc')
       ),
-      products: SellerProductTransformer.transform(await Product.query().orderBy('title')),
+      products: SellerProductTransformer.transform(
+        await Product.query()
+          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
+          .orderBy('title')
+      ),
     })
   }
-  async store({ request, response, session }: HttpContext) {
-    await this.catalogue.saveCollection(
-      new Collection(),
-      await request.validateUsing(collectionCreateValidator)
-    )
+  async store({ request, response, session, bouncer, auth }: HttpContext) {
+    await bouncer.with('SellerCollectionPolicy').authorize('create')
+    const payload = await request.validateUsing(collectionCreateValidator)
+    const collection = new Collection()
+    collection.sellerId = auth.getUserOrFail().id
+    const products = await Product.query().whereIn('id', payload.productIds)
+    await bouncer.with('SellerCollectionPolicy').authorize('attachProducts', collection, products)
+    await this.catalogue.saveCollection(collection, payload)
     session.flash('success', 'Collection created')
     return response.redirect().toRoute('seller.collections.index')
   }
-  async update({ params, request, response, session }: HttpContext) {
+  async update({ params, request, response, session, bouncer }: HttpContext) {
     const collection = await Collection.findOrFail(params.id)
-    await this.catalogue.saveCollection(
-      collection,
-      await request.validateUsing(collectionUpdateValidator, { meta: { id: collection.id } })
-    )
+    await bouncer.with('SellerCollectionPolicy').authorize('update', collection)
+    const payload = await request.validateUsing(collectionUpdateValidator, {
+      meta: { id: collection.id },
+    })
+    const products = await Product.query().whereIn('id', payload.productIds)
+    await bouncer.with('SellerCollectionPolicy').authorize('attachProducts', collection, products)
+    await this.catalogue.saveCollection(collection, payload)
     session.flash('success', 'Collection updated')
     return response.redirect().toRoute('seller.collections.index')
   }
-  async destroy({ params, response, session }: HttpContext) {
+  async destroy({ params, response, session, bouncer }: HttpContext) {
     const collection = await Collection.findOrFail(params.id)
+    await bouncer.with('SellerCollectionPolicy').authorize('delete', collection)
     await collection.delete()
     session.flash('success', 'Collection deleted')
     return response.redirect().toRoute('seller.collections.index')

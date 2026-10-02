@@ -125,7 +125,7 @@ test.group('Seller pages', (group) => {
       fullName: 'Owner',
       email: 'owner@example.com',
       password: 'secret-password',
-      role: 'seller',
+      role: 'admin',
     })
     await User.createMany(
       Array.from({ length: 12 }, (_, index) => ({
@@ -181,6 +181,7 @@ test.group('Seller pages', (group) => {
       processedAt: DateTime.utc(),
     })
     await order.related('lineItems').create({
+      sellerId: seller.id,
       title: 'Bunny Lamp',
       quantity: 1,
       unitPriceAmount: 499,
@@ -216,5 +217,56 @@ test.group('Seller pages', (group) => {
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
     await page.screenshot({ path: 'tmp/seller-order-mobile.png', fullPage: true })
+  })
+
+  test('admins see seller navigation and can create admin accounts', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const admin = await User.create({
+      fullName: 'Administrator',
+      email: 'admin@example.com',
+      password: 'secret-password',
+      role: 'admin',
+    })
+    await browserContext.loginAs(admin)
+    const page = await visit('/dashboard')
+    await page.getByRole('link', { name: 'Products', exact: true }).waitFor()
+    await page.getByRole('link', { name: 'Users', exact: true }).click()
+    await page.getByRole('button', { name: 'Add user', exact: true }).click()
+    await page.getByLabel('Full name', { exact: true }).fill('Second Admin')
+    await page.getByLabel('Email', { exact: true }).fill('second-admin@example.com')
+    await page.getByLabel('Password', { exact: true }).fill('secret-password')
+    await page.getByLabel('Role', { exact: true }).click()
+    await page.getByRole('option', { name: 'admin', exact: true }).click()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await page.getByRole('cell', { name: 'Second Admin', exact: true }).waitFor()
+    const secondAdmin = await User.findByOrFail('email', 'second-admin@example.com')
+    assert.equal(secondAdmin.role, 'admin')
+    await page.getByRole('button', { name: /Actions for Administrator/ }).click()
+    await page.getByRole('menuitem', { name: 'Edit user', exact: true }).click()
+    await page.assertDisabled(page.getByLabel('Role', { exact: true }))
+    await page.screenshot({ path: 'tmp/seller-admin-user.png', fullPage: true })
+  })
+
+  test('sellers see catalog navigation but global user management stays hidden', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const owner = await User.create({
+      fullName: 'Seller',
+      email: 'seller@example.com',
+      password: 'secret-password',
+      role: 'seller',
+    })
+    await browserContext.loginAs(owner)
+    const page = await visit('/dashboard')
+    await page.getByRole('link', { name: 'Products', exact: true }).waitFor()
+    assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
+    await page.getByRole('link', { name: 'Products', exact: true }).click()
+    await page.getByRole('button', { name: 'Add product', exact: true }).waitFor()
+    assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
   })
 })

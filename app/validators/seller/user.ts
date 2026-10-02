@@ -1,4 +1,5 @@
 import vine from '@vinejs/vine'
+import { userRoles } from '#models/account/user'
 
 const userFields = {
   fullName: vine.string().trim().minLength(1).maxLength(255),
@@ -12,7 +13,7 @@ const userFields = {
       if (field.meta.id) query.whereNot('id', field.meta.id)
       return !(await query.first())
     }),
-  role: vine.enum(['customer', 'seller']),
+  role: vine.enum(userRoles),
 }
 export const userCreateValidator = vine.create({
   ...userFields,

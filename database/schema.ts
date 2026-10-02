@@ -125,7 +125,7 @@ export class CollectionProductSchema extends BaseModel {
 }
 
 export class CollectionSchema extends BaseModel {
-  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'publishedAt', 'seoDescription', 'seoTitle', 'title', 'updatedAt'] as const
+  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'publishedAt', 'sellerId', 'seoDescription', 'seoTitle', 'title', 'updatedAt'] as const
   $columns = CollectionSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -139,6 +139,8 @@ export class CollectionSchema extends BaseModel {
   declare id: number
   @column.dateTime()
   declare publishedAt: DateTime | null
+  @column()
+  declare sellerId: number | null
   @column()
   declare seoDescription: string | null
   @column()
@@ -218,7 +220,7 @@ export class OrderAddressSchema extends BaseModel {
 }
 
 export class OrderLineItemSchema extends BaseModel {
-  static $columns = ['createdAt', 'currencyCode', 'discountAmount', 'id', 'imageAltText', 'imageUrl', 'options', 'orderId', 'productId', 'productVariantId', 'quantity', 'sku', 'title', 'totalAmount', 'unitPriceAmount', 'updatedAt', 'variantTitle'] as const
+  static $columns = ['createdAt', 'currencyCode', 'discountAmount', 'id', 'imageAltText', 'imageUrl', 'options', 'orderId', 'productId', 'productVariantId', 'quantity', 'sellerId', 'sku', 'title', 'totalAmount', 'unitPriceAmount', 'updatedAt', 'variantTitle'] as const
   $columns = OrderLineItemSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -242,6 +244,8 @@ export class OrderLineItemSchema extends BaseModel {
   declare productVariantId: number | null
   @column()
   declare quantity: number
+  @column()
+  declare sellerId: number | null
   @column()
   declare sku: string | null
   @column()
@@ -335,7 +339,7 @@ export class ProductVariantSchema extends BaseModel {
 }
 
 export class ProductSchema extends BaseModel {
-  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'isGiftCard', 'productType', 'publishedAt', 'seoDescription', 'seoTitle', 'status', 'tags', 'title', 'updatedAt', 'vendor'] as const
+  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'isGiftCard', 'productType', 'publishedAt', 'sellerId', 'seoDescription', 'seoTitle', 'status', 'tags', 'title', 'updatedAt', 'vendor'] as const
   $columns = ProductSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -353,6 +357,8 @@ export class ProductSchema extends BaseModel {
   declare productType: string | null
   @column.dateTime()
   declare publishedAt: DateTime | null
+  @column()
+  declare sellerId: number | null
   @column()
   declare seoDescription: string | null
   @column()

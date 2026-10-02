@@ -1,0 +1,25 @@
+import { BasePolicy } from '@adonisjs/bouncer'
+import type User from '#models/account/user'
+import type Product from '#models/catalog/product'
+
+export default class ProductPolicy extends BasePolicy {
+  before(user: User | null) {
+    if (user?.role === 'admin') return true
+  }
+
+  viewAny(user: User) {
+    return user.role === 'seller'
+  }
+
+  create(user: User) {
+    return user.role === 'seller'
+  }
+
+  update(user: User, product: Product) {
+    return user.role === 'seller' && product.sellerId === user.id
+  }
+
+  delete(user: User, product: Product) {
+    return user.role === 'seller' && product.sellerId === user.id
+  }
+}

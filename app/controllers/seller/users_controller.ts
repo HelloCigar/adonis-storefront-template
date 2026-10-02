@@ -9,29 +9,35 @@ import { userCreateValidator, userUpdateValidator } from '#validators/seller/use
 export default class UsersController {
   constructor(private users: SellerUserService) {}
 
-  async index({ inertia, auth }: HttpContext) {
+  async index({ inertia, auth, bouncer }: HttpContext) {
+    await bouncer.with('SellerUserPolicy').authorize('viewAny')
     return inertia.render('seller/users', {
       users: SellerUserTransformer.transform(await User.query().orderBy('id', 'desc')),
       currentUserId: auth.user!.id,
+      canAssignAdmin: await bouncer.with('SellerUserPolicy').allows('assignRole', 'admin'),
     })
   }
-  async store({ request, response, session }: HttpContext) {
-    await User.create(await request.validateUsing(userCreateValidator))
+  async store({ request, response, session, bouncer }: HttpContext) {
+    await bouncer.with('SellerUserPolicy').authorize('create')
+    const payload = await request.validateUsing(userCreateValidator)
+    await bouncer.with('SellerUserPolicy').authorize('assignRole', payload.role)
+    await User.create(payload)
     session.flash('success', 'User created')
     return response.redirect().toRoute('seller.users.index')
   }
-  async update({ params, auth, request, response, session }: HttpContext) {
+  async update({ params, auth, request, response, session, bouncer }: HttpContext) {
     const user = await User.findOrFail(params.id)
-    await this.users.update(
-      auth.user!,
-      user,
-      await request.validateUsing(userUpdateValidator, { meta: { id: user.id } })
-    )
+    await bouncer.with('SellerUserPolicy').authorize('update', user)
+    const payload = await request.validateUsing(userUpdateValidator, { meta: { id: user.id } })
+    await bouncer.with('SellerUserPolicy').authorize('assignRole', payload.role)
+    await this.users.update(auth.user!, user, payload)
     session.flash('success', 'User updated')
     return response.redirect().toRoute('seller.users.index')
   }
-  async destroy({ params, auth, response, session }: HttpContext) {
-    await this.users.destroy(auth.user!, await User.findOrFail(params.id))
+  async destroy({ params, auth, response, session, bouncer }: HttpContext) {
+    const user = await User.findOrFail(params.id)
+    await bouncer.with('SellerUserPolicy').authorize('delete', user)
+    await this.users.destroy(auth.user!, user)
     session.flash('success', 'User deleted')
     return response.redirect().toRoute('seller.users.index')
   }

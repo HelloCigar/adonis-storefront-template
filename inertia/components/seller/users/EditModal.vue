@@ -3,9 +3,18 @@ import { watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
-const props = defineProps<{ user?: Data.Seller.User; currentUserId: number }>()
+const props = defineProps<{
+  user?: Data.Seller.User
+  currentUserId: number
+  canAssignAdmin: boolean
+}>()
 const open = defineModel<boolean>('open', { required: true })
-const form = useForm({ fullName: '', email: '', role: 'customer', password: '' })
+const form = useForm({
+  fullName: '',
+  email: '',
+  role: 'customer' as Data.Seller.User['role'],
+  password: '',
+})
 watch(
   open,
   (isOpen) => {
@@ -34,7 +43,7 @@ function save() {
   <UModal
     v-model:open="open"
     :title="user ? 'Edit user' : 'Add user'"
-    description="Sellers can manage the catalogue, orders, and user accounts."
+    description="Assign customer, seller, or admin access. Only admins can manage user accounts."
     :dismissible="!form.processing"
     :ui="{ content: 'sm:max-w-xl' }"
   >
@@ -50,12 +59,10 @@ function save() {
           name="role"
           label="Role"
           :error="form.errors.role"
-          :description="
-            user?.id === currentUserId ? 'Your own seller access cannot be removed.' : undefined
-          "
+          :description="user?.id === currentUserId ? 'Your own role cannot be changed.' : undefined"
           ><USelect
             v-model="form.role"
-            :items="['customer', 'seller']"
+            :items="canAssignAdmin ? ['customer', 'seller', 'admin'] : ['customer', 'seller']"
             :disabled="user?.id === currentUserId"
             class="w-full"
         /></UFormField>

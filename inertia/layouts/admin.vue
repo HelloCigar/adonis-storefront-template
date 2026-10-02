@@ -32,7 +32,7 @@ const links = computed(
             open.value = false
           },
         },
-        ...(page.props.user?.role === 'seller'
+        ...(page.props.permissions.manageSeller
           ? [
               {
                 label: 'Products',
@@ -58,6 +58,10 @@ const links = computed(
                   open.value = false
                 },
               },
+            ]
+          : []),
+        ...(page.props.permissions.manageUsers
+          ? [
               {
                 label: 'Users',
                 icon: 'i-lucide-users',

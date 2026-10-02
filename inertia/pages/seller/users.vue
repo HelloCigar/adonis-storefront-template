@@ -5,7 +5,7 @@ import type { Data } from '@generated/data'
 import UsersTable from '~/components/seller/users/Table.vue'
 import EditModal from '~/components/seller/users/EditModal.vue'
 import DeleteModal from '~/components/seller/users/DeleteModal.vue'
-defineProps<{ users: Data.Seller.User[]; currentUserId: number }>()
+defineProps<{ users: Data.Seller.User[]; currentUserId: number; canAssignAdmin: boolean }>()
 const selected = ref<Data.Seller.User>()
 const open = ref(false)
 const deleting = ref(false)
@@ -20,13 +20,12 @@ function requestDelete(user: Data.Seller.User) {
 </script>
 <template>
   <Head title="Users" />
-  <UsersTable
-    :users="users"
+  <UsersTable :users="users" @create="edit()" @edit="edit" @delete="requestDelete" />
+  <EditModal
+    v-model:open="open"
+    :user="selected"
     :current-user-id="currentUserId"
-    @create="edit()"
-    @edit="edit"
-    @delete="requestDelete"
+    :can-assign-admin="canAssignAdmin"
   />
-  <EditModal v-model:open="open" :user="selected" :current-user-id="currentUserId" />
   <DeleteModal v-if="selected" v-model:open="deleting" :user="selected" />
 </template>

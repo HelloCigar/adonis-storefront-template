@@ -9,21 +9,29 @@ import { productCreateValidator, productUpdateValidator } from '#validators/sell
 export default class ProductsController {
   constructor(private catalogue: SellerCatalogueService) {}
 
-  async index({ inertia }: HttpContext) {
+  async index({ inertia, bouncer, auth }: HttpContext) {
+    await bouncer.with('SellerProductPolicy').authorize('viewAny')
     return inertia.render('seller/products', {
       products: SellerProductTransformer.transform(
-        await Product.query().preload('variants').orderBy('id', 'desc')
+        await Product.query()
+          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
+          .preload('variants')
+          .orderBy('id', 'desc')
       ),
     })
   }
-  async store({ request, response, session }: HttpContext) {
+  async store({ request, response, session, bouncer, auth }: HttpContext) {
+    await bouncer.with('SellerProductPolicy').authorize('create')
     const payload = await request.validateUsing(productCreateValidator)
-    const product = await this.catalogue.saveProduct(new Product(), payload)
+    const product = new Product()
+    product.sellerId = auth.getUserOrFail().id
+    await this.catalogue.saveProduct(product, payload)
     session.flash('success', 'Product created. Add a variant to set its price and stock.')
     return response.redirect().toRoute('seller.variants.index', { productId: product.id })
   }
-  async update({ params, request, response, session }: HttpContext) {
+  async update({ params, request, response, session, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.id)
+    await bouncer.with('SellerProductPolicy').authorize('update', product)
     const payload = await request.validateUsing(productUpdateValidator, {
       meta: { id: product.id },
     })
@@ -31,8 +39,9 @@ export default class ProductsController {
     session.flash('success', 'Product updated')
     return response.redirect().toRoute('seller.products.index')
   }
-  async destroy({ params, response, session }: HttpContext) {
+  async destroy({ params, response, session, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.id)
+    await bouncer.with('SellerProductPolicy').authorize('delete', product)
     await product.delete()
     session.flash('success', 'Product deleted')
     return response.redirect().toRoute('seller.products.index')

@@ -11,8 +11,9 @@ export default class SettingsController {
     return inertia.render('settings/index', {})
   }
 
-  async update({ request, auth, response, session }: HttpContext) {
+  async update({ request, auth, response, session, bouncer }: HttpContext) {
     const user = auth.getUserOrFail()
+    await bouncer.with('AccountUserPolicy').authorize('update', user)
     const data = await request.validateUsing(updateProfileValidator, { meta: { userId: user.id } })
     await this.profileService.update(user, data)
     session.flash('success', 'Your profile has been updated.')

@@ -6,7 +6,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class AvatarController {
   constructor(private profileService: ProfileService) {}
 
-  async destroy({ auth, response, session }: HttpContext) {
+  async destroy({ auth, response, session, bouncer }: HttpContext) {
+    await bouncer.with('AccountUserPolicy').authorize('update', auth.getUserOrFail())
     await this.profileService.removeAvatar(auth.getUserOrFail())
     session.flash('success', 'Your avatar has been removed.')
     return response.redirect().toRoute('settings')

@@ -3,7 +3,7 @@ import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
-const props = defineProps<{ users: Data.Seller.User[]; currentUserId: number }>()
+const props = defineProps<{ users: Data.Seller.User[] }>()
 const emit = defineEmits<{
   create: []
   edit: [row: Data.Seller.User]
@@ -11,10 +11,11 @@ const emit = defineEmits<{
 }>()
 const title = 'Users'
 const singular = 'user'
-const description = 'Manage customer accounts and seller access.'
+const description = 'Manage user accounts and customer, seller, or admin access.'
 const filters = [
   { label: 'Customers', value: 'customer' },
   { label: 'Sellers', value: 'seller' },
+  { label: 'Admins', value: 'admin' },
 ]
 const searchText = (row: Data.Seller.User) => `${row.fullName || ''} ${row.email}`
 const status = (row: Data.Seller.User) => row.role
@@ -29,7 +30,7 @@ const resourceColumns: TableColumn<Data.Seller.User>[] = [
     cell: ({ row }) =>
       h(badge, {
         label: row.original.role,
-        color: row.original.role === 'seller' ? 'primary' : 'neutral',
+        color: row.original.role === 'customer' ? 'neutral' : 'primary',
         variant: 'subtle',
         class: 'capitalize',
       }),
@@ -86,8 +87,10 @@ const columns = computed<TableColumn<Data.Seller.User>[]>(() =>
 )
 function rowActions(row: Data.Seller.User): DropdownMenuItem[] {
   return [
-    { label: 'Edit user', icon: 'i-lucide-pencil', onSelect: () => emit('edit', row) },
-    ...(row.id !== props.currentUserId
+    ...(row.can.edit
+      ? [{ label: 'Edit user', icon: 'i-lucide-pencil', onSelect: () => emit('edit', row) }]
+      : []),
+    ...(row.can.delete
       ? [
           {
             label: 'Delete user',

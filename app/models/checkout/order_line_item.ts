@@ -2,10 +2,37 @@ import { OrderLineItemSchema } from '#database/schema'
 import Order from '#models/checkout/order'
 import Product from '#models/catalog/product'
 import ProductVariant from '#models/catalog/product_variant'
-import { belongsTo, column } from '@adonisjs/lucid/orm'
+import User from '#models/account/user'
+import { Exception } from '@adonisjs/core/exceptions'
+import { beforeCreate, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 export default class OrderLineItem extends OrderLineItemSchema {
+  @beforeCreate()
+  static async snapshotSeller(item: OrderLineItem) {
+    let productId = item.productId
+    if (item.productVariantId) {
+      const variant = await ProductVariant.query({ client: item.$trx })
+        .where('id', item.productVariantId)
+        .firstOrFail()
+      if (productId && productId !== variant.productId) {
+        throw new Exception('The order variant must belong to its product', { status: 422 })
+      }
+      productId = variant.productId
+      item.productId = productId
+    }
+    if (productId) {
+      const product = await Product.query({ client: item.$trx })
+        .where('id', productId)
+        .firstOrFail()
+      // Keep the seller snapshot even if the catalog product is later deleted.
+      item.sellerId = product.sellerId
+    }
+  }
+
+  @belongsTo(() => User, { foreignKey: 'sellerId' })
+  declare seller: BelongsTo<typeof User>
+
   @column({
     prepare: (value) => (value === null ? null : JSON.stringify(value)),
     consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),

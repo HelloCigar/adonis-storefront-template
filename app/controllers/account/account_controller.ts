@@ -14,7 +14,8 @@ export default class AccountController {
     private catalogueService: CatalogueService
   ) {}
 
-  show({ auth, inertia }: HttpContext) {
+  async show({ auth, inertia, bouncer }: HttpContext) {
+    await bouncer.with('AccountUserPolicy').authorize('view', auth.getUserOrFail())
     let customerPromise: Promise<User> | undefined
     const loadCustomer = () =>
       (customerPromise ??= this.accountService.loadCustomer(auth.getUserOrFail().id))

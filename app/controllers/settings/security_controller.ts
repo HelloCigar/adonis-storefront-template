@@ -11,7 +11,8 @@ export default class SecurityController {
     return inertia.render('settings/security', {})
   }
 
-  async update({ request, auth, response, session }: HttpContext) {
+  async update({ request, auth, response, session, bouncer }: HttpContext) {
+    await bouncer.with('AccountUserPolicy').authorize('update', auth.getUserOrFail())
     const data = await request.validateUsing(updatePasswordValidator)
     const errors = await this.profileService.updatePassword(auth.getUserOrFail(), data)
     if (errors) {

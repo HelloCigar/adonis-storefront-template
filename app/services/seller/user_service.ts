@@ -5,9 +5,13 @@ import type { userUpdateValidator } from '#validators/seller/user'
 
 export default class SellerUserService {
   async update(actor: User, user: User, payload: Infer<typeof userUpdateValidator>) {
-    if (actor.id === user.id && payload.role !== 'seller') {
+    if (actor.id === user.id && payload.role !== actor.role) {
       throw new errors.E_VALIDATION_ERROR([
-        { field: 'role', rule: 'self', message: 'You cannot remove your own seller access.' },
+        {
+          field: 'role',
+          rule: 'self',
+          message: `You cannot remove your own ${actor.role} access.`,
+        },
       ])
     }
     await user.merge(payload).save()

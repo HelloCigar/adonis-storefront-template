@@ -57,9 +57,10 @@ test.group('Seller management', (group) => {
       '/seller/products/1/variants',
       '/customers',
     ]) {
-      const guest = await client.get(path)
-      guest.assertRedirectsTo('/login')
-      const denied = await client.get(path).loginAs(customer)
+      const guest = await client.get(path).redirects(0)
+      guest.assertStatus(302)
+      guest.assertHeader('location', '/login')
+      const denied = await client.get(path).loginAs(customer).accept('json')
       denied.assertStatus(403)
     }
     for (const [method, path] of [
@@ -157,7 +158,7 @@ test.group('Seller management', (group) => {
     assert,
   }) => {
     const owner = await seller()
-    const product = await Product.create(productPayload)
+    const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const variant = await product
       .related('variants')
       .create({ ...variantPayload, options: null, position: 0 })
@@ -189,7 +190,12 @@ test.group('Seller management', (group) => {
       .accept('json')
       .json({ ...variantPayload, sku: null, currencyCode: 'USD' })
     wrongCurrency.assertStatus(422)
-    const other = await Product.create({ title: 'Other', handle: 'other', status: 'draft' })
+    const other = await Product.create({
+      title: 'Other',
+      handle: 'other',
+      status: 'draft',
+      sellerId: owner.id,
+    })
     const hidden = await client
       .patch(`/seller/products/${other.id}/variants/${variant.id}`)
       .loginAs(owner)
@@ -213,7 +219,7 @@ test.group('Seller management', (group) => {
     assert,
   }) => {
     const owner = await seller()
-    const product = await Product.create(productPayload)
+    const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const payload = {
       title: 'Lighting',
       handle: 'lighting',
@@ -274,6 +280,7 @@ test.group('Seller management', (group) => {
       processedAt: DateTime.utc(),
     })
     const line = await order.related('lineItems').create({
+      sellerId: owner.id,
       title: 'Lamp',
       quantity: 1,
       unitPriceAmount: 250,
@@ -303,11 +310,12 @@ test.group('Seller management', (group) => {
     removed.assertStatus(404)
   })
 
-  test('manages users without exposing passwords or removing the current seller', async ({
+  test('manages users without exposing passwords or removing the current admin', async ({
     client,
     assert,
   }) => {
     const owner = await seller()
+    await owner.merge({ role: 'admin' }).save()
     const payload = {
       fullName: 'Buyer',
       email: 'buyer@example.com',
@@ -373,7 +381,7 @@ test.group('Seller management', (group) => {
     assert,
   }) => {
     const owner = await seller()
-    const product = await Product.create(productPayload)
+    const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const png = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/vXcAAAAASUVORK5CYII=',
       'base64'
@@ -396,7 +404,12 @@ test.group('Seller management', (group) => {
     assert.exists(image)
     const attachments = await app.container.make('jrmc.attachment')
     assert.deepEqual(Buffer.from(await attachments.read(image.toAttachment())), png)
-    const other = await Product.create({ title: 'Other', handle: 'other', status: 'draft' })
+    const other = await Product.create({
+      title: 'Other',
+      handle: 'other',
+      status: 'draft',
+      sellerId: owner.id,
+    })
     const wrongOwner = await client
       .delete(`/seller/products/${other.id}/images/${image.id}`)
       .loginAs(owner)
@@ -409,5 +422,190 @@ test.group('Seller management', (group) => {
     removed.assertRedirectsTo(`/seller/products/${product.id}/variants`)
     assert.lengthOf(await product.media.all(), 0)
     assert.isNull(await AttachmentModel.find(image.attachmentId))
+  })
+
+  test('admin access reaches seller resources and can assign the admin role', async ({
+    client,
+    assert,
+  }) => {
+    const admin = await User.create({
+      fullName: 'Administrator',
+      email: 'admin@example.com',
+      password: 'secret-password',
+      role: 'admin',
+    })
+    const product = await Product.create(productPayload)
+    const order = await Order.create({
+      number: 'MB-ADMIN',
+      currencyCode: 'PHP',
+      email: 'buyer@example.com',
+      financialStatus: 'paid',
+      fulfillmentStatus: 'unfulfilled',
+      totalAmount: 250,
+      processedAt: DateTime.utc(),
+    })
+    for (const path of [
+      '/seller/products',
+      '/seller/collections',
+      '/seller/orders',
+      '/seller/users',
+      `/seller/products/${product.id}/variants`,
+      `/seller/orders/${order.id}`,
+    ]) {
+      const page = await client.get(path).loginAs(admin).withInertia()
+      page.assertStatus(200)
+      assert.isTrue(page.inertiaProps.permissions.manageSeller)
+    }
+    const legacy = await client.get('/customers').loginAs(admin)
+    legacy.assertRedirectsTo('/seller/users')
+    const created = await client
+      .post('/seller/users')
+      .loginAs(admin)
+      .withCsrfToken()
+      .accept('json')
+      .json({
+        fullName: 'Second Admin',
+        email: 'second-admin@example.com',
+        password: 'secret-password',
+        role: 'admin',
+      })
+    created.assertRedirectsTo('/seller/users')
+    const secondAdmin = await User.findByOrFail('email', 'second-admin@example.com')
+    assert.equal(secondAdmin.role, 'admin')
+    const list = await client.get('/seller/users').loginAs(admin).withInertia()
+    assert.isTrue(list.inertiaProps.canAssignAdmin)
+    const target = list.inertiaProps.users.find(
+      (user: { id: number }) => user.id === secondAdmin.id
+    )
+    assert.deepEqual(target.can, { edit: true, delete: true })
+    const selfUpdate = await client
+      .patch(`/seller/users/${admin.id}`)
+      .loginAs(admin)
+      .withCsrfToken()
+      .accept('json')
+      .json({ fullName: 'Updated Admin', email: admin.email, role: 'admin' })
+    selfUpdate.assertRedirectsTo('/seller/users')
+    await admin.refresh()
+    assert.equal(admin.fullName, 'Updated Admin')
+    const selfDemote = await client
+      .patch(`/seller/users/${admin.id}`)
+      .loginAs(admin)
+      .withCsrfToken()
+      .accept('json')
+      .json({ fullName: admin.fullName, email: admin.email, role: 'seller' })
+    selfDemote.assertStatus(422)
+    const selfDelete = await client
+      .delete(`/seller/users/${admin.id}`)
+      .loginAs(admin)
+      .withCsrfToken()
+      .accept('json')
+    selfDelete.assertStatus(422)
+    const edited = await client
+      .patch(`/seller/users/${secondAdmin.id}`)
+      .loginAs(admin)
+      .withCsrfToken()
+      .accept('json')
+      .json({ fullName: 'Updated Second Admin', email: secondAdmin.email, role: 'admin' })
+    edited.assertRedirectsTo('/seller/users')
+    await secondAdmin.refresh()
+    assert.equal(secondAdmin.fullName, 'Updated Second Admin')
+    const deleted = await client
+      .delete(`/seller/users/${secondAdmin.id}`)
+      .loginAs(admin)
+      .withCsrfToken()
+    deleted.assertRedirectsTo('/seller/users')
+    assert.isNull(await User.find(secondAdmin.id))
+  })
+
+  test('global user management is admin-only and roles are validated', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const admin = await User.create({
+      fullName: 'Administrator',
+      email: 'admin@example.com',
+      password: 'secret-password',
+      role: 'admin',
+    })
+    const customer = await User.create({
+      fullName: 'Customer',
+      email: 'customer@example.com',
+      password: 'secret-password',
+    })
+    const created = await client
+      .post('/seller/users')
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+      .json({
+        fullName: 'Injected Admin',
+        email: 'injected-admin@example.com',
+        password: 'secret-password',
+        role: 'admin',
+      })
+    created.assertStatus(403)
+    assert.isNull(await User.findBy('email', 'injected-admin@example.com'))
+    const promoted = await client
+      .patch(`/seller/users/${customer.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+      .json({ fullName: customer.fullName, email: customer.email, role: 'admin' })
+    promoted.assertStatus(403)
+    await customer.refresh()
+    assert.equal(customer.role, 'customer')
+    const edited = await client
+      .patch(`/seller/users/${admin.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+      .json({ fullName: 'Changed', email: admin.email, role: 'customer' })
+    edited.assertStatus(403)
+    const deleted = await client
+      .delete(`/seller/users/${admin.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+    deleted.assertStatus(403)
+    await admin.refresh()
+    assert.equal(admin.role, 'admin')
+    assert.equal(admin.fullName, 'Administrator')
+    for (const path of ['/seller/users', '/customers']) {
+      const denied = await client.get(path).loginAs(owner).accept('json')
+      denied.assertStatus(403)
+    }
+    const dashboard = await client.get('/dashboard').loginAs(owner).withInertia()
+    assert.isTrue(dashboard.inertiaProps.permissions.manageSeller)
+    assert.isFalse(dashboard.inertiaProps.permissions.manageUsers)
+    for (const role of ['customer', 'seller', 'admin']) {
+      const denied = await client
+        .post('/seller/users')
+        .loginAs(owner)
+        .withCsrfToken()
+        .accept('json')
+        .json({
+          fullName: 'Blocked',
+          email: `blocked-${role}@example.com`,
+          password: 'secret-password',
+          role,
+        })
+      denied.assertStatus(403)
+    }
+    const deletedCustomer = await client
+      .delete(`/seller/users/${customer.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+    deletedCustomer.assertStatus(403)
+    for (const actor of [admin]) {
+      const invalid = await client
+        .patch(`/seller/users/${customer.id}`)
+        .loginAs(actor)
+        .withCsrfToken()
+        .accept('json')
+        .json({ fullName: customer.fullName, email: customer.email, role: 'owner' })
+      invalid.assertStatus(422)
+    }
   })
 })

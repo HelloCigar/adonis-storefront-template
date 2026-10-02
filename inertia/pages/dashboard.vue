@@ -20,7 +20,7 @@ const items = computed(
           icon: 'i-lucide-send',
           to: urlFor('inbox'),
         },
-        ...(page.props.user?.role === 'seller'
+        ...(page.props.permissions.manageUsers
           ? [
               {
                 label: 'Manage users',
