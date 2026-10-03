@@ -43,7 +43,7 @@ function save() {
   <UModal
     v-model:open="open"
     :title="user ? 'Edit user' : 'Add user'"
-    description="Assign customer, seller, or admin access. Only admins can manage user accounts."
+    description="Assign customer, staff, or admin access. Only admins can manage user accounts."
     :dismissible="!form.processing"
     :ui="{ content: 'sm:max-w-xl' }"
   >
@@ -62,7 +62,7 @@ function save() {
           :description="user?.id === currentUserId ? 'Your own role cannot be changed.' : undefined"
           ><USelect
             v-model="form.role"
-            :items="canAssignAdmin ? ['customer', 'seller', 'admin'] : ['customer', 'seller']"
+            :items="canAssignAdmin ? ['customer', 'staff', 'admin'] : ['customer', 'staff']"
             :disabled="user?.id === currentUserId"
             class="w-full"
         /></UFormField>

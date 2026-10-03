@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
+import { usePage } from '@inertiajs/vue3'
+
+const page = usePage()
 
 const links = [
   [
@@ -9,11 +12,6 @@ const links = [
       icon: 'i-lucide-user',
       to: urlFor('settings'),
       exact: true,
-    },
-    {
-      label: 'Members',
-      icon: 'i-lucide-users',
-      to: urlFor('settings.members'),
     },
     {
       label: 'Notifications',
@@ -38,7 +36,14 @@ const links = [
 </script>
 
 <template>
-  <UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }">
+  <UContainer v-if="!page.props.permissions.manageStore" class="py-8 sm:py-12">
+    <div class="max-w-2xl mx-auto space-y-6">
+      <h1 class="text-2xl font-semibold text-highlighted">Account settings</h1>
+      <UNavigationMenu :items="links[0]" highlight />
+      <slot />
+    </div>
+  </UContainer>
+  <UDashboardPanel v-else id="settings" :ui="{ body: 'lg:py-12' }">
     <template #header>
       <UDashboardNavbar title="Settings">
         <template #leading>

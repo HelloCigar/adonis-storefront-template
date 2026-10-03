@@ -7,6 +7,7 @@ import User from '#models/account/user'
 import Cart from '#models/checkout/cart'
 import Order from '#models/checkout/order'
 import { ProductFactory } from '../factories/product_factory.js'
+import { ProductVariantFactory } from '../factories/product_variant_factory.js'
 import { CollectionFactory } from '../factories/collection_factory.js'
 import { UserFactory } from '../factories/user_factory.js'
 import { CustomerAddressFactory } from '../factories/customer_address_factory.js'
@@ -62,8 +63,6 @@ export default class MainSeeder extends BaseSeeder {
           const handle = 'demo-' + title.toLowerCase().replaceAll(' ', '-')
           let product = await Product.query({ client: trx }).where('handle', handle).first()
           if (!product) {
-            const price = 299 + groupIndex * 200 + index * 100
-            const soldOut = groupIndex === 2 && index === 5
             product = await ProductFactory.client(trx)
               .apply('published', 'withMedia')
               .merge({
@@ -77,25 +76,30 @@ export default class MainSeeder extends BaseSeeder {
                 tags: ['demo', group.handle.replace('demo-', '')],
                 seoTitle: title,
               })
-              .with('variants', 3, (variants) =>
-                variants.merge(
-                  colors.map((color, position) => ({
-                    title: color,
-                    position,
-                    sku: handle.toUpperCase() + '-' + position,
-                    options: { Color: color },
-                    priceAmount: price + position * 50,
-                    compareAtPriceAmount: index % 3 === 0 ? price + position * 50 + 150 : null,
-                    availableForSale: !soldOut,
-                    inventoryQuantity: soldOut ? 0 : 25,
-                  }))
-                )
-              )
               .create()
-            product.useTransaction(trx)
+          }
+          product.useTransaction(trx)
+          // Older demo data may have products without their price and stock variants.
+          if (!(await product.related('variants').query().first())) {
+            const price = 299 + groupIndex * 200 + index * 100
+            const soldOut = groupIndex === 2 && index === 5
             const media = await product.media.all()
-            if (media[0])
-              await product.related('variants').query().update({ featuredMediaId: media[0].id })
+            await ProductVariantFactory.client(trx)
+              .merge(
+                colors.map((color, position) => ({
+                  productId: product.id,
+                  title: color,
+                  position,
+                  sku: handle.toUpperCase() + '-' + position,
+                  options: { Color: color },
+                  priceAmount: price + position * 50,
+                  compareAtPriceAmount: index % 3 === 0 ? price + position * 50 + 150 : null,
+                  availableForSale: !soldOut,
+                  inventoryQuantity: soldOut ? 0 : 25,
+                  featuredMediaId: media[0]?.id ?? null,
+                }))
+              )
+              .createMany(colors.length)
           }
           products.push(product)
           members.push(product)

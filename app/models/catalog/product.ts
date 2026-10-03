@@ -3,14 +3,10 @@ import Collection from '#models/catalog/collection'
 import ProductVariant from '#models/catalog/product_variant'
 import User from '#models/account/user'
 import { attachments, type AttachmentCollectionRelation } from '@jrmc/adonis-attachment/lucid'
-import { belongsTo, column, hasMany, manyToMany, scope } from '@adonisjs/lucid/orm'
+import { belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 
 export default class Product extends ProductSchema {
-  static forSeller = scope((query, seller: User) => {
-    if (seller.role !== 'admin') query.where('sellerId', seller.id)
-  })
-
   @belongsTo(() => User, { foreignKey: 'sellerId' })
   declare seller: BelongsTo<typeof User>
 

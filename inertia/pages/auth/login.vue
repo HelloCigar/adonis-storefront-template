@@ -9,7 +9,7 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 
   <AuthLayout>
     <h1 class="text-2xl font-semibold text-highlighted">Welcome back</h1>
-    <p class="mt-1 text-sm text-muted">Sign in to continue building.</p>
+    <p class="mt-1 text-sm text-muted">Sign in to your account.</p>
 
     <Form v-slot="{ processing, errors }" route="session.store" class="mt-6 flex flex-col gap-4">
       <UFormField label="Email" name="email" :error="errors.email">

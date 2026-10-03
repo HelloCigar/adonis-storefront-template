@@ -13,6 +13,6 @@ export default class NewAccountController {
 
     await auth.use('web').login(user)
     session.flash('success', 'Account created successfully')
-    response.redirect().toRoute('dashboard')
+    response.redirect().toRoute('account.show')
   }
 }

@@ -33,7 +33,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
       permissions: async () => ({
-        manageSeller: ctx.bouncer
+        manageStore: ctx.bouncer
           ? await ctx.bouncer.with('SellerAccessPolicy').allows('access')
           : false,
         manageUsers: ctx.bouncer

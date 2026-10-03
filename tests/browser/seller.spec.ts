@@ -5,7 +5,7 @@ import Product from '#models/catalog/product'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
 
-test.group('Seller pages', (group) => {
+test.group('Store management pages', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
   test('creates products and variants, edits and deletes through Inertia forms', async ({
@@ -17,7 +17,7 @@ test.group('Seller pages', (group) => {
       fullName: 'Owner',
       email: 'owner@example.com',
       password: 'secret-password',
-      role: 'seller',
+      role: 'staff',
     })
     await browserContext.loginAs(seller)
     const page = await visit('/seller/products')
@@ -168,7 +168,7 @@ test.group('Seller pages', (group) => {
     const seller = await User.create({
       email: 'owner@example.com',
       password: 'secret-password',
-      role: 'seller',
+      role: 'staff',
     })
     const order = await Order.create({
       number: 'MB-1001',
@@ -219,7 +219,7 @@ test.group('Seller pages', (group) => {
     await page.screenshot({ path: 'tmp/seller-order-mobile.png', fullPage: true })
   })
 
-  test('admins see seller navigation and can create admin accounts', async ({
+  test('admins see store navigation and can create admin accounts', async ({
     visit,
     browserContext,
     assert,
@@ -250,16 +250,16 @@ test.group('Seller pages', (group) => {
     await page.screenshot({ path: 'tmp/seller-admin-user.png', fullPage: true })
   })
 
-  test('sellers see catalog navigation but global user management stays hidden', async ({
+  test('staff see catalog navigation but global user management stays hidden', async ({
     visit,
     browserContext,
     assert,
   }) => {
     const owner = await User.create({
-      fullName: 'Seller',
+      fullName: 'Staff',
       email: 'seller@example.com',
       password: 'secret-password',
-      role: 'seller',
+      role: 'staff',
     })
     await browserContext.loginAs(owner)
     const page = await visit('/dashboard')
@@ -268,5 +268,43 @@ test.group('Seller pages', (group) => {
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Add product', exact: true }).waitFor()
     assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
+    assert.equal(await page.getByRole('link', { name: 'Members', exact: true }).count(), 0)
+    await page.getByRole('link', { name: 'Store management', exact: true }).waitFor()
+    await page.screenshot({ path: 'tmp/store-staff-desktop.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+    await page.screenshot({ path: 'tmp/store-staff-mobile.png', fullPage: true })
+  })
+
+  test('customers use storefront account settings and can save their profile', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const customer = await User.create({
+      fullName: 'Customer',
+      email: 'customer@example.com',
+      password: 'secret-password',
+      role: 'customer',
+    })
+    await browserContext.loginAs(customer)
+    const page = await visit('/settings')
+    await page.getByRole('heading', { name: 'Account settings', exact: true }).waitFor()
+    assert.equal(await page.getByRole('link', { name: 'Store management', exact: true }).count(), 0)
+    assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
+    assert.equal(await page.getByRole('link', { name: 'Members', exact: true }).count(), 0)
+    await page.getByLabel('Name', { exact: true }).fill('Updated Customer')
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+    await page.getByText('Profile updated', { exact: true }).waitFor()
+    await customer.refresh()
+    assert.equal(customer.fullName, 'Updated Customer')
+    assert.equal(customer.role, 'customer')
+    await page.screenshot({ path: 'tmp/customer-settings-desktop.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'tmp/customer-settings-mobile.png', fullPage: true })
+    assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+    await page.getByRole('link', { name: 'Security', exact: true }).click()
+    await page.getByLabel('Current password', { exact: true }).waitFor()
+    await page.assertPath('/settings/security')
   })
 })

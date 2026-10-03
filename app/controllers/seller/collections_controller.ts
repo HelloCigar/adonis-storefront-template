@@ -11,22 +11,13 @@ import { collectionCreateValidator, collectionUpdateValidator } from '#validator
 export default class CollectionsController {
   constructor(private catalogue: SellerCatalogueService) {}
 
-  async index({ inertia, bouncer, auth }: HttpContext) {
+  async index({ inertia, bouncer }: HttpContext) {
     await bouncer.with('SellerCollectionPolicy').authorize('viewAny')
     return inertia.render('seller/collections', {
       collections: SellerCollectionTransformer.transform(
-        await Collection.query()
-          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
-          .preload('products', (query) =>
-            query.withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
-          )
-          .orderBy('id', 'desc')
+        await Collection.query().preload('products').orderBy('id', 'desc')
       ),
-      products: SellerProductTransformer.transform(
-        await Product.query()
-          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
-          .orderBy('title')
-      ),
+      products: SellerProductTransformer.transform(await Product.query().orderBy('title')),
     })
   }
   async store({ request, response, session, bouncer, auth }: HttpContext) {

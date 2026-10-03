@@ -3,27 +3,23 @@ import type User from '#models/account/user'
 import type { UserRole } from '#models/account/user'
 
 export default class UserPolicy extends BasePolicy {
-  before(user: User | null) {
-    if (user?.role === 'admin') return true
+  viewAny(user: User) {
+    return user.role === 'admin'
   }
 
-  viewAny(_user: User) {
-    return false
+  create(user: User) {
+    return user.role === 'admin'
   }
 
-  create(_user: User) {
-    return false
+  update(user: User, _target: User) {
+    return user.role === 'admin'
   }
 
-  update(_user: User, _target: User) {
-    return false
+  delete(user: User, target: User) {
+    return user.role === 'admin' && user.id !== target.id
   }
 
-  delete(_user: User, _target: User) {
-    return false
-  }
-
-  assignRole(_user: User, _role: UserRole) {
-    return false
+  assignRole(user: User, role: UserRole, target?: User) {
+    return user.role === 'admin' && (!target || user.id !== target.id || role === user.role)
   }
 }

@@ -9,14 +9,11 @@ import { productCreateValidator, productUpdateValidator } from '#validators/sell
 export default class ProductsController {
   constructor(private catalogue: SellerCatalogueService) {}
 
-  async index({ inertia, bouncer, auth }: HttpContext) {
+  async index({ inertia, bouncer }: HttpContext) {
     await bouncer.with('SellerProductPolicy').authorize('viewAny')
     return inertia.render('seller/products', {
       products: SellerProductTransformer.transform(
-        await Product.query()
-          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
-          .preload('variants')
-          .orderBy('id', 'desc')
+        await Product.query().preload('variants').orderBy('id', 'desc')
       ),
     })
   }

@@ -15,7 +15,7 @@ export default defineConfig({
       },
       ui: {
         colors: {
-          primary: 'emerald',
+          primary: 'orange',
           secondary: 'yellow',
           neutral: 'taupe',
         },
@@ -59,6 +59,7 @@ export default defineConfig({
   },
 
   server: {
+    allowedHosts: ['vbns3m5x-3333.asse.devtunnels.ms'],
     watch: {
       ignored: ['**/storage/**', '**/tmp/**'],
     },

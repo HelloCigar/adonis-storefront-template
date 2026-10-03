@@ -11,10 +11,10 @@ const emit = defineEmits<{
 }>()
 const title = 'Users'
 const singular = 'user'
-const description = 'Manage user accounts and customer, seller, or admin access.'
+const description = 'Manage user accounts and customer, staff, or admin access.'
 const filters = [
   { label: 'Customers', value: 'customer' },
-  { label: 'Sellers', value: 'seller' },
+  { label: 'Staff', value: 'staff' },
   { label: 'Admins', value: 'admin' },
 ]
 const searchText = (row: Data.Seller.User) => `${row.fullName || ''} ${row.email}`

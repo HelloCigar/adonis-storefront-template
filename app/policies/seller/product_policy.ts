@@ -3,23 +3,19 @@ import type User from '#models/account/user'
 import type Product from '#models/catalog/product'
 
 export default class ProductPolicy extends BasePolicy {
-  before(user: User | null) {
-    if (user?.role === 'admin') return true
-  }
-
   viewAny(user: User) {
-    return user.role === 'seller'
+    return user.isStoreStaff
   }
 
   create(user: User) {
-    return user.role === 'seller'
+    return user.isStoreStaff
   }
 
-  update(user: User, product: Product) {
-    return user.role === 'seller' && product.sellerId === user.id
+  update(user: User, _product: Product) {
+    return user.isStoreStaff
   }
 
-  delete(user: User, product: Product) {
-    return user.role === 'seller' && product.sellerId === user.id
+  delete(user: User, _product: Product) {
+    return user.isStoreStaff
   }
 }

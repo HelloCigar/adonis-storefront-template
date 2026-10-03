@@ -9,11 +9,15 @@ import Cart from '#models/checkout/cart'
 import CustomerAddress from '#models/account/customer_address'
 import Order from '#models/checkout/order'
 
-export const userRoles = ['customer', 'seller', 'admin'] as const
+export const userRoles = ['customer', 'staff', 'admin'] as const
 export type UserRole = (typeof userRoles)[number]
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
   declare role: UserRole
+
+  get isStoreStaff() {
+    return this.role === 'staff' || this.role === 'admin'
+  }
 
   @attachment({ folder: 'avatars' })
   declare avatar: AttachmentRelation

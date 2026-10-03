@@ -4,14 +4,10 @@ import SellerOrderTransformer from '#transformers/seller/order_transformer'
 import { orderUpdateValidator } from '#validators/seller/order'
 
 export default class OrdersController {
-  async index({ inertia, bouncer, auth }: HttpContext) {
+  async index({ inertia, bouncer }: HttpContext) {
     await bouncer.with('SellerOrderPolicy').authorize('viewAny')
     return inertia.render('seller/orders', {
-      orders: SellerOrderTransformer.transform(
-        await Order.query()
-          .withScopes((scopes) => scopes.forSeller(auth.getUserOrFail()))
-          .orderBy('processedAt', 'desc')
-      ),
+      orders: SellerOrderTransformer.transform(await Order.query().orderBy('processedAt', 'desc')),
     })
   }
   async show({ params, inertia, bouncer }: HttpContext) {

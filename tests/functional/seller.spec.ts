@@ -15,7 +15,7 @@ const seller = () =>
     fullName: 'Store Owner',
     email: 'seller@example.com',
     password: 'secret-password',
-    role: 'seller',
+    role: 'staff',
   })
 const productPayload = {
   title: 'Bunny lamp',
@@ -351,23 +351,23 @@ test.group('Seller management', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
-      .json({ fullName: 'New Seller', email: buyer.email, role: 'seller' })
+      .json({ fullName: 'New Seller', email: buyer.email, role: 'staff' })
     updated.assertRedirectsTo('/seller/users')
     await buyer.refresh()
-    assert.equal(buyer.role, 'seller')
+    assert.equal(buyer.role, 'staff')
     const selfDemote = await client
       .patch(`/seller/users/${owner.id}`)
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json({ fullName: owner.fullName, email: owner.email, role: 'customer' })
-    selfDemote.assertStatus(422)
+    selfDemote.assertStatus(403)
     const selfDelete = await client
       .delete(`/seller/users/${owner.id}`)
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
-    selfDelete.assertStatus(422)
+    selfDelete.assertStatus(403)
     const deleted = await client.delete(`/seller/users/${buyer.id}`).loginAs(owner).withCsrfToken()
     deleted.assertRedirectsTo('/seller/users')
     assert.isNull(await User.find(buyer.id))
@@ -454,7 +454,7 @@ test.group('Seller management', (group) => {
     ]) {
       const page = await client.get(path).loginAs(admin).withInertia()
       page.assertStatus(200)
-      assert.isTrue(page.inertiaProps.permissions.manageSeller)
+      assert.isTrue(page.inertiaProps.permissions.manageStore)
     }
     const legacy = await client.get('/customers').loginAs(admin)
     legacy.assertRedirectsTo('/seller/users')
@@ -492,14 +492,14 @@ test.group('Seller management', (group) => {
       .loginAs(admin)
       .withCsrfToken()
       .accept('json')
-      .json({ fullName: admin.fullName, email: admin.email, role: 'seller' })
-    selfDemote.assertStatus(422)
+      .json({ fullName: admin.fullName, email: admin.email, role: 'staff' })
+    selfDemote.assertStatus(403)
     const selfDelete = await client
       .delete(`/seller/users/${admin.id}`)
       .loginAs(admin)
       .withCsrfToken()
       .accept('json')
-    selfDelete.assertStatus(422)
+    selfDelete.assertStatus(403)
     const edited = await client
       .patch(`/seller/users/${secondAdmin.id}`)
       .loginAs(admin)
@@ -576,9 +576,9 @@ test.group('Seller management', (group) => {
       denied.assertStatus(403)
     }
     const dashboard = await client.get('/dashboard').loginAs(owner).withInertia()
-    assert.isTrue(dashboard.inertiaProps.permissions.manageSeller)
+    assert.isTrue(dashboard.inertiaProps.permissions.manageStore)
     assert.isFalse(dashboard.inertiaProps.permissions.manageUsers)
-    for (const role of ['customer', 'seller', 'admin']) {
+    for (const role of ['customer', 'staff', 'admin']) {
       const denied = await client
         .post('/seller/users')
         .loginAs(owner)

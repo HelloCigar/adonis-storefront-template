@@ -29,7 +29,7 @@ export default class UsersController {
     const user = await User.findOrFail(params.id)
     await bouncer.with('SellerUserPolicy').authorize('update', user)
     const payload = await request.validateUsing(userUpdateValidator, { meta: { id: user.id } })
-    await bouncer.with('SellerUserPolicy').authorize('assignRole', payload.role)
+    await bouncer.with('SellerUserPolicy').authorize('assignRole', payload.role, user)
     await this.users.update(auth.user!, user, payload)
     session.flash('success', 'User updated')
     return response.redirect().toRoute('seller.users.index')

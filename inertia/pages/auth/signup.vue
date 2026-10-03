@@ -9,7 +9,7 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 
   <AuthLayout>
     <h1 class="text-2xl font-semibold text-highlighted">Create your account</h1>
-    <p class="mt-1 text-sm text-muted">Start building with the starter kit.</p>
+    <p class="mt-1 text-sm text-muted">Create an account to manage your orders.</p>
 
     <Form
       v-slot="{ processing, errors }"

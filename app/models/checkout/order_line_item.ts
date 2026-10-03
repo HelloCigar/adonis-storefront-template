@@ -9,7 +9,7 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 export default class OrderLineItem extends OrderLineItemSchema {
   @beforeCreate()
-  static async snapshotSeller(item: OrderLineItem) {
+  static async snapshotCreator(item: OrderLineItem) {
     let productId = item.productId
     if (item.productVariantId) {
       const variant = await ProductVariant.query({ client: item.$trx })
@@ -25,7 +25,7 @@ export default class OrderLineItem extends OrderLineItemSchema {
       const product = await Product.query({ client: item.$trx })
         .where('id', productId)
         .firstOrFail()
-      // Keep the seller snapshot even if the catalog product is later deleted.
+      // Legacy creator attribution is retained for history, never for access checks.
       item.sellerId = product.sellerId
     }
   }

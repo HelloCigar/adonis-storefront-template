@@ -57,12 +57,15 @@ router
       .as('account.addresses.delete')
     router.get('/account/orders', [controllers.account.Orders, 'index']).as('orders.index')
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
-    router.get('/dashboard', [controllers.dashboard.Dashboard, 'index']).as('dashboard')
-    router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox')
+    router
+      .get('/dashboard', [controllers.dashboard.Dashboard, 'index'])
+      .as('dashboard')
+      .use(middleware.staff())
+    router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox').use(middleware.staff())
     router
       .get('/customers', [controllers.seller.Customers, 'index'])
       .as('customers')
-      .use(middleware.seller())
+      .use(middleware.staff())
     router.get('/settings', [controllers.settings.Settings, 'index']).as('settings')
     router.post('/settings', [controllers.settings.Settings, 'update']).as('settings.update')
     router
@@ -124,4 +127,4 @@ router
   })
   .prefix('/seller')
   .as('seller')
-  .use([middleware.auth(), middleware.seller()])
+  .use([middleware.auth(), middleware.staff()])

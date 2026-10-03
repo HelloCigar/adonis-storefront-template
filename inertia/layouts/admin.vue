@@ -5,6 +5,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
 import { usePage } from '@inertiajs/vue3'
 import FlashToasts from '~/components/flash_toasts.vue'
+import StorefrontLayout from '~/layouts/default.vue'
 
 const toast = useToast()
 
@@ -32,7 +33,7 @@ const links = computed(
             open.value = false
           },
         },
-        ...(page.props.permissions.manageSeller
+        ...(page.props.permissions.manageStore
           ? [
               {
                 label: 'Products',
@@ -83,13 +84,6 @@ const links = computed(
               label: 'General',
               to: urlFor('settings'),
               exact: true,
-              onSelect: () => {
-                open.value = false
-              },
-            },
-            {
-              label: 'Members',
-              to: urlFor('settings.members'),
               onSelect: () => {
                 open.value = false
               },
@@ -149,7 +143,7 @@ const groups = computed(() => [
 ])
 
 const cookie = useStorage('cookie-consent', 'pending')
-if (cookie.value !== 'accepted') {
+if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
   toast.add({
     title: 'We use first-party cookies to enhance your experience on our website.',
     duration: 0,
@@ -174,7 +168,11 @@ if (cookie.value !== 'accepted') {
 </script>
 
 <template>
-  <UDashboardGroup unit="rem" storage="local">
+  <StorefrontLayout v-if="!page.props.permissions.manageStore">
+    <slot />
+    <FlashToasts />
+  </StorefrontLayout>
+  <UDashboardGroup v-else unit="rem" storage="local">
     <UDashboardSidebar
       id="default"
       v-model:open="open"
@@ -184,7 +182,16 @@ if (cookie.value !== 'accepted') {
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <TeamsMenu :collapsed="collapsed" />
+        <UButton
+          :label="collapsed ? undefined : 'Store management'"
+          :to="urlFor('dashboard')"
+          icon="i-lucide-store"
+          color="neutral"
+          variant="ghost"
+          :square="collapsed"
+          :aria-label="collapsed ? 'Store management' : undefined"
+          block
+        />
       </template>
 
       <template #default="{ collapsed }">

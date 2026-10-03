@@ -184,4 +184,57 @@ test.group('Initial factories and seeder', (group) => {
     assert.equal(unrelated.title, 'My own product')
     assert.deepEqual(MainSeeder.environment, ['development', 'test'])
   }).timeout(60_000)
+
+  test('restores stock variants for existing demo products without changing existing inventory', async ({
+    assert,
+  }) => {
+    const product = await ProductFactory.apply('published')
+      .merge({ handle: 'demo-canvas-tote', title: 'My edited tote' })
+      .create()
+    const soldOut = await ProductFactory.apply('published')
+      .merge({ handle: 'demo-cable-organizer' })
+      .create()
+    const customized = await ProductFactory.merge({ handle: 'demo-ceramic-mug' })
+      .with('variants', 1, (variants) => variants.merge({ inventoryQuantity: 7, priceAmount: 123 }))
+      .create()
+    const unrelated = await ProductFactory.merge({ handle: 'my-own-product' }).create()
+    const seeder = new MainSeeder(db.connection())
+
+    await seeder.run()
+    await product.load('variants')
+    await soldOut.load('variants')
+    await customized.load('variants')
+    await unrelated.load('variants')
+    assert.lengthOf(product.variants, 3)
+    assert.deepEqual(
+      product.variants.map((variant) => variant.inventoryQuantity),
+      [25, 25, 25]
+    )
+    assert.deepEqual(
+      product.variants.map((variant) => variant.priceAmount),
+      [299, 349, 399]
+    )
+    assert.lengthOf(soldOut.variants, 3)
+    for (const variant of soldOut.variants) {
+      assert.equal(variant.inventoryQuantity, 0)
+      assert.isFalse(Boolean(variant.availableForSale))
+    }
+    assert.lengthOf(customized.variants, 1)
+    assert.equal(customized.variants[0].inventoryQuantity, 7)
+    assert.equal(customized.variants[0].priceAmount, 123)
+    assert.lengthOf(unrelated.variants, 0)
+    const variantIds = product.variants.map((variant) => variant.id)
+
+    await seeder.run()
+    await product.refresh()
+    await product.load('variants')
+    await customized.load('variants')
+    assert.equal(product.title, 'My edited tote')
+    assert.deepEqual(
+      product.variants.map((variant) => variant.id),
+      variantIds
+    )
+    assert.lengthOf(customized.variants, 1)
+    assert.equal(customized.variants[0].inventoryQuantity, 7)
+  }).timeout(60_000)
 })

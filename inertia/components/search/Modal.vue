@@ -87,6 +87,7 @@ const groups = computed(() => [
       variant="ghost"
       color="neutral"
       :label="t('search.label')"
+      :aria-label="t('search.label')"
       :ui="{
         label: 'hidden min-[420px]:block',
       }"

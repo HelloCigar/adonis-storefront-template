@@ -4,12 +4,8 @@ import type Product from '#models/catalog/product'
 import type ProductVariant from '#models/catalog/product_variant'
 
 export default class VariantPolicy extends BasePolicy {
-  before(user: User | null) {
-    if (user?.role === 'admin') return true
-  }
-
-  viewAny(user: User, product: Product) {
-    return user.role === 'seller' && product.sellerId === user.id
+  viewAny(user: User, _product: Product) {
+    return user.isStoreStaff
   }
 
   create(user: User, product: Product) {
