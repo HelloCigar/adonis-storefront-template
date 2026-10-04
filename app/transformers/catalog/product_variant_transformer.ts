@@ -45,7 +45,8 @@ export default class ProductVariantTransformer extends BaseTransformer<ProductVa
               amount: this.resource.compareAtPriceAmount,
               currencyCode: this.resource.currencyCode,
             },
-      quantityAvailable: this.resource.inventoryQuantity,
+      availableForSale: this.resource.isSellable,
+      quantityAvailable: this.resource.quantityAvailable,
       selectedOptions: Object.entries(this.resource.options ?? {}).map(([name, value]) => ({
         name,
         value: String(value),

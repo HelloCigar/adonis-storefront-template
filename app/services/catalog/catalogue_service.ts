@@ -40,9 +40,21 @@ export default class CatalogueService {
       .orderBy('products.id', 'asc')
 
     if (params.available === true) {
-      query.whereHas('variants', (variants) => variants.where('available_for_sale', true))
+      query.whereHas('variants', (variants) =>
+        variants
+          .where('available_for_sale', true)
+          .whereRaw(
+            '(inventory_quantity IS NULL OR inventory_quantity > inventory_reserved_quantity)'
+          )
+      )
     } else if (params.available === false) {
-      query.whereDoesntHave('variants', (variants) => variants.where('available_for_sale', true))
+      query.whereDoesntHave('variants', (variants) =>
+        variants
+          .where('available_for_sale', true)
+          .whereRaw(
+            '(inventory_quantity IS NULL OR inventory_quantity > inventory_reserved_quantity)'
+          )
+      )
     }
     if (params.vendor?.length) query.whereIn('vendor', params.vendor)
 

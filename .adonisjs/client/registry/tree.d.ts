@@ -28,6 +28,28 @@ export interface ApiDefinition {
     update: typeof routes['cart.update']
     remove: typeof routes['cart.remove']
   }
+  checkout: {
+    create: typeof routes['checkout.create']
+    store: typeof routes['checkout.store']
+    access: {
+      show: typeof routes['checkout.access.show']
+      store: typeof routes['checkout.access.store']
+    }
+    orders: {
+      show: typeof routes['checkout.orders.show']
+    }
+    cancellations: {
+      store: typeof routes['checkout.cancellations.store']
+    }
+    reconciliations: {
+      store: typeof routes['checkout.reconciliations.store']
+    }
+  }
+  payments: {
+    webhooks: {
+      store: typeof routes['payments.webhooks.store']
+    }
+  }
   newAccount: {
     create: typeof routes['new_account.create']
     store: typeof routes['new_account.store']
@@ -96,6 +118,21 @@ export interface ApiDefinition {
       index: typeof routes['seller.orders.index']
       show: typeof routes['seller.orders.show']
       update: typeof routes['seller.orders.update']
+    }
+    packing: {
+      store: typeof routes['seller.packing.store']
+    }
+    shipments: {
+      store: typeof routes['seller.shipments.store']
+    }
+    refunds: {
+      store: typeof routes['seller.refunds.store']
+    }
+    cancellations: {
+      store: typeof routes['seller.cancellations.store']
+    }
+    operations: {
+      store: typeof routes['seller.operations.store']
     }
     users: {
       index: typeof routes['seller.users.index']

@@ -20,7 +20,37 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   // App
   APP_KEY: Env.schema.secret(),
+  APP_URL: Env.schema.string.optional(),
 
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
+
+  // Payments (optional until checkout or webhook verification is used)
+  PAYMENT_PROVIDER: Env.schema.string.optional(),
+  PAYMONGO_SECRET_KEY: Env.schema.secret.optional(),
+  PAYMONGO_WEBHOOK_SECRET: Env.schema.secret.optional(),
+  PAYMONGO_PAYMENT_METHODS: Env.schema.string.optional(),
+  PAYMONGO_TIMEOUT_MS: Env.schema.number.optional(),
+  PAYMONGO_WEBHOOK_TOLERANCE_SECONDS: Env.schema.number.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring @adonisjs/queue
+  |----------------------------------------------------------
+  */
+  QUEUE_DRIVER: Env.schema.enum(['database', 'sync'] as const),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the mail package
+  |----------------------------------------------------------
+  */
+  MAIL_MAILER: Env.schema.enum.optional(['smtp'] as const),
+  MAIL_FROM_NAME: Env.schema.string.optional(),
+  MAIL_FROM_ADDRESS: Env.schema.string.optional(),
+  SMTP_HOST: Env.schema.string.optional(),
+  SMTP_PORT: Env.schema.number.optional(),
+  SMTP_USERNAME: Env.schema.string.optional(),
+  SMTP_PASSWORD: Env.schema.secret.optional(),
+  SMTP_SECURE: Env.schema.boolean.optional(),
 })

@@ -151,6 +151,102 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/cart_controller').default['destroy']>>>
     }
   }
+  'checkout.create': {
+    methods: ["GET","HEAD"]
+    pattern: '/checkout'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/checkout_controller').default['create']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/checkout_controller').default['create']>>>
+    }
+  }
+  'checkout.store': {
+    methods: ["POST"]
+    pattern: '/checkout'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/checkout/checkout').checkoutValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/checkout/checkout').checkoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/checkout_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/checkout_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'checkout.access.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/checkout/orders/:publicId/access'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/order_access_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/order_access_controller').default['show']>>>
+    }
+  }
+  'checkout.access.store': {
+    methods: ["POST"]
+    pattern: '/checkout/orders/:publicId/claim'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/order_access_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/order_access_controller').default['store']>>>
+    }
+  }
+  'checkout.orders.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/checkout/orders/:publicId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/orders_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/orders_controller').default['show']>>>
+    }
+  }
+  'checkout.cancellations.store': {
+    methods: ["POST"]
+    pattern: '/checkout/orders/:publicId/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/cancellations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/cancellations_controller').default['store']>>>
+    }
+  }
+  'checkout.reconciliations.store': {
+    methods: ["POST"]
+    pattern: '/checkout/orders/:publicId/reconcile'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/reconciliations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/reconciliations_controller').default['store']>>>
+    }
+  }
+  'payments.webhooks.store': {
+    methods: ["POST"]
+    pattern: '/payments/webhooks/:provider'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { provider: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments/webhooks_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/webhooks_controller').default['store']>>>
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'
@@ -641,6 +737,66 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/seller/order').orderUpdateValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/orders_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/orders_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.packing.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/packing'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/packing_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/packing_controller').default['store']>>>
+    }
+  }
+  'seller.shipments.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/shipment'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/checkout/fulfillment').shipmentValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/checkout/fulfillment').shipmentValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/shipments_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/shipments_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.refunds.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/refund'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/checkout/fulfillment').refundValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/checkout/fulfillment').refundValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/refunds_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/refunds_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.cancellations.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/cancellations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/cancellations_controller').default['store']>>>
+    }
+  }
+  'seller.operations.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/operations'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/checkout/fulfillment').operationRetryValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/checkout/fulfillment').operationRetryValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/operations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/operations_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'seller.users.index': {

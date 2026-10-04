@@ -7,7 +7,7 @@ const dashboardPages = new Set(['inbox'])
 export function resolveLayout(name: string) {
   if (
     name === 'index' ||
-    /^(account|collection|collections|product|pages|policies|blog)\//.test(name)
+    /^(account|checkout|collection|collections|product|pages|policies|blog)\//.test(name)
   ) {
     return StorefrontLayout
   }

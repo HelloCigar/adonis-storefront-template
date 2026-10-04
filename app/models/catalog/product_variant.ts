@@ -7,6 +7,15 @@ import { belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
 export default class ProductVariant extends ProductVariantSchema {
+  get quantityAvailable() {
+    return this.inventoryQuantity === null
+      ? null
+      : this.inventoryQuantity - (this.inventoryReservedQuantity ?? 0)
+  }
+
+  get isSellable() {
+    return this.availableForSale && (this.quantityAvailable === null || this.quantityAvailable > 0)
+  }
   @column({
     prepare: (value) => (value === null ? null : JSON.stringify(value)),
     consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),

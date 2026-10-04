@@ -1,6 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
+import CheckoutException from '#exceptions/checkout_exception'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -30,6 +31,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * response to the client
    */
   async handle(error: unknown, ctx: HttpContext) {
+    if (
+      error instanceof CheckoutException &&
+      [409, 422].includes(error.status) &&
+      ctx.request.header('X-Inertia') &&
+      ctx.request.method() !== 'GET'
+    ) {
+      ctx.session.flash('error', error.message)
+      return ctx.response.redirect().back()
+    }
     return super.handle(error, ctx)
   }
 

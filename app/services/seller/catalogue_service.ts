@@ -66,6 +66,30 @@ export default class SellerCatalogueService {
       ])
     }
     return db.transaction(async (trx) => {
+      if (variant.$isPersisted) {
+        const current = await ProductVariant.findOrFail(variant.id, { client: trx })
+        const held = current.inventoryReservedQuantity
+        const pending = await trx
+          .from('order_line_items')
+          .join('orders', 'orders.id', 'order_line_items.order_id')
+          .where('product_variant_id', variant.id)
+          .where('orders.source', 'online')
+          .where('orders.lifecycle_state', 'pending_payment')
+          .first()
+        if (
+          (held > 0 && (payload.inventoryQuantity === null || payload.inventoryQuantity < held)) ||
+          (pending && (current.inventoryQuantity === null) !== (payload.inventoryQuantity === null))
+        ) {
+          throw new errors.E_VALIDATION_ERROR([
+            {
+              field: 'inventoryQuantity',
+              rule: 'reserved',
+              message:
+                'Stock is held by pending orders. Keep at least the reserved quantity and its tracking mode.',
+            },
+          ])
+        }
+      }
       const currencies = await ProductVariant.query({ client: trx })
         .where('productId', product.id)
         .whereNot('id', variant.id || 0)
@@ -99,6 +123,23 @@ export default class SellerCatalogueService {
 
   async deleteVariant(product: Product, variant: ProductVariant) {
     return db.transaction(async (trx) => {
+      const current = await ProductVariant.findOrFail(variant.id, { client: trx })
+      const pending = await trx
+        .from('order_line_items')
+        .join('orders', 'orders.id', 'order_line_items.order_id')
+        .where('product_variant_id', variant.id)
+        .where('orders.source', 'online')
+        .where('orders.lifecycle_state', 'pending_payment')
+        .first()
+      if (current.inventoryReservedQuantity > 0 || pending) {
+        throw new errors.E_VALIDATION_ERROR([
+          {
+            field: 'delete',
+            rule: 'reserved',
+            message: 'This variant has stock held by pending orders.',
+          },
+        ])
+      }
       const variants = await product.related('variants').query().useTransaction(trx)
       if (product.status === 'active' && variants.length <= 1) {
         throw new errors.E_VALIDATION_ERROR([
@@ -112,6 +153,28 @@ export default class SellerCatalogueService {
       }
       variant.useTransaction(trx)
       await variant.delete()
+    })
+  }
+
+  async deleteProduct(product: Product) {
+    return db.transaction(async (trx) => {
+      const held = await ProductVariant.query({ client: trx })
+        .where('productId', product.id)
+        .where('inventoryReservedQuantity', '>', 0)
+        .first()
+      const pending = await trx
+        .from('order_line_items')
+        .join('orders', 'orders.id', 'order_line_items.order_id')
+        .where('product_id', product.id)
+        .where('orders.source', 'online')
+        .where('orders.lifecycle_state', 'pending_payment')
+        .first()
+      if (held || pending)
+        throw new errors.E_VALIDATION_ERROR([
+          { field: 'delete', rule: 'reserved', message: 'This product has pending orders.' },
+        ])
+      product.useTransaction(trx)
+      await product.delete()
     })
   }
 }

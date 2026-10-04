@@ -12,8 +12,8 @@ export const variantCreateValidator = vine.create({
       return !(await query.first())
     })
     .nullable(),
-  priceAmount: vine.number().min(0).max(100000000),
-  compareAtPriceAmount: vine.number().min(0).max(100000000).nullable(),
+  priceAmount: vine.number().decimal([0, 2]).min(0).max(100000000),
+  compareAtPriceAmount: vine.number().decimal([0, 2]).min(0).max(100000000).nullable(),
   currencyCode: vine.enum(['PHP', 'USD']),
   inventoryQuantity: vine.number().withoutDecimals().min(0).max(100000000).nullable(),
   availableForSale: vine.boolean(),

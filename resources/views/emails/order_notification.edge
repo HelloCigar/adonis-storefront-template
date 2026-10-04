@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><body>
+  <h1>{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}</h1>
+  <p>Order {{ order.number }}</p>
+  @if(kind === 'receipt')
+    <p>Thank you for your order. We received PHP {{ order.totalAmount.toFixed(2) }}, including PHP {{ order.shippingAmount.toFixed(2) }} shipping.</p>
+  @elseif(shipment)
+    <p>{{ shipment.carrier }} · {{ shipment.trackingNumber }}</p>
+    @if(shipment.trackingUrl)
+      <p><a href="{{ shipment.trackingUrl }}">Track delivery</a></p>
+    @endif
+  @endif
+  <p><a href="{{ accessUrl }}">View your order</a></p>
+  <p>This private link gives access to your order for 30 days. Keep it private.</p>
+</body></html>

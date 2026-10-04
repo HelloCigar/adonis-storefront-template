@@ -3,10 +3,31 @@ import Cart from '#models/checkout/cart'
 import OrderAddress from '#models/checkout/order_address'
 import OrderLineItem from '#models/checkout/order_line_item'
 import User from '#models/account/user'
-import { belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import Attempt from '#models/payments/attempt'
+import RefundOperation from '#models/payments/refund_operation'
+import Shipment from '#models/checkout/shipment'
+import Activity from '#models/checkout/activity'
+import Payment from '#models/payments/payment'
+import Notification from '#models/checkout/notification'
+import { belongsTo, hasMany, column } from '@adonisjs/lucid/orm'
+import type { OrderState } from '#services/checkout/state_service'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
 export default class Order extends OrderSchema {
+  @hasMany(() => Attempt) declare attempts: HasMany<typeof Attempt>
+  @hasMany(() => RefundOperation) declare refunds: HasMany<typeof RefundOperation>
+  @hasMany(() => Shipment) declare shipments: HasMany<typeof Shipment>
+  @hasMany(() => Activity) declare activities: HasMany<typeof Activity>
+  @hasMany(() => Payment) declare payments: HasMany<typeof Payment>
+  @hasMany(() => Notification) declare notifications: HasMany<typeof Notification>
+  @column() declare lifecycleState: OrderState
+  @column() declare source: 'legacy' | 'online'
+  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare totalMinor:
+    number | null
+  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare shippingMinor:
+    number | null
+  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare subtotalMinor:
+    number | null
   @belongsTo(() => User, { foreignKey: 'userId' })
   declare user: BelongsTo<typeof User>
 

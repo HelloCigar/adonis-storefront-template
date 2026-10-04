@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
 import StatusForm from '~/components/seller/orders/StatusForm.vue'
+import WorkflowPanel from '~/components/seller/orders/WorkflowPanel.vue'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
 const props = defineProps<{ order: Data.Seller.Order }>()
@@ -89,6 +90,7 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
           </div>
         </div>
         <div class="space-y-6 min-w-0">
+          <WorkflowPanel v-if="order.source === 'online'" :order="order" />
           <UCard
             ><template #header><h2 class="font-semibold text-highlighted">Customer</h2></template>
             <p class="text-sm break-all">{{ order.email }}</p>

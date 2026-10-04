@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { useRouter } from '@adonisjs/inertia/vue'
 import { t } from '~/utils/store'
 import { useCart } from '~/composables/cart'
 import CartLineItem from '~/components/cart/LineItem.vue'
 import ProductPrice from '~/components/product/Price.vue'
 const { open, loading, quantity, lines, total } = useCart()
 const page = usePage()
-const toast = useToast()
-const checkout = () =>
-  toast.add({
-    title: 'Checkout is not configured',
-    description: 'Connect your own checkout flow to this action.',
-  })
+const router = useRouter()
+const checkout = () => router.visit({ route: 'checkout.create' })
 watch(
   () => page.url,
   () => {

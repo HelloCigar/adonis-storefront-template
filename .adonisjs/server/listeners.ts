@@ -3,4 +3,8 @@
  * DO NOT EDIT manually
  */
 
-export const listeners = {}
+export const listeners = {
+  checkout: {
+    PublishWorkflowOutbox: () => import('#listeners/checkout/publish_workflow_outbox'),
+  },
+}

@@ -39,7 +39,7 @@ export default class ProductsController {
   async destroy({ params, response, session, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.id)
     await bouncer.with('SellerProductPolicy').authorize('delete', product)
-    await product.delete()
+    await this.catalogue.deleteProduct(product)
     session.flash('success', 'Product deleted')
     return response.redirect().toRoute('seller.products.index')
   }

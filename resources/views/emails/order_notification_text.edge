@@ -1,0 +1,10 @@
+{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}
+Order {{ order.number }}
+@if(kind === 'receipt')
+Total: PHP {{ order.totalAmount.toFixed(2) }} (shipping: PHP {{ order.shippingAmount.toFixed(2) }})
+@elseif(shipment)
+Carrier: {{ shipment.carrier }}
+Tracking number: {{ shipment.trackingNumber }}
+@endif
+View your order: {{ accessUrl }}
+This private link gives access to your order for 30 days. Keep it private.

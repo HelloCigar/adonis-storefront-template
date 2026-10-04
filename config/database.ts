@@ -13,6 +13,7 @@ const dbConfig = defineConfig({
      */
     sqlite: {
       client: 'better-sqlite3',
+      schemaGeneration: { excludeTables: ['queue_jobs', 'queue_schedules'] },
 
       connection: {
         /**

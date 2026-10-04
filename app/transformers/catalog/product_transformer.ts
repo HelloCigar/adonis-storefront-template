@@ -9,7 +9,7 @@ export default class ProductTransformer extends BaseTransformer<Product> {
     const media = await this.resource.media.all()
     const images = media.filter((item) => item.attachment.mimeType.startsWith('image/'))
     const variants = (this.resource.$preloaded.variants as ProductVariant[] | undefined) ?? []
-    const availableVariant = variants.find((variant) => variant.availableForSale) ?? variants[0]
+    const availableVariant = variants.find((variant) => variant.isSellable) ?? variants[0]
     const prices = variants.map((variant) => variant.priceAmount)
     const compareAtPrices = variants
       .map((variant) => variant.compareAtPriceAmount)
@@ -44,7 +44,7 @@ export default class ProductTransformer extends BaseTransformer<Product> {
         'updatedAt',
       ]),
       availableForSale: variants.length
-        ? variants.some((variant) => variant.availableForSale)
+        ? variants.some((variant) => variant.isSellable)
         : undefined,
       priceRange:
         prices.length && currencyCode

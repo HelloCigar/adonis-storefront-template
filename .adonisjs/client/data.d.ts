@@ -18,6 +18,8 @@ import type CheckoutCartTransformer from '#transformers/checkout/cart_transforme
 import type CheckoutOrderAddressTransformer from '#transformers/checkout/order_address_transformer'
 import type CheckoutOrderLineItemTransformer from '#transformers/checkout/order_line_item_transformer'
 import type CheckoutOrderTransformer from '#transformers/checkout/order_transformer'
+import type CheckoutQuoteTransformer from '#transformers/checkout/quote_transformer'
+import type CheckoutStatusTransformer from '#transformers/checkout/status_transformer'
 import type ContentContentTransformer from '#transformers/content/content_transformer'
 import type SellerCollectionTransformer from '#transformers/seller/collection_transformer'
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
@@ -80,6 +82,14 @@ export namespace Data {
     export type Order = InferData<CheckoutOrderTransformer>
     export namespace Order {
       export type Variants = InferVariants<CheckoutOrderTransformer>
+    }
+    export type Quote = InferData<CheckoutQuoteTransformer>
+    export namespace Quote {
+      export type Variants = InferVariants<CheckoutQuoteTransformer>
+    }
+    export type Status = InferData<CheckoutStatusTransformer>
+    export namespace Status {
+      export type Variants = InferVariants<CheckoutStatusTransformer>
     }
   }
   export namespace Content {

@@ -25,6 +25,27 @@ router.get('/blog/:handle/:article', [controllers.content.Articles, 'show']).as(
 router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')
 router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
 router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
+router.get('/checkout', [controllers.checkout.Checkout, 'create']).as('checkout.create')
+router.post('/checkout', [controllers.checkout.Checkout, 'store']).as('checkout.store')
+router
+  .get('/checkout/orders/:publicId/access', [controllers.checkout.OrderAccess, 'show'])
+  .as('checkout.access.show')
+router
+  .post('/checkout/orders/:publicId/claim', [controllers.checkout.OrderAccess, 'store'])
+  .as('checkout.access.store')
+  .use(middleware.auth())
+router
+  .get('/checkout/orders/:publicId', [controllers.checkout.Orders, 'show'])
+  .as('checkout.orders.show')
+router
+  .post('/checkout/orders/:publicId/cancel', [controllers.checkout.Cancellations, 'store'])
+  .as('checkout.cancellations.store')
+router
+  .post('/checkout/orders/:publicId/reconcile', [controllers.checkout.Reconciliations, 'store'])
+  .as('checkout.reconciliations.store')
+router
+  .post('/payments/webhooks/:provider', [controllers.payments.Webhooks, 'store'])
+  .as('payments.webhooks.store')
 
 router
   .group(() => {
@@ -120,6 +141,17 @@ router
     router.get('/orders', [controllers.seller.Orders, 'index']).as('orders.index')
     router.get('/orders/:id', [controllers.seller.Orders, 'show']).as('orders.show')
     router.patch('/orders/:id', [controllers.seller.Orders, 'update']).as('orders.update')
+    router.post('/orders/:id/packing', [controllers.seller.Packing, 'store']).as('packing.store')
+    router
+      .post('/orders/:id/shipment', [controllers.seller.Shipments, 'store'])
+      .as('shipments.store')
+    router.post('/orders/:id/refund', [controllers.seller.Refunds, 'store']).as('refunds.store')
+    router
+      .post('/orders/:id/cancel', [controllers.seller.Cancellations, 'store'])
+      .as('cancellations.store')
+    router
+      .post('/orders/:id/operations', [controllers.seller.Operations, 'store'])
+      .as('operations.store')
     router.get('/users', [controllers.seller.Users, 'index']).as('users.index')
     router.post('/users', [controllers.seller.Users, 'store']).as('users.store')
     router.patch('/users/:id', [controllers.seller.Users, 'update']).as('users.update')

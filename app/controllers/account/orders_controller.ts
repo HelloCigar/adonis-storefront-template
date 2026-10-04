@@ -17,7 +17,7 @@ export default class OrdersController {
     })
   }
 
-  async show({ auth, params, inertia, bouncer }: HttpContext) {
+  async show({ auth, params, inertia, bouncer, response }: HttpContext) {
     const order = await Order.query()
       .where('id', params.id)
       .where('user_id', auth.user!.id)
@@ -25,6 +25,8 @@ export default class OrdersController {
       .preload('addresses')
       .firstOrFail()
     await bouncer.with('AccountOrderPolicy').authorize('view', order)
+    if (order.source === 'online')
+      return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })
 
     return inertia.render('account/orders/[id]', {
       order: OrderTransformer.transform(order),

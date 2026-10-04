@@ -12,7 +12,13 @@ defineProps<{ order: Data.Seller.Order }>()
     :transform="(data) => ({ ...data, note: data.note || null })"
     class="space-y-4"
   >
-    <UFormField name="financialStatus" label="Payment status" :error="errors.financialStatus"
+    <div v-if="order.source === 'online'" class="flex gap-2 flex-wrap">
+      <UBadge :label="order.financialStatus" variant="subtle" />
+      <UBadge :label="order.fulfillmentStatus" color="neutral" variant="subtle" />
+      <input type="hidden" name="financialStatus" :value="order.financialStatus" />
+      <input type="hidden" name="fulfillmentStatus" :value="order.fulfillmentStatus" />
+    </div>
+    <UFormField v-else name="financialStatus" label="Payment status" :error="errors.financialStatus"
       ><USelect
         name="financialStatus"
         :default-value="order.financialStatus"
@@ -20,6 +26,7 @@ defineProps<{ order: Data.Seller.Order }>()
         class="w-full"
     /></UFormField>
     <UFormField
+      v-if="order.source !== 'online'"
       name="fulfillmentStatus"
       label="Fulfillment status"
       :error="errors.fulfillmentStatus"
@@ -33,7 +40,11 @@ defineProps<{ order: Data.Seller.Order }>()
       ><UTextarea name="note" :default-value="order.note || ''" class="w-full" :rows="4"
     /></UFormField>
     <p class="text-xs text-muted">
-      Status changes record your manual payment and fulfillment updates.
+      {{
+        order.source === 'online'
+          ? 'Payment and shipping actions control the order status.'
+          : 'Status changes record your manual payment and fulfillment updates.'
+      }}
     </p>
     <UButton type="submit" label="Save changes" :loading="processing" :disabled="processing" />
   </Form>
