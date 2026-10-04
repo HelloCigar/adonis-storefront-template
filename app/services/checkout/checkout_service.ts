@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import type { Infer } from '@vinejs/vine/types'
@@ -63,6 +64,7 @@ export default class CheckoutService {
           )
         }
         const publicId = randomUUID()
+        const orderUrl = urlFor('checkout.orders.show', { publicId }, { prefixUrl: publicUrl })
         const attemptPublicId = randomUUID()
         const now = DateTime.utc()
         const deadline = Date.now() + checkout.reservationTtlMs
@@ -148,8 +150,8 @@ export default class CheckoutService {
                 })),
                 { name: 'Shipping', unitAmount: quote.shippingMinor, quantity: 1 },
               ],
-              successUrl: `${publicUrl}/checkout/orders/${publicId}`,
-              cancelUrl: `${publicUrl}/checkout/orders/${publicId}`,
+              successUrl: orderUrl,
+              cancelUrl: orderUrl,
               customer: {
                 email: input.email,
                 name: `${input.shipping.firstName} ${input.shipping.lastName}`,

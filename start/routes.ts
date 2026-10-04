@@ -46,6 +46,12 @@ router
 router
   .post('/payments/webhooks/:provider', [controllers.payments.Webhooks, 'store'])
   .as('payments.webhooks.store')
+router
+  .get('/_dev/paymongo/checkouts/:id', [controllers.payments.Simulations, 'show'])
+  .as('payments.simulations.show')
+router
+  .post('/_dev/paymongo/checkouts/:id', [controllers.payments.Simulations, 'store'])
+  .as('payments.simulations.store')
 
 router
   .group(() => {

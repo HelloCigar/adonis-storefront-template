@@ -188,6 +188,25 @@ export class CustomerAddressSchema extends BaseModel {
   declare zoneCode: string | null
 }
 
+export class DevPaymentResourceSchema extends BaseModel {
+  static $columns = ['id', 'idempotencyKey', 'inputHash', 'kind', 'payload', 'paymentId', 'version'] as const
+  $columns = DevPaymentResourceSchema.$columns
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare idempotencyKey: string
+  @column()
+  declare inputHash: string
+  @column()
+  declare kind: string
+  @column()
+  declare payload: string
+  @column()
+  declare paymentId: string | null
+  @column()
+  declare version: number
+}
+
 export class OrderAccessGrantSchema extends BaseModel {
   static $columns = ['createdAt', 'expiresAtMs', 'id', 'orderId', 'revokedAt', 'tokenHash', 'updatedAt'] as const
   $columns = OrderAccessGrantSchema.$columns

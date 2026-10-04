@@ -1,13 +1,15 @@
 import { BaseCommand } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 import AuditService from '#services/checkout/audit_service'
+import { inject } from '@adonisjs/core'
 
 export default class CheckoutAudit extends BaseCommand {
   static commandName = 'checkout:audit'
   static description = 'Read checkout, inventory and queue health without changing records'
   static options: CommandOptions = { startApp: true }
-  async run() {
-    const audit = await this.app.container.make(AuditService)
+
+  @inject()
+  async run(audit: AuditService) {
     const report = await audit.read()
     for (const [kind, ids] of Object.entries(report.issues)) {
       this.logger.info(

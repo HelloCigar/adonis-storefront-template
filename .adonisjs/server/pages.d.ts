@@ -28,6 +28,7 @@ declare module '@adonisjs/inertia/types' {
     'inbox': ExtractProps<(typeof import('../../inertia/pages/inbox.vue'))['default']>
     'index': ExtractProps<(typeof import('../../inertia/pages/index.vue'))['default']>
     'pages/[handle]': ExtractProps<(typeof import('../../inertia/pages/pages/[handle].vue'))['default']>
+    'payments/simulation': ExtractProps<(typeof import('../../inertia/pages/payments/simulation.vue'))['default']>
     'policies/[handle]': ExtractProps<(typeof import('../../inertia/pages/policies/[handle].vue'))['default']>
     'policies/index': ExtractProps<(typeof import('../../inertia/pages/policies/index.vue'))['default']>
     'product/[handle]': ExtractProps<(typeof import('../../inertia/pages/product/[handle].vue'))['default']>

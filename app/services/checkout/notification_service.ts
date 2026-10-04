@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 import { DateTime } from 'luxon'
 import mail from '@adonisjs/mail/services/main'
 import logger from '@adonisjs/core/services/logger'
@@ -29,10 +30,13 @@ export default class NotificationService {
       const order = await Order.findOrFail(row.orderId)
       const shipment = await Shipment.query().where('order_id', order.id).first()
       const grant = await this.access.issue(order.id)
-      const url = new URL(`/checkout/orders/${order.publicId}/access`, checkout.publicUrl)
-      url.searchParams.set('token', grant)
+      const url = urlFor(
+        'checkout.access.show',
+        { publicId: order.publicId! },
+        { prefixUrl: new URL(checkout.publicUrl ?? '').origin, qs: { token: grant } }
+      )
       // This service runs inside the durable notification job. Await delivery before acknowledging it.
-      await mail.send(new OrderNotification(order, row.kind, url.toString(), shipment, row.id))
+      await mail.send(new OrderNotification(order, row.kind, url, shipment, row.id))
       await Notification.query()
         .where('id', id)
         .where('claim_token', token)

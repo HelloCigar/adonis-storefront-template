@@ -40,6 +40,7 @@ import mail from '@adonisjs/mail/services/main'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
 import { ProductVariantFactory } from '../../database/factories/product_variant_factory.js'
 import { DateTime } from 'luxon'
+import checkoutConfig from '#config/checkout'
 
 const shipping = {
   firstName: 'Guest',
@@ -139,6 +140,10 @@ test.group('Online checkout workflow', (group) => {
     assert.equal(first.order.shippingMinor, 10000)
     assert.lengthOf(await Order.all(), 1)
     assert.lengthOf(await Attempt.all(), 1)
+    const attempt = await Attempt.findByOrFail('orderId', first.order.id)
+    const orderUrl = `${new URL(checkoutConfig.publicUrl!).origin}/checkout/orders/${first.order.publicId}`
+    assert.equal(attempt.requestSnapshot.successUrl, orderUrl)
+    assert.equal(attempt.requestSnapshot.cancelUrl, orderUrl)
     assert.lengthOf(await WorkflowOutbox.all(), 2)
     assert.isEmpty(adapter.calls)
     await variant.refresh()
@@ -402,9 +407,12 @@ test.group('Online checkout workflow', (group) => {
       await notifications.run(notification.id)
     }
     fakeMail.mails.assertSentCount(2)
-    fakeMail.mails.assertSent(OrderNotification, ({ message }) =>
-      message.hasTo('guest@example.com')
-    )
+    fakeMail.mails.assertSent(OrderNotification, ({ message }) => {
+      message.assertHtmlIncludes(
+        `${new URL(checkoutConfig.publicUrl!).origin}/checkout/orders/${order.publicId}/access?token=`
+      )
+      return message.hasTo('guest@example.com')
+    })
     const email = new OrderNotification(
       await Order.findOrFail(order.id),
       'receipt',

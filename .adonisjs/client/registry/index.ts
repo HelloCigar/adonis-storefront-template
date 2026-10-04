@@ -126,6 +126,18 @@ const routes = {
     tokens: [{"old":"/payments/webhooks/:provider","type":0,"val":"payments","end":""},{"old":"/payments/webhooks/:provider","type":0,"val":"webhooks","end":""},{"old":"/payments/webhooks/:provider","type":1,"val":"provider","end":""}],
     types: placeholder as Registry['payments.webhooks.store']['types'],
   },
+  'payments.simulations.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/_dev/paymongo/checkouts/:id',
+    tokens: [{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"_dev","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"paymongo","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"checkouts","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['payments.simulations.show']['types'],
+  },
+  'payments.simulations.store': {
+    methods: ["POST"],
+    pattern: '/_dev/paymongo/checkouts/:id',
+    tokens: [{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"_dev","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"paymongo","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"checkouts","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['payments.simulations.store']['types'],
+  },
   'new_account.create': {
     methods: ["GET","HEAD"],
     pattern: '/signup',

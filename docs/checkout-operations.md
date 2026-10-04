@@ -50,6 +50,21 @@ SMTP can accept a message before a worker loses its acknowledgement. Delivery ca
 
 ## Local verification
 
+### Local payment simulation
+
+1. Set `NODE_ENV=development`, `PAYMENT_PROVIDER=fake_paymongo`, `QUEUE_DRIVER=database`, and `APP_URL` to the origin you use in the browser in `.env`. Leave PayMongo credentials empty. Run `node ace migration:run` to add the persistent simulator resource table.
+2. Restart `npm run dev` and start a worker with the same environment/database:
+
+   ```sh
+   node ace queue:work --queue=maintenance,payments,notifications --concurrency=1
+   ```
+
+3. Add an in-stock product, submit guest checkout, wait for the payment job, and click **Pay now**. The local simulator offers **Simulate successful payment**, **Simulate failed payment**, **Expire checkout**, and **Pay without notification**. A failed payment keeps the stock hold and allows another try. Expiry closes the checkout and releases the hold. A successful payment consumes stock once and creates a receipt intent; paying without notification is recovered by the normal payment lookup.
+4. Sign in as staff to pack and ship a paid order. To test refunds, cancel a separate paid, unshipped order; the worker confirms its fake refund and the normal order balance updates. Simulator data survives web/worker restarts. Switching the provider affects new orders; re-enable `fake_paymongo` before reconciling older simulated orders.
+5. Run Mailpit on `localhost:1025` (or configure another local SMTP sink) to inspect receipts and shipment emails. Payment simulation does not fake mail delivery. Without SMTP, notification jobs retry independently while payments and fulfillment continue.
+
+Production rejects `PAYMENT_PROVIDER=fake_paymongo` at startup, and simulator endpoints return 404 when the feature is disabled. Set `PAYMENT_PROVIDER=paymongo` to exercise the real provider's test mode. Simulated observations exercise application workflows, while provider HTTP requests and webhook signatures are covered separately by adapter tests and PayMongo test mode.
+
 ```sh
 node ace test unit functional
 node ace test browser

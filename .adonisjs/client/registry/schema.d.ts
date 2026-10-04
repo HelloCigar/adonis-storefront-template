@@ -247,6 +247,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/webhooks_controller').default['store']>>>
     }
   }
+  'payments.simulations.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/_dev/paymongo/checkouts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['show']>>>
+    }
+  }
+  'payments.simulations.store': {
+    methods: ["POST"]
+    pattern: '/_dev/paymongo/checkouts/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/payments/simulation').simulationValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/payments/simulation').simulationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'

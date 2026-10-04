@@ -24,6 +24,8 @@ export type ScannedRoutes = {
     'checkout.cancellations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.reconciliations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'payments.webhooks.store': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'payments.simulations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
@@ -88,6 +90,7 @@ export type ScannedRoutes = {
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
+    'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'account.show': { paramsTuple?: []; params?: {} }
@@ -121,6 +124,7 @@ export type ScannedRoutes = {
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
+    'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'account.show': { paramsTuple?: []; params?: {} }
@@ -148,6 +152,7 @@ export type ScannedRoutes = {
     'checkout.cancellations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.reconciliations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'payments.webhooks.store': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
+    'payments.simulations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'account.addresses.create': { paramsTuple?: []; params?: {} }

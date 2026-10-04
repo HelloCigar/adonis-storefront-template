@@ -39,6 +39,14 @@ Use `.env.example` as the configuration reference:
 
 Credentials use Adonis `Secret` values. Missing credentials permit application boot but block new checkout with a sanitized configuration error. The adapter creates v2 checkout sessions and uses the documented v1 lookup/expiry/refund endpoints. An active hosted session becomes normalized `paid` only when it contains a captured payment.
 
+## Local payment simulator
+
+Set `PAYMENT_PROVIDER=fake_paymongo` with `NODE_ENV=development`, run `node ace migration:run`, and restart both the web server and queue worker. Keep `APP_URL` set to the origin you open in the browser. No PayMongo keys or external webhook tunnel are needed. The worker command and full walkthrough are in [checkout operations](docs/checkout-operations.md#local-payment-simulation).
+
+“Pay now” opens a local Fake PayMongo page where you can simulate a successful payment, a failed payment followed by a retry, expiry, or payment without a notification. Success passes normalized observations through the existing settlement service; lookup recovers missed notifications. Guest cancellation and staff fulfillment/refunds retain their normal authorization and transaction guards. Fake refund requests succeed through the normal queued refund operation.
+
+Simulator resources and idempotency keys live in `dev_payment_resources`, shared by the web and worker processes and preserved across restarts. The adapter uses its own `fake_paymongo` provider identity and never contacts PayMongo. Its page requires the unguessable checkout reference, retains CSRF protection, and exposes neither customer data nor operation keys. It returns 404 when disabled or outside development/tests; selecting it in production prevents application startup. The simulator does not reproduce PayMongo's HTTP payloads, signature validation, account rules, or bank/network behavior; use PayMongo test mode to verify that integration before release.
+
 ## Mutation and settlement rules
 
 Payment HTTP calls happen outside database transactions. Before a mutation, a durable operation records an unknown outcome and a lease. Successful processing checks the operation owner and commits domain changes atomically. A browser return never marks an order paid.

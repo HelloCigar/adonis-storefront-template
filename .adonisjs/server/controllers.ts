@@ -34,6 +34,7 @@ export const controllers = {
     Inbox: () => import('#controllers/dashboard/inbox_controller'),
   },
   payments: {
+    Simulations: () => import('#controllers/payments/simulations_controller'),
     Webhooks: () => import('#controllers/payments/webhooks_controller'),
   },
   seller: {

@@ -49,6 +49,10 @@ export interface ApiDefinition {
     webhooks: {
       store: typeof routes['payments.webhooks.store']
     }
+    simulations: {
+      show: typeof routes['payments.simulations.show']
+      store: typeof routes['payments.simulations.store']
+    }
   }
   newAccount: {
     create: typeof routes['new_account.create']
