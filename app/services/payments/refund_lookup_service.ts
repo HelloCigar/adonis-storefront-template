@@ -32,12 +32,18 @@ export default class RefundLookupService {
       const key = `refund-lookup:${row.id}:${eventKey}`
       if (await WorkflowOutbox.query({ client: trx }).where('operation_key', key).first())
         return row
-      if (row.state === 'resolved') {
-        row.state = 'pending'
-        await row.save()
-      }
-      if (row.state !== 'review_required')
+      if (row.state !== 'review_required') {
+        // A new notification supersedes an in-flight lookup's completion. Its queued
+        // job can claim immediately; the old token can no longer resolve this work.
+        await RefundLookup.query({ client: trx }).where('id', row.id).update({
+          state: 'pending',
+          claimToken: null,
+          claimExpiresAtMs: null,
+          lastError: null,
+        })
+        await row.refresh()
         await this.outbox.record(trx, { key, kind: 'lookup_refund', entityId: row.id })
+      }
       return row
     })
   }
@@ -68,12 +74,18 @@ export default class RefundLookupService {
       await RefundLookup.query()
         .where('id', id)
         .where('claim_token', token)
-        .update({ state: 'resolved', claimToken: null, claimExpiresAtMs: null, lastError: null })
+        .update({
+          state: result.status === 'pending' ? 'pending' : 'resolved',
+          claimToken: null,
+          claimExpiresAtMs: null,
+          lastError: null,
+        })
     } catch {
-      await RefundLookup.query()
+      const released = await RefundLookup.query()
         .where('id', id)
         .where('claim_token', token)
         .update({ claimToken: null, claimExpiresAtMs: null, lastError: 'E_REFUND_LOOKUP' })
+      if (affectedRows(released) !== 1) return
       throw new Error('Refund resource lookup failed')
     }
   }

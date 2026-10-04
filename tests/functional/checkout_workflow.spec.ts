@@ -28,6 +28,7 @@ import Shipment from '#models/checkout/shipment'
 import RefundObservation from '#models/payments/refund_observation'
 import RefundLookup from '#models/payments/refund_lookup'
 import RefundLookupService from '#services/payments/refund_lookup_service'
+import SimulationService from '#services/payments/simulation_service'
 import PayMongoService from '#services/payments/paymongo_service'
 import AuditService from '#services/checkout/audit_service'
 import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
@@ -682,6 +683,216 @@ test.group('Online checkout workflow', (group) => {
     await refunds.run(loadedrefunds28.id)
     assert.equal(adapter.refunds.size, 1)
     assert.isEmpty(replacement.calls)
+  })
+
+  test('the simulation workflow reads and reconciles through the unified payment interface', async ({
+    assert,
+  }) => {
+    const { checkout, token, input, variant } = await submission()
+    const { order } = await checkout.submit(token, undefined, input)
+    const attempt = await Attempt.findByOrFail('orderId', order.id)
+    const recovery = await app.container.make(RecoveryService)
+    await recovery.run(attempt.id)
+    await attempt.refresh()
+    const reference = { provider: adapter.provider, id: attempt.externalId! }
+    const simulations = await app.container.make(SimulationService)
+    const view = await simulations.show(reference)
+    assert.equal(view.reference, order.publicId)
+    assert.equal(view.amountMinor, 109800)
+    const session = adapter.sessions.get(reference.id)!
+    session.status = 'paid'
+    session.payments = [
+      { id: 'simulation-capture', amount: 109800, currency: 'PHP', status: 'paid' },
+    ]
+    await simulations.update(reference)
+    await simulations.update(reference)
+    await order.refresh()
+    await variant.refresh()
+    assert.equal(order.lifecycleState, 'confirmed')
+    assert.equal(variant.inventoryQuantity, 0)
+    assert.lengthOf(await Payment.all(), 1)
+  })
+
+  test('a concurrent stale failure cannot undo refund success or allow a second full refund', async ({
+    assert,
+  }) => {
+    const { order } = await capturedSubmission(adapter)
+    const staff = await UserFactory.merge({ role: 'staff' }).create()
+    const refunds = await app.container.make(RefundService)
+    const operation = await refunds.requestFull(order.id, staff)
+    await refunds.run(operation.id)
+    await operation.refresh()
+    const remote = adapter.refunds.get(operation.externalId!)!
+    let signalRead!: () => void
+    const read = new Promise<void>((resolve) => {
+      signalRead = resolve
+    })
+    let resumeStale!: () => void
+    const resume = new Promise<void>((resolve) => {
+      resumeStale = resolve
+    })
+    const original = RefundObservation.firstOrCreate
+    // Hold an older observation after its real DB read, while the successful event commits.
+    RefundObservation.firstOrCreate = async function (
+      this: typeof RefundObservation,
+      ...args: Parameters<typeof original>
+    ) {
+      const observation = await original.apply(this, args)
+      if ((args[1] as Partial<RefundObservation> | undefined)?.state === 'failed') {
+        signalRead()
+        await resume
+      }
+      return observation
+    } as typeof original
+    let stale: Promise<void> | undefined
+    try {
+      stale = refunds.apply({ ...remote, status: 'failed' })
+      await read
+      await refunds.apply({ ...remote, status: 'succeeded' })
+      resumeStale()
+      await stale
+      const observation = await RefundObservation.findByOrFail('externalId', remote.id)
+      await operation.refresh()
+      await order.refresh()
+      assert.equal(observation.state, 'succeeded')
+      assert.equal(operation.state, 'succeeded')
+      assert.equal(order.financialStatus, 'refunded')
+      await assert.rejects(
+        () => refunds.requestFull(order.id, staff),
+        'This payment is already refunded'
+      )
+      assert.lengthOf(await order.related('refunds').query(), 1)
+    } finally {
+      resumeStale()
+      await stale?.catch(() => {})
+      RefundObservation.firstOrCreate = original
+    }
+  })
+
+  for (const earlierStatus of ['pending', 'failed'] as const) {
+    test(`a sparse refund update received during a ${earlierStatus} lookup is fetched by its queued job`, async ({
+      assert,
+    }) => {
+      const { order } = await capturedSubmission(adapter)
+      const reference = { provider: adapter.provider, id: 'lookup-race-refund' }
+      adapter.refunds.set(reference.id, {
+        ...reference,
+        paymentId: 'captured-fixture',
+        amount: 109800,
+        currency: 'PHP',
+        status: earlierStatus,
+        liveMode: false,
+      })
+      const lookups = await app.container.make(RefundLookupService)
+      const row = await lookups.request(reference, false, 'first-event')
+      let signalFetched!: () => void
+      const fetched = new Promise<void>((resolve) => {
+        signalFetched = resolve
+      })
+      let releaseResponse!: () => void
+      const responseReady = new Promise<void>((resolve) => {
+        releaseResponse = resolve
+      })
+      const original = adapter.getRefund.bind(adapter)
+      adapter.getRefund = async (id) => {
+        const response = await original(id)
+        signalFetched()
+        await responseReady
+        return response
+      }
+      const firstLookup = lookups.run(row.id)
+      try {
+        await fetched
+        adapter.refunds.get(reference.id)!.status = 'succeeded'
+        await lookups.request(reference, false, 'second-event')
+        releaseResponse()
+        await firstLookup
+        adapter.getRefund = original
+        await lookups.run(row.id)
+        await row.refresh()
+        await order.refresh()
+        const observation = await RefundObservation.findByOrFail('externalId', reference.id)
+        assert.equal(row.state, 'resolved')
+        assert.equal(observation.state, 'succeeded')
+        assert.equal(order.financialStatus, 'refunded')
+      } finally {
+        releaseResponse()
+        await firstLookup.catch(() => {})
+        adapter.getRefund = original
+      }
+    })
+  }
+
+  test('a processing refund remains eligible for lookup without another webhook', async ({
+    assert,
+  }) => {
+    const { order } = await capturedSubmission(adapter)
+    const reference = { provider: adapter.provider, id: 'processing-refund' }
+    adapter.refunds.set(reference.id, {
+      ...reference,
+      paymentId: 'captured-fixture',
+      amount: 109800,
+      currency: 'PHP',
+      status: 'pending',
+      liveMode: false,
+    })
+    const lookups = await app.container.make(RefundLookupService)
+    const row = await lookups.request(reference, false, 'processing-event')
+    await lookups.run(row.id)
+    await row.refresh()
+    assert.equal(row.state, 'pending')
+    adapter.refunds.get(reference.id)!.status = 'succeeded'
+    await lookups.run(row.id)
+    await row.refresh()
+    await order.refresh()
+    assert.equal(row.state, 'resolved')
+    assert.equal(order.financialStatus, 'refunded')
+  })
+
+  test('a superseded lookup failure cannot retry or mark newer successful work for review', async ({
+    assert,
+  }) => {
+    const reference = { provider: adapter.provider, id: 'superseded-refund' }
+    adapter.refunds.set(reference.id, {
+      ...reference,
+      paymentId: 'unknown-capture',
+      amount: 100,
+      currency: 'PHP',
+      status: 'succeeded',
+      liveMode: false,
+    })
+    const lookups = await app.container.make(RefundLookupService)
+    const row = await lookups.request(reference, false, 'first-event')
+    let signalFetched!: () => void
+    const fetched = new Promise<void>((resolve) => {
+      signalFetched = resolve
+    })
+    let releaseFailure!: () => void
+    const failureReady = new Promise<void>((resolve) => {
+      releaseFailure = resolve
+    })
+    const original = adapter.getRefund.bind(adapter)
+    adapter.getRefund = async () => {
+      signalFetched()
+      await failureReady
+      throw new Error('Earlier provider lookup failed')
+    }
+    const firstLookup = lookups.run(row.id)
+    try {
+      await fetched
+      await lookups.request(reference, false, 'second-event')
+      adapter.getRefund = original
+      await lookups.run(row.id)
+      releaseFailure()
+      await firstLookup
+      await row.refresh()
+      assert.equal(row.state, 'resolved')
+      assert.isNull(row.lastError)
+    } finally {
+      releaseFailure()
+      await firstLookup.catch(() => {})
+      adapter.getRefund = original
+    }
   })
 
   test('signed PayMongo HTTP webhooks settle without a browser return and sparse refunds only enqueue a lookup', async ({

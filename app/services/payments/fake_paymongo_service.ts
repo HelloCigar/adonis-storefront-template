@@ -2,7 +2,6 @@ import { createHash, randomUUID } from 'node:crypto'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-import paymentConfig from '#config/payment'
 import checkoutConfig from '#config/checkout'
 import PaymentException from '#exceptions/payment_exception'
 import {
@@ -37,7 +36,7 @@ export default class FakePayMongoService implements PaymentAdapter {
   readonly idempotencyScope = 'local-fake-paymongo-v1'
 
   assertEnabled() {
-    if ((!app.inDev && !app.inTest) || paymentConfig.defaultProvider !== this.provider)
+    if (!app.inDev && !app.inTest)
       throw new PaymentException('Payment simulator is unavailable', {
         code: 'E_PAYMENT_SIMULATOR_DISABLED',
         status: 404,

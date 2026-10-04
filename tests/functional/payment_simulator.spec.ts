@@ -7,6 +7,8 @@ import paymentConfig from '#config/payment'
 import PaymentProvider from '#providers/payment_provider'
 import PaymentService from '#services/payments/payment_service'
 import FakePayMongoService from '#services/payments/fake_paymongo_service'
+import DispatcherService from '#services/payments/dispatcher_service'
+import FakePaymentAdapter from '../helpers/fake_payment_adapter.js'
 import RecoveryService from '#services/payments/recovery_service'
 import FulfillmentService from '#services/checkout/fulfillment_service'
 import RefundService from '#services/payments/refund_service'
@@ -223,7 +225,7 @@ test.group('Development payment simulator', (group) => {
     assert.lengthOf(await db.from('dev_payment_resources').where('kind', 'refund'), 1)
   })
 
-  test('rejects invalid mutations, unknown resources, and disabled simulator access', async ({
+  test('rejects invalid mutations, unknown resources, and unauthenticated fake webhooks', async ({
     client,
   }) => {
     const { attempt } = await simulatedCheckout()
@@ -240,11 +242,47 @@ test.group('Development payment simulator', (group) => {
       .post('/payments/webhooks/fake_paymongo')
       .json({ type: 'checkout.paid' })
     webhook.assertStatus(404)
+  })
+
+  test('switching the default preserves saved fake checkout controls, reconciliation and refunds', async ({
+    assert,
+    client,
+  }) => {
+    const { order, attempt } = await simulatedCheckout()
     paymentConfig.defaultProvider = 'paymongo'
-    const disabled = await client.get(path).withInertia()
-    disabled.assertStatus(404)
-    const mutation = await client.post(path).withCsrfToken().form({ outcome: 'paid' }).redirects(0)
-    mutation.assertStatus(404)
+    const next = new FakePaymentAdapter('paymongo')
+    app.container.swap(
+      PaymentService,
+      () => new DispatcherService(next.provider, [new FakePayMongoService(), next])
+    )
+    try {
+      const payments = await app.container.make(PaymentService)
+      assert.equal(payments.getProvider().provider, 'paymongo')
+      const reference = { provider: attempt.provider, id: attempt.externalId! }
+      const savedCheckout = await payments.getCheckout(reference)
+      assert.equal(savedCheckout.id, attempt.externalId)
+      const path = new URL(attempt.checkoutUrl!).pathname
+      const page = await client.get(path).withInertia()
+      page.assertStatus(200)
+      const paid = await client.post(path).withCsrfToken().form({ outcome: 'paid' }).redirects(0)
+      paid.assertStatus(302)
+      await order.refresh()
+      assert.equal(order.lifecycleState, 'confirmed')
+      const staff = await UserFactory.merge({ role: 'staff' }).create()
+      const refunds = await app.container.make(RefundService)
+      const operation = await refunds.requestFull(order.id, staff)
+      await refunds.run(operation.id)
+      await operation.refresh()
+      assert.equal(operation.state, 'succeeded')
+      const savedRefund = await payments.getRefund({
+        provider: operation.provider,
+        id: operation.externalId!,
+      })
+      assert.equal(savedRefund.status, 'succeeded')
+      assert.isEmpty(next.calls)
+    } finally {
+      app.container.restore(PaymentService)
+    }
   })
 
   test('refuses to boot a production app configured for the simulator', async ({ assert }) => {

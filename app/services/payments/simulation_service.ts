@@ -1,19 +1,19 @@
 import { inject } from '@adonisjs/core'
-import FakePayMongoService from '#services/payments/fake_paymongo_service'
-import SettlementService from '#services/payments/settlement_service'
+import PaymentService, { type PaymentReference } from '#services/payments/payment_service'
 import RecoveryService from '#services/payments/recovery_service'
 import Attempt from '#models/payments/attempt'
 
 @inject()
 export default class SimulationService {
   constructor(
-    private gateway: FakePayMongoService,
-    private settlement: SettlementService,
+    private payments: PaymentService,
     private recovery: RecoveryService
   ) {}
 
-  async show(id: string) {
-    const { input, session } = await this.gateway.inspectCheckout(id)
+  async show(reference: PaymentReference) {
+    const session = await this.payments.getCheckout(reference)
+    const attempt = await this.attempt(reference, session.liveMode)
+    const input = attempt.requestSnapshot
     return {
       id: session.id,
       reference: session.reference!,
@@ -24,20 +24,15 @@ export default class SimulationService {
     }
   }
 
-  async update(id: string, outcome: 'paid' | 'failed' | 'expired' | 'paid_without_notification') {
-    const checkout = await this.gateway.changeCheckout(
-      id,
-      outcome === 'paid_without_notification' ? 'paid' : outcome
-    )
-    // Use the same normalized settlement boundary as verified webhooks. Never write order status here.
-    if (checkout.status === 'paid' && outcome !== 'paid_without_notification')
-      await this.settlement.apply(checkout)
-    else if (checkout.status === 'expired') {
-      const attempt = await Attempt.query()
-        .where({ provider: checkout.provider, externalId: checkout.id })
-        .first()
-      if (attempt) await this.recovery.run(attempt.id)
-    }
-    return checkout
+  async update(reference: PaymentReference) {
+    const provider = this.payments.getProvider(reference.provider)
+    const attempt = await this.attempt(reference, provider.liveMode)
+    await this.recovery.run(attempt.id)
+  }
+
+  private attempt(reference: PaymentReference, liveMode: boolean) {
+    return Attempt.query()
+      .where({ provider: reference.provider, externalId: reference.id, liveMode })
+      .firstOrFail()
   }
 }

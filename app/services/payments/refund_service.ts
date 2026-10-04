@@ -204,10 +204,12 @@ export default class RefundService {
         422
       )
     }
-    if (observation.state !== 'succeeded') {
-      observation.state = result.status
-      await observation.save()
-    }
+    // Check persisted state in the write, since another notification may have succeeded
+    // after firstOrCreate read this observation.
+    await RefundObservation.query()
+      .where('id', observation.id)
+      .whereNot('state', 'succeeded')
+      .update({ state: result.status })
     const query = RefundOperation.query()
       .where('provider', result.provider)
       .where('live_mode', result.liveMode)
@@ -254,24 +256,25 @@ export default class RefundService {
         })
         return
       }
+      observation.useTransaction(trx)
+      await observation.refresh()
       if (
         refund.state === 'succeeded' ||
-        (refund.state === 'failed' && result.status !== 'succeeded')
+        (refund.state === 'failed' && observation.state !== 'succeeded')
       )
         return
       // A verified success wins over an earlier failed/out-of-order notification.
-      refund.state = result.status
+      refund.state = observation.state
       refund.externalId = result.id
       refund.claimToken = null
       refund.claimExpiresAtMs = null
       refund.lastError = null
       refund.needsReview = false
       await refund.save()
-      observation.useTransaction(trx)
       observation.refundOperationId = refund.id
       await observation.save()
       await this.balance(trx, refund.orderId)
-      await this.activities.record(trx, refund.orderId, `refund.${result.status}`, {
+      await this.activities.record(trx, refund.orderId, `refund.${refund.state}`, {
         refundId: refund.id,
         amountMinor: refund.amountMinor,
       })

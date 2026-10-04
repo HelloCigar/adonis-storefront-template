@@ -11,6 +11,8 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
+const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
+
 router.get('/', [controllers.storefront.Storefront, 'index']).as('home')
 router.get('/collections', [controllers.storefront.Collections, 'index']).as('collections.index')
 router
@@ -47,10 +49,10 @@ router
   .post('/payments/webhooks/:provider', [controllers.payments.Webhooks, 'store'])
   .as('payments.webhooks.store')
 router
-  .get('/_dev/paymongo/checkouts/:id', [controllers.payments.Simulations, 'show'])
+  .get('/_dev/paymongo/checkouts/:id', [FakePayMongoController, 'show'])
   .as('payments.simulations.show')
 router
-  .post('/_dev/paymongo/checkouts/:id', [controllers.payments.Simulations, 'store'])
+  .post('/_dev/paymongo/checkouts/:id', [FakePayMongoController, 'store'])
   .as('payments.simulations.store')
 
 router

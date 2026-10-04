@@ -255,8 +255,8 @@ export interface Registry {
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['show']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['show']>>>
     }
   }
   'payments.simulations.store': {
@@ -267,8 +267,8 @@ export interface Registry {
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/payments/simulation').simulationValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['store']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments/simulations_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+      response: ExtractResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'new_account.create': {
