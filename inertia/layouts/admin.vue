@@ -28,7 +28,6 @@ const links = computed(
           label: 'Inbox',
           icon: 'i-lucide-inbox',
           to: urlFor('inbox'),
-          badge: '4',
           onSelect: () => {
             open.value = false
           },

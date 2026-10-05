@@ -1,4 +1,5 @@
 import vine from '@vinejs/vine'
+import { emailAddress } from '#validators/shared/email'
 
 const address = vine.object({
   firstName: vine.string().trim().minLength(1).maxLength(100),
@@ -16,7 +17,7 @@ export const checkoutValidator = vine.create({
   submissionKey: vine.string().uuid(),
   cartVersion: vine.number().withoutDecimals().min(0),
   quoteFingerprint: vine.string().regex(/^[a-f0-9]{64}$/),
-  email: vine.string().trim().email().maxLength(254).normalizeEmail(),
+  email: emailAddress(),
   shipping: address,
   billing: address.clone().optional(),
   note: vine.string().trim().maxLength(1000).optional(),

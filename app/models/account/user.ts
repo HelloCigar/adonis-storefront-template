@@ -3,7 +3,7 @@ import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { attachment, type AttachmentRelation } from '@jrmc/adonis-attachment/lucid'
-import { belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import { beforeSave, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Cart from '#models/checkout/cart'
 import CustomerAddress from '#models/account/customer_address'
@@ -14,6 +14,12 @@ export type UserRole = (typeof userRoles)[number]
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
   declare role: UserRole
+
+  /** Email lookups are exact, so every write path stores the canonical form. */
+  @beforeSave()
+  static normalizeEmail(user: User) {
+    if (user.$dirty.email) user.email = user.email.trim().toLowerCase()
+  }
 
   get isStoreStaff() {
     return this.role === 'staff' || this.role === 'admin'

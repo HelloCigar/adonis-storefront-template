@@ -434,9 +434,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/dashboard/summary').dashboardQueryValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/dashboard/dashboard_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/dashboard/dashboard_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/dashboard/dashboard_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'inbox': {

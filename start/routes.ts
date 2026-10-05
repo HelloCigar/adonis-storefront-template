@@ -10,6 +10,7 @@
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
+import { checkoutThrottle, loginThrottle, signupThrottle } from '#start/limiter'
 
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
@@ -28,7 +29,10 @@ router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add'
 router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
 router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
 router.get('/checkout', [controllers.checkout.Checkout, 'create']).as('checkout.create')
-router.post('/checkout', [controllers.checkout.Checkout, 'store']).as('checkout.store')
+router
+  .post('/checkout', [controllers.checkout.Checkout, 'store'])
+  .as('checkout.store')
+  .use(checkoutThrottle)
 router
   .get('/checkout/orders/:publicId/access', [controllers.checkout.OrderAccess, 'show'])
   .as('checkout.access.show')
@@ -58,10 +62,13 @@ router
 router
   .group(() => {
     router.get('signup', [controllers.auth.NewAccount, 'create']).as('new_account.create')
-    router.post('signup', [controllers.auth.NewAccount, 'store']).as('new_account.store')
+    router
+      .post('signup', [controllers.auth.NewAccount, 'store'])
+      .as('new_account.store')
+      .use(signupThrottle)
 
     router.get('login', [controllers.auth.Session, 'create']).as('session.create')
-    router.post('login', [controllers.auth.Session, 'store']).as('session.store')
+    router.post('login', [controllers.auth.Session, 'store']).as('session.store').use(loginThrottle)
   })
   .use(middleware.guest())
 

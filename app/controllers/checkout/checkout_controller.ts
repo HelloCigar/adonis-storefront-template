@@ -5,6 +5,7 @@ import { errors } from '@vinejs/vine'
 import CartService from '#services/checkout/cart_service'
 import QuoteService from '#services/checkout/quote_service'
 import CheckoutService from '#services/checkout/checkout_service'
+import OrderAccessService from '#services/checkout/order_access_service'
 import { checkoutValidator } from '#validators/checkout/checkout'
 import CheckoutException from '#exceptions/checkout_exception'
 import PaymentException from '#exceptions/payment_exception'
@@ -15,7 +16,8 @@ export default class CheckoutController {
   constructor(
     private carts: CartService,
     private quotes: QuoteService,
-    private checkout: CheckoutService
+    private checkout: CheckoutService,
+    private access: OrderAccessService
   ) {}
 
   async create({ session, auth, inertia }: HttpContext) {
@@ -48,12 +50,13 @@ export default class CheckoutController {
     try {
       const result = await this.checkout.submit(token, auth.user?.id, input)
       const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
-      grants[result.order.publicId!] = result.token
-      session.put('store_order_grants', Object.fromEntries(Object.entries(grants).slice(-20)))
-      previous[input.submissionKey] = token
+      session.put(
+        'store_order_grants',
+        this.access.remember(grants, result.order.publicId!, result.token)
+      )
       session.put(
         'store_checkout_submissions',
-        Object.fromEntries(Object.entries(previous).slice(-20))
+        this.access.remember(previous, input.submissionKey, token)
       )
       session.put('store_cart_token', randomUUID())
       return response

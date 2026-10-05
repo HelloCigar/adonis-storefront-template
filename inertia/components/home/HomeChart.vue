@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, ref, watch } from 'vue'
-import { eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format } from 'date-fns'
+import { computed, useTemplateRef } from 'vue'
+import { format, parseISO } from 'date-fns'
 import { VisXYContainer, VisLine, VisAxis, VisArea, VisCrosshair, VisTooltip } from '@unovis/vue'
 import { useElementSize } from '@vueuse/core'
-import type { Period, Range } from '../../types'
+import type { Data } from '@generated/data'
+import type { Period } from '../../types'
+import { orderMoney } from '~/components/seller/orders/presentation'
 
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
 
 const props = defineProps<{
+  chart: Data.Dashboard.Summary['chart']
   period: Period
-  range: Range
+  currency: string
 }>()
 
 type DataRecord = {
@@ -19,28 +22,8 @@ type DataRecord = {
 
 const { width } = useElementSize(cardRef)
 
-const data = ref<DataRecord[]>([])
-
-watch(
-  [() => props.period, () => props.range],
-  () => {
-    const dates = (
-      {
-        daily: eachDayOfInterval,
-        weekly: eachWeekOfInterval,
-        monthly: eachMonthOfInterval,
-      } as Record<Period, typeof eachDayOfInterval>
-    )[props.period](props.range)
-
-    const min = 1000
-    const max = 10000
-
-    data.value = dates.map((date) => ({
-      date,
-      amount: Math.floor(Math.random() * (max - min + 1)) + min,
-    }))
-  },
-  { immediate: true }
+const data = computed<DataRecord[]>(() =>
+  props.chart.map((bucket) => ({ date: parseISO(bucket.date), amount: bucket.amount }))
 )
 
 const x = (_: DataRecord, i: number) => i
@@ -48,11 +31,7 @@ const y = (d: DataRecord) => d.amount
 
 const total = computed(() => data.value.reduce((acc: number, { amount }) => acc + amount, 0))
 
-const formatNumber = new Intl.NumberFormat('en', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-}).format
+const formatNumber = (amount: number) => orderMoney(amount, props.currency)
 
 const formatDate = (date: Date): string => {
   return {
@@ -77,7 +56,7 @@ const template = (d: DataRecord) => `${formatDate(d.date)}: ${formatNumber(d.amo
   <UCard ref="cardRef" :ui="{ root: 'overflow-visible', body: 'px-0! pt-0! pb-3!' }">
     <template #header>
       <div>
-        <p class="text-xs text-muted uppercase mb-1.5">Revenue</p>
+        <p class="text-xs text-muted uppercase mb-1.5">Gross sales</p>
         <p class="text-3xl text-highlighted font-semibold">
           {{ formatNumber(total) }}
         </p>
