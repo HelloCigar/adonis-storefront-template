@@ -166,15 +166,15 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/orders/${order.id}`)
     await page
-      .getByRole('heading', { name: 'Resolve the dispatch blockers', exact: true })
+      .getByRole('heading', { name: 'Reconcile the payment checkout', exact: true })
       .waitFor()
-    await page.getByText(order.reviewReason, { exact: true }).waitFor()
+    await page.getByText(order.reviewReason).waitFor()
     assert.equal(await page.getByRole('button', { name: 'Start packing', exact: true }).count(), 0)
     assert.equal(
       await page.getByRole('button', { name: 'Mark as shipped', exact: true }).count(),
       0
     )
-    await page.getByRole('button', { name: 'Reconcile payment', exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Recheck payment with provider', exact: true }).waitFor()
     await page.getByRole('button', { name: 'Accept', exact: true }).click()
     await page.waitForLoadState('networkidle')
     await mkdir('.impeccable/review', { recursive: true })
@@ -187,7 +187,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page.getByText('Recovery requested', { exact: true }).waitFor()
     await notification.refresh()
     assert.equal(notification.state, 'pending')
-    await page.getByRole('button', { name: 'Reconcile payment', exact: true }).click()
+    await page.getByRole('button', { name: 'Recheck payment with provider', exact: true }).click()
     await page.getByText('Recovery requested', { exact: true }).waitFor()
     await attempt.refresh()
     assert.isFalse(attempt.needsReview)

@@ -74,6 +74,7 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
         event: activity.event,
         createdAt: activity.createdAt,
         actorId: activity.actorId,
+        actorName: activity.actor ? activity.actor.fullName || activity.actor.email : null,
         details: activity.details,
       })),
     }

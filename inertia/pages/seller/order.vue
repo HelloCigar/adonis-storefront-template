@@ -12,7 +12,7 @@ const props = defineProps<{
   order: Data.Seller.Order
   operations: Data.Seller.OrderOperations | null
 }>()
-const { busy, error, uncertain, requestOptions } = provideOrderInteraction()
+const { busy, error, uncertain, announcement, requestOptions } = provideOrderInteraction()
 const refreshing = ref(false)
 const refresh = () =>
   router.reload({
@@ -36,9 +36,23 @@ const refresh = () =>
     onNetworkError: requestOptions.onNetworkError,
   })
 const label = orderLabel
+// Online orders show only lifecycle states the fulfillment strip cannot express.
+const showBadges = computed(
+  () =>
+    props.order.source !== 'online' ||
+    ['review_required', 'cancelled', 'expired'].includes(props.order.lifecycleState)
+)
 const money = (amount: number) => orderMoney(amount, props.order.currencyCode)
 const quantity = computed(
   () => props.order.lineItems?.reduce((total, item) => total + item.quantity, 0) || 0
+)
+const totals = computed(() =>
+  [
+    { label: 'Subtotal', amount: props.order.subtotalAmount, always: true },
+    { label: 'Discount', amount: -props.order.discountAmount, always: false },
+    { label: 'Shipping', amount: props.order.shippingAmount, always: true },
+    { label: 'Tax', amount: props.order.taxAmount, always: false },
+  ].filter((row) => row.always || row.amount !== 0)
 )
 const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
   { accessorKey: 'title', header: 'Product' },
@@ -55,11 +69,11 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
   <Head :title="`Order ${order.number}`" />
   <UDashboardPanel
     id="order"
-    class="[--ui-primary:var(--ui-color-primary-700)] dark:[--ui-primary:var(--ui-color-primary-400)] [&_.bg-primary:hover]:bg-primary-800 dark:[&_.bg-primary:hover]:bg-primary/75"
+    class="[--ui-primary:var(--ui-color-primary-700)] [--ui-warning:var(--ui-color-warning-700)] [--ui-error:var(--ui-color-error-700)] dark:[--ui-primary:var(--ui-color-primary-400)] dark:[--ui-warning:var(--ui-color-warning-400)] dark:[--ui-error:var(--ui-color-error-400)] [&_.bg-primary:hover]:bg-primary-800 dark:[&_.bg-primary:hover]:bg-primary/75"
     :ui="{ body: 'gap-8 sm:gap-8' }"
   >
     <template #header>
-      <UDashboardNavbar :title="order.number">
+      <UDashboardNavbar title="Order details">
         <template #leading><UDashboardSidebarCollapse /></template>
         <template #right
           ><UButton
@@ -91,33 +105,41 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
                 · Placed {{ orderDate(order.processedAt) }} (Philippine time)</span
               >
             </p>
-            <div class="flex flex-wrap gap-2 mt-3">
+            <div v-if="showBadges" class="flex flex-wrap gap-2 mt-3">
               <UBadge
                 v-if="order.source === 'online'"
                 class="text-default"
                 :label="label(order.lifecycleState)"
-                :color="order.lifecycleState === 'review_required' ? 'warning' : 'neutral'"
+                :color="
+                  order.lifecycleState === 'review_required'
+                    ? 'warning'
+                    : ['cancelled', 'expired'].includes(order.lifecycleState)
+                      ? 'error'
+                      : 'neutral'
+                "
                 variant="subtle"
               />
-              <UBadge
-                class="text-default"
-                :label="label(order.financialStatus)"
-                :color="order.financialStatus === 'paid' ? 'success' : 'neutral'"
-                variant="subtle"
-              />
-              <UBadge
-                class="text-default"
-                :label="label(order.fulfillmentStatus)"
-                color="neutral"
-                variant="subtle"
-              />
-              <UBadge
-                v-if="order.cancelledAt"
-                class="text-default"
-                label="Cancelled"
-                color="error"
-                variant="subtle"
-              />
+              <template v-else>
+                <UBadge
+                  class="text-default"
+                  :label="label(order.financialStatus)"
+                  :color="order.financialStatus === 'paid' ? 'success' : 'neutral'"
+                  variant="subtle"
+                />
+                <UBadge
+                  class="text-default"
+                  :label="label(order.fulfillmentStatus)"
+                  color="neutral"
+                  variant="subtle"
+                />
+                <UBadge
+                  v-if="order.cancelledAt"
+                  class="text-default"
+                  label="Cancelled"
+                  color="error"
+                  variant="subtle"
+                />
+              </template>
             </div>
           </div>
           <div class="sm:text-right">
@@ -131,6 +153,7 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
         </div>
       </header>
 
+      <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
       <div
         v-if="error"
         role="alert"
@@ -235,16 +258,7 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             </ul>
             <p v-else class="text-sm text-muted py-4">No items are recorded for this order.</p>
             <dl class="ml-auto w-full sm:max-w-xs mt-5 space-y-2 text-sm tabular-nums">
-              <div
-                v-for="item in [
-                  { label: 'Subtotal', amount: order.subtotalAmount },
-                  { label: 'Discount', amount: -order.discountAmount },
-                  { label: 'Shipping', amount: order.shippingAmount },
-                  { label: 'Tax', amount: order.taxAmount },
-                ]"
-                :key="item.label"
-                class="flex justify-between gap-4"
-              >
+              <div v-for="item in totals" :key="item.label" class="flex justify-between gap-4">
                 <dt class="text-muted">{{ item.label }}</dt>
                 <dd>{{ money(item.amount) }}</dd>
               </div>
@@ -287,8 +301,8 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             :key="address.id"
             class="border-t border-default pt-5"
           >
-            <h3 class="text-sm font-semibold text-highlighted capitalize mb-2">
-              {{ address.type }} address
+            <h3 class="text-sm font-semibold text-highlighted mb-2">
+              {{ label(address.type) }} address
             </h3>
             <p
               v-for="(line, index) in address.formatted"

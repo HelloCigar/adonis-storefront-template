@@ -1,24 +1,53 @@
-import { computed, inject, provide, ref, type InjectionKey } from 'vue'
+import { computed, inject, nextTick, provide, ref, type InjectionKey } from 'vue'
 import type { FormComponentProps } from '@inertiajs/core'
 
 function createInteraction() {
   const busy = ref(false)
   const error = ref('')
   const uncertain = ref(false)
+  /** Read by the page's polite live region: validation results and workflow transitions. */
+  const announcement = ref('')
   const locked = computed(() => busy.value || uncertain.value)
+  let submittedForm: HTMLFormElement | null = null
+  let invalidField: string | null = null
+  const announce = (message: string) => {
+    // Clearing first makes a repeated message audible again.
+    announcement.value = ''
+    void nextTick(() => {
+      announcement.value = message
+    })
+  }
   const callbacks = {
     onBefore: () => {
       if (locked.value) return false
       error.value = ''
+      submittedForm =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement.closest('form')
+          : null
     },
     onStart: () => {
       busy.value = true
     },
     onFinish: () => {
       busy.value = false
+      // Fields stay disabled until processing ends, so focus the first invalid one afterwards.
+      const name = invalidField
+      invalidField = null
+      if (name)
+        void nextTick(() => {
+          submittedForm?.querySelector<HTMLElement>(`[name="${CSS.escape(name)}"]`)?.focus()
+        })
     },
-    onError: () => {
-      error.value = 'Check the highlighted fields and submit again. Your input has been kept.'
+    onError: (errors) => {
+      const fields = Object.keys(errors)
+      const first = fields[0]
+      announce(
+        first
+          ? `${fields.length === 1 ? 'One field needs' : `${fields.length} fields need`} attention. ${errors[first]}`
+          : 'Check the form and submit again.'
+      )
+      invalidField = first ?? null
     },
     onFlash: (flash) => {
       if (flash.error) error.value = flash.error
@@ -65,7 +94,16 @@ function createInteraction() {
     onFinish: callbacks.onFinish,
     onError: callbacks.onError,
   }
-  return { busy, locked, error, uncertain, callbacks: formCallbacks, requestOptions }
+  return {
+    busy,
+    locked,
+    error,
+    uncertain,
+    announcement,
+    announce,
+    callbacks: formCallbacks,
+    requestOptions,
+  }
 }
 const key: InjectionKey<ReturnType<typeof createInteraction>> = Symbol('order-interaction')
 

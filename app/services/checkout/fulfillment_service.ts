@@ -17,6 +17,22 @@ import CheckoutException from '#exceptions/checkout_exception'
 import RefundService from '#services/payments/refund_service'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
+export type DispatchBlockerCode =
+  | 'order_review'
+  | 'unconfirmed'
+  | 'unpaid'
+  | 'checkout_review'
+  | 'refund'
+  | 'provider_refund'
+  | 'inventory'
+  | 'shipment'
+  | 'manual'
+
+export interface DispatchBlocker {
+  code: DispatchBlockerCode
+  message: string
+}
+
 @inject()
 export default class FulfillmentService {
   constructor(
@@ -174,22 +190,49 @@ export default class FulfillmentService {
           .first()
       : null
     const shipment = await Shipment.query({ client: trx }).where('order_id', order.id).first()
-    const blockers: string[] = []
+    const blockers: DispatchBlocker[] = []
     if (order.lifecycleState === 'review_required')
-      blockers.push(order.reviewReason || 'Review this order’s payment before fulfillment.')
+      blockers.push({
+        code: 'order_review',
+        message: order.reviewReason || 'Review this order’s payment before fulfillment.',
+      })
     else if (order.lifecycleState !== 'confirmed')
-      blockers.push('The order must be confirmed before fulfillment.')
+      blockers.push({
+        code: 'unconfirmed',
+        message: 'The order must be confirmed before fulfillment.',
+      })
     if (order.financialStatus !== 'paid' || !payment)
-      blockers.push('A verified full payment is required before packing or dispatch.')
-    if (blockedAttempt) blockers.push('Reconcile the payment checkout before dispatch.')
-    if (refund) blockers.push('A refund is in progress or confirmed. Dispatch is blocked.')
+      blockers.push({
+        code: 'unpaid',
+        message: 'A verified full payment is required before packing or dispatch.',
+      })
+    if (blockedAttempt)
+      blockers.push({
+        code: 'checkout_review',
+        message: 'Reconcile the payment checkout before dispatch.',
+      })
+    if (refund)
+      blockers.push({
+        code: 'refund',
+        message: 'A refund is in progress or confirmed. Dispatch is blocked.',
+      })
     if (observedRefund)
-      blockers.push('The provider has reported a refund. Review its status before dispatch.')
+      blockers.push({
+        code: 'provider_refund',
+        message: 'The provider has reported a refund. Review its status before dispatch.',
+      })
     if (invalidStock)
-      blockers.push('Inventory is no longer allocated for dispatch. Review the stock records.')
+      blockers.push({
+        code: 'inventory',
+        message: 'Inventory is no longer allocated for dispatch.',
+      })
     if (!shipment)
-      blockers.push('No shipment record is available. Review this order before fulfillment.')
-    if (order.source !== 'online') blockers.push('Use the manual order controls for this order.')
+      blockers.push({
+        code: 'shipment',
+        message: 'No shipment record is available for this order.',
+      })
+    if (order.source !== 'online')
+      blockers.push({ code: 'manual', message: 'Use the manual order controls for this order.' })
     return { blockers, shipment }
   }
 
