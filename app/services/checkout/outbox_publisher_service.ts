@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import logger from '@adonisjs/core/services/logger'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
 import { affectedRows } from '#models/shared/affected_rows'
+import { leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease'
 import CreateCheckout from '#jobs/payments/create_checkout'
 import ReconcileCheckout from '#jobs/payments/reconcile_checkout'
 import ExpireCheckout from '#jobs/payments/expire_checkout'
@@ -26,9 +27,7 @@ export default class OutboxPublisherService {
   async publish(limit = 100) {
     const rows = await WorkflowOutbox.query()
       .whereNull('published_at')
-      .where((q) =>
-        q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-      )
+      .where(unleased)
       .where('available_at_ms', '<=', Date.now() + 24 * 60 * 60 * 1000)
       .orderBy('available_at_ms')
       .limit(limit)
@@ -37,10 +36,8 @@ export default class OutboxPublisherService {
       const changed = await WorkflowOutbox.query()
         .where('id', row.id)
         .whereNull('published_at')
-        .where((q) =>
-          q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-        )
-        .update({ claimToken: token, claimExpiresAtMs: Date.now() + 60_000 })
+        .where(unleased)
+        .update(leaseFor(token, leaseMs.publication))
       if (affectedRows(changed) !== 1) continue
       try {
         const result = await this.dispatch(row)
@@ -50,8 +47,7 @@ export default class OutboxPublisherService {
           .update({
             publishedAt: DateTime.utc().toSQL({ includeOffset: false }),
             jobId: result.jobId,
-            claimToken: null,
-            claimExpiresAtMs: null,
+            ...leaseReleased(),
             lastError: null,
           })
       } catch {

@@ -10,6 +10,7 @@ import Activity from '#models/checkout/activity'
 import Payment from '#models/payments/payment'
 import Notification from '#models/checkout/notification'
 import { belongsTo, hasMany, column } from '@adonisjs/lucid/orm'
+import { toMajor, toMinor } from '#models/shared/money'
 import type { OrderState } from '#services/checkout/state_service'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
@@ -22,12 +23,27 @@ export default class Order extends OrderSchema {
   @hasMany(() => Notification) declare notifications: HasMany<typeof Notification>
   @column() declare lifecycleState: OrderState
   @column() declare source: 'legacy' | 'online'
-  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare totalMinor:
-    number | null
-  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare shippingMinor:
-    number | null
-  @column({ consume: (value) => (value === null ? null : Number(value)) }) declare subtotalMinor:
-    number | null
+  /** Money is stored only as integer centavos; peso values are derived for display. */
+  @column({ consume: toMinor }) declare subtotalMinor: number
+  @column({ consume: toMinor }) declare discountMinor: number
+  @column({ consume: toMinor }) declare shippingMinor: number
+  @column({ consume: toMinor }) declare taxMinor: number
+  @column({ consume: toMinor }) declare totalMinor: number
+  get subtotalAmount() {
+    return toMajor(this.subtotalMinor)
+  }
+  get discountAmount() {
+    return toMajor(this.discountMinor)
+  }
+  get shippingAmount() {
+    return toMajor(this.shippingMinor)
+  }
+  get taxAmount() {
+    return toMajor(this.taxMinor)
+  }
+  get totalAmount() {
+    return toMajor(this.totalMinor)
+  }
   @belongsTo(() => User, { foreignKey: 'userId' })
   declare user: BelongsTo<typeof User>
 

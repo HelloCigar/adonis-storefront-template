@@ -203,7 +203,7 @@ export default class MainSeeder extends BaseSeeder {
         if (existing) continue
         await OrderFactory.client(trx)
           .apply('paid', ...(index === 0 ? ['fulfilled' as const] : []))
-          .merge({ number, userId: customer.id, email, shippingAmount: 100 })
+          .merge({ number, userId: customer.id, email, shippingMinor: 10_000 })
           .with('addresses', 2, (addresses) =>
             addresses.merge(
               ['shipping', 'billing'].map((type) => ({

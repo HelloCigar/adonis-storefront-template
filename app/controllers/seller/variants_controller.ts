@@ -4,12 +4,12 @@ import Product from '#models/catalog/product'
 import ProductVariant from '#models/catalog/product_variant'
 import SellerProductTransformer from '#transformers/seller/product_transformer'
 import MediaTransformer from '#transformers/shared/media_transformer'
-import SellerCatalogueService from '#services/seller/catalogue_service'
+import SellerVariantService from '#services/seller/variant_service'
 import { variantCreateValidator, variantUpdateValidator } from '#validators/seller/variant'
 
 @inject()
 export default class VariantsController {
-  constructor(private catalogue: SellerCatalogueService) {}
+  constructor(private variants: SellerVariantService) {}
 
   async index({ params, inertia, bouncer }: HttpContext) {
     const product = await Product.query()
@@ -25,7 +25,7 @@ export default class VariantsController {
   async store({ params, request, response, session, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.productId)
     await bouncer.with('SellerVariantPolicy').authorize('create', product)
-    await this.catalogue.saveVariant(
+    await this.variants.saveVariant(
       product,
       new ProductVariant(),
       await request.validateUsing(variantCreateValidator)
@@ -37,7 +37,7 @@ export default class VariantsController {
     const product = await Product.findOrFail(params.productId)
     const variant = await product.related('variants').query().where('id', params.id).firstOrFail()
     await bouncer.with('SellerVariantPolicy').authorize('update', variant, product)
-    await this.catalogue.saveVariant(
+    await this.variants.saveVariant(
       product,
       variant,
       await request.validateUsing(variantUpdateValidator, { meta: { id: variant.id } })
@@ -49,7 +49,7 @@ export default class VariantsController {
     const product = await Product.findOrFail(params.productId)
     const variant = await product.related('variants').query().where('id', params.id).firstOrFail()
     await bouncer.with('SellerVariantPolicy').authorize('delete', variant, product)
-    await this.catalogue.deleteVariant(product, variant)
+    await this.variants.deleteVariant(product, variant)
     session.flash('success', 'Variant deleted')
     return response.redirect().toRoute('seller.variants.index', { productId: product.id })
   }

@@ -122,22 +122,22 @@ test.group('Management dashboard', (group) => {
     const now = DateTime.utc()
     await OrderFactory.merge({
       financialStatus: 'paid',
-      totalAmount: 1000,
+      totalMinor: 100000,
       processedAt: now,
     }).create()
     await OrderFactory.merge({
       financialStatus: 'refunded',
-      totalAmount: 500,
+      totalMinor: 50000,
       processedAt: now,
     }).create()
     await OrderFactory.merge({
       financialStatus: 'voided',
-      totalAmount: 700,
+      totalMinor: 70000,
       processedAt: now,
     }).create()
     await OrderFactory.merge({
       financialStatus: 'paid',
-      totalAmount: 300,
+      totalMinor: 30000,
       processedAt: now.minus({ days: 30 }),
     }).create()
 

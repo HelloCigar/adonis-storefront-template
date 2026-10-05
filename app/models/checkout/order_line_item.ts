@@ -6,6 +6,7 @@ import User from '#models/account/user'
 import { Exception } from '@adonisjs/core/exceptions'
 import { beforeCreate, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { toMajor, toMinor } from '#models/shared/money'
 
 export default class OrderLineItem extends OrderLineItemSchema {
   @beforeCreate()
@@ -28,6 +29,20 @@ export default class OrderLineItem extends OrderLineItemSchema {
       // Legacy creator attribution is retained for history, never for access checks.
       item.sellerId = product.sellerId
     }
+  }
+
+  /** Money is stored only as integer centavos; peso values are derived for display. */
+  @column({ consume: toMinor }) declare unitPriceMinor: number
+  @column({ consume: toMinor }) declare discountMinor: number
+  @column({ consume: toMinor }) declare totalMinor: number
+  get unitPriceAmount() {
+    return toMajor(this.unitPriceMinor)
+  }
+  get discountAmount() {
+    return toMajor(this.discountMinor)
+  }
+  get totalAmount() {
+    return toMajor(this.totalMinor)
   }
 
   @belongsTo(() => User, { foreignKey: 'sellerId' })

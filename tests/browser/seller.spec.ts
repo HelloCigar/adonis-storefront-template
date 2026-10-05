@@ -176,16 +176,16 @@ test.group('Store management pages', (group) => {
       currencyCode: 'PHP',
       financialStatus: 'paid',
       fulfillmentStatus: 'unfulfilled',
-      subtotalAmount: 499,
-      totalAmount: 499,
+      subtotalMinor: 49900,
+      totalMinor: 49900,
       processedAt: DateTime.utc(),
     })
     await order.related('lineItems').create({
       sellerId: seller.id,
       title: 'Bunny Lamp',
       quantity: 1,
-      unitPriceAmount: 499,
-      totalAmount: 499,
+      unitPriceMinor: 49900,
+      totalMinor: 49900,
       currencyCode: 'PHP',
     })
     await browserContext.loginAs(seller)

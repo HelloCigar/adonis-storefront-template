@@ -70,9 +70,9 @@ export default class SummaryService {
       .where('processed_at', '>=', from)
       .where('processed_at', '<', until)
       .count('* as count')
-      .sum('total_amount as total')
+      .sum('total_minor as total')
       .first()
-    return { count: Number(row?.count ?? 0), total: Number(row?.total ?? 0) }
+    return { count: Number(row?.count ?? 0), total: Number(row?.total ?? 0) / 100 }
   }
 
   private async newCustomers({ from, until }: Window) {
@@ -93,9 +93,9 @@ export default class SummaryService {
       buckets.set(cursor.toISODate()!, 0)
     }
     const { from, until: to } = this.window(start, until)
-    const rows: { processed_at: string; total_amount: number }[] = await db
+    const rows: { processed_at: string; total_minor: number }[] = await db
       .from('orders')
-      .select('processed_at', 'total_amount')
+      .select('processed_at', 'total_minor')
       .whereIn('financial_status', capturedStatuses)
       .where('processed_at', '>=', from)
       .where('processed_at', '<', to)
@@ -104,7 +104,7 @@ export default class SummaryService {
         .setZone(storeZone)
         .startOf(unit)
         .toISODate()!
-      buckets.set(key, (buckets.get(key) ?? 0) + Number(row.total_amount))
+      buckets.set(key, (buckets.get(key) ?? 0) + Number(row.total_minor) / 100)
     }
     return [...buckets].map(([date, amount]) => ({ date, amount }))
   }
@@ -121,7 +121,7 @@ export default class SummaryService {
       number: order.number,
       email: order.email,
       financialStatus: order.financialStatus,
-      totalAmount: Number(order.totalAmount),
+      totalAmount: order.totalAmount,
       currencyCode: order.currencyCode,
       processedAt: order.processedAt.toISO()!,
     }))

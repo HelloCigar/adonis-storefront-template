@@ -10,12 +10,11 @@ export default class ReconciliationsController {
     private access: OrderAccessService,
     private recovery: RecoveryService
   ) {}
-  async store({ params, auth, session, response }: HttpContext) {
-    const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
+  async store({ params, auth, checkoutSession, response }: HttpContext) {
     const order = await this.access.authorize(
       params.publicId,
       auth.user?.id,
-      grants[params.publicId]
+      checkoutSession.orderGrant(params.publicId)
     )
     const attempt = await Attempt.query()
       .where('order_id', order.id)

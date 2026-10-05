@@ -90,7 +90,7 @@ test.group('Single store authorization', (group) => {
       currencyCode: 'PHP',
       financialStatus: 'paid',
       fulfillmentStatus: 'unfulfilled',
-      totalAmount: 100,
+      totalMinor: 10000,
       processedAt: DateTime.utc(),
     })
     for (const role of ['customer', 'staff', 'admin'] as const) {

@@ -11,11 +11,11 @@ export const OrderFactory = factory
     currencyCode: 'PHP',
     financialStatus: 'pending',
     fulfillmentStatus: 'unfulfilled',
-    subtotalAmount: 0,
-    discountAmount: 0,
-    shippingAmount: 0,
-    taxAmount: 0,
-    totalAmount: 0,
+    subtotalMinor: 0,
+    discountMinor: 0,
+    shippingMinor: 0,
+    taxMinor: 0,
+    totalMinor: 0,
     processedAt: DateTime.utc(),
   }))
   .state('paid', (order) => {
@@ -32,19 +32,13 @@ export const OrderFactory = factory
   .after('create', async (_builder, order) => {
     const lines = await order.related('lineItems').query()
     if (!lines.length) return
-    const subtotal = lines.reduce(
-      (total, line) => total + Math.round(line.unitPriceAmount * 100) * line.quantity,
+    order.subtotalMinor = lines.reduce(
+      (total, line) => total + line.unitPriceMinor * line.quantity,
       0
     )
-    const discount = lines.reduce((total, line) => total + Math.round(line.discountAmount * 100), 0)
-    order.subtotalAmount = subtotal / 100
-    order.discountAmount = discount / 100
-    order.totalAmount =
-      (subtotal -
-        discount +
-        Math.round(order.shippingAmount * 100) +
-        Math.round(order.taxAmount * 100)) /
-      100
+    order.discountMinor = lines.reduce((total, line) => total + line.discountMinor, 0)
+    order.totalMinor =
+      order.subtotalMinor - order.discountMinor + order.shippingMinor + order.taxMinor
     await order.save()
   })
   .build()

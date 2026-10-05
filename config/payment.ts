@@ -1,5 +1,5 @@
 import env from '#start/env'
-import type { PayMongoConfig } from '#services/payments/paymongo_service'
+import type { PayMongoConfig } from '#providers/payments/paymongo_service'
 
 export interface PaymentConfig {
   defaultProvider: string

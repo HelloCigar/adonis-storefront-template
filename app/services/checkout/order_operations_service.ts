@@ -1,10 +1,9 @@
 import { inject } from '@adonisjs/core'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import Order from '#models/checkout/order'
-import RefundObservation from '#models/payments/refund_observation'
 import StockReservation from '#models/checkout/stock_reservation'
 import FulfillmentService, { type DispatchBlocker } from '#services/checkout/fulfillment_service'
-import MoneyService from '#services/checkout/money_service'
+import BalanceService from '#services/payments/balance_service'
 
 export type OrderIssueCause = 'payment' | 'refund' | 'inventory' | 'shipment'
 export type OrderIssueFix =
@@ -25,7 +24,7 @@ export interface OrderIssue {
 export default class OrderOperationsService {
   constructor(
     private fulfillment: FulfillmentService,
-    private money: MoneyService
+    private balances: BalanceService
   ) {}
 
   /** Read alongside the order snapshot. Mutations always recheck their own guards. */
@@ -54,37 +53,19 @@ export default class OrderOperationsService {
     }[] = []
     const payments = []
     let cancellationRefundBlocker: string | null = null
-    const allObservations = order.payments.length
-      ? await RefundObservation.query({ client: trx }).where((query) => {
-          for (const payment of order.payments)
-            query.orWhere({
-              provider: payment.provider,
-              liveMode: payment.liveMode,
-              externalPaymentId: payment.externalId,
-            })
-        })
-      : []
+    const balances = await this.balances.forPayments(trx, order.payments)
     for (const payment of order.payments) {
-      const observations = allObservations.filter(
-        (row) =>
-          row.provider === payment.provider &&
-          row.liveMode === payment.liveMode &&
-          row.externalPaymentId === payment.externalId
-      )
-      const mismatched = observations.some(
-        (row) => row.state !== 'failed' && row.currency !== payment.currency
-      )
-      const refunded = observations
-        .filter((row) => row.state === 'succeeded' && row.currency === payment.currency)
-        .reduce((total, row) => this.money.add(total, row.amountMinor), 0)
-      const remaining = Math.max(0, payment.amountMinor - refunded)
-      const observedPending = observations.some((row) => row.state === 'pending')
+      const balance = balances.get(payment)!
+      const observations = balance.observations
+      const mismatched = balance.currencyMismatch
+      const remaining = balance.remainingMinor
+      const observedPending = balance.pending
       const existingRefund = order.refunds.some(
         (row) =>
           row.paymentId === payment.id && ['requested', 'pending', 'unknown'].includes(row.state)
       )
       const pending = observedPending || existingRefund
-      if (!existingRefund && (mismatched || observedPending || refunded > payment.amountMinor))
+      if (!existingRefund && (mismatched || observedPending || balance.overRefunded))
         cancellationRefundBlocker = 'Reconcile the provider refund before cancelling this order.'
       const reason = shipped
         ? 'Shipped orders cannot be refunded here.'

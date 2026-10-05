@@ -6,14 +6,14 @@ import { OrderFactory } from './order_factory.js'
 export const OrderLineItemFactory = factory
   .define(OrderLineItem, ({ faker }) => {
     const quantity = faker.number.int({ min: 1, max: 3 })
-    const unitPriceAmount = Number(faker.commerce.price({ min: 100, max: 2500 }))
+    const unitPriceMinor = faker.number.int({ min: 100, max: 2500 }) * 100
     return {
       title: faker.commerce.productName(),
       variantTitle: 'Default',
       quantity,
-      unitPriceAmount,
-      discountAmount: 0,
-      totalAmount: (Math.round(unitPriceAmount * 100) * quantity) / 100,
+      unitPriceMinor,
+      discountMinor: 0,
+      totalMinor: unitPriceMinor * quantity,
       currencyCode: 'PHP',
       options: {},
     }
@@ -34,7 +34,8 @@ export const OrderLineItemFactory = factory
       line.variantTitle = variant.title
       line.sku = variant.sku
       line.options = variant.options
-      line.unitPriceAmount = variant.priceAmount
+      // Catalogue prices are decimal pesos; order snapshots are centavos.
+      line.unitPriceMinor = Math.round(variant.priceAmount * 100)
       line.currencyCode = variant.currencyCode
       const image = variant.featuredMedia?.attachment
       if (image) {
@@ -43,9 +44,6 @@ export const OrderLineItemFactory = factory
         line.imageAltText ??= image.originalName
       }
     }
-    line.totalAmount =
-      (Math.round(line.unitPriceAmount * 100) * line.quantity -
-        Math.round(line.discountAmount * 100)) /
-      100
+    line.totalMinor = line.unitPriceMinor * line.quantity - line.discountMinor
   })
   .build()

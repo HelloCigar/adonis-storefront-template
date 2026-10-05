@@ -1,9 +1,9 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { PaymentConfig } from '#config/payment'
 import PaymentService from '#services/payments/payment_service'
-import PayMongoService from '#services/payments/paymongo_service'
+import PayMongoService from '#providers/payments/paymongo_service'
 import DispatcherService from '#services/payments/dispatcher_service'
-import FakePayMongoService from '#services/payments/fake_paymongo_service'
+import FakePayMongoService from '#providers/payments/fake_paymongo_service'
 import type { PaymentAdapter } from '#services/payments/payment_service'
 
 export default class PaymentProvider {

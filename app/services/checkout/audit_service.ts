@@ -2,6 +2,7 @@ import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import MoneyService from '#services/checkout/money_service'
+import { unleased } from '#models/shared/lease'
 
 @inject()
 export default class AuditService {
@@ -45,9 +46,7 @@ export default class AuditService {
         .from('payment_attempts')
         .whereIn('state', ['creating', 'pending', 'unknown', 'closing', 'failed'])
         .where('updated_at', '<', staleAt)
-        .where((query) =>
-          query.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-        )
+        .where(unleased)
         .select('id')
       const reviewAttempts = await trx
         .from('payment_attempts')

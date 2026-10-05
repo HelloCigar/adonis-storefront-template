@@ -10,6 +10,7 @@ import RefundService from '#services/payments/refund_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
 import CheckoutException from '#exceptions/checkout_exception'
+import { isLeased } from '#models/shared/lease'
 
 @inject()
 export default class OperationService {
@@ -24,7 +25,7 @@ export default class OperationService {
     actor: User,
     input: { kind: 'payment' | 'refund' | 'notification'; operationId: number; externalId?: string }
   ) {
-    if (!actor.isStoreStaff) throw new CheckoutException('Access denied', 'E_OPERATION_ACCESS', 403)
+    CheckoutException.assertStaff(actor, 'E_OPERATION_ACCESS')
     if (input.kind === 'payment') {
       const attempt = await Attempt.query()
         .where('id', input.operationId)
@@ -45,7 +46,7 @@ export default class OperationService {
         .where('order_id', orderId)
         .firstOrFail()
       if (row.state === 'sent') return
-      if (Number(row.claimExpiresAtMs ?? 0) > Date.now())
+      if (isLeased(row))
         throw new CheckoutException('This notification is still running', 'E_NOTIFICATION_BUSY')
       row.state = 'pending'
       row.lastError = null

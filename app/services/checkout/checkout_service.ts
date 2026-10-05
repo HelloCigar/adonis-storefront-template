@@ -4,13 +4,13 @@ import { urlFor } from '@adonisjs/core/services/url_builder'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import type { Infer } from '@vinejs/vine/types'
+import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import { checkoutValidator } from '#validators/checkout/checkout'
 import Cart from '#models/checkout/cart'
 import Order from '#models/checkout/order'
 import Attempt from '#models/payments/attempt'
 import { affectedRows } from '#models/shared/affected_rows'
 import QuoteService from '#services/checkout/quote_service'
-import MoneyService from '#services/checkout/money_service'
 import OrderAccessService from '#services/checkout/order_access_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
@@ -20,12 +20,12 @@ import CheckoutException from '#exceptions/checkout_exception'
 import checkout from '#config/checkout'
 
 export type CheckoutPayload = Infer<typeof checkoutValidator>
+type Quote = Awaited<ReturnType<QuoteService['quote']>>
 
 @inject()
 export default class CheckoutService {
   constructor(
     private quotes: QuoteService,
-    private money: MoneyService,
     private access: OrderAccessService,
     private outbox: OutboxService,
     private activities: ActivityService,
@@ -41,20 +41,7 @@ export default class CheckoutService {
     const publicUrl = this.publicUrl()
     try {
       return await db.transaction(async (trx) => {
-        const cart = await Cart.query({ client: trx }).where('token', cartToken).firstOrFail()
-        if (cart.submissionKey !== input.submissionKey || cart.version !== input.cartVersion) {
-          throw new CheckoutException(
-            'Your cart changed. Review it before paying.',
-            'E_CART_CHANGED'
-          )
-        }
-        const changed = await Cart.query({ client: trx })
-          .where('id', cart.id)
-          .where('status', 'active')
-          .where('version', input.cartVersion)
-          .update({ status: 'submitted', version: input.cartVersion + 1 })
-        if (affectedRows(changed) !== 1)
-          throw new CheckoutException('Your cart changed', 'E_CART_CHANGED')
+        const cart = await this.freezeCart(trx, cartToken, input)
         // The database cart is frozen; quote the original in-memory version in this transaction.
         const quote = await this.quotes.quote(cart, trx)
         if (quote.fingerprint !== input.quoteFingerprint) {
@@ -63,105 +50,21 @@ export default class CheckoutService {
             'E_QUOTE_CHANGED'
           )
         }
-        const publicId = randomUUID()
-        const orderUrl = urlFor('checkout.orders.show', { publicId }, { prefixUrl: publicUrl })
-        const attemptPublicId = randomUUID()
-        const now = DateTime.utc()
         const deadline = Date.now() + checkout.reservationTtlMs
-        const order = await Order.create(
-          {
-            publicId,
-            number: `MB-${publicId.replaceAll('-', '').slice(0, 16).toUpperCase()}`,
-            cartId: cart.id,
-            userId: userId ?? null,
-            submissionKey: input.submissionKey,
-            inputFingerprint: fingerprint,
-            source: 'online',
-            lifecycleState: 'pending_payment',
-            version: 0,
-            email: input.email,
-            phoneNumber: input.shipping.phoneNumber,
-            currencyCode: quote.currency,
-            financialStatus: 'pending',
-            fulfillmentStatus: 'unfulfilled',
-            subtotalMinor: quote.subtotalMinor,
-            shippingMinor: quote.shippingMinor,
-            totalMinor: quote.totalMinor,
-            subtotalAmount: Number(this.money.toMajor(quote.subtotalMinor)),
-            shippingAmount: Number(this.money.toMajor(quote.shippingMinor)),
-            totalAmount: Number(this.money.toMajor(quote.totalMinor)),
-            discountAmount: 0,
-            taxAmount: 0,
-            processedAt: now,
-            note: input.note ?? null,
-          },
-          { client: trx }
-        )
-        for (const [type, address] of Object.entries({
-          shipping: input.shipping,
-          billing: input.billing ?? input.shipping,
-        })) {
-          await order
-            .related('addresses')
-            .create({ ...address, address2: address.address2 ?? null, type })
-        }
-        await order.related('lineItems').createMany(
-          quote.lines.map((line) => ({
-            productId: line.productId,
-            productVariantId: line.variantId,
-            title: line.title,
-            variantTitle: line.variantTitle,
-            sku: line.sku,
-            options: line.options,
-            quantity: line.quantity,
-            unitPriceMinor: line.unitAmount,
-            totalMinor: line.totalAmount,
-            unitPriceAmount: Number(this.money.toMajor(line.unitAmount)),
-            totalAmount: Number(this.money.toMajor(line.totalAmount)),
-            discountAmount: 0,
-            currencyCode: quote.currency,
-          }))
-        )
+        const order = await this.createOrder(trx, { cart, userId, input, quote, fingerprint })
         await this.inventory.reserve(trx, order.id, quote.lines, deadline)
-        const idempotencyKey = randomUUID()
-        const attempt = await Attempt.create(
-          {
-            publicId: attemptPublicId,
-            orderId: order.id,
-            provider: provider.provider,
-            liveMode: provider.liveMode,
-            amountMinor: quote.totalMinor,
-            currency: quote.currency,
-            state: 'creating',
-            version: 0,
-            idempotencyKey,
-            expiresAtMs: deadline,
-            replayScope: provider.idempotencyScope,
-            needsReview: false,
-            requestSnapshot: {
-              reference: publicId,
-              currency: quote.currency,
-              idempotencyKey,
-              items: [
-                ...quote.lines.map((line) => ({
-                  name: `${line.title} — ${line.variantTitle}`,
-                  unitAmount: line.unitAmount,
-                  quantity: line.quantity,
-                })),
-                { name: 'Shipping', unitAmount: quote.shippingMinor, quantity: 1 },
-              ],
-              successUrl: orderUrl,
-              cancelUrl: orderUrl,
-              customer: {
-                email: input.email,
-                name: `${input.shipping.firstName} ${input.shipping.lastName}`,
-                phone: input.shipping.phoneNumber,
-              },
-              metadata: { attemptId: attemptPublicId, orderId: publicId },
-            },
-          },
-          { client: trx }
-        )
+        const attempt = await this.createAttempt(trx, {
+          order,
+          input,
+          quote,
+          provider,
+          deadline,
+          orderUrl: urlFor(
+            'checkout.orders.show',
+            { publicId: order.publicId! },
+            { prefixUrl: publicUrl }
+          ),
+        })
         await this.outbox.record(trx, {
           key: `create:${attempt.id}`,
           kind: 'create_checkout',
@@ -185,6 +88,151 @@ export default class CheckoutService {
       if (existing) return existing
       throw error
     }
+  }
+
+  /** Claims the active cart at the version the shopper reviewed; any concurrent change wins. */
+  private async freezeCart(
+    trx: TransactionClientContract,
+    cartToken: string,
+    input: CheckoutPayload
+  ) {
+    const cart = await Cart.query({ client: trx }).where('token', cartToken).firstOrFail()
+    if (cart.submissionKey !== input.submissionKey || cart.version !== input.cartVersion) {
+      throw new CheckoutException('Your cart changed. Review it before paying.', 'E_CART_CHANGED')
+    }
+    const changed = await Cart.query({ client: trx })
+      .where('id', cart.id)
+      .where('status', 'active')
+      .where('version', input.cartVersion)
+      .update({ status: 'submitted', version: input.cartVersion + 1 })
+    if (affectedRows(changed) !== 1)
+      throw new CheckoutException('Your cart changed', 'E_CART_CHANGED')
+    return cart
+  }
+
+  /** Snapshots the quote, addresses and line items; later catalogue edits never change them. */
+  private async createOrder(
+    trx: TransactionClientContract,
+    {
+      cart,
+      userId,
+      input,
+      quote,
+      fingerprint,
+    }: { cart: Cart; userId?: number; input: CheckoutPayload; quote: Quote; fingerprint: string }
+  ) {
+    const publicId = randomUUID()
+    const order = await Order.create(
+      {
+        publicId,
+        number: `MB-${publicId.replaceAll('-', '').slice(0, 16).toUpperCase()}`,
+        cartId: cart.id,
+        userId: userId ?? null,
+        submissionKey: input.submissionKey,
+        inputFingerprint: fingerprint,
+        source: 'online',
+        lifecycleState: 'pending_payment',
+        version: 0,
+        email: input.email,
+        phoneNumber: input.shipping.phoneNumber,
+        currencyCode: quote.currency,
+        financialStatus: 'pending',
+        fulfillmentStatus: 'unfulfilled',
+        subtotalMinor: quote.subtotalMinor,
+        shippingMinor: quote.shippingMinor,
+        totalMinor: quote.totalMinor,
+        discountMinor: 0,
+        taxMinor: 0,
+        processedAt: DateTime.utc(),
+        note: input.note ?? null,
+      },
+      { client: trx }
+    )
+    for (const [type, address] of Object.entries({
+      shipping: input.shipping,
+      billing: input.billing ?? input.shipping,
+    })) {
+      await order
+        .related('addresses')
+        .create({ ...address, address2: address.address2 ?? null, type })
+    }
+    await order.related('lineItems').createMany(
+      quote.lines.map((line) => ({
+        productId: line.productId,
+        productVariantId: line.variantId,
+        title: line.title,
+        variantTitle: line.variantTitle,
+        sku: line.sku,
+        options: line.options,
+        quantity: line.quantity,
+        unitPriceMinor: line.unitAmount,
+        totalMinor: line.totalAmount,
+        discountMinor: 0,
+        currencyCode: quote.currency,
+      }))
+    )
+    return order
+  }
+
+  /** Freezes the exact provider request so retries replay it with the same idempotency key. */
+  private async createAttempt(
+    trx: TransactionClientContract,
+    {
+      order,
+      input,
+      quote,
+      provider,
+      deadline,
+      orderUrl,
+    }: {
+      order: Order
+      input: CheckoutPayload
+      quote: Quote
+      provider: ReturnType<PaymentService['getProvider']>
+      deadline: number
+      orderUrl: string
+    }
+  ) {
+    const publicId = randomUUID()
+    const idempotencyKey = randomUUID()
+    return Attempt.create(
+      {
+        publicId,
+        orderId: order.id,
+        provider: provider.provider,
+        liveMode: provider.liveMode,
+        amountMinor: quote.totalMinor,
+        currency: quote.currency,
+        state: 'creating',
+        version: 0,
+        idempotencyKey,
+        expiresAtMs: deadline,
+        replayScope: provider.idempotencyScope,
+        needsReview: false,
+        requestSnapshot: {
+          reference: order.publicId!,
+          currency: quote.currency,
+          idempotencyKey,
+          items: [
+            ...quote.lines.map((line) => ({
+              name: `${line.title} — ${line.variantTitle}`,
+              unitAmount: line.unitAmount,
+              quantity: line.quantity,
+            })),
+            { name: 'Shipping', unitAmount: quote.shippingMinor, quantity: 1 },
+          ],
+          successUrl: orderUrl,
+          cancelUrl: orderUrl,
+          customer: {
+            email: input.email,
+            name: `${input.shipping.firstName} ${input.shipping.lastName}`,
+            phone: input.shipping.phoneNumber,
+          },
+          metadata: { attemptId: publicId, orderId: order.publicId! },
+        },
+      },
+      { client: trx }
+    )
   }
 
   private async replay(cartToken: string, key: string, fingerprint: string) {

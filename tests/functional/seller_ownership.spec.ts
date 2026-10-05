@@ -146,15 +146,15 @@ test.group('Shared store resource access', (group) => {
         currencyCode: 'PHP',
         financialStatus: 'pending',
         fulfillmentStatus: 'unfulfilled',
-        totalAmount: 250,
+        totalMinor: 25000,
         processedAt: DateTime.utc(),
       })
       for (const sellerId of creators)
         await order.related('lineItems').create({
           title: 'Lamp',
           quantity: 1,
-          unitPriceAmount: 250,
-          totalAmount: 250,
+          unitPriceMinor: 25000,
+          totalMinor: 25000,
           currencyCode: 'PHP',
           sellerId,
         })
