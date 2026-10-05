@@ -105,20 +105,6 @@ const links = computed(
           ],
         },
       ],
-      [
-        {
-          label: 'Feedback',
-          icon: 'i-lucide-message-circle',
-          to: 'https://github.com/nuxt-ui-templates/dashboard-vue',
-          target: '_blank',
-        },
-        {
-          label: 'Help & Support',
-          icon: 'i-lucide-info',
-          to: 'https://github.com/nuxt/ui',
-          target: '_blank',
-        },
-      ],
     ] satisfies NavigationMenuItem[][]
 )
 
@@ -127,18 +113,6 @@ const groups = computed(() => [
     id: 'links',
     label: 'Go to',
     items: links.value.flat(),
-  },
-  {
-    id: 'code',
-    label: 'Code',
-    items: [
-      {
-        id: 'source',
-        label: 'View page source',
-        icon: 'simple-icons:github',
-        target: '_blank',
-      },
-    ],
   },
 ])
 
@@ -203,14 +177,6 @@ if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
           orientation="vertical"
           tooltip
           popover
-        />
-
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[1]"
-          orientation="vertical"
-          tooltip
-          class="mt-auto"
         />
       </template>
 

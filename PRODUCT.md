@@ -45,6 +45,8 @@ Keep the current behavior unless a subsequent task explicitly changes it. Deploy
 
 The final product and store name are undecided. MediaBunny appears in mail configuration, while Nuxt Shopify and Nuxt UI demo copy remain in the storefront. These are existing implementation references, not a confirmed brand commitment.
 
+Authentication uses the user-approved neutral label "Your store" until a final store name is chosen. It replaces framework branding and is also the default document-title suffix when `VITE_APP_NAME` is unset.
+
 No store-specific voice, approved marketing claims, or binding visual constraints have been supplied.
 
 ## Evidence on Hand

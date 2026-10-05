@@ -8,7 +8,7 @@ import { createApp, type DefineComponent, h } from 'vue'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import { resolveLayout } from './layouts/resolve'
 
-const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
+const appName = import.meta.env.VITE_APP_NAME || 'Your store'
 
 createInertiaApp({
   title: (title) => (title ? `${title} - ${appName}` : appName),

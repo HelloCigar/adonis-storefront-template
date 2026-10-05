@@ -23,6 +23,7 @@ declare module 'vue' {
     AppLocaleSelect: typeof import('./inertia/components/app/LocaleSelect.vue')['default']
     AppLogo: typeof import('./inertia/components/app/Logo.vue')['default']
     AppVersion: typeof import('./inertia/components/app/Version.vue')['default']
+    AuthPasswordInput: typeof import('./inertia/components/auth/PasswordInput.vue')['default']
     CartAdd: typeof import('./inertia/components/cart/Add.vue')['default']
     CartChoose: typeof import('./inertia/components/cart/Choose.vue')['default']
     CartLineItem: typeof import('./inertia/components/cart/LineItem.vue')['default']
