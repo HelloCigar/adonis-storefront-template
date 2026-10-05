@@ -12,9 +12,7 @@ defineProps<{ order: Data.Seller.Order }>()
     :transform="(data) => ({ ...data, note: data.note || null })"
     class="space-y-4"
   >
-    <div v-if="order.source === 'online'" class="flex gap-2 flex-wrap">
-      <UBadge :label="order.financialStatus" variant="subtle" />
-      <UBadge :label="order.fulfillmentStatus" color="neutral" variant="subtle" />
+    <div v-if="order.source === 'online'">
       <input type="hidden" name="financialStatus" :value="order.financialStatus" />
       <input type="hidden" name="fulfillmentStatus" :value="order.fulfillmentStatus" />
     </div>
@@ -46,6 +44,11 @@ defineProps<{ order: Data.Seller.Order }>()
           : 'Status changes record your manual payment and fulfillment updates.'
       }}
     </p>
-    <UButton type="submit" label="Save changes" :loading="processing" :disabled="processing" />
+    <UButton
+      type="submit"
+      :label="order.source === 'online' ? 'Save note' : 'Save changes'"
+      :loading="processing"
+      :disabled="processing"
+    />
   </Form>
 </template>

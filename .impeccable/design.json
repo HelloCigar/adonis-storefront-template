@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T07:41:42.880Z",
+  "title": "Design System: In-house Store Template",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Burnt Orange",
+        "tonalRamp": [
+          "oklch(26.6% 0.079 36.259)",
+          "oklch(40.8% 0.123 38.172)",
+          "oklch(47% 0.157 37.304)",
+          "oklch(55.3% 0.195 38.402)",
+          "oklch(70.5% 0.213 47.604)",
+          "oklch(83.7% 0.128 66.29)",
+          "oklch(95.4% 0.038 75.164)",
+          "oklch(98% 0.016 73.684)"
+        ]
+      },
+      "primary-dark": {
+        "role": "primary",
+        "displayName": "Burnt Orange — dark theme",
+        "tonalRamp": [
+          "oklch(26.6% 0.079 36.259)",
+          "oklch(40.8% 0.123 38.172)",
+          "oklch(47% 0.157 37.304)",
+          "oklch(55.3% 0.195 38.402)",
+          "oklch(70.5% 0.213 47.604)",
+          "oklch(83.7% 0.128 66.29)",
+          "oklch(95.4% 0.038 75.164)",
+          "oklch(98% 0.016 73.684)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Golden Yellow",
+        "tonalRamp": [
+          "oklch(28.6% 0.066 53.813)",
+          "oklch(42.1% 0.095 57.708)",
+          "oklch(47.6% 0.114 61.907)",
+          "oklch(55.4% 0.135 66.442)",
+          "oklch(79.5% 0.184 86.047)",
+          "oklch(90.5% 0.182 98.111)",
+          "oklch(97.3% 0.071 103.193)",
+          "oklch(98.7% 0.026 102.212)"
+        ]
+      },
+      "secondary-dark": {
+        "role": "secondary",
+        "displayName": "Golden Yellow — dark theme",
+        "tonalRamp": [
+          "oklch(28.6% 0.066 53.813)",
+          "oklch(42.1% 0.095 57.708)",
+          "oklch(47.6% 0.114 61.907)",
+          "oklch(55.4% 0.135 66.442)",
+          "oklch(79.5% 0.184 86.047)",
+          "oklch(90.5% 0.182 98.111)",
+          "oklch(97.3% 0.071 103.193)",
+          "oklch(98.7% 0.026 102.212)"
+        ]
+      },
+      "taupe-50": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 50",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-100": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 100",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-200": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 200",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-300": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 300",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-400": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 400",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-500": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 500",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-700": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 700",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-800": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 800",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      },
+      "taupe-900": {
+        "role": "neutral",
+        "displayName": "Warm Taupe 900",
+        "tonalRamp": [
+          "oklch(14.7% 0.004 49.3)",
+          "oklch(21.4% 0.009 43.1)",
+          "oklch(26.8% 0.011 36.5)",
+          "oklch(36.7% 0.016 35.7)",
+          "oklch(54.7% 0.021 43.1)",
+          "oklch(86.8% 0.007 39.5)",
+          "oklch(96% 0.002 17.2)",
+          "oklch(98.6% 0.002 67.8)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "display",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "display-small": {
+        "displayName": "display small",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "headline": {
+        "displayName": "headline",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "headline-small": {
+        "displayName": "headline small",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "title": {
+        "displayName": "title",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "product-title": {
+        "displayName": "product title",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "body": {
+        "displayName": "body",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "body-large": {
+        "displayName": "body large",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "label": {
+        "displayName": "label",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      },
+      "caption": {
+        "displayName": "caption",
+        "purpose": "See the Typography hierarchy in DESIGN.md for observed usage."
+      }
+    },
+    "shadows": [
+      {
+        "name": "primary-action-lift",
+        "value": "0 4px 6px -1px color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 30%, transparent), 0 2px 4px -2px color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 30%, transparent)",
+        "purpose": "Orange-tinted medium shadow on solid primary buttons."
+      },
+      {
+        "name": "overlay-lift",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Nuxt UI modal and navigation overlay shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-duration",
+        "value": "150ms",
+        "purpose": "Default color state transitions."
+      },
+      {
+        "name": "selector-duration",
+        "value": "200ms",
+        "purpose": "Selector icons and navigation movement."
+      },
+      {
+        "name": "cart-label-duration",
+        "value": "300ms",
+        "purpose": "Expansion of cart-action labels."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default utility transition easing."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "40rem"
+      },
+      {
+        "name": "md",
+        "value": "48rem"
+      },
+      {
+        "name": "lg",
+        "value": "64rem"
+      },
+      {
+        "name": "xl",
+        "value": "80rem"
+      },
+      {
+        "name": "2xl",
+        "value": "96rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Existing medium primary button variant.",
+      "html": "<button class=\"ds-primary\" type=\"button\">Save changes</button>",
+      "css": ".ds-primary{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;border:0;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);padding:6px 10px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1),color 150ms cubic-bezier(0.4,0,0.2,1);background:var(--ui-primary, oklch(64.6% 0.222 41.116));color:var(--ui-text-inverted, oklch(98.6% 0.002 67.8));box-shadow:0 4px 6px -1px color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 30%, transparent), 0 2px 4px -2px color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 30%, transparent);}.ds-primary:hover,.ds-primary:active{background:color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 75%, transparent);}.ds-primary:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;}.ds-primary:disabled{opacity:.75;cursor:not-allowed;}"
+    },
+    {
+      "name": "Neutral Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline-neutral",
+      "description": "Existing medium neutral outline button variant.",
+      "html": "<button class=\"ds-outline\" type=\"button\">Display</button>",
+      "css": ".ds-outline{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;border:0;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);padding:6px 10px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1),color 150ms cubic-bezier(0.4,0,0.2,1);background:transparent;color:var(--ui-text, oklch(36.7% 0.016 35.7));box-shadow:inset 0 0 0 1px var(--ui-border-accented, oklch(86.8% 0.007 39.5));}.ds-outline:hover,.ds-outline:active{background:color-mix(in oklab, var(--ui-bg-elevated, oklch(96% 0.002 17.2)) 50%, transparent);}.ds-outline:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;}.ds-outline:disabled{opacity:.75;cursor:not-allowed;}"
+    },
+    {
+      "name": "Neutral Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost-neutral",
+      "description": "Existing medium neutral ghost button variant.",
+      "html": "<button class=\"ds-ghost\" type=\"button\">View details</button>",
+      "css": ".ds-ghost{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;border:0;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);padding:6px 10px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1),color 150ms cubic-bezier(0.4,0,0.2,1);background:transparent;color:var(--ui-text, oklch(36.7% 0.016 35.7));}.ds-ghost:hover,.ds-ghost:active{background:color-mix(in oklab, var(--ui-bg-elevated, oklch(96% 0.002 17.2)) 50%, transparent);}.ds-ghost:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;}.ds-ghost:disabled{opacity:.75;cursor:not-allowed;}"
+    },
+    {
+      "name": "Primary Soft Button",
+      "kind": "button",
+      "refersTo": "button-soft-primary",
+      "description": "Existing medium primary soft button variant.",
+      "html": "<button class=\"ds-soft\" type=\"button\">Order details</button>",
+      "css": ".ds-soft{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;border:0;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);padding:6px 10px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background-color 150ms cubic-bezier(0.4,0,0.2,1),color 150ms cubic-bezier(0.4,0,0.2,1);background:color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 10%, transparent);color:var(--ui-primary, oklch(64.6% 0.222 41.116));}.ds-soft:hover,.ds-soft:active{background:color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 15%, transparent);}.ds-soft:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;}.ds-soft:disabled{opacity:.75;cursor:not-allowed;}"
+    },
+    {
+      "name": "Outline Field",
+      "kind": "input",
+      "refersTo": "input-outline",
+      "description": "Default outlined field with the live primary focus treatment.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-email\">Email address</label><input class=\"ds-field\" id=\"ds-email\" type=\"email\" placeholder=\"you@example.com\"/>",
+      "css": ".ds-field-label{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;display:block;font-weight:500;color:var(--ui-text, oklch(36.7% 0.016 35.7));margin-bottom:6px;}.ds-field{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;font-weight:400;border:0;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);padding:6px 10px;color:var(--ui-text-highlighted, oklch(21.4% 0.009 43.1));background:var(--ui-bg, oklch(98.6% 0.002 67.8));box-shadow:inset 0 0 0 1px var(--ui-border-accented, oklch(86.8% 0.007 39.5));}.ds-field::placeholder{color:var(--ui-text-dimmed, oklch(71.4% 0.014 41.2));}.ds-field:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;box-shadow:inset 0 0 0 1px var(--ui-primary, oklch(64.6% 0.222 41.116));}.ds-field:disabled{opacity:.75;cursor:not-allowed;}"
+    },
+    {
+      "name": "Primary Badge",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "Medium solid product badge; intentionally static rather than an action.",
+      "html": "<span class=\"ds-badge\">Gift card</span>",
+      "css": ".ds-badge{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;font-size:12px;line-height:16px;font-weight:500;display:inline-flex;align-items:center;background:var(--ui-primary, oklch(64.6% 0.222 41.116));color:var(--ui-text-inverted, oklch(98.6% 0.002 67.8));padding:4px 8px;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);}"
+    },
+    {
+      "name": "Subtle Card",
+      "kind": "card",
+      "refersTo": "card-subtle",
+      "description": "Default tonal card with a ring, divided header, and responsive body padding.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\">Order summary</header><div class=\"ds-card-body\">Review your items and delivery details.</div></section>",
+      "css": ".ds-card{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;color:var(--ui-text, oklch(36.7% 0.016 35.7));background:color-mix(in oklab, var(--ui-bg-elevated, oklch(96% 0.002 17.2)) 50%, transparent);border-radius:calc(var(--ui-radius, 0.625rem) * 2);overflow:hidden;box-shadow:0 0 0 1px var(--ui-border, oklch(92.2% 0.005 34.3));}.ds-card-head{font-weight:600;color:var(--ui-text-highlighted, oklch(21.4% 0.009 43.1));padding:16px;border-bottom:1px solid var(--ui-border, oklch(92.2% 0.005 34.3));}.ds-card-body{padding:16px;}@media(min-width:40rem){.ds-card-head{padding-left:24px;padding-right:24px;}.ds-card-body{padding:24px;}}"
+    },
+    {
+      "name": "Active Navigation",
+      "kind": "nav",
+      "refersTo": "nav-active",
+      "description": "Compact pill navigation with active color and tonal hover states.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Store\"><a class=\"ds-nav-link\" href=\"#products\" aria-current=\"page\">Products</a><a class=\"ds-nav-link\" href=\"#orders\">Orders</a></nav>",
+      "css": ".ds-nav{display:flex;gap:6px;}.ds-nav-link{font-family:var(--font-sans, 'Bricolage Grotesque', sans-serif);font-size:14px;line-height:20px;font-weight:500;padding:6px 10px;border-radius:calc(var(--ui-radius, 0.625rem) * 1.5);color:var(--ui-text-muted, oklch(54.7% 0.021 43.1));text-decoration:none;transition:background-color 150ms,color 150ms;}.ds-nav-link[aria-current=\"page\"]{color:var(--ui-primary, oklch(64.6% 0.222 41.116));background:color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 10%, transparent);}.ds-nav-link:hover{background:color-mix(in oklab, var(--ui-bg-elevated, oklch(96% 0.002 17.2)) 50%, transparent);}.ds-nav-link:focus-visible{outline:3px solid color-mix(in oklab, var(--ui-primary, oklch(64.6% 0.222 41.116)) 25%, transparent);outline-offset:0;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Store Counter",
+    "overview": "The Warm Store Counter brings approachable commerce together with practical store operations. The confirmed voice is friendly and expressive: distinctive typography gives the interface character, while straightforward interactions keep shopping and management easy to follow.\n\nWarm Taupe surfaces support Burnt Orange actions and a configured Golden Yellow secondary accent. Large storefront headings and generous section spacing coexist with compact forms, navigation, and operational tables. Softly lifted actions and overlays add warmth; tonal surfaces and thin dividers carry most of the structure.\n\nThis is a record of the incumbent interface, not a replacement identity. Evidence comes from the current source, generated Nuxt UI themes, and computed styles on the running storefront and login page in light and dark mode. Store-management patterns were inspected in source. No visual anti-reference or separate component-character phrase was confirmed. The template's final brand remains open in PRODUCT.md.",
+    "keyCharacteristics": [
+      "Friendly, expressive typography with direct interaction labels.",
+      "Warm neutral surfaces with orange primary actions.",
+      "Soft corners, tonal grouping, and selective shadows.",
+      "Generous storefront spacing and compact operational controls.",
+      "Semantic colors and geometry shared across light and dark themes."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Theme Rule",
+        "body": "Use the semantic Nuxt UI color roles; let the current theme choose their palette step. Do not fix a light-theme color into a shared control.",
+        "section": "colors"
+      },
+      {
+        "name": "The Single Family Rule",
+        "body": "Bricolage Grotesque supplies both headings and interface text. The Source Sans 3 link in the HTML shell is not the active application font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Selective Lift Rule",
+        "body": "Keep the primary-button tint and overlay shadows; ordinary content grouping uses tonal surfaces and borders.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use semantic surface, text, border, and action roles in both themes.",
+      "Do derive control and card corners from the shared base radius.",
+      "Do preserve the difference between generous storefront sections and compact operational controls.",
+      "Do keep focus, processing, disabled, validation, and selected states supplied by the component library.",
+      "Do retain square product media, readable price hierarchy, and transparent product-card wrappers."
+    ],
+    "donts": [
+      "Don't substitute Tailwind's unmodified corner defaults for Nuxt UI's radius multipliers.",
+      "Don't turn the configured secondary yellow into an established dominant color; its actual usage is sparse.",
+      "Don't make every card glow or lift; the implemented orange shadow belongs to solid primary buttons.",
+      "Don't document Source Sans 3 or the unresolved font-headings utility as a second active font family.",
+      "Don't treat demo logos, sample product imagery, missing media, or placeholder copy as binding brand assets."
+    ]
+  }
+}

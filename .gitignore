@@ -26,5 +26,15 @@ yarn-error.log
 .idea
 .vscode
 
+# Local Impeccable skills and agents
+/.agents/skills/impeccable/
+/.claude/skills/impeccable/
+/.claude/agents/impeccable-*.md
+
+# Impeccable local runtime and review captures
+/.impeccable/live/
+/.impeccable/config.local.json
+/.impeccable/review/*.png
+
 # Platform specific
 .DS_Store

@@ -15,6 +15,9 @@ import Attempt from '#models/payments/attempt'
 import Shipment from '#models/checkout/shipment'
 import { ProductVariantFactory } from '../../database/factories/product_variant_factory.js'
 import { UserFactory } from '../../database/factories/user_factory.js'
+import Notification from '#models/checkout/notification'
+import { simulatedCheckout } from '../helpers/simulated_checkout.js'
+import { mkdir } from 'node:fs/promises'
 
 test.group('Guest checkout and store fulfillment', (group) => {
   let adapter: FakePaymentAdapter
@@ -96,15 +99,31 @@ test.group('Guest checkout and store fulfillment', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
     await page.goto(`/seller/orders/${order.id}`)
+    await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Accept', exact: true }).click()
+    await page.waitForLoadState('networkidle')
+    await mkdir('.impeccable/review', { recursive: true })
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.screenshot({ path: '.impeccable/review/desktop.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+    await page.screenshot({ path: '.impeccable/review/mobile.png', fullPage: true })
+    await page.setViewportSize({ width: 1280, height: 900 })
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
+    await page.getByRole('heading', { name: 'Ready to dispatch', exact: true }).waitFor()
     await page.getByLabel('Carrier', { exact: true }).fill('Sample Carrier')
     await page.getByLabel('Tracking number', { exact: true }).fill('BROWSER-123')
     await page.getByLabel('Tracking URL', { exact: true }).fill('https://carrier.example/track/123')
     await page.getByRole('button', { name: 'Mark as shipped', exact: true }).click()
-    await page.getByText('Shipment recorded', { exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Shipment recorded', exact: true }).waitFor()
     const shipment = await Shipment.findByOrFail('orderId', order.id)
     assert.equal(shipment.state, 'shipped')
     assert.equal(shipment.trackingNumber, 'BROWSER-123')
+    await page.getByText('BROWSER-123', { exact: true }).waitFor()
+    assert.equal(
+      await page.getByRole('button', { name: 'Mark as shipped', exact: true }).count(),
+      0
+    )
     assert.isEmpty(errors)
     assert.isTrue(
       requests.some(
@@ -118,6 +137,71 @@ test.group('Guest checkout and store fulfillment', (group) => {
           request.path.endsWith('/shipment') && request.inertia === 'true' && !request.navigation
       )
     )
+    await page
+      .getByRole('heading', { name: 'Order contents', exact: true })
+      .scrollIntoViewIfNeeded()
+    await page.screenshot({ path: '.impeccable/review/details-desktop.png', fullPage: true })
+  })
+
+  test('staff see dispatch blockers and can recover checkout and customer updates', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const { order, attempt } = await simulatedCheckout()
+    order.lifecycleState = 'review_required'
+    order.reviewReason = 'Verify the original checkout before dispatch.'
+    await order.save()
+    attempt.state = 'unknown'
+    attempt.needsReview = true
+    attempt.lastError = 'The provider response could not be confirmed.'
+    await attempt.save()
+    const notification = await Notification.create({
+      orderId: order.id,
+      kind: 'receipt',
+      state: 'failed',
+      lastError: 'Email delivery could not be confirmed.',
+    })
+    const staff = await UserFactory.merge({ role: 'staff' }).create()
+    await browserContext.loginAs(staff)
+    const page = await visit(`/seller/orders/${order.id}`)
+    await page
+      .getByRole('heading', { name: 'Resolve the dispatch blockers', exact: true })
+      .waitFor()
+    await page.getByText(order.reviewReason, { exact: true }).waitFor()
+    assert.equal(await page.getByRole('button', { name: 'Start packing', exact: true }).count(), 0)
+    assert.equal(
+      await page.getByRole('button', { name: 'Mark as shipped', exact: true }).count(),
+      0
+    )
+    await page.getByRole('button', { name: 'Reconcile payment', exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Accept', exact: true }).click()
+    await page.waitForLoadState('networkidle')
+    await mkdir('.impeccable/review', { recursive: true })
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.screenshot({ path: '.impeccable/review/recovery-desktop.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+    await page.screenshot({ path: '.impeccable/review/recovery-mobile.png', fullPage: true })
+    await page.getByRole('button', { name: 'Retry receipt', exact: true }).click()
+    await page.getByText('Recovery requested', { exact: true }).waitFor()
+    await notification.refresh()
+    assert.equal(notification.state, 'pending')
+    await page.getByRole('button', { name: 'Reconcile payment', exact: true }).click()
+    await page.getByText('Recovery requested', { exact: true }).waitFor()
+    await attempt.refresh()
+    assert.isFalse(attempt.needsReview)
+    await order.refresh()
+    assert.equal(order.lifecycleState, 'review_required')
+    await page.getByRole('button', { name: 'Save note', exact: true }).scrollIntoViewIfNeeded()
+    await page
+      .getByLabel('Note', { exact: true })
+      .fill('Verify with the original provider account.')
+    await page.getByRole('button', { name: 'Save note', exact: true }).click()
+    await page.getByText('Order updated', { exact: true }).waitFor()
+    await order.refresh()
+    assert.equal(order.note, 'Verify with the original provider account.')
+    assert.equal(order.financialStatus, 'pending')
   })
 
   test('a signed-in customer reviews a changed quote before submitting the updated amount', async ({

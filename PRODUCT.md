@@ -1,0 +1,65 @@
+# Product
+
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
+## Users
+
+Confirmed scope: this is a custom template for an in-house store.
+
+The current implementation serves shoppers, store staff, and administrators. The intended customer audience and merchandise are open decisions for each store adopting the template.
+
+## Product Purpose
+
+Provide a reusable foundation for an in-house store, with a storefront and shared store operations that can be customized for the adopting business.
+
+Store-specific success measures and customer positioning are undecided. Do not treat the demo catalogue as the intended merchandise.
+
+## Operating Context
+
+Repository evidence establishes the current baseline:
+
+- One shared store and catalogue. Customer, staff, and admin are the supported roles.
+- Shoppers browse collections and products, choose variants, manage a cart, and check out as guests or with an account.
+- Customers manage their profile, saved addresses, and their own order history.
+- Staff manage the shared catalogue and orders, including packing, shipment tracking, cancellation, refunds, and payment review. Administrators additionally manage users and roles.
+
+## Capabilities and Constraints
+
+The following are implemented defaults, not independently confirmed business requirements:
+
+- AdonisJS backend with Vue, Inertia, Nuxt UI, Tailwind CSS, and Lucid/SQLite.
+- PHP prices, an en-PH locale, and a frozen PHP 100 shipping fee per order.
+- PayMongo hosted checkout and a development-only local payment simulator.
+- Payment confirmation requires verified provider evidence. A browser return alone cannot mark an order paid.
+- Private guest order access and ownership checks protect personal account data.
+- One staff-managed shipment per order. Partial shipments, returns, and post-shipment refunds are outside the documented rollout.
+- The `seller/` URLs and source names are compatibility names for shared store management. They do not imply multiple stores, independent sellers, teams, or ownership-based catalogue access.
+
+Keep the current behavior unless a subsequent task explicitly changes it. Deployment target, launch scope, product-specific accessibility requirements, and any store-specific variations remain open.
+
+## Brand Commitments
+
+The final product and store name are undecided. MediaBunny appears in mail configuration, while Nuxt Shopify and Nuxt UI demo copy remain in the storefront. These are existing implementation references, not a confirmed brand commitment.
+
+No store-specific voice, approved marketing claims, or binding visual constraints have been supplied.
+
+## Evidence on Hand
+
+- `AUTHORIZATION.md`: single-store roles, permissions, and compatibility constraints.
+- `PAYMENTS.md`, `docs/checkout-process.md`, and `docs/checkout-operations.md`: implemented checkout, payment, fulfillment, and recovery behavior.
+- `database/seeders/main_seeder.ts`: development/test catalogue examples for everyday essentials, home goods, and workspace items. These are demo content.
+- `config/storefront.ts`: authored content slots for pages, policies, and blogs; currently empty in the checked-in configuration.
+- `inertia/`: existing storefront, account, and store-management interface.
+
+No approved customer testimonials, business metrics, store policies, or launch claims have been supplied. Future work must not invent them.
+
+## Product Principles
+
+- Make store-specific customization possible without treating demo content as business truth.
+- Support the full shopping and store-operations journey within one shared store.
+- Preserve clear role boundaries and private customer access.
+- Keep order and payment status grounded in verified backend state.
