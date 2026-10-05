@@ -4,6 +4,7 @@ import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
 import Payment from '#models/payments/payment'
+import Attempt from '#models/payments/attempt'
 import RefundObservation from '#models/payments/refund_observation'
 import RefundOperation from '#models/payments/refund_operation'
 import Shipment from '#models/checkout/shipment'
@@ -83,10 +84,11 @@ test.group('Order operations availability', (group) => {
       'Reconcile the provider refund before cancelling this order.'
     )
     assert.lengthOf(response.inertiaProps.operations.observedRefunds, 1)
-    assert.include(
-      response.inertiaProps.operations.blockers,
-      'The provider has reported a refund. Review its status before dispatch.'
+    assert.deepEqual(
+      response.inertiaProps.operations.issues.map((issue: { cause: string }) => issue.cause),
+      ['refund']
     )
+    assert.equal(response.inertiaProps.operations.issues[0].fix, 'review_refunds')
     const fulfillment = await app.container.make(FulfillmentService)
     await assert.rejects(() => fulfillment.pack(order.id, staff), /prevents shipment/)
   })
@@ -108,8 +110,77 @@ test.group('Order operations availability', (group) => {
     const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
     response.assertOk()
     assert.isFalse(response.inertiaProps.operations.canPack)
+    const [inventory] = response.inertiaProps.operations.issues
+    assert.equal(inventory.cause, 'inventory')
+    assert.equal(inventory.fix, 'check_stock')
     const fulfillment = await app.container.make(FulfillmentService)
     await assert.rejects(() => fulfillment.pack(order.id, staff), /prevents shipment/)
+  })
+
+  test('issues lead with the payment root cause and point to the reconcile form', async ({
+    client,
+    assert,
+  }) => {
+    const { order, staff } = await paidOrder()
+    await order.merge({ lifecycleState: 'review_required', reviewReason: null }).save()
+    await Attempt.create({
+      publicId: randomUUID(),
+      orderId: order.id,
+      provider: 'order-operations',
+      liveMode: false,
+      amountMinor: 59900,
+      currency: 'PHP',
+      state: 'unknown',
+      version: 0,
+      idempotencyKey: randomUUID(),
+      expiresAtMs: Date.now() + 60_000,
+      replayScope: 'resource',
+      needsReview: true,
+      requestSnapshot: {
+        reference: order.publicId ?? randomUUID(),
+        currency: 'PHP',
+        idempotencyKey: randomUUID(),
+        items: [{ name: 'Order', unitAmount: 59900, quantity: 1 }],
+        successUrl: 'https://store.test/orders',
+        cancelUrl: 'https://store.test/orders',
+      },
+    })
+    await Shipment.query().where('orderId', order.id).delete()
+    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const issues = response.inertiaProps.operations.issues
+    assert.deepEqual(
+      issues.map((issue: { cause: string }) => issue.cause),
+      ['payment', 'shipment']
+    )
+    assert.equal(issues[0].fix, 'reconcile_checkout')
+    assert.equal(issues[1].fix, 'contact_admin')
+  })
+
+  test('the cancellation preview states the refund and the stock that will return', async ({
+    client,
+    assert,
+  }) => {
+    const { order, staff } = await paidOrder()
+    const variant = await ProductVariantFactory.create()
+    await StockReservation.create({
+      orderId: order.id,
+      productVariantId: variant.id,
+      quantity: 2,
+      state: 'consumed',
+      expiresAtMs: Date.now(),
+    })
+    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    assert.isTrue(response.inertiaProps.operations.canCancel)
+    assert.deepInclude(response.inertiaProps.operations.cancellation, {
+      closesCheckout: false,
+      returnedQuantity: 2,
+    })
+    assert.lengthOf(response.inertiaProps.operations.cancellation.refunds, 1)
+    assert.deepInclude(response.inertiaProps.operations.cancellation.refunds[0], {
+      amountMinor: 59900,
+      currency: 'PHP',
+      existing: false,
+    })
   })
 
   test('refund amounts use the remaining matching currency and reject mismatched observations', async ({
@@ -180,6 +251,7 @@ test.group('Order operations availability', (group) => {
     })
     const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
     assert.isTrue(response.inertiaProps.operations.canCancel)
+    assert.isTrue(response.inertiaProps.operations.cancellation.refunds[0].existing)
     const fulfillment = await app.container.make(FulfillmentService)
     await fulfillment.cancel(order.id, staff)
     await order.refresh()

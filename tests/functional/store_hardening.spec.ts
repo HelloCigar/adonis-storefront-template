@@ -40,7 +40,8 @@ test.group('Account emails', (group) => {
     login.assertHeader('location', '/account')
 
     await user.merge({ email: 'Renamed@Example.com' }).save()
-    assert.equal((await User.findOrFail(user.id)).email, 'renamed@example.com')
+    const renamed = await User.findOrFail(user.id)
+    assert.equal(renamed.email, 'renamed@example.com')
   })
 })
 
@@ -108,7 +109,7 @@ test.group('Rate limits', (group) => {
       .redirects(0)
       .json(signup('blocked@example.com'))
     assert.include([302, 303], inertia.status())
-    assert.match(inertia.flashMessages().error, /Too many attempts/)
+    assert.match(String(inertia.flashMessages().error), /Too many attempts/)
   })
 })
 

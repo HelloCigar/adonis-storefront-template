@@ -155,8 +155,9 @@ test.group('Staff order hardening', (group) => {
     })
     await page.getByRole('button', { name: 'Refresh status', exact: true }).click()
     await page
-      .getByRole('heading', { name: 'Resolve the dispatch blockers', exact: true })
+      .getByRole('heading', { name: 'The provider reported a refund', exact: true })
       .waitFor()
+    await page.getByRole('link', { name: 'Go to refund records', exact: true }).waitFor()
     assert.equal(await page.getByRole('button', { name: 'Start packing', exact: true }).count(), 0)
     await page
       .getByText('A refund is already in progress for this payment.', { exact: true })
@@ -202,14 +203,23 @@ test.group('Staff order hardening', (group) => {
       .click()
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
     await page.getByRole('heading', { name: 'Ready to dispatch', exact: true }).waitFor()
+    // The packing button disappears; focus continues in the dispatch form.
+    assert.equal(await page.evaluate('document.activeElement?.getAttribute("name")'), 'carrier')
+    await page
+      .getByRole('status')
+      .getByText('Packing started. Add the carrier and tracking number to record the shipment.')
+      .waitFor({ state: 'attached' })
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.screenshot({ path: '.impeccable/review/dispatch-desktop.png', fullPage: true })
     await page.getByLabel('Carrier', { exact: true }).fill('  ')
     await page.getByLabel('Tracking number', { exact: true }).fill('KEEP-MY-TRACKING')
     await page.getByRole('button', { name: 'Mark as shipped', exact: true }).click()
     await page
-      .getByText('Check the highlighted fields and submit again. Your input has been kept.', {
-        exact: true,
-      })
-      .waitFor()
+      .getByRole('status')
+      .getByText(/^One field needs attention\./)
+      .waitFor({ state: 'attached' })
+    await page.waitForFunction('document.activeElement?.getAttribute("name") === "carrier"')
+    assert.equal(await page.getByRole('alert').count(), 0)
     assert.equal(
       await page.getByLabel('Tracking number', { exact: true }).inputValue(),
       'KEEP-MY-TRACKING'
@@ -230,10 +240,10 @@ test.group('Staff order hardening', (group) => {
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/orders/${order.id}`)
     await page.getByText('Refund this payment', { exact: true }).click()
-    const button = page.getByRole('button', { name: 'Request full refund', exact: true })
+    const button = page.getByRole('button', { name: /^Request refund of ₱/ })
     assert.isTrue(await button.isDisabled())
     await page
-      .getByRole('checkbox', { name: 'I confirm the refund amount above.', exact: true })
+      .getByRole('checkbox', { name: /^I confirm refunding ₱.+ to this payment\.$/ })
       .check()
     await button.click({ clickCount: 2 })
     await page
@@ -308,7 +318,7 @@ test.group('Staff order hardening', (group) => {
     const amount = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'USD' }).format(
       150
     )
-    await page.getByText(amount, { exact: true }).waitFor()
+    await page.getByText(`Payment · ${amount}`, { exact: true }).waitFor()
     await page.getByText(`Refund · ${amount}`, { exact: true }).waitFor()
   })
 })

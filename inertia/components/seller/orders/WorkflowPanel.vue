@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Form } from '@adonisjs/inertia/vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { Form, Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
 import { orderLabel, orderMoney, orderDate, operationMessage } from './presentation'
+import PickList from './PickList.vue'
+import ShippingAddress from './ShippingAddress.vue'
+import CancellationSection from './CancellationSection.vue'
+import ReconcileCheckoutForm from './ReconcileCheckoutForm.vue'
+
+type Issue = Data.Seller.OrderOperations['issues'][number]
 
 const props = defineProps<{ order: Data.Seller.Order; operations: Data.Seller.OrderOperations }>()
-const { locked, callbacks, requestOptions } = useOrderInteraction()
+const { locked, callbacks, requestOptions, announce } = useOrderInteraction()
 const label = orderLabel
 const money = (amount: number, currency = props.order.currencyCode) =>
   orderMoney(amount / 100, currency)
 const refundConfirmed = ref<Record<number, boolean>>({})
-const cancelConfirmed = ref(false)
 const showAllActivity = ref(false)
 const visibleActivity = computed(() =>
   showAllActivity.value ? props.order.activities : props.order.activities.slice(0, 8)
@@ -22,7 +27,6 @@ watch(
   () => props.operations,
   () => {
     refundConfirmed.value = {}
-    cancelConfirmed.value = false
   }
 )
 const trackingUrl = computed(() => {
@@ -35,126 +39,190 @@ const trackingUrl = computed(() => {
 })
 const closed = computed(() => ['cancelled', 'expired'].includes(props.order.lifecycleState))
 const shipped = computed(() => props.order.shipment?.state === 'shipped')
-const blockers = computed(() => props.operations.blockers)
 const canPack = computed(() => props.operations.canPack)
 const canShip = computed(() => props.operations.canShip)
-const canCancel = computed(() => props.operations.canCancel)
+const paymentReview = computed(
+  () => !!props.order.attempt?.needsReview || props.order.lifecycleState === 'review_required'
+)
+const waitingForPayment = computed(
+  () => props.order.lifecycleState === 'pending_payment' && !props.order.attempt?.needsReview
+)
+/** Issues block fulfillment only while it is still open; an unpaid checkout waits instead. */
+const issues = computed<Issue[]>(() =>
+  shipped.value || closed.value || waitingForPayment.value ? [] : props.operations.issues
+)
+const primaryIssue = computed(() => issues.value[0] ?? null)
+const otherIssues = computed(() => issues.value.slice(1))
+/** True only when the card leads with an issue; other states keep their own body copy. */
+const blocked = computed(() => nextAction.value.key.startsWith('blocked'))
+const cardReconciles = computed(
+  () => blocked.value && primaryIssue.value?.fix === 'reconcile_checkout'
+)
+const reconcilable = computed(
+  () => !!props.order.attempt?.needsReview && props.order.attempt.state !== 'paid'
+)
+const shippingAddress = computed(
+  () =>
+    props.order.addresses?.find((address) => address.type === 'shipping') ??
+    props.order.addresses?.[0] ??
+    null
+)
+const lineItems = computed(() => props.order.lineItems ?? [])
+const shipmentEmail = computed(
+  () =>
+    !!props.order.email &&
+    props.order.notifications.some((notification) => notification.kind === 'shipment')
+)
+
 const nextAction = computed(() => {
   if (closed.value)
     return {
-      title: 'Order ' + props.order.lifecycleState,
+      key: 'closed',
+      title: `Order ${label(props.order.lifecycleState).toLowerCase()}`,
       description:
-        'Fulfillment is closed. Outstanding refunds and customer updates remain visible below.',
+        'Fulfillment is closed. Outstanding refunds and customer updates stay visible below.',
       icon: 'i-lucide-circle-slash',
     }
   if (shipped.value)
     return {
+      key: 'shipped',
       title: 'Shipment recorded',
-      description:
-        'Tracking details are saved. Check customer updates for delivery of the shipment notification.',
+      description: shipmentEmail.value
+        ? 'Tracking is saved. Check customer updates for delivery of the shipment email.'
+        : 'Tracking is saved. No shipment email is recorded for this order.',
       icon: 'i-lucide-truck',
     }
   if (props.operations.cancellationPending)
     return {
+      key: 'cancelling',
       title: 'Cancellation requested',
       description:
-        'The checkout is being closed. Stock remains held until the provider confirms it is unpaid and closed.',
+        'The checkout is being closed. Stock stays held until the provider confirms it is unpaid and closed.',
       icon: 'i-lucide-clock',
     }
-  if (props.order.lifecycleState === 'pending_payment' && !props.order.attempt?.needsReview)
+  if (waitingForPayment.value)
     return {
+      key: 'waiting',
       title: 'Waiting for payment confirmation',
       description:
         'A checkout request is not payment confirmation. Refresh status to check for a verified payment.',
       icon: 'i-lucide-clock',
     }
-  if (blockers.value.length)
+  if (primaryIssue.value)
     return {
-      title: 'Resolve the dispatch blockers',
-      description: 'Review the payment and refund records below before continuing fulfillment.',
+      key: `blocked:${primaryIssue.value.cause}`,
+      title: primaryIssue.value.title,
+      description: primaryIssue.value.detail,
       icon: 'i-lucide-shield-alert',
     }
   if (canShip.value)
     return {
+      key: 'ship',
       title: 'Ready to dispatch',
-      description:
-        'Add carrier and tracking details to record the shipment and queue the customer update.',
+      description: 'Label the parcel for the address below, then record its tracking.',
       icon: 'i-lucide-truck',
     }
   if (canPack.value)
     return {
+      key: 'pack',
       title: 'Ready to pack',
-      description:
-        'Payment is recorded. Start packing, then add tracking details when the parcel is ready to dispatch.',
+      description: 'Payment is verified. Pick these items, then start packing.',
       icon: 'i-lucide-package',
     }
   return {
-    title: 'Fulfillment is not ready',
-    description:
-      'Payment or shipment prerequisites are incomplete. Review the records below; the server validates payment and stock before each action.',
+    key: 'idle',
+    title: 'No fulfillment action is available',
+    description: 'Refresh status to load the latest order state before continuing.',
     icon: 'i-lucide-circle-pause',
   }
 })
-const stages = computed(() => [
-  {
-    title: 'Payment',
-    icon: 'i-lucide-credit-card',
-    text: label(props.order.financialStatus),
-    done: props.order.financialStatus === 'paid',
-    attention:
-      !!props.order.attempt?.needsReview || props.order.lifecycleState === 'review_required',
-  },
-  {
-    title: 'Packing',
-    icon: 'i-lucide-package',
-    text: shipped.value
-      ? 'Complete'
-      : props.order.shipment?.state === 'packing'
-        ? 'In progress'
-        : closed.value
-          ? 'Closed'
-          : canPack.value
-            ? 'Ready to start'
-            : 'Not started',
-    done: shipped.value,
-    attention: false,
-  },
-  {
-    title: 'Dispatch',
-    icon: 'i-lucide-truck',
-    text: shipped.value
-      ? 'Shipped'
-      : closed.value
-        ? 'Closed'
-        : props.order.lifecycleState === 'pending_payment'
-          ? 'Waiting for payment'
-          : blockers.value.length
-            ? 'Blocked'
-            : 'Not dispatched',
-    done: shipped.value,
-    attention:
-      !shipped.value &&
-      !closed.value &&
-      props.order.lifecycleState !== 'pending_payment' &&
-      !!blockers.value.length,
-  },
-  {
-    title: 'Customer updates',
-    icon: 'i-lucide-mail',
-    text: props.order.notifications.some((n) => n.state === 'failed')
-      ? 'Delivery failed'
-      : props.order.notifications.some((n) => n.state === 'pending')
-        ? 'Queued'
-        : props.order.notifications.length &&
-            props.order.notifications.every((n) => n.state === 'sent')
-          ? 'Sent'
-          : 'No updates yet',
-    done:
-      !!props.order.notifications.length &&
-      props.order.notifications.every((n) => n.state === 'sent'),
-    attention: props.order.notifications.some((n) => n.state === 'failed'),
-  },
-])
+
+/** Stage state: done, current (the next step), attention (blocked), upcoming, or closed. */
+const stages = computed(() => {
+  const captured =
+    ['paid', 'partially_refunded', 'refunded'].includes(props.order.financialStatus) &&
+    !paymentReview.value
+  const shipmentState = props.order.shipment?.state
+  const steps = [
+    {
+      title: 'Payment',
+      icon: 'i-lucide-credit-card',
+      done: captured,
+      doneText:
+        props.order.financialStatus === 'paid' ? 'Paid' : label(props.order.financialStatus),
+      currentText: 'Awaiting payment',
+      blockedText: paymentReview.value ? 'Needs review' : 'Not verified',
+    },
+    {
+      title: 'Packing',
+      icon: 'i-lucide-package',
+      done: shipmentState === 'packing' || shipped.value,
+      doneText: shipped.value ? 'Packed' : 'Started',
+      currentText: 'Ready to pack',
+      blockedText: 'Blocked',
+    },
+    {
+      title: 'Dispatch',
+      icon: 'i-lucide-truck',
+      done: shipped.value,
+      doneText: 'Shipped',
+      currentText: 'Add tracking',
+      blockedText: 'Blocked',
+    },
+  ]
+  const currentIndex = steps.findIndex((step) => !step.done)
+  return steps.map((step, index) => {
+    if (step.done) return { ...step, state: 'done', text: step.doneText }
+    if (closed.value) return { ...step, state: 'closed', text: 'Closed' }
+    if (index !== currentIndex) return { ...step, state: 'upcoming', text: 'Not started' }
+    if (primaryIssue.value || (index === 0 && paymentReview.value))
+      return { ...step, state: 'attention', text: step.blockedText }
+    return { ...step, state: 'current', text: step.currentText }
+  })
+})
+
+const updateLabels: Record<string, string> = { pending: 'Queued', sent: 'Sent', failed: 'Failed' }
+const updatesSummary = computed(() => {
+  const notifications = props.order.notifications
+  // A single update already shows its own state; summarize only a list.
+  if (notifications.length < 2) return null
+  const failed = notifications.filter((notification) => notification.state === 'failed').length
+  if (failed) return { label: `${failed} failed`, color: 'warning' as const }
+  if (notifications.some((notification) => notification.state === 'pending'))
+    return { label: 'Queued', color: 'neutral' as const }
+  if (notifications.length) return { label: 'All sent', color: 'success' as const }
+  return null
+})
+
+const heading = useTemplateRef<HTMLElement>('heading')
+const transitionMessages: Record<string, string> = {
+  pack: 'Ready to pack.',
+  ship: 'Packing started. Add the carrier and tracking number to record the shipment.',
+  shipped: 'Shipment recorded.',
+  cancelling: 'Cancellation requested.',
+  waiting: 'Waiting for payment confirmation.',
+}
+// After a state change removes the control that had focus, continue from the new task.
+watch(
+  () => nextAction.value.key,
+  async (key) => {
+    announce(
+      transitionMessages[key] ??
+        (key.startsWith('blocked')
+          ? `Fulfillment is blocked. ${nextAction.value.title}.`
+          : `${nextAction.value.title}.`)
+    )
+    await nextTick()
+    const active = document.activeElement
+    if (active && active !== document.body) return
+    const carrier =
+      key === 'ship'
+        ? document.querySelector<HTMLElement>('#order-ship-form [name="carrier"]')
+        : null
+    ;(carrier ?? heading.value)?.focus()
+  }
+)
+
 const activityNames: Record<string, string> = {
   'order.created': 'Order placed',
   'order.submitted': 'Order placed',
@@ -169,23 +237,56 @@ const activityNames: Record<string, string> = {
   'refund.failed': 'Refund failed',
   'order.cancellation_requested': 'Cancellation requested',
 }
+const detailValue = (value: unknown) =>
+  value && typeof value === 'object'
+    ? Object.entries(value)
+        .map(([key, entry]) => `${label(key)} ${entry}`)
+        .join(', ')
+    : String(value ?? '—')
 </script>
 
 <template>
   <div class="space-y-8">
     <ol
-      aria-label="Order workflow"
-      class="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-default py-5 lg:grid-cols-4"
+      aria-label="Fulfillment progress"
+      class="grid grid-cols-3 gap-x-4 border-y border-default py-5"
     >
-      <li v-for="stage in stages" :key="stage.title" class="flex items-start gap-3 min-w-0">
+      <li
+        v-for="stage in stages"
+        :key="stage.title"
+        :aria-current="
+          stage.state === 'current' || stage.state === 'attention' ? 'step' : undefined
+        "
+        class="flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3"
+      >
         <UIcon
-          :name="stage.done ? 'i-lucide-circle-check' : stage.icon"
-          class="size-5 shrink-0 mt-0.5"
-          :class="stage.attention ? 'text-default' : stage.done ? 'text-success' : 'text-muted'"
+          :name="
+            stage.state === 'done'
+              ? 'i-lucide-circle-check'
+              : stage.state === 'attention'
+                ? 'i-lucide-triangle-alert'
+                : stage.state === 'closed'
+                  ? 'i-lucide-circle-slash'
+                  : stage.icon
+          "
+          class="size-5 shrink-0 sm:mt-0.5"
+          :class="{
+            'text-success': stage.state === 'done',
+            'text-warning': stage.state === 'attention',
+            'text-primary': stage.state === 'current',
+            'text-muted': stage.state === 'upcoming' || stage.state === 'closed',
+          }"
         />
         <div class="min-w-0">
           <p class="text-sm font-semibold text-highlighted">{{ stage.title }}</p>
-          <p class="text-sm mt-1" :class="stage.attention ? 'text-default' : 'text-muted'">
+          <p
+            class="text-sm mt-0.5"
+            :class="{
+              'text-warning font-medium': stage.state === 'attention',
+              'text-primary font-medium': stage.state === 'current',
+              'text-muted': ['done', 'upcoming', 'closed'].includes(stage.state),
+            }"
+          >
             {{ stage.text }}
           </p>
         </div>
@@ -193,212 +294,269 @@ const activityNames: Record<string, string> = {
     </ol>
     <div class="grid gap-8 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
       <div class="min-w-0 space-y-8">
-        <section aria-labelledby="order-next-action" class="rounded-lg bg-elevated/50 p-5 sm:p-6">
+        <section
+          aria-labelledby="order-next-action"
+          class="@container rounded-lg bg-elevated/50 p-5 sm:p-6"
+        >
           <div class="flex items-start gap-3">
             <UIcon
               :name="nextAction.icon"
               class="size-6 shrink-0 mt-0.5"
-              :class="blockers.length ? 'text-default' : 'text-primary'"
+              :class="blocked ? 'text-warning' : 'text-primary'"
             />
             <div class="min-w-0">
               <h2
                 id="order-next-action"
-                class="text-xl font-semibold text-highlighted"
-                aria-live="polite"
+                ref="heading"
+                tabindex="-1"
+                class="text-xl font-semibold text-highlighted focus:outline-none"
               >
                 {{ nextAction.title }}
               </h2>
-              <p class="text-sm text-muted mt-2 max-w-prose">{{ nextAction.description }}</p>
+              <p class="text-sm text-default mt-2 max-w-prose">{{ nextAction.description }}</p>
+              <p
+                v-if="blocked && primaryIssue?.note"
+                class="text-sm text-default mt-2 max-w-prose [overflow-wrap:anywhere]"
+              >
+                <span class="font-medium text-highlighted">Review reason:</span>
+                {{ primaryIssue.note }}
+              </p>
             </div>
           </div>
-          <ul
-            v-if="
-              blockers.length &&
-              !shipped &&
-              !closed &&
-              (order.lifecycleState !== 'pending_payment' || order.attempt?.needsReview)
-            "
-            class="mt-5 space-y-2 text-sm text-default"
+
+          <template v-if="blocked && primaryIssue">
+            <ReconcileCheckoutForm
+              v-if="primaryIssue.fix === 'reconcile_checkout' && order.attempt"
+              :order="order"
+              :attempt="order.attempt"
+              class="mt-5"
+            />
+            <a
+              v-else-if="
+                primaryIssue.fix === 'review_payment' || primaryIssue.fix === 'review_refunds'
+              "
+              href="#order-payments"
+              class="inline-flex mt-4 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+              >{{
+                primaryIssue.fix === 'review_refunds'
+                  ? 'Go to refund records'
+                  : 'Go to payment records'
+              }}</a
+            >
+            <ul
+              v-else-if="primaryIssue.fix === 'check_stock' && primaryIssue.products.length"
+              class="mt-4 space-y-1.5"
+            >
+              <li v-for="product in primaryIssue.products" :key="product.id">
+                <Link
+                  route="seller.variants.index"
+                  :params="{ productId: product.id }"
+                  class="text-sm font-medium text-primary underline underline-offset-4 [overflow-wrap:anywhere] focus-visible:outline-2 focus-visible:outline-primary"
+                  >Check stock for {{ product.title }}</Link
+                >
+              </li>
+            </ul>
+
+            <section
+              v-if="otherIssues.length"
+              aria-labelledby="order-other-issues"
+              class="mt-6 border-t border-default pt-5"
+            >
+              <h3 id="order-other-issues" class="text-sm font-semibold text-highlighted">
+                Also blocking fulfillment
+              </h3>
+              <ul class="mt-3 space-y-4">
+                <li v-for="issue in otherIssues" :key="issue.cause" class="flex gap-2.5">
+                  <UIcon
+                    name="i-lucide-triangle-alert"
+                    class="size-4 shrink-0 mt-0.5 text-warning"
+                    aria-hidden="true"
+                  />
+                  <div class="min-w-0 text-sm">
+                    <p class="font-medium text-highlighted">{{ issue.title }}</p>
+                    <p class="text-default mt-0.5 max-w-prose">{{ issue.detail }}</p>
+                    <a
+                      v-if="issue.fix === 'review_payment' || issue.fix === 'review_refunds'"
+                      href="#order-payments"
+                      class="inline-flex mt-1.5 font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
+                      >{{
+                        issue.fix === 'review_refunds'
+                          ? 'Go to refund records'
+                          : 'Go to payment records'
+                      }}</a
+                    >
+                    <template v-else-if="issue.fix === 'check_stock'">
+                      <Link
+                        v-for="product in issue.products"
+                        :key="product.id"
+                        route="seller.variants.index"
+                        :params="{ productId: product.id }"
+                        class="block mt-1.5 font-medium text-primary underline underline-offset-4 [overflow-wrap:anywhere] focus-visible:outline-2 focus-visible:outline-primary"
+                        >Check stock for {{ product.title }}</Link
+                      >
+                    </template>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </template>
+
+          <template v-else-if="canPack">
+            <PickList :items="lineItems" heading-id="order-pick-list" class="mt-5" />
+            <Form
+              v-slot="{ processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
+              route="seller.packing.store"
+              :params="{ id: order.id }"
+              class="mt-5"
+              ><UButton
+                type="submit"
+                label="Start packing"
+                icon="i-lucide-package"
+                :loading="processing"
+                :disabled="processing || locked"
+            /></Form>
+          </template>
+
+          <div
+            v-else-if="canShip"
+            class="mt-6 grid gap-6 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]"
           >
-            <li v-for="reason in blockers" :key="reason" class="flex gap-2">
-              <UIcon
-                name="i-lucide-circle-alert"
-                class="size-4 shrink-0 mt-0.5 text-warning"
-              /><span class="[overflow-wrap:anywhere]">{{ reason }}</span>
-            </li>
-          </ul>
-          <a
-            v-if="
-              blockers.length &&
-              !shipped &&
-              !closed &&
-              (order.lifecycleState !== 'pending_payment' || order.attempt?.needsReview)
-            "
-            href="#order-payments"
-            class="inline-flex mt-4 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
-            >Review payment &amp; refunds</a
-          >
-          <Form
-            v-if="canPack"
-            v-slot="{ processing }"
-            v-bind="callbacks"
-            :options="requestOptions"
-            disable-while-processing
-            route="seller.packing.store"
-            :params="{ id: order.id }"
-            class="mt-5"
-            ><UButton
-              type="submit"
-              label="Start packing"
-              icon="i-lucide-package"
-              :loading="processing"
-              :disabled="processing || locked"
-          /></Form>
-          <Form
-            v-if="canShip"
-            v-slot="{ errors, processing }"
-            v-bind="callbacks"
-            :options="requestOptions"
-            disable-while-processing
-            route="seller.shipments.store"
-            :params="{ id: order.id }"
-            class="mt-6 space-y-4"
-          >
-            <div class="grid sm:grid-cols-2 gap-4">
-              <UFormField label="Carrier" name="carrier" :error="errors.carrier" required
-                ><UInput
-                  name="carrier"
-                  required
-                  minlength="2"
-                  maxlength="100"
-                  autocomplete="off"
-                  class="w-full" /></UFormField
-              ><UFormField
-                label="Tracking number"
-                name="trackingNumber"
-                :error="errors.trackingNumber"
-                required
-                ><UInput
-                  name="trackingNumber"
-                  required
-                  minlength="2"
-                  maxlength="255"
-                  autocomplete="off"
-                  class="w-full"
-              /></UFormField>
+            <div class="min-w-0 space-y-5">
+              <ShippingAddress :address="shippingAddress" heading-id="order-ship-to" />
+              <details>
+                <summary
+                  class="cursor-pointer text-sm font-medium text-default w-fit focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  Parcel contents
+                </summary>
+                <PickList :items="lineItems" :title="null" class="mt-3" />
+              </details>
             </div>
-            <UFormField
-              label="Tracking URL"
-              name="trackingUrl"
-              :error="errors.trackingUrl"
-              hint="Optional"
-              ><UInput
-                name="trackingUrl"
-                type="url"
-                maxlength="2048"
-                placeholder="https://"
-                class="w-full"
-            /></UFormField>
+            <div id="order-ship-form" class="@container min-w-0">
+              <Form
+                v-slot="{ errors, processing }"
+                v-bind="callbacks"
+                :options="requestOptions"
+                disable-while-processing
+                route="seller.shipments.store"
+                :params="{ id: order.id }"
+                class="space-y-4"
+              >
+                <div class="grid @lg:grid-cols-2 gap-4">
+                  <UFormField label="Carrier" name="carrier" :error="errors.carrier" required
+                    ><UInput
+                      name="carrier"
+                      required
+                      minlength="2"
+                      maxlength="100"
+                      autocomplete="off"
+                      class="w-full" /></UFormField
+                  ><UFormField
+                    label="Tracking number"
+                    name="trackingNumber"
+                    :error="errors.trackingNumber"
+                    required
+                    ><UInput
+                      name="trackingNumber"
+                      required
+                      minlength="2"
+                      maxlength="255"
+                      autocomplete="off"
+                      class="w-full"
+                  /></UFormField>
+                </div>
+                <UFormField
+                  label="Tracking URL"
+                  name="trackingUrl"
+                  :error="errors.trackingUrl"
+                  hint="Optional"
+                  ><UInput
+                    name="trackingUrl"
+                    type="url"
+                    maxlength="2048"
+                    placeholder="https://"
+                    class="w-full"
+                /></UFormField>
+                <p class="text-sm text-default [overflow-wrap:anywhere]">
+                  <template v-if="order.email"
+                    >Saving emails this tracking to <bdi class="font-medium">{{ order.email }}</bdi
+                    >.
+                  </template>
+                  Tracking can’t be changed after it is saved, so check the number first.
+                </p>
+                <UButton
+                  type="submit"
+                  label="Mark as shipped"
+                  icon="i-lucide-truck"
+                  :loading="processing"
+                  :disabled="processing || locked"
+                />
+              </Form>
+            </div>
+          </div>
+
+          <template v-else-if="shipped">
+            <dl class="mt-5 grid gap-4 sm:grid-cols-2 text-sm">
+              <div>
+                <dt class="text-muted">Carrier</dt>
+                <dd class="mt-1 font-medium text-highlighted break-words">
+                  {{ order.shipment?.carrier || 'Not provided' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-muted">Tracking number</dt>
+                <dd class="mt-1 font-medium text-highlighted break-all tabular-nums">
+                  {{ order.shipment?.trackingNumber || 'Not provided' }}
+                </dd>
+              </div>
+            </dl>
             <UButton
-              type="submit"
-              label="Mark as shipped"
-              icon="i-lucide-truck"
-              :loading="processing"
-              :disabled="processing || locked"
-            />
-          </Form>
-          <dl v-if="shipped" class="mt-5 grid gap-4 sm:grid-cols-2 text-sm">
-            <div>
-              <dt class="text-muted">Carrier</dt>
-              <dd class="mt-1 font-medium text-highlighted break-words">
-                {{ order.shipment?.carrier || 'Not provided' }}
-              </dd>
-            </div>
-            <div>
-              <dt class="text-muted">Tracking number</dt>
-              <dd class="mt-1 font-medium text-highlighted break-all">
-                {{ order.shipment?.trackingNumber || 'Not provided' }}
-              </dd>
-            </div>
-          </dl>
-          <UButton
-            v-if="shipped && trackingUrl"
-            :href="trackingUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            label="Track shipment"
-            icon="i-lucide-external-link"
-            variant="outline"
-            color="neutral"
-            class="mt-4"
-          />
-        </section>
-        <section id="order-payments" aria-labelledby="order-payments-title" class="scroll-mt-6">
-          <div class="flex items-center justify-between gap-3 mb-4">
-            <h2 id="order-payments-title" class="text-lg font-semibold text-highlighted">
-              Payments &amp; refunds
-            </h2>
-            <UBadge
-              class="text-default"
-              :label="label(order.financialStatus)"
+              v-if="trackingUrl"
+              :href="trackingUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              label="Track shipment"
+              icon="i-lucide-external-link"
+              variant="outline"
               color="neutral"
-              variant="subtle"
+              class="mt-4"
             />
-          </div>
-          <div v-if="order.attempt" class="border-b border-default pb-5 mb-5">
+          </template>
+        </section>
+
+        <section id="order-payments" aria-labelledby="order-payments-title" class="scroll-mt-6">
+          <h2 id="order-payments-title" class="text-lg font-semibold text-highlighted mb-4">
+            Payments &amp; refunds
+          </h2>
+          <div v-if="order.attempt" class="border-b border-default pb-5 mb-1">
             <div class="flex flex-wrap justify-between gap-2 text-sm">
-              <p class="font-medium text-highlighted">Payment checkout</p>
+              <h3 class="font-medium text-highlighted">Payment checkout</h3>
               <span class="text-muted"
                 >{{ label(order.attempt.state) }} · {{ label(order.attempt.provider) }}</span
               >
             </div>
-            <Form
-              v-if="order.attempt.needsReview && order.attempt.state !== 'paid'"
-              v-slot="{ errors, processing }"
-              v-bind="callbacks"
-              :options="requestOptions"
-              disable-while-processing
-              route="seller.operations.store"
-              :params="{ id: order.id }"
-              class="mt-4 space-y-3"
-            >
-              <input type="hidden" name="kind" value="payment" /><input
-                type="hidden"
-                name="operationId"
-                :value="order.attempt.id"
-              />
-              <p v-if="order.attempt.lastError" class="text-sm text-default break-words">
-                {{ operationMessage(order.attempt.lastError, 'payment') }}
+            <p v-if="cardReconciles" class="text-sm text-default mt-3">
+              This checkout needs a provider recheck. Use the form at the top of the page.
+            </p>
+            <template v-else-if="reconcilable">
+              <p class="text-sm text-default mt-3">
+                The provider’s result for this checkout is uncertain. Recheck it before relying on
+                this order’s payment status.
               </p>
-              <UFormField
-                label="Checkout reference from the provider"
-                name="externalId"
-                hint="Optional"
-                :error="errors.externalId"
-                ><UInput name="externalId" maxlength="255" autocomplete="off" class="w-full"
-              /></UFormField>
-              <p class="text-sm text-muted">
-                Use the original provider reference if the request outcome is uncertain.
-                Reconciliation verifies this order’s checkout; it does not manually mark the order
-                paid.
-              </p>
-              <UButton
-                type="submit"
-                label="Reconcile payment"
-                icon="i-lucide-refresh-cw"
-                :loading="processing"
-                :disabled="processing || locked"
-              />
-            </Form>
+              <ReconcileCheckoutForm :order="order" :attempt="order.attempt" class="mt-4" />
+            </template>
             <p v-else-if="order.attempt.needsReview" class="text-sm text-default mt-3">
               A payment is recorded, but this checkout still needs review. Verify the original
               provider record before continuing.
             </p>
             <p v-if="order.attempt.externalId" class="text-sm text-muted break-all mt-3">
-              Checkout reference: {{ order.attempt.externalId }}
+              Checkout reference <bdi>{{ order.attempt.externalId }}</bdi>
             </p>
           </div>
-          <p v-if="!order.payments.length" class="text-sm text-muted py-2">
+          <p v-if="!order.payments.length" class="text-sm text-muted py-4">
             No captured payment is recorded. A checkout request is not payment confirmation.
           </p>
           <div
@@ -407,18 +565,18 @@ const activityNames: Record<string, string> = {
             class="py-4 border-b border-default last:border-b-0"
           >
             <div class="flex flex-wrap justify-between items-center gap-2">
-              <p class="text-base font-semibold tabular-nums text-highlighted">
-                {{ money(payment.amountMinor, payment.currency) }}
-              </p>
+              <h3 class="text-base font-semibold tabular-nums text-highlighted">
+                Payment · {{ money(payment.amountMinor, payment.currency) }}
+              </h3>
               <UBadge
                 class="text-default"
-                :label="label(payment.disposition)"
+                :label="payment.disposition === 'accepted' ? 'Paid' : label(payment.disposition)"
                 :color="payment.disposition === 'accepted' ? 'success' : 'warning'"
                 variant="subtle"
               />
             </div>
             <p class="text-sm text-muted break-all mt-2">
-              {{ label(payment.provider) }} · {{ payment.externalId }}
+              {{ label(payment.provider) }} payment <bdi>{{ payment.externalId }}</bdi>
             </p>
             <Form
               v-if="refundAction(payment.id)?.canRefund"
@@ -437,22 +595,22 @@ const activityNames: Record<string, string> = {
                 >
                   Refund this payment
                 </summary>
-                <p class="text-sm text-muted mt-3 mb-3">
+                <p class="text-sm text-default mt-3 mb-3 max-w-prose">
                   Requests a refund of the remaining
                   {{
                     money(refundAction(payment.id)?.refundableAmountMinor || 0, payment.currency)
-                  }}. Confirmation is asynchronous. This blocks dispatch and does not restore stock;
-                  cancelling the order restores stock.
+                  }}. It stays pending until the provider confirms it. A refund blocks dispatch but
+                  does not return stock; cancelling the order does.
                 </p>
                 <UCheckbox
                   v-model="refundConfirmed[payment.id]"
-                  label="I confirm the refund amount above."
+                  :label="`I confirm refunding ${money(refundAction(payment.id)?.refundableAmountMinor || 0, payment.currency)} to this payment.`"
                   class="mb-4"
                   :disabled="locked"
                 />
                 <UButton
                   type="submit"
-                  label="Request full refund"
+                  :label="`Request refund of ${money(refundAction(payment.id)?.refundableAmountMinor || 0, payment.currency)}`"
                   icon="i-lucide-undo-2"
                   color="neutral"
                   variant="outline"
@@ -461,7 +619,10 @@ const activityNames: Record<string, string> = {
                 />
               </details>
             </Form>
-            <p v-else-if="refundAction(payment.id)?.refundBlocker" class="text-sm text-muted mt-3">
+            <p
+              v-else-if="refundAction(payment.id)?.refundBlocker"
+              class="text-sm text-default mt-3"
+            >
               {{ refundAction(payment.id)?.refundBlocker }}
             </p>
           </div>
@@ -471,7 +632,7 @@ const activityNames: Record<string, string> = {
             class="border-t border-default py-4"
           >
             <div class="flex flex-wrap justify-between gap-2 text-sm">
-              <p class="font-medium text-highlighted">
+              <h3 class="font-medium text-highlighted">
                 Refund ·
                 {{
                   money(
@@ -479,7 +640,7 @@ const activityNames: Record<string, string> = {
                     order.payments.find((payment) => payment.id === refund.paymentId)?.currency
                   )
                 }}
-              </p>
+              </h3>
               <UBadge
                 class="text-default"
                 :label="label(refund.state)"
@@ -494,7 +655,7 @@ const activityNames: Record<string, string> = {
               />
             </div>
             <p v-if="refund.externalId" class="text-sm text-muted break-all mt-2">
-              Refund reference: {{ refund.externalId }}
+              Refund reference <bdi>{{ refund.externalId }}</bdi>
             </p>
             <p v-if="refund.lastError" class="text-sm text-default mt-2 break-words">
               {{ operationMessage(refund.lastError, 'refund') }}
@@ -512,9 +673,10 @@ const activityNames: Record<string, string> = {
                 type="hidden"
                 name="operationId"
                 :value="refund.id" /><UFormField
-                label="Verified refund reference"
+                label="Provider refund reference"
                 name="externalId"
                 hint="Optional"
+                help="Leave blank to recheck the saved refund."
                 :error="errors.externalId"
                 ><UInput
                   name="externalId"
@@ -523,7 +685,7 @@ const activityNames: Record<string, string> = {
                   class="w-full" /></UFormField
               ><UButton
                 type="submit"
-                label="Reconcile refund"
+                label="Recheck refund with provider"
                 icon="i-lucide-refresh-cw"
                 variant="soft"
                 :loading="processing"
@@ -536,72 +698,41 @@ const activityNames: Record<string, string> = {
             class="border-t border-default py-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="text-sm font-medium text-highlighted">
+              <h3 class="text-sm font-medium text-highlighted">
                 Provider refund · {{ orderMoney(refund.amountMinor / 100, refund.currency) }}
-              </p>
+              </h3>
               <UBadge
                 :label="label(refund.state)"
                 :color="refund.state === 'succeeded' ? 'success' : 'warning'"
                 variant="subtle"
               />
             </div>
-            <p class="text-sm text-muted mt-2">Recorded directly from the payment provider.</p>
+            <p class="text-sm text-muted mt-2">Reported directly by the payment provider.</p>
             <p class="text-sm text-muted break-all mt-2">
-              Refund reference: {{ refund.externalId }}
+              Refund reference <bdi>{{ refund.externalId }}</bdi>
             </p>
           </div>
         </section>
-        <section
-          v-if="canCancel || operations.cancelBlocker || operations.cancellationPending"
-          aria-label="Order cancellation"
-          class="border-t border-default pt-5"
-        >
-          <p v-if="operations.cancelBlocker" class="text-sm text-muted">
-            {{ operations.cancelBlocker }}
-          </p>
-          <p v-else-if="operations.cancellationPending" class="text-sm text-muted">
-            Cancellation is already requested. Refresh status to check the confirmed outcome.
-          </p>
-          <details v-else>
-            <summary
-              class="cursor-pointer text-sm font-medium text-error w-fit focus-visible:outline-2 focus-visible:outline-error"
-            >
-              Cancel this order
-            </summary>
-            <p class="text-sm text-muted mt-3 mb-4 max-w-prose">
-              Cancellation closes the unpaid checkout or restores held/consumed stock and requests
-              any outstanding full refund. Uncertain payment outcomes must be resolved first;
-              refunds remain pending until confirmed.
-            </p>
-            <UCheckbox
-              v-model="cancelConfirmed"
-              label="I confirm cancellation of this order and any required refund."
-              :disabled="locked"
-              class="mb-4"
-            />
-            <Form
-              v-slot="{ processing }"
-              v-bind="callbacks"
-              :options="requestOptions"
-              disable-while-processing
-              route="seller.cancellations.store"
-              :params="{ id: order.id }"
-              ><UButton
-                type="submit"
-                label="Cancel order"
-                color="error"
-                variant="soft"
-                :loading="processing"
-                :disabled="processing || locked || !cancelConfirmed"
-            /></Form>
-          </details>
-        </section>
+        <CancellationSection
+          v-if="operations.canCancel || operations.cancelBlocker || operations.cancellationPending"
+          :order="order"
+          :operations="operations"
+        />
       </div>
       <div class="min-w-0 space-y-8 xl:border-l xl:border-default xl:pl-8">
         <section aria-labelledby="order-updates-title">
-          <h2 id="order-updates-title" class="text-lg font-semibold text-highlighted">
-            Customer updates
-          </h2>
+          <div class="flex items-center justify-between gap-3">
+            <h2 id="order-updates-title" class="text-lg font-semibold text-highlighted">
+              Customer updates
+            </h2>
+            <UBadge
+              v-if="updatesSummary"
+              class="text-default"
+              :label="updatesSummary.label"
+              :color="updatesSummary.color"
+              variant="subtle"
+            />
+          </div>
           <p class="text-sm text-muted mt-2">
             Receipt and shipment emails. Delivery failures do not reverse payment or fulfillment.
           </p>
@@ -615,10 +746,10 @@ const activityNames: Record<string, string> = {
               class="py-4 first:pt-0"
             >
               <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <p class="font-medium text-highlighted">{{ label(notification.kind) }}</p>
+                <h3 class="font-medium text-highlighted">{{ label(notification.kind) }}</h3>
                 <UBadge
                   class="text-default"
-                  :label="label(notification.state)"
+                  :label="updateLabels[notification.state] ?? label(notification.state)"
                   :color="
                     notification.state === 'failed'
                       ? 'warning'
@@ -679,7 +810,9 @@ const activityNames: Record<string, string> = {
               </p>
               <p class="text-sm text-muted mt-1">
                 {{ orderDate(activity.createdAt)
-                }}<span v-if="activity.actorId"> · Staff #{{ activity.actorId }}</span>
+                }}<span v-if="activity.actorName || activity.actorId">
+                  · <bdi>{{ activity.actorName || 'Staff member' }}</bdi></span
+                >
               </p>
               <details v-if="activity.details && Object.keys(activity.details).length" class="mt-2">
                 <summary
@@ -694,9 +827,7 @@ const activityNames: Record<string, string> = {
                     class="[overflow-wrap:anywhere]"
                   >
                     <dt class="inline text-muted">{{ label(String(key)) }}:</dt>
-                    <dd class="inline">
-                      {{ typeof value === 'object' ? JSON.stringify(value) : value }}
-                    </dd>
+                    <dd class="inline">{{ detailValue(value) }}</dd>
                   </div>
                 </dl>
               </details>
