@@ -1,7 +1,7 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import SimulationService from '#services/payments/simulation_service'
-import FakePayMongoService from '#services/payments/fake_paymongo_service'
+import FakePayMongoService from '#providers/payments/fake_paymongo_service'
 import { simulationValidator } from '#validators/payments/simulation'
 import SimulationTransformer from '#transformers/payments/simulation_transformer'
 

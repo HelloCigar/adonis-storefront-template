@@ -94,6 +94,21 @@ export default class InventoryService {
     }
   }
 
+  /** Whether an unpaid online checkout still references this variant or product. */
+  async hasPendingCheckout(
+    trx: TransactionClientContract,
+    target: { variantId: number } | { productId: number }
+  ) {
+    const query = trx
+      .from('order_line_items')
+      .join('orders', 'orders.id', 'order_line_items.order_id')
+      .where('orders.source', 'online')
+      .where('orders.lifecycle_state', 'pending_payment')
+    if ('variantId' in target) query.where('product_variant_id', target.variantId)
+    else query.where('product_id', target.productId)
+    return !!(await query.first())
+  }
+
   private unavailable(): never {
     throw new CheckoutException('The requested stock is no longer available.', 'E_CHECKOUT_STOCK')
   }

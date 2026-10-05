@@ -283,14 +283,14 @@ export class OrderAddressSchema extends BaseModel {
 }
 
 export class OrderLineItemSchema extends BaseModel {
-  static $columns = ['createdAt', 'currencyCode', 'discountAmount', 'id', 'imageAltText', 'imageUrl', 'options', 'orderId', 'productId', 'productVariantId', 'quantity', 'sellerId', 'sku', 'title', 'totalAmount', 'totalMinor', 'unitPriceAmount', 'unitPriceMinor', 'updatedAt', 'variantTitle'] as const
+  static $columns = ['createdAt', 'currencyCode', 'discountMinor', 'id', 'imageAltText', 'imageUrl', 'options', 'orderId', 'productId', 'productVariantId', 'quantity', 'sellerId', 'sku', 'title', 'totalMinor', 'unitPriceMinor', 'updatedAt', 'variantTitle'] as const
   $columns = OrderLineItemSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
   declare currencyCode: string
   @column()
-  declare discountAmount: number
+  declare discountMinor: bigint | number
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -314,11 +314,7 @@ export class OrderLineItemSchema extends BaseModel {
   @column()
   declare title: string
   @column()
-  declare totalAmount: number
-  @column()
   declare totalMinor: bigint | number | null
-  @column()
-  declare unitPriceAmount: number
   @column()
   declare unitPriceMinor: bigint | number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -353,7 +349,7 @@ export class OrderNotificationSchema extends BaseModel {
 }
 
 export class OrderSchema extends BaseModel {
-  static $columns = ['cancelledAt', 'cartId', 'createdAt', 'currencyCode', 'discountAmount', 'email', 'financialStatus', 'fulfillmentStatus', 'id', 'inputFingerprint', 'lifecycleState', 'note', 'number', 'paidAt', 'phoneNumber', 'processedAt', 'publicId', 'reviewReason', 'shippingAmount', 'shippingMinor', 'source', 'submissionKey', 'subtotalAmount', 'subtotalMinor', 'taxAmount', 'totalAmount', 'totalMinor', 'updatedAt', 'userId', 'version'] as const
+  static $columns = ['cancelledAt', 'cartId', 'createdAt', 'currencyCode', 'discountMinor', 'email', 'financialStatus', 'fulfillmentStatus', 'id', 'inputFingerprint', 'lifecycleState', 'note', 'number', 'paidAt', 'phoneNumber', 'processedAt', 'publicId', 'reviewReason', 'shippingMinor', 'source', 'submissionKey', 'subtotalMinor', 'taxMinor', 'totalMinor', 'updatedAt', 'userId', 'version'] as const
   $columns = OrderSchema.$columns
   @column.dateTime()
   declare cancelledAt: DateTime | null
@@ -364,7 +360,7 @@ export class OrderSchema extends BaseModel {
   @column()
   declare currencyCode: string
   @column()
-  declare discountAmount: number
+  declare discountMinor: bigint | number
   @column()
   declare email: string
   @column()
@@ -392,21 +388,15 @@ export class OrderSchema extends BaseModel {
   @column()
   declare reviewReason: string | null
   @column()
-  declare shippingAmount: number
-  @column()
   declare shippingMinor: bigint | number | null
   @column()
   declare source: string
   @column()
   declare submissionKey: string | null
   @column()
-  declare subtotalAmount: number
-  @column()
   declare subtotalMinor: bigint | number | null
   @column()
-  declare taxAmount: number
-  @column()
-  declare totalAmount: number
+  declare taxMinor: bigint | number
   @column()
   declare totalMinor: bigint | number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })

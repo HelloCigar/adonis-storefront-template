@@ -9,6 +9,7 @@ import PaymentService, { type PaymentReference } from '#services/payments/paymen
 import RefundService from '#services/payments/refund_service'
 import OutboxService from '#services/checkout/outbox_service'
 import { affectedRows } from '#models/shared/affected_rows'
+import { isLeased, leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease'
 import CheckoutException from '#exceptions/checkout_exception'
 
 @inject()
@@ -35,12 +36,13 @@ export default class RefundLookupService {
       if (row.state !== 'review_required') {
         // A new notification supersedes an in-flight lookup's completion. Its queued
         // job can claim immediately; the old token can no longer resolve this work.
-        await RefundLookup.query({ client: trx }).where('id', row.id).update({
-          state: 'pending',
-          claimToken: null,
-          claimExpiresAtMs: null,
-          lastError: null,
-        })
+        await RefundLookup.query({ client: trx })
+          .where('id', row.id)
+          .update({
+            state: 'pending',
+            ...leaseReleased(),
+            lastError: null,
+          })
         await row.refresh()
         await this.outbox.record(trx, { key, kind: 'lookup_refund', entityId: row.id })
       }
@@ -53,10 +55,8 @@ export default class RefundLookupService {
     const changed = await RefundLookup.query()
       .where('id', id)
       .where('state', 'pending')
-      .where((query) =>
-        query.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-      )
-      .update({ claimToken: token, claimExpiresAtMs: Date.now() + 120_000 })
+      .where(unleased)
+      .update(leaseFor(token, leaseMs.operation))
     if (affectedRows(changed) !== 1) return
     try {
       const row = await RefundLookup.findOrFail(id)
@@ -76,27 +76,28 @@ export default class RefundLookupService {
         .where('claim_token', token)
         .update({
           state: result.status === 'pending' ? 'pending' : 'resolved',
-          claimToken: null,
-          claimExpiresAtMs: null,
+          ...leaseReleased(),
           lastError: null,
         })
     } catch {
       const released = await RefundLookup.query()
         .where('id', id)
         .where('claim_token', token)
-        .update({ claimToken: null, claimExpiresAtMs: null, lastError: 'E_REFUND_LOOKUP' })
+        .update({ ...leaseReleased(), lastError: 'E_REFUND_LOOKUP' })
       if (affectedRows(released) !== 1) return
       throw new Error('Refund resource lookup failed')
     }
   }
 
   async review(id: number) {
-    await RefundLookup.query().where('id', id).whereNot('state', 'resolved').update({
-      state: 'review_required',
-      claimToken: null,
-      claimExpiresAtMs: null,
-      lastError: 'E_REFUND_LOOKUP_RETRIES_EXHAUSTED',
-    })
+    await RefundLookup.query()
+      .where('id', id)
+      .whereNot('state', 'resolved')
+      .update({
+        state: 'review_required',
+        ...leaseReleased(),
+        lastError: 'E_REFUND_LOOKUP_RETRIES_EXHAUSTED',
+      })
     logger.error({ lookupId: id }, 'Refund lookup requires operator review')
   }
 
@@ -123,7 +124,7 @@ export default class RefundLookupService {
     await db.transaction(async (trx) => {
       const row = await RefundLookup.findOrFail(id, { client: trx })
       if (row.state === 'resolved') return
-      if ((row.claimExpiresAtMs ?? 0) > Date.now())
+      if (isLeased(row))
         throw new CheckoutException('Lookup is still running', 'E_REFUND_LOOKUP_BUSY')
       row.state = 'pending'
       row.lastError = null

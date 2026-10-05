@@ -323,20 +323,20 @@ test.group('Storefront', (group) => {
       currencyCode: 'USD',
       financialStatus: 'paid',
       fulfillmentStatus: 'unfulfilled',
-      subtotalAmount: 49,
-      discountAmount: 0,
-      shippingAmount: 5,
-      taxAmount: 0,
-      totalAmount: 54,
+      subtotalMinor: 4900,
+      discountMinor: 0,
+      shippingMinor: 500,
+      taxMinor: 0,
+      totalMinor: 5400,
       processedAt: DateTime.utc(),
     })
     await order.related('lineItems').create({
       title: 'Bunny Lamp',
       variantTitle: 'Default',
       quantity: 1,
-      unitPriceAmount: 49,
-      discountAmount: 0,
-      totalAmount: 49,
+      unitPriceMinor: 4900,
+      discountMinor: 0,
+      totalMinor: 4900,
       currencyCode: 'USD',
     })
 

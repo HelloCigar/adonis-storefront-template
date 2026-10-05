@@ -6,12 +6,11 @@ import StatusTransformer from '#transformers/checkout/status_transformer'
 @inject()
 export default class OrdersController {
   constructor(private access: OrderAccessService) {}
-  async show({ params, auth, session, inertia, response }: HttpContext) {
-    const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
+  async show({ params, auth, checkoutSession, inertia, response }: HttpContext) {
     const order = await this.access.authorize(
       params.publicId,
       auth.user?.id,
-      grants[params.publicId]
+      checkoutSession.orderGrant(params.publicId)
     )
     await order.load('addresses')
     await order.load('lineItems')

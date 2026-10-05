@@ -8,6 +8,7 @@ import Order from '#models/checkout/order'
 import Cart from '#models/checkout/cart'
 import User from '#models/account/user'
 import { affectedRows } from '#models/shared/affected_rows'
+import { isLeased, leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease'
 import PaymentException from '#exceptions/payment_exception'
 import CheckoutException from '#exceptions/checkout_exception'
 import PaymentService, { type CheckoutSession } from '#services/payments/payment_service'
@@ -76,7 +77,7 @@ export default class RecoveryService {
           .where('id', id)
           .where('claim_token', token)
           .whereNot('state', 'paid')
-          .update({ state: 'pending', claimToken: null, claimExpiresAtMs: null, lastError: null })
+          .update({ state: 'pending', ...leaseReleased(), lastError: null })
     } catch (error) {
       const code =
         error instanceof PaymentException || error instanceof CheckoutException
@@ -90,8 +91,7 @@ export default class RecoveryService {
         .whereNot('state', 'paid')
         .update({
           state: knownRejection ? 'failed' : 'unknown',
-          claimToken: null,
-          claimExpiresAtMs: null,
+          ...leaseReleased(),
           lastError: code,
         })
       if (affectedRows(changed) !== 1) return
@@ -116,8 +116,7 @@ export default class RecoveryService {
   }
 
   async retry(id: number, actor: User, externalId?: string) {
-    if (!actor.isStoreStaff)
-      throw new CheckoutException('Access denied', 'E_PAYMENT_RETRY_ACCESS', 403)
+    CheckoutException.assertStaff(actor, 'E_PAYMENT_RETRY_ACCESS')
     const original = await Attempt.findOrFail(id)
     if (original.state === 'paid' || original.state === 'expired')
       throw new CheckoutException('Review captured funds using refunds', 'E_PAYMENT_RETRY_STATE')
@@ -129,7 +128,7 @@ export default class RecoveryService {
     await db.transaction(async (trx) => {
       await Order.query({ client: trx }).where('id', original.orderId).increment('version', 1)
       const attempt = await Attempt.findOrFail(id, { client: trx })
-      if ((attempt.claimExpiresAtMs ?? 0) > Date.now())
+      if (isLeased(attempt))
         throw new CheckoutException('This operation is still running', 'E_PAYMENT_BUSY')
       if (['paid', 'expired'].includes(attempt.state))
         throw new CheckoutException('Payment state changed', 'E_PAYMENT_RETRY_STATE')
@@ -139,8 +138,7 @@ export default class RecoveryService {
       }
       attempt.needsReview = false
       attempt.lastError = null
-      attempt.claimToken = null
-      attempt.claimExpiresAtMs = null
+      attempt.merge(leaseReleased())
       await attempt.save()
       await this.outbox.record(trx, {
         key: `staff-retry:${id}:${randomUUID()}`,
@@ -183,9 +181,7 @@ export default class RecoveryService {
     const stale = await Attempt.query()
       .whereIn('state', ['creating', 'pending', 'closing', 'unknown', 'failed'])
       .where('needs_review', false)
-      .where((q) =>
-        q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-      )
+      .where(unleased)
       .where(
         'updated_at',
         '<',
@@ -213,8 +209,7 @@ export default class RecoveryService {
       const changed = await query.update({
         needsReview: true,
         lastError: code,
-        claimToken: null,
-        claimExpiresAtMs: null,
+        ...leaseReleased(),
       })
       if (affectedRows(changed) !== 1) return
       const attempt = await Attempt.findOrFail(id, { client: trx })
@@ -233,16 +228,13 @@ export default class RecoveryService {
         .where('id', id)
         .whereNotIn('state', ['paid', 'expired'])
         .where('needs_review', false)
-        .where((q) =>
-          q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-        )
-        .update({ claimToken: token, claimExpiresAtMs: Date.now() + 120_000 })
+        .where(unleased)
+        .update(leaseFor(token, leaseMs.operation))
       if (affectedRows(changed) !== 1) return null
       const attempt = await Attempt.findOrFail(id, { client: trx })
       const firstSubmission = !attempt.externalId && ['creating', 'failed'].includes(attempt.state)
       if (expire && attempt.expiresAtMs > Date.now() && !attempt.closeReason) {
-        attempt.claimToken = null
-        attempt.claimExpiresAtMs = null
+        attempt.merge(leaseReleased())
         await attempt.save()
         return null
       }
@@ -321,8 +313,7 @@ export default class RecoveryService {
     if (order.lifecycleState !== 'pending_payment') return
     await this.inventory.release(trx, order.id)
     attempt.state = 'expired'
-    attempt.claimToken = null
-    attempt.claimExpiresAtMs = null
+    attempt.merge(leaseReleased())
     attempt.checkoutUrl = null
     attempt.version++
     await attempt.save()

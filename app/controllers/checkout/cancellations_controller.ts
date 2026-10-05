@@ -9,12 +9,11 @@ export default class CancellationsController {
     private access: OrderAccessService,
     private recovery: RecoveryService
   ) {}
-  async store({ params, auth, session, response }: HttpContext) {
-    const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
+  async store({ params, auth, checkoutSession, response }: HttpContext) {
     const order = await this.access.authorize(
       params.publicId,
       auth.user?.id,
-      grants[params.publicId]
+      checkoutSession.orderGrant(params.publicId)
     )
     await this.recovery.requestCancel(order.id)
     return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })

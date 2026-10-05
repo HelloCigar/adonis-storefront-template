@@ -14,9 +14,11 @@ import StateService from '#services/checkout/state_service'
 import MoneyService from '#services/checkout/money_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
+import BalanceService from '#services/payments/balance_service'
 import PaymentException from '#exceptions/payment_exception'
 import CheckoutException from '#exceptions/checkout_exception'
 import { affectedRows } from '#models/shared/affected_rows'
+import { isLeased, leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 @inject()
@@ -26,7 +28,8 @@ export default class RefundService {
     private states: StateService,
     private money: MoneyService,
     private outbox: OutboxService,
-    private activities: ActivityService
+    private activities: ActivityService,
+    private balances: BalanceService
   ) {}
 
   async requestFull(orderId: number, actor: User, paymentId?: number) {
@@ -39,7 +42,7 @@ export default class RefundService {
     actor: User,
     paymentId?: number
   ) {
-    if (!actor.isStoreStaff) throw new CheckoutException('Access denied', 'E_REFUND_ACCESS', 403)
+    CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
     const order = await Order.findOrFail(orderId, { client: trx })
     const shipped = await Shipment.query({ client: trx })
@@ -60,27 +63,20 @@ export default class RefundService {
       .whereIn('state', ['requested', 'pending', 'unknown'])
       .first()
     if (existing) return existing
-    const observations = await RefundObservation.query({ client: trx })
-      .where({
-        provider: payment.provider,
-        liveMode: payment.liveMode,
-        externalPaymentId: payment.externalId,
-      })
-      .whereIn('state', ['pending', 'succeeded'])
-    if (observations.some((row) => row.currency !== payment.currency)) {
+    const balance = await this.balances.forPayment(trx, payment)
+    if (balance.currencyMismatch) {
       throw new CheckoutException(
         'A provider refund currency does not match this payment. Reconcile it before requesting another refund.',
         'E_REFUND_ASSOCIATION'
       )
     }
-    if (observations.some((row) => row.state === 'pending')) {
+    if (balance.pending) {
       throw new CheckoutException(
         'A provider refund is still pending. Reconcile it before requesting another refund.',
         'E_REFUND_PENDING'
       )
     }
-    const refunded = observations.reduce((total, row) => this.money.add(total, row.amountMinor), 0)
-    const amountMinor = payment.amountMinor - refunded
+    const amountMinor = payment.amountMinor - balance.refundedMinor
     this.money.assertMinor(amountMinor)
     if (amountMinor === 0)
       throw new CheckoutException('This payment is already refunded', 'E_REFUND_BALANCE')
@@ -125,10 +121,8 @@ export default class RefundService {
         .where('id', id)
         .whereIn('state', ['requested', 'unknown', 'pending'])
         .where('needs_review', false)
-        .where((q) =>
-          q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-        )
-        .update({ claimToken: token, claimExpiresAtMs: Date.now() + 120_000 })
+        .where(unleased)
+        .update(leaseFor(token, leaseMs.operation))
       if (affectedRows(changed) !== 1) return null
       const refund = await RefundOperation.findOrFail(id, { client: trx })
       const firstSubmission = refund.state === 'requested'
@@ -182,8 +176,7 @@ export default class RefundService {
         .update({
           state: retryableRejection ? 'requested' : rejected ? 'failed' : 'unknown',
           lastError: code,
-          claimToken: null,
-          claimExpiresAtMs: null,
+          ...leaseReleased(),
         })
       if (affectedRows(changed) !== 1) return
       if (error instanceof PaymentException && !error.retryable) {
@@ -267,8 +260,7 @@ export default class RefundService {
       if (!associated) {
         refund.needsReview = true
         refund.lastError = 'E_REFUND_ASSOCIATION'
-        refund.claimToken = null
-        refund.claimExpiresAtMs = null
+        refund.merge(leaseReleased())
         await refund.save()
         await this.activities.record(trx, refund.orderId, 'refund.review_required', {
           refundId: refund.id,
@@ -284,8 +276,7 @@ export default class RefundService {
       // A verified success wins over an earlier failed/out-of-order notification.
       refund.state = observation.state
       refund.externalId = result.id
-      refund.claimToken = null
-      refund.claimExpiresAtMs = null
+      refund.merge(leaseReleased())
       refund.lastError = null
       refund.needsReview = false
       await refund.save()
@@ -325,7 +316,7 @@ export default class RefundService {
   }
 
   async retry(id: number, actor: User, externalId?: string) {
-    if (!actor.isStoreStaff) throw new CheckoutException('Access denied', 'E_REFUND_ACCESS', 403)
+    CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     const original = await RefundOperation.findOrFail(id)
     const payment = await Payment.findOrFail(original.paymentId)
     let observation: PaymentRefund | undefined
@@ -348,13 +339,12 @@ export default class RefundService {
       const refund = await RefundOperation.findOrFail(id, { client: trx })
       if (['succeeded', 'failed'].includes(refund.state))
         throw new CheckoutException('This refund is already resolved', 'E_REFUND_RETRY_STATE')
-      if ((refund.claimExpiresAtMs ?? 0) > Date.now())
+      if (isLeased(refund))
         throw new CheckoutException('This operation is still running', 'E_REFUND_BUSY')
       if (observation) refund.externalId = observation.id
       refund.needsReview = false
       refund.lastError = null
-      refund.claimToken = null
-      refund.claimExpiresAtMs = null
+      refund.merge(leaseReleased())
       await refund.save()
       await this.outbox.record(trx, {
         key: `staff-refund-retry:${id}:${randomUUID()}`,
@@ -377,8 +367,7 @@ export default class RefundService {
     await query.update({
       needsReview: true,
       lastError: code,
-      claimToken: null,
-      claimExpiresAtMs: null,
+      ...leaseReleased(),
     })
     logger.error({ refundId: id, code }, 'Refund operation requires staff review')
   }
@@ -395,22 +384,10 @@ export default class RefundService {
 
   private async balance(trx: TransactionClientContract, orderId: number) {
     const order = await Order.findOrFail(orderId, { client: trx })
-    const accepted = await Payment.query({ client: trx })
-      .where('order_id', orderId)
-      .where('disposition', 'accepted')
-      .first()
-    const currencyMismatch = await trx
-      .from('refund_observations as observations')
-      .join('payments as captured', (join) => {
-        join
-          .on('captured.provider', 'observations.provider')
-          .andOn('captured.live_mode', 'observations.live_mode')
-          .andOn('captured.external_id', 'observations.external_payment_id')
-      })
-      .where('captured.order_id', orderId)
-      .whereNot('observations.state', 'failed')
-      .whereRaw('observations.currency <> captured.currency')
-      .first()
+    const payments = await Payment.query({ client: trx }).where('order_id', orderId)
+    const balances = await this.balances.forPayments(trx, payments)
+    const currencyMismatch = payments.some((payment) => balances.get(payment)!.currencyMismatch)
+    const accepted = payments.find((payment) => payment.disposition === 'accepted')
     if (!accepted) {
       if (currencyMismatch) {
         order.lifecycleState = 'review_required'
@@ -419,22 +396,14 @@ export default class RefundService {
       }
       return
     }
-    const refunds = await RefundObservation.query({ client: trx })
-      .where({
-        provider: accepted.provider,
-        liveMode: accepted.liveMode,
-        externalPaymentId: accepted.externalId,
-      })
-      .where('state', 'succeeded')
-      .where('currency', accepted.currency)
-    const amount = refunds.reduce((total, row) => this.money.add(total, row.amountMinor), 0)
-    if (amount > accepted.amountMinor) {
+    const balance = balances.get(accepted)!
+    if (balance.overRefunded) {
       order.lifecycleState = 'review_required'
       order.reviewReason = 'Refund observations exceed captured payment.'
       await order.save()
       return
     }
-    order.financialStatus = this.states.financial(accepted.amountMinor, amount)
+    order.financialStatus = this.states.financial(accepted.amountMinor, balance.refundedMinor)
     if (currencyMismatch) {
       order.lifecycleState = 'review_required'
       order.reviewReason = 'A provider refund currency does not match its captured payment.'
@@ -442,25 +411,11 @@ export default class RefundService {
       return
     }
     if (order.lifecycleState === 'review_required' && order.financialStatus === 'paid') {
-      const others = await Payment.query({ client: trx })
-        .where('order_id', orderId)
-        .whereNot('id', accepted.id)
-      let resolved = others.length > 0
-      for (const other of others) {
-        const confirmed = await RefundObservation.query({ client: trx })
-          .where({
-            provider: other.provider,
-            liveMode: other.liveMode,
-            externalPaymentId: other.externalId,
-          })
-          .where('state', 'succeeded')
-          .where('currency', other.currency)
-        if (
-          confirmed.reduce((total, row) => this.money.add(total, row.amountMinor), 0) !==
-          other.amountMinor
-        )
-          resolved = false
-      }
+      const others = payments.filter((payment) => payment.id !== accepted.id)
+      // Extra captures are resolved only once each is confirmed fully refunded.
+      const resolved =
+        others.length > 0 &&
+        others.every((other) => balances.get(other)!.refundedMinor === other.amountMinor)
       if (resolved) {
         order.lifecycleState = 'confirmed'
         order.reviewReason = null

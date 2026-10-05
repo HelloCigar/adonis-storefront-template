@@ -11,6 +11,7 @@ import OrderAccessService from '#services/checkout/order_access_service'
 import OrderNotification from '#mails/checkout/order_notification'
 import checkout from '#config/checkout'
 import { affectedRows } from '#models/shared/affected_rows'
+import { leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease'
 
 @inject()
 export default class NotificationService {
@@ -20,10 +21,8 @@ export default class NotificationService {
     const claimed = await Notification.query()
       .where('id', id)
       .whereNot('state', 'sent')
-      .where((q) =>
-        q.whereNull('claim_expires_at_ms').orWhere('claim_expires_at_ms', '<', Date.now())
-      )
-      .update({ claimToken: token, claimExpiresAtMs: Date.now() + 120_000 })
+      .where(unleased)
+      .update(leaseFor(token, leaseMs.operation))
     if (affectedRows(claimed) !== 1) return
     try {
       const row = await Notification.findOrFail(id)
@@ -43,27 +42,30 @@ export default class NotificationService {
         .update({
           state: 'sent',
           sentAt: DateTime.utc().toSQL({ includeOffset: false }),
-          claimToken: null,
-          claimExpiresAtMs: null,
+          ...leaseReleased(),
           lastError: null,
         })
     } catch {
-      await Notification.query().where('id', id).where('claim_token', token).update({
-        state: 'failed',
-        claimToken: null,
-        claimExpiresAtMs: null,
-        lastError: 'E_NOTIFICATION_DELIVERY',
-      })
+      await Notification.query()
+        .where('id', id)
+        .where('claim_token', token)
+        .update({
+          state: 'failed',
+          ...leaseReleased(),
+          lastError: 'E_NOTIFICATION_DELIVERY',
+        })
       throw new Error('Order notification delivery failed')
     }
   }
   async failed(id: number) {
-    await Notification.query().where('id', id).whereNot('state', 'sent').update({
-      state: 'failed',
-      lastError: 'E_NOTIFICATION_RETRIES_EXHAUSTED',
-      claimToken: null,
-      claimExpiresAtMs: null,
-    })
+    await Notification.query()
+      .where('id', id)
+      .whereNot('state', 'sent')
+      .update({
+        state: 'failed',
+        lastError: 'E_NOTIFICATION_RETRIES_EXHAUSTED',
+        ...leaseReleased(),
+      })
     logger.error({ notificationId: id }, 'Order notification retries exhausted')
   }
 }

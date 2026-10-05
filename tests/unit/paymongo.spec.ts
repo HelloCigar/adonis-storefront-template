@@ -8,7 +8,7 @@ import PaymentService, { type CheckoutInput } from '#services/payments/payment_s
 import PayMongoService, {
   type PayMongoConfig,
   type PayMongoFetch,
-} from '#services/payments/paymongo_service'
+} from '#providers/payments/paymongo_service'
 import DispatcherService from '#services/payments/dispatcher_service'
 
 const config: PayMongoConfig = {

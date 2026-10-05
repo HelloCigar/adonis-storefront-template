@@ -281,17 +281,17 @@ test.group('Seller management', (group) => {
       currencyCode: 'PHP',
       financialStatus: 'pending',
       fulfillmentStatus: 'unfulfilled',
-      subtotalAmount: 250,
-      totalAmount: 300,
-      shippingAmount: 50,
+      subtotalMinor: 25000,
+      totalMinor: 30000,
+      shippingMinor: 5000,
       processedAt: DateTime.utc(),
     })
     const line = await order.related('lineItems').create({
       sellerId: owner.id,
       title: 'Lamp',
       quantity: 1,
-      unitPriceAmount: 250,
-      totalAmount: 250,
+      unitPriceMinor: 25000,
+      totalMinor: 25000,
       currencyCode: 'PHP',
     })
     const updated = await client
@@ -345,7 +345,7 @@ test.group('Seller management', (group) => {
       currencyCode: 'PHP',
       financialStatus: 'paid',
       fulfillmentStatus: 'fulfilled',
-      totalAmount: 250,
+      totalMinor: 25000,
       processedAt: DateTime.utc(),
     })
     const list = await client.get('/seller/users').loginAs(owner).withInertia()
@@ -448,7 +448,7 @@ test.group('Seller management', (group) => {
       email: 'buyer@example.com',
       financialStatus: 'paid',
       fulfillmentStatus: 'unfulfilled',
-      totalAmount: 250,
+      totalMinor: 25000,
       processedAt: DateTime.utc(),
     })
     for (const path of [

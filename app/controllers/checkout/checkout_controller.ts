@@ -1,11 +1,9 @@
-import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import { errors } from '@vinejs/vine'
 import CartService from '#services/checkout/cart_service'
 import QuoteService from '#services/checkout/quote_service'
 import CheckoutService from '#services/checkout/checkout_service'
-import OrderAccessService from '#services/checkout/order_access_service'
 import { checkoutValidator } from '#validators/checkout/checkout'
 import CheckoutException from '#exceptions/checkout_exception'
 import PaymentException from '#exceptions/payment_exception'
@@ -16,17 +14,11 @@ export default class CheckoutController {
   constructor(
     private carts: CartService,
     private quotes: QuoteService,
-    private checkout: CheckoutService,
-    private access: OrderAccessService
+    private checkout: CheckoutService
   ) {}
 
-  async create({ session, auth, inertia }: HttpContext) {
-    let token = session.get('store_cart_token') as string | undefined
-    if (!token) {
-      token = randomUUID()
-      session.put('store_cart_token', token)
-    }
-    const cart = await this.carts.findOrCreate(token, auth.user?.id)
+  async create({ checkoutSession, auth, inertia }: HttpContext) {
+    const cart = await this.carts.findOrCreate(checkoutSession.ensureCartToken(), auth.user?.id)
     let quote: Awaited<ReturnType<QuoteService['quote']>> | null = null
     let error: string | null = null
     try {
@@ -41,24 +33,15 @@ export default class CheckoutController {
     })
   }
 
-  async store({ request, auth, response, session }: HttpContext) {
+  async store({ request, auth, response, checkoutSession }: HttpContext) {
     const input = await request.validateUsing(checkoutValidator)
-    const previous = (session.get('store_checkout_submissions') ?? {}) as Record<string, string>
-    const token =
-      previous[input.submissionKey] ?? (session.get('store_cart_token') as string | undefined)
+    const token = checkoutSession.submissionCart(input.submissionKey) ?? checkoutSession.cartToken()
     if (!token) throw new CheckoutException('Cart not found', 'E_CART_NOT_FOUND', 404)
     try {
       const result = await this.checkout.submit(token, auth.user?.id, input)
-      const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
-      session.put(
-        'store_order_grants',
-        this.access.remember(grants, result.order.publicId!, result.token)
-      )
-      session.put(
-        'store_checkout_submissions',
-        this.access.remember(previous, input.submissionKey, token)
-      )
-      session.put('store_cart_token', randomUUID())
+      checkoutSession.rememberOrderGrant(result.order.publicId!, result.token)
+      checkoutSession.rememberSubmission(input.submissionKey, token)
+      checkoutSession.rotateCartToken()
       return response
         .redirect()
         .toRoute('checkout.orders.show', { publicId: result.order.publicId! })

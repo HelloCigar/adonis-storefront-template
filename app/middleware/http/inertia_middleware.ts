@@ -42,7 +42,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
       }),
       policies: ContentTransformer.transform(this.contentService.policies()),
       cart: async () => {
-        const cart = await this.cartService.load(ctx.session?.get('store_cart_token'))
+        const cart = await this.cartService.load(ctx.checkoutSession?.cartToken())
         return cart ? CartTransformer.transform(cart).depth(4) : null
       },
       searchResults: ctx.inertia.optional(async () => {

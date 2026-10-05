@@ -5,16 +5,17 @@ import Order from '#models/checkout/order'
 import Cart from '#models/checkout/cart'
 import Attempt from '#models/payments/attempt'
 import Payment from '#models/payments/payment'
-import RefundObservation from '#models/payments/refund_observation'
 import Shipment from '#models/checkout/shipment'
 import InventoryService from '#services/catalog/inventory_service'
 import MoneyService from '#services/checkout/money_service'
 import StateService from '#services/checkout/state_service'
 import ActivityService from '#services/checkout/activity_service'
 import NotificationIntentService from '#services/checkout/notification_intent_service'
+import BalanceService from '#services/payments/balance_service'
 import type { CheckoutSession } from '#services/payments/payment_service'
 import CheckoutException from '#exceptions/checkout_exception'
 import { affectedRows } from '#models/shared/affected_rows'
+import { leaseReleased } from '#models/shared/lease'
 
 @inject()
 export default class SettlementService {
@@ -23,7 +24,8 @@ export default class SettlementService {
     private money: MoneyService,
     private states: StateService,
     private activities: ActivityService,
-    private notifications: NotificationIntentService
+    private notifications: NotificationIntentService,
+    private balances: BalanceService
   ) {}
 
   async apply(checkout: CheckoutSession, expectedAttemptId?: number) {
@@ -70,21 +72,17 @@ export default class SettlementService {
         this.money.assertMinor(observation.amount)
         if (!observation.amount || !observation.id)
           throw new CheckoutException('Invalid payment observation', 'E_PAYMENT_OBSERVATION', 422)
-        const knownRefunds = await RefundObservation.query({ client: trx })
-          .where({
-            provider: checkout.provider,
-            liveMode: checkout.liveMode,
-            externalPaymentId: observation.id,
-          })
-          .whereNot('state', 'failed')
-        const currencyMismatch = knownRefunds.some((row) => row.currency !== observation.currency)
+        const { currencyMismatch, refundedMinor: refunded } = await this.balances.forPayment(trx, {
+          provider: checkout.provider,
+          liveMode: checkout.liveMode,
+          externalId: observation.id,
+          amountMinor: observation.amount,
+          currency: observation.currency,
+        })
         if (currencyMismatch) {
           review = true
           refundCurrencyReview = true
         }
-        const refunded = knownRefunds
-          .filter((row) => row.state === 'succeeded' && row.currency === observation.currency)
-          .reduce((total, row) => this.money.add(total, row.amountMinor), 0)
         const existing = await Payment.query({ client: trx })
           .where({
             provider: checkout.provider,
@@ -160,8 +158,7 @@ export default class SettlementService {
         order!.paidAt = DateTime.utc()
         attempt!.state = this.states.transition('attempt', attempt!.state, 'paid')
         attempt!.externalId = checkout.id
-        attempt!.claimToken = null
-        attempt!.claimExpiresAtMs = null
+        attempt!.merge(leaseReleased())
         attempt!.lastError = null
         attempt!.version++
         await attempt!.save()
@@ -195,8 +192,7 @@ export default class SettlementService {
           if (associated && checkout.status === 'paid' && captured.length) {
             attempt.state = 'paid'
             attempt.externalId = checkout.id
-            attempt.claimToken = null
-            attempt.claimExpiresAtMs = null
+            attempt.merge(leaseReleased())
           }
           await attempt.save()
         }

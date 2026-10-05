@@ -8,13 +8,13 @@ import Attempt from '#models/payments/attempt'
 import StockReservation from '#models/checkout/stock_reservation'
 import RefundOperation from '#models/payments/refund_operation'
 import Payment from '#models/payments/payment'
-import RefundObservation from '#models/payments/refund_observation'
 import InventoryService from '#services/catalog/inventory_service'
 import StateService from '#services/checkout/state_service'
 import ActivityService from '#services/checkout/activity_service'
 import NotificationIntentService from '#services/checkout/notification_intent_service'
 import CheckoutException from '#exceptions/checkout_exception'
 import RefundService from '#services/payments/refund_service'
+import BalanceService from '#services/payments/balance_service'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 export type DispatchBlockerCode =
@@ -40,7 +40,8 @@ export default class FulfillmentService {
     private states: StateService,
     private activities: ActivityService,
     private notifications: NotificationIntentService,
-    private refunds: RefundService
+    private refunds: RefundService,
+    private balances: BalanceService
   ) {}
 
   async pack(orderId: number, actor: User) {
@@ -149,8 +150,7 @@ export default class FulfillmentService {
   }
 
   private staff(actor: User) {
-    if (!actor.isStoreStaff)
-      throw new CheckoutException('Access denied', 'E_FULFILLMENT_ACCESS', 403)
+    CheckoutException.assertStaff(actor, 'E_FULFILLMENT_ACCESS')
   }
   private async claimOrder(trx: TransactionClientContract, orderId: number) {
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
@@ -179,16 +179,8 @@ export default class FulfillmentService {
       .where('order_id', order.id)
       .where((q) => q.whereNot('state', 'consumed').orWhereNotNull('restocked_at'))
       .first()
-    const observedRefund = payment
-      ? await RefundObservation.query({ client: trx })
-          .where({
-            provider: payment.provider,
-            liveMode: payment.liveMode,
-            externalPaymentId: payment.externalId,
-          })
-          .whereNot('state', 'failed')
-          .first()
-      : null
+    const balance = payment ? await this.balances.forPayment(trx, payment) : null
+    const observedRefund = !!balance?.active
     const shipment = await Shipment.query({ client: trx }).where('order_id', order.id).first()
     const blockers: DispatchBlocker[] = []
     if (order.lifecycleState === 'review_required')
