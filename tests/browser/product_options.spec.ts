@@ -1,5 +1,7 @@
 import Product from '#models/catalog/product'
+import CartLine from '#models/checkout/cart_line'
 import testUtils from '@adonisjs/core/services/test_utils'
+import db from '@adonisjs/lucid/services/db'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
@@ -7,6 +9,10 @@ async function createProductOptions() {
   const product = await Product.create({
     title: 'Option test',
     handle: 'option-test',
+    optionDefinitions: [
+      { name: 'Color', values: ['Red', 'Blue', 'Green'] },
+      { name: 'Size', values: ['Small', 'Large'] },
+    ],
     status: 'active',
     publishedAt: DateTime.utc(),
   })
@@ -74,6 +80,63 @@ test.group('Product option availability', (group) => {
     await page.assertQueryString({ variantId: String(variants[0].id) })
     assert.isTrue(await page.getByRole('button', { name: 'Add to cart', exact: true }).isEnabled())
     assert.isTrue(await page.getByRole('spinbutton').isEnabled())
+  })
+
+  test('keeps the sellable variant identity when legacy option tuples are duplicated', async ({
+    visit,
+    assert,
+  }) => {
+    const product = await Product.create({
+      title: 'Legacy duplicate options',
+      handle: 'legacy-duplicate-options',
+      optionDefinitions: [{ name: 'Color', values: ['Red', 'Blue'] }],
+      status: 'active',
+      publishedAt: DateTime.utc(),
+    })
+    await product.related('variants').createMany(
+      [
+        { title: 'Red', options: { Color: 'Red' }, availableForSale: true },
+        { title: 'Sold-out Blue', options: { Color: 'Blue' }, availableForSale: false },
+      ].map((variant, position) => ({
+        ...variant,
+        position,
+        priceAmount: 49,
+        currencyCode: 'PHP',
+      }))
+    )
+    // Migrated duplicates retain a null combination key; ordinary model writes reject duplicates.
+    await db.table('product_variants').insert({
+      product_id: product.id,
+      title: 'Sellable Blue',
+      options: JSON.stringify({ Color: 'Blue' }),
+      option_combination_key: null,
+      available_for_sale: true,
+      position: 2,
+      price_amount: 49,
+      currency_code: 'PHP',
+      created_at: DateTime.utc().toSQL(),
+    })
+    const sellableBlue = await product
+      .related('variants')
+      .query()
+      .where('position', 2)
+      .firstOrFail()
+    const page = await visit('/product/legacy-duplicate-options')
+    const blue = page.getByRole('radio', { name: 'Blue', exact: true })
+    await blue.waitFor()
+    assert.isTrue(await blue.isEnabled())
+
+    await page.getByText('Blue', { exact: true }).click()
+    await page.assertQueryString({ variantId: String(sellableBlue.id) })
+    assert.isTrue(await blue.isChecked())
+    assert.isTrue(await page.getByRole('button', { name: 'Add to cart', exact: true }).isEnabled())
+
+    await page.getByRole('button', { name: 'Add to cart', exact: true }).click()
+    await page.getByRole('button', { name: 'Open cart', exact: true }).click()
+    await page.getByText('Legacy duplicate options - Sellable Blue', { exact: true }).waitFor()
+    const line = await CartLine.firstOrFail()
+    assert.equal(line.productVariantId, sellableBlue.id)
+    assert.equal(await page.getByRole('dialog').locator('img').count(), 0)
   })
 
   test('disables all options and quantity when every variant is sold out', async ({

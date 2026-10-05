@@ -15,15 +15,6 @@ export default class ProductTransformer extends BaseTransformer<Product> {
       .map((variant) => variant.compareAtPriceAmount)
       .filter((amount): amount is number => amount !== null)
     const currencyCode = variants[0]?.currencyCode
-    const optionValues = new Map<string, Set<string>>()
-
-    for (const variant of variants) {
-      for (const [name, value] of Object.entries(variant.options ?? {})) {
-        const values = optionValues.get(name) ?? new Set<string>()
-        values.add(String(value))
-        optionValues.set(name, values)
-      }
-    }
 
     return {
       ...this.pick(this.resource, [
@@ -60,11 +51,11 @@ export default class ProductTransformer extends BaseTransformer<Product> {
               maxVariantPrice: { amount: Math.max(...compareAtPrices), currencyCode },
             }
           : undefined,
-      options: [...optionValues].map(([name, values], index) => ({
+      options: this.resource.optionDefinitions.map(({ name, values }, index) => ({
         id: `${this.resource.id}:${index + 1}`,
         name,
-        values: [...values],
-        optionValues: [...values].map((value) => ({ name: value })),
+        values,
+        optionValues: values.map((value) => ({ name: value })),
       })),
       media: MediaTransformer.transform(media),
       images: MediaTransformer.transform(images),

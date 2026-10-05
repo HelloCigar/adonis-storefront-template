@@ -4,12 +4,14 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { Link } from '@adonisjs/inertia/vue'
-const props = defineProps<{ product: Data.Seller.Product }>()
+import OptionsEditor from './OptionsEditor.vue'
+const props = defineProps<{ product: Data.Seller.Product; images: Data.Shared.Media[] }>()
 const emit = defineEmits<{
   create: []
   edit: [row: Data.Seller.Variant]
   delete: [row: Data.Seller.Variant]
   images: []
+  generate: []
 }>()
 const title = 'Variants'
 const singular = 'variant'
@@ -18,12 +20,14 @@ const filters = [
   { label: 'Available', value: 'available' },
   { label: 'Unavailable', value: 'unavailable' },
 ]
-const searchText = (row: Data.Seller.Variant) => `${row.title} ${row.sku || ''}`
+const searchText = (row: Data.Seller.Variant) =>
+  `${row.title} ${row.sku || ''} ${Object.values(row.options ?? {}).join(' ')}`.trim()
 const status = (row: Data.Seller.Variant) => (row.availableForSale ? 'available' : 'unavailable')
 const badge = resolveComponent('UBadge')
 const money = (amount: number, currency: string) =>
   new Intl.NumberFormat('en', { style: 'currency', currency }).format(amount)
 const resourceColumns: TableColumn<Data.Seller.Variant>[] = [
+  { id: 'image', header: 'Image', enableHiding: false },
   { accessorKey: 'title', header: 'Variant' },
   { accessorKey: 'sku', header: 'SKU' },
   {
@@ -56,6 +60,10 @@ const resourceColumns: TableColumn<Data.Seller.Variant>[] = [
   },
 ]
 const table = useTemplateRef('table')
+const imageFor = (variant: Data.Seller.Variant) =>
+  props.images.find((image) => image.id === variant.featuredMediaId)
+const issuesFor = (variant: Data.Seller.Variant) =>
+  props.product.optionIssues.filter((issue) => issue.variantId === variant.id)
 const search = ref('')
 const statusFilter = ref('all')
 const pagination = ref({ pageIndex: 0, pageSize: 10 })
@@ -116,16 +124,6 @@ function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
     <template #header>
       <UDashboardNavbar :title="title">
         <template #leading><UDashboardSidebarCollapse /></template>
-        <template #right>
-          <UButton
-            label="Images"
-            icon="i-lucide-image"
-            color="neutral"
-            variant="outline"
-            @click="emit('images')"
-          />
-          <UButton :label="`Add ${singular}`" icon="i-lucide-plus" @click="emit('create')" />
-        </template>
       </UDashboardNavbar>
     </template>
     <template #body>
@@ -135,8 +133,53 @@ function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
           class="inline-flex items-center gap-1 text-sm text-primary mb-3"
           ><UIcon name="i-lucide-arrow-left" class="size-4" />Products</Link
         >
-        <p class="text-sm text-muted">{{ description }}</p>
+        <h1 class="text-2xl font-semibold text-highlighted">{{ product.title }}</h1>
+        <p class="mt-2 text-sm text-muted">{{ description }}</p>
+        <div class="mt-5 flex flex-wrap items-center gap-2">
+          <UButton
+            label="Generate variants"
+            icon="i-lucide-list-plus"
+            class="text-highlighted dark:text-inverted"
+            @click="emit('generate')"
+          />
+          <UButton
+            :label="`Add ${singular}`"
+            icon="i-lucide-plus"
+            color="neutral"
+            variant="outline"
+            :disabled="product.optionDefinitions.length > 3"
+            @click="emit('create')"
+          />
+          <UButton
+            label="Images"
+            icon="i-lucide-image"
+            color="neutral"
+            variant="outline"
+            @click="emit('images')"
+          />
+        </div>
       </div>
+      <OptionsEditor :product="product" />
+      <UAlert
+        v-if="product.optionIssues.length"
+        color="warning"
+        title="Some options need attention"
+        description="Edit the flagged variants to use the shared options and a unique combination. Generation is paused until these are resolved."
+      >
+        <template #description>
+          <p class="text-sm">
+            Edit the flagged variants to use the shared options and a unique combination. Generation
+            is paused until these are resolved.
+          </p>
+          <p
+            v-for="(issue, index) in product.optionIssues.filter((item) => item.variantId === null)"
+            :key="index"
+            class="mt-2 text-sm"
+          >
+            {{ issue.message }}
+          </p>
+        </template>
+      </UAlert>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <UInput
           v-model="search"
@@ -195,6 +238,33 @@ function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
           separator: 'h-0',
         }"
       >
+        <template #image-cell="{ row }">
+          <button
+            type="button"
+            :aria-label="`Assign image for ${row.original.title}`"
+            class="flex size-12 items-center justify-center overflow-hidden rounded-md bg-elevated text-muted ring-1 ring-inset ring-default hover:ring-accented focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            @click="emit('edit', row.original)"
+          >
+            <img
+              v-if="imageFor(row.original)"
+              :src="imageFor(row.original)!.url"
+              alt=""
+              class="size-full object-cover"
+            />
+            <UIcon v-else name="i-lucide-image-plus" class="size-5" />
+          </button>
+        </template>
+        <template #title-cell="{ row }">
+          <span class="font-medium text-highlighted">{{ row.original.title }}</span>
+          <div
+            v-if="issuesFor(row.original).length"
+            class="mt-1 max-w-64 whitespace-normal text-xs text-warning"
+          >
+            <p v-for="(issue, index) in issuesFor(row.original)" :key="index">
+              {{ issue.message }}
+            </p>
+          </div>
+        </template>
         <template #actions-cell="{ row }">
           <UDropdownMenu
             v-if="rowActions(row.original).length"

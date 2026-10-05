@@ -498,7 +498,7 @@ export class PaymentSchema extends BaseModel {
 }
 
 export class ProductVariantSchema extends BaseModel {
-  static $columns = ['availableForSale', 'barcode', 'compareAtPriceAmount', 'createdAt', 'currencyCode', 'featuredMediaId', 'id', 'inventoryQuantity', 'inventoryReservedQuantity', 'options', 'position', 'priceAmount', 'productId', 'sku', 'title', 'updatedAt'] as const
+  static $columns = ['availableForSale', 'barcode', 'compareAtPriceAmount', 'createdAt', 'currencyCode', 'featuredMediaId', 'id', 'inventoryQuantity', 'inventoryReservedQuantity', 'optionCombinationKey', 'options', 'position', 'priceAmount', 'productId', 'sku', 'title', 'updatedAt'] as const
   $columns = ProductVariantSchema.$columns
   @column()
   declare availableForSale: boolean
@@ -519,6 +519,8 @@ export class ProductVariantSchema extends BaseModel {
   @column()
   declare inventoryReservedQuantity: number
   @column()
+  declare optionCombinationKey: string | null
+  @column()
   declare options: any | null
   @column()
   declare position: number
@@ -535,7 +537,7 @@ export class ProductVariantSchema extends BaseModel {
 }
 
 export class ProductSchema extends BaseModel {
-  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'isGiftCard', 'productType', 'publishedAt', 'sellerId', 'seoDescription', 'seoTitle', 'status', 'tags', 'title', 'updatedAt', 'vendor'] as const
+  static $columns = ['createdAt', 'description', 'descriptionHtml', 'handle', 'id', 'isGiftCard', 'optionDefinitions', 'productType', 'publishedAt', 'sellerId', 'seoDescription', 'seoTitle', 'status', 'tags', 'title', 'updatedAt', 'vendor'] as const
   $columns = ProductSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -549,6 +551,8 @@ export class ProductSchema extends BaseModel {
   declare id: number
   @column()
   declare isGiftCard: boolean
+  @column()
+  declare optionDefinitions: { name: string; values: string[] }[]
   @column()
   declare productType: string | null
   @column.dateTime()

@@ -18,12 +18,16 @@ async function createProduct(
     vendor,
     status: 'active',
     publishedAt: DateTime.utc(),
+    optionDefinitions: [
+      { name: 'Edition', values: prices.map((_, position) => `Edition ${position + 1}`) },
+    ],
     ...attributes,
   })
   await ProductVariant.createMany(
     prices.map((priceAmount, position) => ({
       productId: product.id,
       title: `Variant ${position}`,
+      options: { Edition: `Edition ${position + 1}` },
       priceAmount,
       currencyCode: 'PHP',
       availableForSale: available,

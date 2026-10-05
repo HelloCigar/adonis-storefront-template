@@ -108,6 +108,12 @@ export interface ApiDefinition {
       update: typeof routes['seller.variants.update']
       destroy: typeof routes['seller.variants.destroy']
     }
+    options: {
+      update: typeof routes['seller.options.update']
+    }
+    variantGeneration: {
+      store: typeof routes['seller.variant_generation.store']
+    }
     images: {
       store: typeof routes['seller.images.store']
       destroy: typeof routes['seller.images.destroy']

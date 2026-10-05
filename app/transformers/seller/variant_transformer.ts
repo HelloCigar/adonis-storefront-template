@@ -14,8 +14,11 @@ export default class SellerVariantTransformer extends BaseTransformer<ProductVar
         'inventoryQuantity',
         'availableForSale',
         'options',
+        'featuredMediaId',
         'position',
       ]),
+      options: this.resource.safeOptions,
+      hasInvalidOptions: this.resource.hasInvalidOptions,
       availableForSale: Boolean(this.resource.availableForSale),
     }
   }

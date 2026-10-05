@@ -55,7 +55,16 @@ test.group('Initial factories and seeder', (group) => {
     assert.equal(order.totalAmount, order.subtotalAmount)
 
     const collection = await CollectionFactory.apply('published')
-      .with('products', 2, (products) => products.apply('published').with('variants', 3))
+      .with('products', 2, (products) =>
+        products
+          .apply('published')
+          .merge({ optionDefinitions: [{ name: 'Color', values: ['Red', 'Blue', 'Green'] }] })
+          .with('variants', 3, (variants) =>
+            variants.merge(
+              ['Red', 'Blue', 'Green'].map((color) => ({ title: color, options: { Color: color } }))
+            )
+          )
+      )
       .create()
     await collection.load('products', (products) => products.preload('variants'))
     assert.lengthOf(collection.products, 2)
@@ -89,7 +98,12 @@ test.group('Initial factories and seeder', (group) => {
     assert.isFalse(draft.$isPersisted)
     assert.isNull(await AttachmentModel.first())
     const product = await ProductFactory.apply('published', 'withMedia')
-      .with('variants', 2, (variants) => variants.apply('discounted'))
+      .merge({ optionDefinitions: [{ name: 'Size', values: ['Small', 'Large'] }] })
+      .with('variants', 2, (variants) =>
+        variants
+          .apply('discounted')
+          .merge(['Small', 'Large'].map((size) => ({ title: size, options: { Size: size } })))
+      )
       .create()
     const collection = await CollectionFactory.apply('withImage').create()
     const images = await product.media.all()

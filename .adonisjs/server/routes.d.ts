@@ -56,6 +56,8 @@ export type ScannedRoutes = {
     'seller.products.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.variants.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
@@ -162,6 +164,7 @@ export type ScannedRoutes = {
     'session.destroy': { paramsTuple?: []; params?: {} }
     'seller.products.store': { paramsTuple?: []; params?: {} }
     'seller.variants.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.collections.store': { paramsTuple?: []; params?: {} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -176,6 +179,7 @@ export type ScannedRoutes = {
     'account.profile.update': { paramsTuple?: []; params?: {} }
     'account.addresses.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

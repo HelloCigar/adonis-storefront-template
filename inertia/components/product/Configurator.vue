@@ -14,7 +14,6 @@ const emit = defineEmits<{ submit: [FormSubmitEvent<typeof state>] }>()
 const { add } = useCart()
 const state = reactive({
   quantity: 1,
-  selectedOptions: selectedVariant.value?.selectedOptions ?? [],
 })
 const product = computed(() => props.product)
 const loading = ref(false)
@@ -27,23 +26,7 @@ const maxQuantity = computed(() => {
   const quantity = selectedVariant.value?.quantityAvailable
   return quantity && quantity > 0 ? Math.min(quantity, 10) : 10
 })
-watch(
-  () => state.selectedOptions,
-  (options) => {
-    selectedVariant.value = props.product?.variants?.find((variant) =>
-      options.every((option) =>
-        variant.selectedOptions.some(
-          (value) => value.name === option.name && value.value === option.value
-        )
-      )
-    )
-  },
-  { deep: true }
-)
-watch(selectedVariant, (variant) => {
-  const options = variant?.selectedOptions ?? []
-  if (JSON.stringify(state.selectedOptions) !== JSON.stringify(options))
-    state.selectedOptions = [...options]
+watch(selectedVariant, () => {
   state.quantity = Math.min(state.quantity, maxQuantity.value)
 })
 const onSubmit = async (event: FormSubmitEvent<typeof state>) => {
@@ -101,7 +84,7 @@ const onSubmit = async (event: FormSubmitEvent<typeof state>) => {
 
     <UForm v-if="product" :state="state" @submit="onSubmit">
       <ProductOptionGroup
-        v-model="state.selectedOptions"
+        v-model="selectedVariant"
         :options="product.options"
         :variants="product.variants ?? []"
         class="order-1 lg:order-2 mb-6 lg:mb-8"

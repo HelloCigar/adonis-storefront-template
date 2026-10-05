@@ -631,6 +631,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'seller.options.update': {
+    methods: ["PATCH"]
+    pattern: '/seller/products/:productId/options'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/options').optionsUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { productId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/options').optionsUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/options_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/options_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.variant_generation.store': {
+    methods: ["POST"]
+    pattern: '/seller/products/:productId/variants/generate'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/variant_generation').variantGenerationValidator)>>
+      paramsTuple: [ParamValue]
+      params: { productId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/variant_generation').variantGenerationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'seller.variants.update': {
     methods: ["PATCH"]
     pattern: '/seller/products/:productId/variants/:id'

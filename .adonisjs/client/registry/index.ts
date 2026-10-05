@@ -318,6 +318,18 @@ const routes = {
     tokens: [{"old":"/seller/products/:productId/variants","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants","type":0,"val":"variants","end":""}],
     types: placeholder as Registry['seller.variants.store']['types'],
   },
+  'seller.options.update': {
+    methods: ["PATCH"],
+    pattern: '/seller/products/:productId/options',
+    tokens: [{"old":"/seller/products/:productId/options","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/options","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/options","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/options","type":0,"val":"options","end":""}],
+    types: placeholder as Registry['seller.options.update']['types'],
+  },
+  'seller.variant_generation.store': {
+    methods: ["POST"],
+    pattern: '/seller/products/:productId/variants/generate',
+    tokens: [{"old":"/seller/products/:productId/variants/generate","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/generate","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"generate","end":""}],
+    types: placeholder as Registry['seller.variant_generation.store']['types'],
+  },
   'seller.variants.update': {
     methods: ["PATCH"],
     pattern: '/seller/products/:productId/variants/:id',

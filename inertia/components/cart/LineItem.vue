@@ -43,12 +43,20 @@ watch(
   <UCard :ui="{ body: 'relative flex justify-between gap-8' }">
     <ULink :to="to" :aria-label="`${t('product.view')}: '${variant.product?.title}'`">
       <img
+        v-if="line.image?.url"
         :src="line.image?.url"
         :alt="line.image?.altText ?? variant.product?.title"
         width="160"
         height="160"
         class="size-24 lg:size-28"
       />
+      <span
+        v-else
+        class="inline-flex size-24 items-center justify-center rounded-md bg-elevated text-muted lg:size-28"
+        aria-hidden="true"
+      >
+        <UIcon name="i-lucide-image" class="size-8" />
+      </span>
     </ULink>
 
     <div class="h-24 flex flex-col justify-between grow lg:h-28">

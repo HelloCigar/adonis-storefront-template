@@ -2,6 +2,7 @@ import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import app from '@adonisjs/core/services/app'
 import Product from '#models/catalog/product'
 import ProductVariant from '#models/catalog/product_variant'
+import { optionCombinationKey } from '#services/catalog/options_service'
 import Collection from '#models/catalog/collection'
 import User from '#models/account/user'
 import Cart from '#models/checkout/cart'
@@ -81,6 +82,8 @@ export default class MainSeeder extends BaseSeeder {
           product.useTransaction(trx)
           // Older demo data may have products without their price and stock variants.
           if (!(await product.related('variants').query().first())) {
+            product.optionDefinitions = [{ name: 'Color', values: [...colors] }]
+            await product.save()
             const price = 299 + groupIndex * 200 + index * 100
             const soldOut = groupIndex === 2 && index === 5
             const media = await product.media.all()
@@ -92,6 +95,7 @@ export default class MainSeeder extends BaseSeeder {
                   position,
                   sku: handle.toUpperCase() + '-' + position,
                   options: { Color: color },
+                  optionCombinationKey: optionCombinationKey({ Color: color }),
                   priceAmount: price + position * 50,
                   compareAtPriceAmount: index % 3 === 0 ? price + position * 50 + 150 : null,
                   availableForSale: !soldOut,

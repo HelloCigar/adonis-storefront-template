@@ -3,7 +3,11 @@ import { watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
-const props = defineProps<{ variant?: Data.Seller.Variant; product: Data.Seller.Product }>()
+const props = defineProps<{
+  variant?: Data.Seller.Variant
+  product: Data.Seller.Product
+  images: Data.Shared.Media[]
+}>()
 const open = defineModel<boolean>('open', { required: true })
 const form = useForm({
   title: 'Default',
@@ -13,8 +17,10 @@ const form = useForm({
   currencyCode: 'PHP',
   inventoryQuantity: null as number | null,
   availableForSale: true,
+  featuredMediaId: null as string | null,
   options: [] as { name: string; value: string }[],
 })
+let generatedTitle = 'Default'
 watch(
   open,
   (isOpen) => {
@@ -23,6 +29,12 @@ watch(
     form.reset()
     form.clearErrors()
     form.currencyCode = props.product.variants?.[0]?.currencyCode || 'PHP'
+    form.options = props.product.optionDefinitions.map((definition) => ({
+      name: definition.name,
+      value: definition.values[0] ?? '',
+    }))
+    generatedTitle = form.options.map((option) => option.value).join(' / ') || 'Default'
+    form.title = generatedTitle
     if (variant)
       Object.assign(form, {
         title: variant.title,
@@ -32,11 +44,39 @@ watch(
         currencyCode: variant.currencyCode,
         inventoryQuantity: variant.inventoryQuantity,
         availableForSale: variant.availableForSale,
-        options: Object.entries(variant.options || {}).map(([name, value]) => ({ name, value })),
+        featuredMediaId: variant.featuredMediaId,
+        options: props.product.optionDefinitions
+          .filter(
+            (definition) =>
+              props.product.optionDefinitions.length <= 3 ||
+              Object.hasOwn(variant.options ?? {}, definition.name)
+          )
+          .map((definition) => ({
+            name: definition.name,
+            value: definition.values.includes(variant.options?.[definition.name] ?? '')
+              ? variant.options![definition.name]
+              : (definition.values[0] ?? ''),
+          })),
       })
   },
   { immediate: true }
 )
+watch(
+  () => form.options.map((option) => option.value),
+  () => {
+    if (props.variant) return
+    const next = form.options.map((option) => option.value).join(' / ') || 'Default'
+    if (form.title === generatedTitle) form.title = next
+    generatedTitle = next
+  },
+  { deep: true }
+)
+function includeOption(name: string, included: boolean) {
+  if (included) {
+    const definition = props.product.optionDefinitions.find((option) => option.name === name)
+    if (definition) form.options.push({ name, value: definition.values[0] ?? '' })
+  } else form.options = form.options.filter((option) => option.name !== name)
+}
 function save() {
   form.transform((data) => ({
     ...data,
@@ -120,55 +160,99 @@ function save() {
         <UFormField
           name="options"
           label="Options"
-          description="For example Color: Blue or Size: Small."
+          description="Choose one value from each shared product option."
           :error="form.errors.options"
         >
-          <div class="space-y-3">
-            <div
-              v-for="(option, index) in form.options"
-              :key="index"
-              class="flex items-start gap-2"
-            >
-              <UFormField
-                :name="`options.${index}.name`"
-                :error="form.errors[`options.${index}.name` as keyof typeof form.errors]"
-                class="flex-1"
-                ><UInput
-                  v-model="option.name"
-                  :aria-label="`Option ${index + 1} name`"
-                  placeholder="Name"
-                  class="w-full"
-                  required
-              /></UFormField>
-              <UFormField
-                :name="`options.${index}.value`"
-                :error="form.errors[`options.${index}.value` as keyof typeof form.errors]"
-                class="flex-1"
-                ><UInput
-                  v-model="option.value"
-                  :aria-label="`Option ${index + 1} value`"
-                  placeholder="Value"
-                  class="w-full"
-                  required
-              /></UFormField>
-              <UButton
-                icon="i-lucide-x"
-                color="neutral"
-                variant="ghost"
-                :aria-label="`Remove option ${index + 1}`"
-                @click="form.options.splice(index, 1)"
+          <p v-if="!product.optionDefinitions.length" class="text-sm text-default">
+            Default combination. Define product options on the page to offer more choices.
+          </p>
+          <div v-else class="space-y-3">
+            <div v-if="product.optionDefinitions.length > 3" class="space-y-2">
+              <p class="text-sm text-default">
+                This legacy product has more than three options. Keep up to three on this variant,
+                then remove unused product options.
+              </p>
+              <UCheckbox
+                v-for="definition in product.optionDefinitions"
+                :key="definition.name"
+                :label="`Include ${definition.name}`"
+                :model-value="form.options.some((option) => option.name === definition.name)"
+                @update:model-value="
+                  (included) => includeOption(definition.name, included === true)
+                "
               />
             </div>
-            <UButton
-              v-if="form.options.length < 3"
-              label="Add option"
-              icon="i-lucide-plus"
-              color="neutral"
-              variant="outline"
-              @click="form.options.push({ name: '', value: '' })"
-            />
+            <div class="grid gap-3 sm:grid-cols-2">
+              <UFormField
+                v-for="(option, index) in form.options"
+                :key="option.name"
+                :name="`options.${index}.value`"
+                :label="option.name"
+                :error="form.errors[`options.${index}.value` as keyof typeof form.errors]"
+              >
+                <USelect
+                  v-model="option.value"
+                  :items="
+                    product.optionDefinitions.find((definition) => definition.name === option.name)
+                      ?.values ?? []
+                  "
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
           </div>
         </UFormField>
+        <fieldset aria-describedby="variant-image-help">
+          <legend class="text-sm font-medium text-highlighted">Variant image</legend>
+          <p id="variant-image-help" class="mt-1 text-sm text-muted">
+            Choose from this product's images. The same image can be used by several variants.
+          </p>
+          <div class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+            <label class="cursor-pointer">
+              <input
+                v-model="form.featuredMediaId"
+                type="radio"
+                name="variantImage"
+                :value="null"
+                class="peer sr-only"
+              />
+              <span
+                class="flex aspect-square flex-col items-center justify-center gap-2 rounded-md border border-default bg-default text-sm text-default peer-checked:border-primary peer-checked:bg-primary/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary"
+                ><UIcon name="i-lucide-image-off" class="size-5" />No image</span
+              >
+            </label>
+            <label
+              v-for="(image, index) in images.filter((item) => item.isImage)"
+              :key="image.id"
+              class="cursor-pointer min-w-0"
+            >
+              <input
+                v-model="form.featuredMediaId"
+                type="radio"
+                name="variantImage"
+                :value="image.id"
+                :aria-label="`Image ${index + 1}: ${image.altText}`"
+                class="peer sr-only"
+              />
+              <span
+                class="block rounded-md border border-default p-1 peer-checked:border-primary peer-checked:bg-primary/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary"
+                ><img
+                  :src="image.url"
+                  alt=""
+                  class="aspect-square w-full rounded-sm object-cover"
+                /><span class="block truncate px-1 py-1 text-xs text-default"
+                  >Image {{ index + 1 }}</span
+                ></span
+              >
+            </label>
+          </div>
+          <p v-if="form.errors.featuredMediaId" class="mt-2 text-sm text-error" role="alert">
+            {{ form.errors.featuredMediaId }}
+          </p>
+          <p v-if="!images.length" class="mt-2 text-sm text-muted">
+            Upload product images using the Images button on the page, then assign one here.
+          </p>
+        </fieldset>
         <UFormField name="availableForSale" :error="form.errors.availableForSale"
           ><USwitch v-model="form.availableForSale" label="Available for sale"
         /></UFormField>
@@ -187,6 +271,7 @@ function save() {
             label="Save"
             :loading="form.processing"
             :disabled="form.processing"
+            class="text-highlighted dark:text-inverted"
           />
         </div>
       </form>

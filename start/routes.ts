@@ -127,6 +127,15 @@ router
       .post('/products/:productId/variants', [controllers.seller.Variants, 'store'])
       .as('variants.store')
     router
+      .patch('/products/:productId/options', [controllers.seller.Options, 'update'])
+      .as('options.update')
+    router
+      .post('/products/:productId/variants/generate', [
+        controllers.seller.VariantGeneration,
+        'store',
+      ])
+      .as('variant_generation.store')
+    router
       .patch('/products/:productId/variants/:id', [controllers.seller.Variants, 'update'])
       .as('variants.update')
     router

@@ -34,6 +34,8 @@ export default class ProductVariantTransformer extends BaseTransformer<ProductVa
         'createdAt',
         'updatedAt',
       ]),
+      options: this.resource.safeOptions,
+      hasInvalidOptions: this.resource.hasInvalidOptions,
       price: {
         amount: this.resource.priceAmount,
         currencyCode: this.resource.currencyCode,
@@ -47,9 +49,9 @@ export default class ProductVariantTransformer extends BaseTransformer<ProductVa
             },
       availableForSale: this.resource.isSellable,
       quantityAvailable: this.resource.quantityAvailable,
-      selectedOptions: Object.entries(this.resource.options ?? {}).map(([name, value]) => ({
+      selectedOptions: Object.entries(this.resource.safeOptions ?? {}).map(([name, value]) => ({
         name,
-        value: String(value),
+        value,
       })),
       image: featuredMedia ? MediaTransformer.transform(featuredMedia) : null,
       featuredMedia: featuredMedia ? MediaTransformer.transform(featuredMedia) : null,

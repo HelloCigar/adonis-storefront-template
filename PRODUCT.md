@@ -41,6 +41,8 @@ The following are implemented defaults, not independently confirmed business req
 
 Keep the current behavior unless a subsequent task explicitly changes it. Deployment target, launch scope, product-specific accessibility requirements, and any store-specific variations remain open.
 
+Approved catalogue workflow: staff define up to three shared product options, edit unique variant combinations, assign images from the same product, and generate only missing combinations within a 100-combination limit using explicit starting details. Generation preserves existing variant IDs, prices, SKUs, stock, and images. Staff may remove an option dimension when the remaining combinations stay distinct; conflicting saves name affected variants and never merge or delete their records. Legacy inconsistencies are flagged and pause generation; additive option expansion can provide repair choices while invalid historical selections remain unchanged until explicit edits. Shoppers select available combinations, and the cart uses the selected variant's image.
+
 ## Brand Commitments
 
 The final product and store name are undecided. MediaBunny appears in mail configuration, while Nuxt Shopify and Nuxt UI demo copy remain in the storefront. These are existing implementation references, not a confirmed brand commitment.

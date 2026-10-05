@@ -104,6 +104,13 @@ test.group('Seller management', (group) => {
     const product = await Product.firstOrFail()
     created.assertRedirectsTo(`/seller/products/${product.id}/variants`)
     assert.isNull(product.publishedAt)
+    const configured = await client
+      .patch(`/seller/products/${product.id}/options`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .accept('json')
+      .json({ optionDefinitions: [{ name: 'Color', values: ['Blue'] }] })
+    configured.assertRedirectsTo(`/seller/products/${product.id}/variants`)
     const added = await client
       .post(`/seller/products/${product.id}/variants`)
       .loginAs(owner)
@@ -120,7 +127,7 @@ test.group('Seller management', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
-      .json({ ...variantPayload, priceAmount: 300, inventoryQuantity: 0, options: [] })
+      .json({ ...variantPayload, priceAmount: 300, inventoryQuantity: 0 })
     updated.assertRedirectsTo(`/seller/products/${product.id}/variants`)
     await variant.refresh()
     assert.equal(variant.priceAmount, 300)

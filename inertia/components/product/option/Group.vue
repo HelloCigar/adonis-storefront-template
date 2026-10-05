@@ -9,7 +9,7 @@ const props = defineProps<{
   variants: Variant[]
 }>()
 
-const selectedOptions = defineModel<{ name: string; value: string }[]>()
+const selectedVariant = defineModel<Variant>()
 
 const optionsToState = (options?: { name: string; value: string }[]) =>
   options?.reduce(
@@ -21,10 +21,10 @@ const optionsToState = (options?: { name: string; value: string }[]) =>
     {} as Record<string, string>
   ) ?? {}
 
-const state = reactive(optionsToState(selectedOptions.value))
-watch(selectedOptions, (options) => {
+const state = reactive(optionsToState(selectedVariant.value?.selectedOptions))
+watch(selectedVariant, (variant) => {
   for (const key of Object.keys(state)) delete state[key]
-  Object.assign(state, optionsToState(options))
+  Object.assign(state, optionsToState(variant?.selectedOptions))
 })
 
 const availableVariants = (name: string, value: string) => {
@@ -56,11 +56,16 @@ const options = computed(() =>
 const onChange = (name: string, value: string | undefined) => {
   if (value === undefined) return
   const candidates = availableVariants(name, value)
+  const matchesSelection = (candidate: Variant) =>
+    candidate.selectedOptions.length === Object.keys(state).length &&
+    candidate.selectedOptions.every((option) => state[option.name] === option.value)
   const variant =
-    candidates.find((candidate) =>
-      candidate.selectedOptions.every((option) => state[option.name] === option.value)
-    ) ?? candidates[0]
-  if (variant) selectedOptions.value = [...variant.selectedOptions]
+    candidates.find(
+      (candidate) => candidate.id === selectedVariant.value?.id && matchesSelection(candidate)
+    ) ??
+    candidates.find(matchesSelection) ??
+    candidates[0]
+  if (variant) selectedVariant.value = variant
 }
 
 const isColorSwatchOption = (option?: (typeof props.options)[number]) =>

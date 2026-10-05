@@ -17,6 +17,7 @@ export const variantCreateValidator = vine.create({
   currencyCode: vine.enum(['PHP', 'USD']),
   inventoryQuantity: vine.number().withoutDecimals().min(0).max(100000000).nullable(),
   availableForSale: vine.boolean(),
+  featuredMediaId: vine.string().trim().maxLength(255).nullable().optional(),
   options: vine
     .array(
       vine.object({
