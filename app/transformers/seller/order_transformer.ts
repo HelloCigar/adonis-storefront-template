@@ -50,6 +50,7 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
         id: payment.id,
         provider: payment.provider,
         amountMinor: payment.amountMinor,
+        currency: payment.currency,
         disposition: payment.disposition,
         externalId: payment.externalId,
       })),

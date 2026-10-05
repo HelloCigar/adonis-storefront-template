@@ -1,45 +1,44 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Form } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
+import { useOrderInteraction } from './interaction'
+import { orderLabel, orderMoney, orderDate, operationMessage } from './presentation'
 
-const props = defineProps<{ order: Data.Seller.Order }>()
-const label = (value: string) =>
-  value
-    .replaceAll('_', ' ')
-    .replaceAll('.', ' ')
-    .replace(/^./, (letter) => letter.toUpperCase())
-const money = (amount: number) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: props.order.currencyCode }).format(
-    amount / 100
-  )
+const props = defineProps<{ order: Data.Seller.Order; operations: Data.Seller.OrderOperations }>()
+const { locked, callbacks, requestOptions } = useOrderInteraction()
+const label = orderLabel
+const money = (amount: number, currency = props.order.currencyCode) =>
+  orderMoney(amount / 100, currency)
+const refundConfirmed = ref<Record<number, boolean>>({})
+const cancelConfirmed = ref(false)
+const showAllActivity = ref(false)
+const visibleActivity = computed(() =>
+  showAllActivity.value ? props.order.activities : props.order.activities.slice(0, 8)
+)
+const refundAction = (paymentId: number) =>
+  props.operations.payments.find((payment) => payment.paymentId === paymentId)
+watch(
+  () => props.operations,
+  () => {
+    refundConfirmed.value = {}
+    cancelConfirmed.value = false
+  }
+)
+const trackingUrl = computed(() => {
+  try {
+    const url = new URL(props.order.shipment?.trackingUrl || '')
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : null
+  } catch {
+    return null
+  }
+})
 const closed = computed(() => ['cancelled', 'expired'].includes(props.order.lifecycleState))
 const shipped = computed(() => props.order.shipment?.state === 'shipped')
-const blockers = computed(() => {
-  const reasons: string[] = []
-  if (props.order.reviewReason) reasons.push(props.order.reviewReason)
-  if (props.order.attempt?.needsReview)
-    reasons.push('The payment checkout needs reconciliation before dispatch.')
-  if (props.order.refunds.some((refund) => refund.state !== 'failed'))
-    reasons.push('A refund is in progress or confirmed. This order cannot be dispatched.')
-  if (props.order.lifecycleState === 'review_required' && !reasons.length)
-    reasons.push('This order requires a payment review before fulfillment can continue.')
-  return reasons
-})
-const ready = computed(
-  () =>
-    props.order.lifecycleState === 'confirmed' &&
-    props.order.financialStatus === 'paid' &&
-    props.order.payments.some((payment) => payment.disposition === 'accepted') &&
-    !blockers.value.length
-)
-const canPack = computed(() => ready.value && props.order.shipment?.state === 'pending')
-const canShip = computed(() => ready.value && props.order.shipment?.state === 'packing')
-const canCancel = computed(
-  () =>
-    !shipped.value &&
-    ['pending_payment', 'confirmed', 'review_required'].includes(props.order.lifecycleState)
-)
+const blockers = computed(() => props.operations.blockers)
+const canPack = computed(() => props.operations.canPack)
+const canShip = computed(() => props.operations.canShip)
+const canCancel = computed(() => props.operations.canCancel)
 const nextAction = computed(() => {
   if (closed.value)
     return {
@@ -54,6 +53,20 @@ const nextAction = computed(() => {
       description:
         'Tracking details are saved. Check customer updates for delivery of the shipment notification.',
       icon: 'i-lucide-truck',
+    }
+  if (props.operations.cancellationPending)
+    return {
+      title: 'Cancellation requested',
+      description:
+        'The checkout is being closed. Stock remains held until the provider confirms it is unpaid and closed.',
+      icon: 'i-lucide-clock',
+    }
+  if (props.order.lifecycleState === 'pending_payment' && !props.order.attempt?.needsReview)
+    return {
+      title: 'Waiting for payment confirmation',
+      description:
+        'A checkout request is not payment confirmation. Refresh status to check for a verified payment.',
+      icon: 'i-lucide-clock',
     }
   if (blockers.value.length)
     return {
@@ -74,13 +87,6 @@ const nextAction = computed(() => {
       description:
         'Payment is recorded. Start packing, then add tracking details when the parcel is ready to dispatch.',
       icon: 'i-lucide-package',
-    }
-  if (props.order.lifecycleState === 'pending_payment')
-    return {
-      title: 'Waiting for payment confirmation',
-      description:
-        'Fulfillment starts after a verified payment is recorded. Refresh the status to see the latest result.',
-      icon: 'i-lucide-clock',
     }
   return {
     title: 'Fulfillment is not ready',
@@ -107,7 +113,7 @@ const stages = computed(() => [
         ? 'In progress'
         : closed.value
           ? 'Closed'
-          : ready.value
+          : canPack.value
             ? 'Ready to start'
             : 'Not started',
     done: shipped.value,
@@ -120,11 +126,17 @@ const stages = computed(() => [
       ? 'Shipped'
       : closed.value
         ? 'Closed'
-        : blockers.value.length
-          ? 'Blocked'
-          : 'Not dispatched',
+        : props.order.lifecycleState === 'pending_payment'
+          ? 'Waiting for payment'
+          : blockers.value.length
+            ? 'Blocked'
+            : 'Not dispatched',
     done: shipped.value,
-    attention: !shipped.value && !closed.value && !!blockers.value.length,
+    attention:
+      !shipped.value &&
+      !closed.value &&
+      props.order.lifecycleState !== 'pending_payment' &&
+      !!blockers.value.length,
   },
   {
     title: 'Customer updates',
@@ -145,11 +157,17 @@ const stages = computed(() => [
 ])
 const activityNames: Record<string, string> = {
   'order.created': 'Order placed',
+  'order.submitted': 'Order placed',
   'order.confirmed': 'Order confirmed',
   'order.cancelled': 'Order cancelled',
   'shipment.packing': 'Packing started',
   'shipment.shipped': 'Shipment recorded',
   'notification.retry_requested': 'Customer update retry requested',
+  'payment.accepted': 'Payment confirmed',
+  'refund.requested': 'Refund requested',
+  'refund.succeeded': 'Refund confirmed',
+  'refund.failed': 'Refund failed',
+  'order.cancellation_requested': 'Cancellation requested',
 }
 </script>
 
@@ -194,18 +212,28 @@ const activityNames: Record<string, string> = {
             </div>
           </div>
           <ul
-            v-if="blockers.length && !shipped && !closed"
+            v-if="
+              blockers.length &&
+              !shipped &&
+              !closed &&
+              (order.lifecycleState !== 'pending_payment' || order.attempt?.needsReview)
+            "
             class="mt-5 space-y-2 text-sm text-default"
           >
             <li v-for="reason in blockers" :key="reason" class="flex gap-2">
               <UIcon
                 name="i-lucide-circle-alert"
                 class="size-4 shrink-0 mt-0.5 text-warning"
-              /><span class="break-words">{{ reason }}</span>
+              /><span class="[overflow-wrap:anywhere]">{{ reason }}</span>
             </li>
           </ul>
           <a
-            v-if="blockers.length"
+            v-if="
+              blockers.length &&
+              !shipped &&
+              !closed &&
+              (order.lifecycleState !== 'pending_payment' || order.attempt?.needsReview)
+            "
             href="#order-payments"
             class="inline-flex mt-4 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary"
             >Review payment &amp; refunds</a
@@ -213,34 +241,50 @@ const activityNames: Record<string, string> = {
           <Form
             v-if="canPack"
             v-slot="{ processing }"
+            v-bind="callbacks"
+            :options="requestOptions"
+            disable-while-processing
             route="seller.packing.store"
             :params="{ id: order.id }"
-            :options="{ preserveScroll: true }"
             class="mt-5"
             ><UButton
               type="submit"
               label="Start packing"
               icon="i-lucide-package"
               :loading="processing"
-              :disabled="processing"
+              :disabled="processing || locked"
           /></Form>
           <Form
             v-if="canShip"
             v-slot="{ errors, processing }"
+            v-bind="callbacks"
+            :options="requestOptions"
+            disable-while-processing
             route="seller.shipments.store"
             :params="{ id: order.id }"
-            :options="{ preserveScroll: true }"
             class="mt-6 space-y-4"
           >
             <div class="grid sm:grid-cols-2 gap-4">
               <UFormField label="Carrier" name="carrier" :error="errors.carrier" required
-                ><UInput name="carrier" required class="w-full" /></UFormField
+                ><UInput
+                  name="carrier"
+                  required
+                  minlength="2"
+                  maxlength="100"
+                  autocomplete="off"
+                  class="w-full" /></UFormField
               ><UFormField
                 label="Tracking number"
                 name="trackingNumber"
                 :error="errors.trackingNumber"
                 required
-                ><UInput name="trackingNumber" required class="w-full"
+                ><UInput
+                  name="trackingNumber"
+                  required
+                  minlength="2"
+                  maxlength="255"
+                  autocomplete="off"
+                  class="w-full"
               /></UFormField>
             </div>
             <UFormField
@@ -248,14 +292,19 @@ const activityNames: Record<string, string> = {
               name="trackingUrl"
               :error="errors.trackingUrl"
               hint="Optional"
-              ><UInput name="trackingUrl" type="url" placeholder="https://" class="w-full"
+              ><UInput
+                name="trackingUrl"
+                type="url"
+                maxlength="2048"
+                placeholder="https://"
+                class="w-full"
             /></UFormField>
             <UButton
               type="submit"
               label="Mark as shipped"
               icon="i-lucide-truck"
               :loading="processing"
-              :disabled="processing"
+              :disabled="processing || locked"
             />
           </Form>
           <dl v-if="shipped" class="mt-5 grid gap-4 sm:grid-cols-2 text-sm">
@@ -272,6 +321,17 @@ const activityNames: Record<string, string> = {
               </dd>
             </div>
           </dl>
+          <UButton
+            v-if="shipped && trackingUrl"
+            :href="trackingUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            label="Track shipment"
+            icon="i-lucide-external-link"
+            variant="outline"
+            color="neutral"
+            class="mt-4"
+          />
         </section>
         <section id="order-payments" aria-labelledby="order-payments-title" class="scroll-mt-6">
           <div class="flex items-center justify-between gap-3 mb-4">
@@ -295,9 +355,11 @@ const activityNames: Record<string, string> = {
             <Form
               v-if="order.attempt.needsReview && order.attempt.state !== 'paid'"
               v-slot="{ errors, processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
               route="seller.operations.store"
               :params="{ id: order.id }"
-              :options="{ preserveScroll: true }"
               class="mt-4 space-y-3"
             >
               <input type="hidden" name="kind" value="payment" /><input
@@ -306,14 +368,14 @@ const activityNames: Record<string, string> = {
                 :value="order.attempt.id"
               />
               <p v-if="order.attempt.lastError" class="text-sm text-default break-words">
-                {{ order.attempt.lastError }}
+                {{ operationMessage(order.attempt.lastError, 'payment') }}
               </p>
               <UFormField
                 label="Checkout reference from the provider"
                 name="externalId"
                 hint="Optional"
                 :error="errors.externalId"
-                ><UInput name="externalId" class="w-full"
+                ><UInput name="externalId" maxlength="255" autocomplete="off" class="w-full"
               /></UFormField>
               <p class="text-sm text-muted">
                 Use the original provider reference if the request outcome is uncertain.
@@ -325,14 +387,14 @@ const activityNames: Record<string, string> = {
                 label="Reconcile payment"
                 icon="i-lucide-refresh-cw"
                 :loading="processing"
-                :disabled="processing"
+                :disabled="processing || locked"
               />
             </Form>
             <p v-else-if="order.attempt.needsReview" class="text-sm text-default mt-3">
               A payment is recorded, but this checkout still needs review. Verify the original
               provider record before continuing.
             </p>
-            <p v-if="order.attempt.externalId" class="text-xs text-muted break-all mt-3">
+            <p v-if="order.attempt.externalId" class="text-sm text-muted break-all mt-3">
               Checkout reference: {{ order.attempt.externalId }}
             </p>
           </div>
@@ -346,7 +408,7 @@ const activityNames: Record<string, string> = {
           >
             <div class="flex flex-wrap justify-between items-center gap-2">
               <p class="text-base font-semibold tabular-nums text-highlighted">
-                {{ money(payment.amountMinor) }}
+                {{ money(payment.amountMinor, payment.currency) }}
               </p>
               <UBadge
                 class="text-default"
@@ -355,20 +417,17 @@ const activityNames: Record<string, string> = {
                 variant="subtle"
               />
             </div>
-            <p class="text-xs text-muted break-all mt-2">
+            <p class="text-sm text-muted break-all mt-2">
               {{ label(payment.provider) }} · {{ payment.externalId }}
             </p>
             <Form
-              v-if="
-                !shipped &&
-                !order.refunds.some(
-                  (refund) => refund.paymentId === payment.id && refund.state !== 'failed'
-                )
-              "
+              v-if="refundAction(payment.id)?.canRefund"
               v-slot="{ processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
               route="seller.refunds.store"
               :params="{ id: order.id }"
-              :options="{ preserveScroll: true }"
               class="mt-3"
             >
               <input type="hidden" name="paymentId" :value="payment.id" />
@@ -379,10 +438,18 @@ const activityNames: Record<string, string> = {
                   Refund this payment
                 </summary>
                 <p class="text-sm text-muted mt-3 mb-3">
-                  Requests a full refund of {{ money(payment.amountMinor) }}. Confirmation is
-                  asynchronous. This blocks dispatch and does not restore stock; cancelling the
-                  order restores stock.
+                  Requests a refund of the remaining
+                  {{
+                    money(refundAction(payment.id)?.refundableAmountMinor || 0, payment.currency)
+                  }}. Confirmation is asynchronous. This blocks dispatch and does not restore stock;
+                  cancelling the order restores stock.
                 </p>
+                <UCheckbox
+                  v-model="refundConfirmed[payment.id]"
+                  label="I confirm the refund amount above."
+                  class="mb-4"
+                  :disabled="locked"
+                />
                 <UButton
                   type="submit"
                   label="Request full refund"
@@ -390,10 +457,13 @@ const activityNames: Record<string, string> = {
                   color="neutral"
                   variant="outline"
                   :loading="processing"
-                  :disabled="processing"
+                  :disabled="processing || locked || !refundConfirmed[payment.id]"
                 />
               </details>
             </Form>
+            <p v-else-if="refundAction(payment.id)?.refundBlocker" class="text-sm text-muted mt-3">
+              {{ refundAction(payment.id)?.refundBlocker }}
+            </p>
           </div>
           <div
             v-for="refund in order.refunds"
@@ -401,7 +471,15 @@ const activityNames: Record<string, string> = {
             class="border-t border-default py-4"
           >
             <div class="flex flex-wrap justify-between gap-2 text-sm">
-              <p class="font-medium text-highlighted">Refund · {{ money(refund.amountMinor) }}</p>
+              <p class="font-medium text-highlighted">
+                Refund ·
+                {{
+                  money(
+                    refund.amountMinor,
+                    order.payments.find((payment) => payment.id === refund.paymentId)?.currency
+                  )
+                }}
+              </p>
               <UBadge
                 class="text-default"
                 :label="label(refund.state)"
@@ -415,18 +493,20 @@ const activityNames: Record<string, string> = {
                 variant="subtle"
               />
             </div>
-            <p v-if="refund.externalId" class="text-xs text-muted break-all mt-2">
+            <p v-if="refund.externalId" class="text-sm text-muted break-all mt-2">
               Refund reference: {{ refund.externalId }}
             </p>
             <p v-if="refund.lastError" class="text-sm text-default mt-2 break-words">
-              {{ refund.lastError }}
+              {{ operationMessage(refund.lastError, 'refund') }}
             </p>
             <Form
               v-if="refund.needsReview && !['succeeded', 'failed'].includes(refund.state)"
               v-slot="{ errors, processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
               route="seller.operations.store"
               :params="{ id: order.id }"
-              :options="{ preserveScroll: true }"
               class="mt-4 space-y-3"
               ><input type="hidden" name="kind" value="refund" /><input
                 type="hidden"
@@ -436,23 +516,53 @@ const activityNames: Record<string, string> = {
                 name="externalId"
                 hint="Optional"
                 :error="errors.externalId"
-                ><UInput name="externalId" class="w-full" /></UFormField
+                ><UInput
+                  name="externalId"
+                  maxlength="255"
+                  autocomplete="off"
+                  class="w-full" /></UFormField
               ><UButton
                 type="submit"
                 label="Reconcile refund"
                 icon="i-lucide-refresh-cw"
                 variant="soft"
                 :loading="processing"
-                :disabled="processing"
+                :disabled="processing || locked"
             /></Form>
+          </div>
+          <div
+            v-for="refund in operations.observedRefunds"
+            :key="`observed-${refund.id}`"
+            class="border-t border-default py-4"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-sm font-medium text-highlighted">
+                Provider refund · {{ orderMoney(refund.amountMinor / 100, refund.currency) }}
+              </p>
+              <UBadge
+                :label="label(refund.state)"
+                :color="refund.state === 'succeeded' ? 'success' : 'warning'"
+                variant="subtle"
+              />
+            </div>
+            <p class="text-sm text-muted mt-2">Recorded directly from the payment provider.</p>
+            <p class="text-sm text-muted break-all mt-2">
+              Refund reference: {{ refund.externalId }}
+            </p>
           </div>
         </section>
         <section
-          v-if="canCancel"
+          v-if="canCancel || operations.cancelBlocker || operations.cancellationPending"
           aria-label="Order cancellation"
           class="border-t border-default pt-5"
         >
-          <details>
+          <p v-if="operations.cancelBlocker" class="text-sm text-muted">
+            {{ operations.cancelBlocker }}
+          </p>
+          <p v-else-if="operations.cancellationPending" class="text-sm text-muted">
+            Cancellation is already requested. Refresh status to check the confirmed outcome.
+          </p>
+          <details v-else>
             <summary
               class="cursor-pointer text-sm font-medium text-error w-fit focus-visible:outline-2 focus-visible:outline-error"
             >
@@ -463,18 +573,26 @@ const activityNames: Record<string, string> = {
               any outstanding full refund. Uncertain payment outcomes must be resolved first;
               refunds remain pending until confirmed.
             </p>
+            <UCheckbox
+              v-model="cancelConfirmed"
+              label="I confirm cancellation of this order and any required refund."
+              :disabled="locked"
+              class="mb-4"
+            />
             <Form
               v-slot="{ processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
               route="seller.cancellations.store"
               :params="{ id: order.id }"
-              :options="{ preserveScroll: true }"
               ><UButton
                 type="submit"
                 label="Cancel order"
                 color="error"
                 variant="soft"
                 :loading="processing"
-                :disabled="processing"
+                :disabled="processing || locked || !cancelConfirmed"
             /></Form>
           </details>
         </section>
@@ -512,14 +630,16 @@ const activityNames: Record<string, string> = {
                 />
               </div>
               <p v-if="notification.lastError" class="text-sm text-default mt-2 break-words">
-                {{ notification.lastError }}
+                {{ operationMessage(notification.lastError, 'notification') }}
               </p>
               <Form
                 v-if="notification.state === 'failed'"
                 v-slot="{ processing }"
+                v-bind="callbacks"
+                :options="requestOptions"
+                disable-while-processing
                 route="seller.operations.store"
                 :params="{ id: order.id }"
-                :options="{ preserveScroll: true }"
                 class="mt-3"
                 ><input type="hidden" name="kind" value="notification" /><input
                   type="hidden"
@@ -531,7 +651,7 @@ const activityNames: Record<string, string> = {
                   variant="outline"
                   color="neutral"
                   :loading="processing"
-                  :disabled="processing"
+                  :disabled="processing || locked"
               /></Form>
             </li>
           </ul>
@@ -546,7 +666,7 @@ const activityNames: Record<string, string> = {
           </p>
           <ol v-else class="mt-5 space-y-5">
             <li
-              v-for="activity in order.activities"
+              v-for="activity in visibleActivity"
               :key="activity.id"
               class="relative border-l border-default pl-5 pb-1"
             >
@@ -557,18 +677,22 @@ const activityNames: Record<string, string> = {
               <p class="text-sm font-medium text-highlighted">
                 {{ activityNames[activity.event] || label(activity.event) }}
               </p>
-              <p class="text-xs text-muted mt-1">
-                {{ activity.createdAt ? new Date(activity.createdAt).toLocaleString() : ''
+              <p class="text-sm text-muted mt-1">
+                {{ orderDate(activity.createdAt)
                 }}<span v-if="activity.actorId"> · Staff #{{ activity.actorId }}</span>
               </p>
               <details v-if="activity.details && Object.keys(activity.details).length" class="mt-2">
                 <summary
-                  class="text-xs text-muted cursor-pointer w-fit focus-visible:outline-2 focus-visible:outline-primary"
+                  class="text-sm text-muted cursor-pointer w-fit focus-visible:outline-2 focus-visible:outline-primary"
                 >
                   Event details
                 </summary>
-                <dl class="mt-2 space-y-1 text-xs">
-                  <div v-for="(value, key) in activity.details" :key="key" class="break-words">
+                <dl class="mt-2 space-y-1 text-sm">
+                  <div
+                    v-for="(value, key) in activity.details"
+                    :key="key"
+                    class="[overflow-wrap:anywhere]"
+                  >
                     <dt class="inline text-muted">{{ label(String(key)) }}:</dt>
                     <dd class="inline">
                       {{ typeof value === 'object' ? JSON.stringify(value) : value }}
@@ -578,6 +702,17 @@ const activityNames: Record<string, string> = {
               </details>
             </li>
           </ol>
+          <UButton
+            v-if="order.activities.length > 8"
+            :label="
+              showAllActivity ? 'Show fewer events' : `Show all ${order.activities.length} events`
+            "
+            color="neutral"
+            variant="outline"
+            class="mt-4"
+            :aria-expanded="showAllActivity"
+            @click="showAllActivity = !showAllActivity"
+          />
         </section>
       </div>
     </div>

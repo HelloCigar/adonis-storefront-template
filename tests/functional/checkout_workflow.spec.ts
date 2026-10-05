@@ -723,50 +723,23 @@ test.group('Online checkout workflow', (group) => {
     await refunds.run(operation.id)
     await operation.refresh()
     const remote = adapter.refunds.get(operation.externalId!)!
-    let signalRead!: () => void
-    const read = new Promise<void>((resolve) => {
-      signalRead = resolve
-    })
-    let resumeStale!: () => void
-    const resume = new Promise<void>((resolve) => {
-      resumeStale = resolve
-    })
-    const original = RefundObservation.firstOrCreate
-    // Hold an older observation after its real DB read, while the successful event commits.
-    RefundObservation.firstOrCreate = async function (
-      this: typeof RefundObservation,
-      ...args: Parameters<typeof original>
-    ) {
-      const observation = await original.apply(this, args)
-      if ((args[1] as Partial<RefundObservation> | undefined)?.state === 'failed') {
-        signalRead()
-        await resume
-      }
-      return observation
-    } as typeof original
-    let stale: Promise<void> | undefined
-    try {
-      stale = refunds.apply({ ...remote, status: 'failed' })
-      await read
-      await refunds.apply({ ...remote, status: 'succeeded' })
-      resumeStale()
-      await stale
-      const observation = await RefundObservation.findByOrFail('externalId', remote.id)
-      await operation.refresh()
-      await order.refresh()
-      assert.equal(observation.state, 'succeeded')
-      assert.equal(operation.state, 'succeeded')
-      assert.equal(order.financialStatus, 'refunded')
-      await assert.rejects(
-        () => refunds.requestFull(order.id, staff),
-        'This payment is already refunded'
-      )
-      assert.lengthOf(await order.related('refunds').query(), 1)
-    } finally {
-      resumeStale()
-      await stale?.catch(() => {})
-      RefundObservation.firstOrCreate = original
-    }
+    // Start both events together; their observation and balance transactions serialize.
+    await Promise.all([
+      refunds.apply({ ...remote, status: 'failed' }),
+      refunds.apply({ ...remote, status: 'succeeded' }),
+    ])
+    await refunds.apply({ ...remote, status: 'failed' })
+    const observation = await RefundObservation.findByOrFail('externalId', remote.id)
+    await operation.refresh()
+    await order.refresh()
+    assert.equal(observation.state, 'succeeded')
+    assert.equal(operation.state, 'succeeded')
+    assert.equal(order.financialStatus, 'refunded')
+    await assert.rejects(
+      () => refunds.requestFull(order.id, staff),
+      'This payment is already refunded'
+    )
+    assert.lengthOf(await order.related('refunds').query(), 1)
   })
 
   for (const earlierStatus of ['pending', 'failed'] as const) {

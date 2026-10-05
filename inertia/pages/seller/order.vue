@@ -4,39 +4,45 @@ import { Head, router } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
 import StatusForm from '~/components/seller/orders/StatusForm.vue'
 import WorkflowPanel from '~/components/seller/orders/WorkflowPanel.vue'
+import { provideOrderInteraction } from '~/components/seller/orders/interaction'
+import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/presentation'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
-const props = defineProps<{ order: Data.Seller.Order }>()
+const props = defineProps<{
+  order: Data.Seller.Order
+  operations: Data.Seller.OrderOperations | null
+}>()
+const { busy, error, uncertain, requestOptions } = provideOrderInteraction()
 const refreshing = ref(false)
 const refresh = () =>
   router.reload({
-    only: ['order'],
+    only: ['order', 'operations'],
+    onBefore: () => {
+      if (busy.value) return false
+    },
     onStart: () => {
       refreshing.value = true
+      busy.value = true
     },
     onFinish: () => {
       refreshing.value = false
+      busy.value = false
     },
+    onSuccess: () => {
+      error.value = ''
+      uncertain.value = false
+    },
+    onHttpException: requestOptions.onHttpException,
+    onNetworkError: requestOptions.onNetworkError,
   })
-const label = (value: string) =>
-  value.replaceAll('_', ' ').replace(/^./, (letter) => letter.toUpperCase())
-const money = (amount: number) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: props.order.currencyCode }).format(
-    amount
-  )
+const label = orderLabel
+const money = (amount: number) => orderMoney(amount, props.order.currencyCode)
 const quantity = computed(
   () => props.order.lineItems?.reduce((total, item) => total + item.quantity, 0) || 0
 )
 const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
   { accessorKey: 'title', header: 'Product' },
-  { accessorKey: 'variantTitle', header: 'Variant' },
-  { accessorKey: 'sku', header: 'SKU' },
   { accessorKey: 'quantity', header: 'Quantity' },
-  {
-    accessorKey: 'unitPriceAmount',
-    header: 'Unit price',
-    cell: ({ row }) => money(row.original.unitPriceAmount),
-  },
   {
     accessorKey: 'totalAmount',
     header: 'Total',
@@ -47,7 +53,11 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
 
 <template>
   <Head :title="`Order ${order.number}`" />
-  <UDashboardPanel id="order" :ui="{ body: 'gap-8 sm:gap-8' }">
+  <UDashboardPanel
+    id="order"
+    class="[--ui-primary:var(--ui-color-primary-700)] dark:[--ui-primary:var(--ui-color-primary-400)] [&_.bg-primary:hover]:bg-primary-800 dark:[&_.bg-primary:hover]:bg-primary/75"
+    :ui="{ body: 'gap-8 sm:gap-8' }"
+  >
     <template #header>
       <UDashboardNavbar :title="order.number">
         <template #leading><UDashboardSidebarCollapse /></template>
@@ -58,7 +68,7 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             color="neutral"
             variant="outline"
             :loading="refreshing"
-            :disabled="refreshing"
+            :disabled="busy"
             @click="refresh"
         /></template>
       </UDashboardNavbar>
@@ -72,11 +82,13 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
         >
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="min-w-0">
-            <h1 class="text-2xl font-semibold text-highlighted">Order {{ order.number }}</h1>
+            <h1 class="text-2xl font-semibold text-highlighted [overflow-wrap:anywhere]">
+              Order {{ order.number }}
+            </h1>
             <p class="text-sm text-muted mt-2">
               {{ quantity }} {{ quantity === 1 ? 'item' : 'items'
               }}<span v-if="order.processedAt">
-                · Placed {{ new Date(order.processedAt).toLocaleString() }}</span
+                · Placed {{ orderDate(order.processedAt) }} (Philippine time)</span
               >
             </p>
             <div class="flex flex-wrap gap-2 mt-3">
@@ -119,7 +131,34 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
         </div>
       </header>
 
-      <WorkflowPanel v-if="order.source === 'online'" :order="order" />
+      <div
+        v-if="error"
+        role="alert"
+        class="rounded-lg bg-elevated/50 p-4 sm:p-5 border border-error/40"
+      >
+        <p class="font-semibold text-highlighted">
+          {{ uncertain ? 'Check status before continuing' : 'Action needs attention' }}
+        </p>
+        <p class="text-sm text-default mt-2 [overflow-wrap:anywhere]">{{ error }}</p>
+        <UButton
+          label="Refresh status"
+          icon="i-lucide-refresh-cw"
+          color="neutral"
+          variant="outline"
+          class="mt-3"
+          :loading="refreshing"
+          :disabled="busy"
+          @click="refresh"
+        />
+      </div>
+      <WorkflowPanel
+        v-if="order.source === 'online' && operations"
+        :order="order"
+        :operations="operations"
+      />
+      <p v-else-if="order.source === 'online'" role="status" class="text-default">
+        Order actions are unavailable. Refresh status before continuing.
+      </p>
       <section
         v-else
         aria-labelledby="manual-order-title"
@@ -149,10 +188,52 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
               >
             </div>
             <UTable
+              v-if="order.lineItems?.length"
               :data="order.lineItems || []"
               :columns="columns"
-              :ui="{ td: 'tabular-nums', th: 'text-xs' }"
-            />
+              class="hidden sm:block"
+              :ui="{ td: 'tabular-nums align-top', th: 'text-sm' }"
+            >
+              <template #title-cell="{ row }"
+                ><div class="min-w-48 whitespace-normal [overflow-wrap:anywhere]">
+                  <p class="font-medium text-highlighted">{{ row.original.title }}</p>
+                  <p v-if="row.original.variantTitle" class="mt-1 text-sm text-muted">
+                    {{ row.original.variantTitle }}
+                  </p>
+                  <p v-if="row.original.sku" class="mt-1 text-sm text-muted">
+                    SKU: <bdi>{{ row.original.sku }}</bdi>
+                  </p>
+                  <p class="mt-3 text-sm">Unit price: {{ money(row.original.unitPriceAmount) }}</p>
+                </div></template
+              >
+            </UTable>
+            <ul v-if="order.lineItems?.length" class="divide-y divide-default sm:hidden">
+              <li v-for="item in order.lineItems" :key="item.id" class="py-4 first:pt-0">
+                <p class="font-medium text-highlighted [overflow-wrap:anywhere]">
+                  {{ item.title }}
+                </p>
+                <p
+                  v-if="item.variantTitle"
+                  class="text-sm text-muted mt-1 [overflow-wrap:anywhere]"
+                >
+                  {{ item.variantTitle }}
+                </p>
+                <p v-if="item.sku" class="text-sm text-muted mt-1 [overflow-wrap:anywhere]">
+                  SKU: <bdi>{{ item.sku }}</bdi>
+                </p>
+                <dl class="flex flex-wrap justify-between gap-3 mt-3 text-sm tabular-nums">
+                  <div>
+                    <dt class="sr-only">Quantity and unit price</dt>
+                    <dd>{{ item.quantity }} × {{ money(item.unitPriceAmount) }}</dd>
+                  </div>
+                  <div>
+                    <dt class="sr-only">Line total</dt>
+                    <dd class="font-semibold text-highlighted">{{ money(item.totalAmount) }}</dd>
+                  </div>
+                </dl>
+              </li>
+            </ul>
+            <p v-else class="text-sm text-muted py-4">No items are recorded for this order.</p>
             <dl class="ml-auto w-full sm:max-w-xs mt-5 space-y-2 text-sm tabular-nums">
               <div
                 v-for="item in [
@@ -194,8 +275,12 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             <h2 id="order-customer-title" class="text-lg font-semibold text-highlighted">
               Customer &amp; delivery
             </h2>
-            <p class="text-sm mt-3 break-all">{{ order.email }}</p>
-            <p v-if="order.phoneNumber" class="text-sm mt-1">{{ order.phoneNumber }}</p>
+            <p class="text-sm mt-3 [overflow-wrap:anywhere]">
+              <bdi>{{ order.email || 'No email recorded' }}</bdi>
+            </p>
+            <p v-if="order.phoneNumber" class="text-sm mt-1 [overflow-wrap:anywhere]">
+              <bdi>{{ order.phoneNumber }}</bdi>
+            </p>
           </section>
           <section
             v-for="address in order.addresses"
@@ -205,10 +290,16 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             <h3 class="text-sm font-semibold text-highlighted capitalize mb-2">
               {{ address.type }} address
             </h3>
-            <p v-for="(line, index) in address.formatted" :key="index" class="text-sm break-words">
+            <p
+              v-for="(line, index) in address.formatted"
+              :key="index"
+              class="text-sm [overflow-wrap:anywhere]"
+            >
               {{ line }}
             </p>
-            <p v-if="address.phoneNumber" class="text-sm mt-2">{{ address.phoneNumber }}</p>
+            <p v-if="address.phoneNumber" class="text-sm mt-2 [overflow-wrap:anywhere]">
+              <bdi>{{ address.phoneNumber }}</bdi>
+            </p>
           </section>
           <p v-if="!order.addresses?.length" class="text-sm text-muted">
             No address is recorded for this order.

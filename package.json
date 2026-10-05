@@ -10,7 +10,9 @@
   "scripts": {
     "start": "node bin/server.js",
     "build": "node ace build",
-    "dev": "node ace serve --hmr",
+    "dev": "concurrently --kill-others --names web,worker \"npm run dev:web\" \"npm run dev:worker\"",
+    "dev:web": "node ace serve --hmr",
+    "dev:worker": "node ace queue:work --queue=maintenance,payments,notifications --concurrency=1",
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -53,6 +55,7 @@
     "@types/luxon": "^3.7.1",
     "@types/node": "~25.9.1",
     "@vitejs/plugin-vue": "^6.0.7",
+    "concurrently": "^10.0.5",
     "eslint": "^10.4.0",
     "eslint-plugin-vue": "^10.9.1",
     "hot-hook": "^1.0.0",

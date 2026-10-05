@@ -65,10 +65,26 @@ export default class SettlementService {
             .first()
         : null
       let review = false
+      let refundCurrencyReview = false
       for (const observation of captured) {
         this.money.assertMinor(observation.amount)
         if (!observation.amount || !observation.id)
           throw new CheckoutException('Invalid payment observation', 'E_PAYMENT_OBSERVATION', 422)
+        const knownRefunds = await RefundObservation.query({ client: trx })
+          .where({
+            provider: checkout.provider,
+            liveMode: checkout.liveMode,
+            externalPaymentId: observation.id,
+          })
+          .whereNot('state', 'failed')
+        const currencyMismatch = knownRefunds.some((row) => row.currency !== observation.currency)
+        if (currencyMismatch) {
+          review = true
+          refundCurrencyReview = true
+        }
+        const refunded = knownRefunds
+          .filter((row) => row.state === 'succeeded' && row.currency === observation.currency)
+          .reduce((total, row) => this.money.add(total, row.amountMinor), 0)
         const existing = await Payment.query({ client: trx })
           .where({
             provider: checkout.provider,
@@ -99,18 +115,8 @@ export default class SettlementService {
           observation.currency === attempt!.currency &&
           observation.amount === attempt!.amountMinor &&
           order!.totalMinor === attempt!.amountMinor
-        const knownRefunds = await RefundObservation.query({ client: trx })
-          .where({
-            provider: checkout.provider,
-            liveMode: checkout.liveMode,
-            externalPaymentId: observation.id,
-          })
-          .where('state', 'succeeded')
-        const refunded = knownRefunds.reduce(
-          (total, row) => this.money.add(total, row.amountMinor),
-          0
-        )
         const canAccept =
+          !currencyMismatch &&
           refunded <= observation.amount &&
           matches &&
           !accepted &&
@@ -180,7 +186,9 @@ export default class SettlementService {
           order.lifecycleState,
           'review_required'
         )
-        order.reviewReason = 'Payment requires reconciliation; fulfillment is blocked.'
+        order.reviewReason = refundCurrencyReview
+          ? 'A provider refund currency does not match its captured payment.'
+          : 'Payment requires reconciliation; fulfillment is blocked.'
         if (attempt) {
           attempt.needsReview = true
           attempt.lastError = 'E_PAYMENT_REVIEW'

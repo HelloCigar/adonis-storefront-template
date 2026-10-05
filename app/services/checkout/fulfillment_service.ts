@@ -143,7 +143,8 @@ export default class FulfillmentService {
       throw new CheckoutException('Use the legacy order controls', 'E_ORDER_LEGACY')
     return order
   }
-  private async shippable(trx: TransactionClientContract, order: Order) {
+  /** The detail page and mutations share the same dispatch prerequisites. */
+  async inspectDispatch(trx: TransactionClientContract, order: Order) {
     const payment = await Payment.query({ client: trx })
       .where('order_id', order.id)
       .where('disposition', 'accepted')
@@ -172,19 +173,33 @@ export default class FulfillmentService {
           .whereNot('state', 'failed')
           .first()
       : null
-    if (
-      order.lifecycleState !== 'confirmed' ||
-      order.financialStatus !== 'paid' ||
-      !payment ||
-      blockedAttempt ||
-      refund ||
-      observedRefund ||
-      invalidStock
-    )
+    const shipment = await Shipment.query({ client: trx }).where('order_id', order.id).first()
+    const blockers: string[] = []
+    if (order.lifecycleState === 'review_required')
+      blockers.push(order.reviewReason || 'Review this order’s payment before fulfillment.')
+    else if (order.lifecycleState !== 'confirmed')
+      blockers.push('The order must be confirmed before fulfillment.')
+    if (order.financialStatus !== 'paid' || !payment)
+      blockers.push('A verified full payment is required before packing or dispatch.')
+    if (blockedAttempt) blockers.push('Reconcile the payment checkout before dispatch.')
+    if (refund) blockers.push('A refund is in progress or confirmed. Dispatch is blocked.')
+    if (observedRefund)
+      blockers.push('The provider has reported a refund. Review its status before dispatch.')
+    if (invalidStock)
+      blockers.push('Inventory is no longer allocated for dispatch. Review the stock records.')
+    if (!shipment)
+      blockers.push('No shipment record is available. Review this order before fulfillment.')
+    if (order.source !== 'online') blockers.push('Use the manual order controls for this order.')
+    return { blockers, shipment }
+  }
+
+  private async shippable(trx: TransactionClientContract, order: Order) {
+    const { blockers, shipment } = await this.inspectDispatch(trx, order)
+    if (blockers.length || !shipment)
       throw new CheckoutException(
         'Payment, inventory, or review status prevents shipment',
         'E_ORDER_NOT_SHIPPABLE'
       )
-    return Shipment.query({ client: trx }).where('order_id', order.id).firstOrFail()
+    return shipment
   }
 }

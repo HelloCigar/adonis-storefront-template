@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { Form } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
+import { useOrderInteraction } from './interaction'
 defineProps<{ order: Data.Seller.Order }>()
+const { locked, callbacks, requestOptions } = useOrderInteraction()
 </script>
 <template>
   <Form
     v-slot="{ errors, processing }"
+    v-bind="callbacks"
+    :options="requestOptions"
+    disable-while-processing
     route="seller.orders.update"
     :params="{ id: order.id }"
-    :options="{ preserveScroll: true }"
     :transform="(data) => ({ ...data, note: data.note || null })"
     class="space-y-4"
   >
@@ -48,7 +52,7 @@ defineProps<{ order: Data.Seller.Order }>()
       type="submit"
       :label="order.source === 'online' ? 'Save note' : 'Save changes'"
       :loading="processing"
-      :disabled="processing"
+      :disabled="processing || locked"
     />
   </Form>
 </template>

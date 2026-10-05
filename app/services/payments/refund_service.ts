@@ -66,7 +66,19 @@ export default class RefundService {
         liveMode: payment.liveMode,
         externalPaymentId: payment.externalId,
       })
-      .where('state', 'succeeded')
+      .whereIn('state', ['pending', 'succeeded'])
+    if (observations.some((row) => row.currency !== payment.currency)) {
+      throw new CheckoutException(
+        'A provider refund currency does not match this payment. Reconcile it before requesting another refund.',
+        'E_REFUND_ASSOCIATION'
+      )
+    }
+    if (observations.some((row) => row.state === 'pending')) {
+      throw new CheckoutException(
+        'A provider refund is still pending. Reconcile it before requesting another refund.',
+        'E_REFUND_PENDING'
+      )
+    }
     const refunded = observations.reduce((total, row) => this.money.add(total, row.amountMinor), 0)
     const amountMinor = payment.amountMinor - refunded
     this.money.assertMinor(amountMinor)
@@ -184,68 +196,75 @@ export default class RefundService {
 
   async apply(result: PaymentRefund, expectedId?: number, token?: string): Promise<void> {
     this.money.assertMinor(result.amount)
-    const observation = await RefundObservation.firstOrCreate(
-      { provider: result.provider, liveMode: result.liveMode, externalId: result.id },
-      {
-        externalPaymentId: result.paymentId,
-        amountMinor: result.amount,
-        currency: result.currency,
-        state: result.status,
-      }
-    )
-    if (
-      observation.externalPaymentId !== result.paymentId ||
-      observation.amountMinor !== result.amount ||
-      observation.currency !== result.currency
-    ) {
-      throw new CheckoutException(
-        'Refund resource facts changed',
-        'E_REFUND_OBSERVATION_CONFLICT',
-        422
+    const reconcile = await db.transaction(async (trx) => {
+      // Provider facts and their financial effect commit together, including refunds
+      // initiated outside this application that have no local operation to retry.
+      const observation = await RefundObservation.firstOrCreate(
+        { provider: result.provider, liveMode: result.liveMode, externalId: result.id },
+        {
+          externalPaymentId: result.paymentId,
+          amountMinor: result.amount,
+          currency: result.currency,
+          state: result.status,
+        },
+        { client: trx }
       )
-    }
-    // Check persisted state in the write, since another notification may have succeeded
-    // after firstOrCreate read this observation.
-    await RefundObservation.query()
-      .where('id', observation.id)
-      .whereNot('state', 'succeeded')
-      .update({ state: result.status })
-    const query = RefundOperation.query()
-      .where('provider', result.provider)
-      .where('live_mode', result.liveMode)
-    if (expectedId) query.where('id', expectedId)
-    else query.where('external_id', result.id)
-    const candidate = await query.first()
-    if (!candidate) {
-      // Do not guess a local refund from amount alone. Replay/lookup discovers its original reference.
-      const payment = await Payment.query()
+      if (
+        observation.externalPaymentId !== result.paymentId ||
+        observation.amountMinor !== result.amount ||
+        observation.currency !== result.currency
+      ) {
+        throw new CheckoutException(
+          'Refund resource facts changed',
+          'E_REFUND_OBSERVATION_CONFLICT',
+          422
+        )
+      }
+      await RefundObservation.query({ client: trx })
+        .where('id', observation.id)
+        .whereNot('state', 'succeeded')
+        .update({ state: result.status })
+      await observation.refresh()
+      const query = RefundOperation.query({ client: trx })
+        .where('provider', result.provider)
+        .where('live_mode', result.liveMode)
+      if (expectedId) query.where('id', expectedId)
+      else query.where('external_id', result.id)
+      const candidate = await query.first()
+      const observedPayment = await Payment.query({ client: trx })
         .where({
           provider: result.provider,
           liveMode: result.liveMode,
           externalId: result.paymentId,
         })
         .first()
-      if (payment?.orderId)
-        await db.transaction(async (trx) => {
-          await Order.query({ client: trx }).where('id', payment.orderId!).increment('version', 1)
-          await this.balance(trx, payment.orderId!)
-        })
-      await this.reconcilePayment(result.provider, result.paymentId, result.liveMode)
-      return
-    }
-    await db.transaction(async (trx) => {
-      await Order.query({ client: trx }).where('id', candidate.orderId).increment('version', 1)
+      if (observedPayment?.orderId) {
+        await Order.query({ client: trx })
+          .where('id', observedPayment.orderId)
+          .increment('version', 1)
+        // Provider facts affect their own payment independently of operation ownership.
+        await this.balance(trx, observedPayment.orderId)
+      }
+      if (!candidate) {
+        // Do not guess a local refund from amount alone. Replay/lookup discovers its original reference.
+        return true
+      }
+      if (candidate.orderId !== observedPayment?.orderId) {
+        await Order.query({ client: trx }).where('id', candidate.orderId).increment('version', 1)
+      }
       const refund = await RefundOperation.findOrFail(candidate.id, { client: trx })
       const payment = await Payment.findOrFail(refund.paymentId, { client: trx })
-      if (token && refund.claimToken !== token) return
-      if (
-        result.paymentId !== payment.externalId ||
-        result.provider !== payment.provider ||
-        result.liveMode !== payment.liveMode ||
-        result.currency !== payment.currency ||
-        result.amount !== refund.amountMinor ||
-        (refund.externalId && result.id !== refund.externalId)
-      ) {
+      const associated =
+        result.paymentId === payment.externalId &&
+        result.provider === payment.provider &&
+        result.liveMode === payment.liveMode &&
+        result.currency === payment.currency &&
+        result.amount === refund.amountMinor &&
+        (!refund.externalId || result.id === refund.externalId)
+      if (token && refund.claimToken !== token) {
+        return false
+      }
+      if (!associated) {
         refund.needsReview = true
         refund.lastError = 'E_REFUND_ASSOCIATION'
         refund.claimToken = null
@@ -254,15 +273,14 @@ export default class RefundService {
         await this.activities.record(trx, refund.orderId, 'refund.review_required', {
           refundId: refund.id,
         })
-        return
+        return false
       }
-      observation.useTransaction(trx)
-      await observation.refresh()
       if (
         refund.state === 'succeeded' ||
         (refund.state === 'failed' && observation.state !== 'succeeded')
-      )
-        return
+      ) {
+        return false
+      }
       // A verified success wins over an earlier failed/out-of-order notification.
       refund.state = observation.state
       refund.externalId = result.id
@@ -273,12 +291,13 @@ export default class RefundService {
       await refund.save()
       observation.refundOperationId = refund.id
       await observation.save()
-      await this.balance(trx, refund.orderId)
       await this.activities.record(trx, refund.orderId, `refund.${refund.state}`, {
         refundId: refund.id,
         amountMinor: refund.amountMinor,
       })
+      return false
     })
+    if (reconcile) await this.reconcilePayment(result.provider, result.paymentId, result.liveMode)
   }
 
   async reconcilePayment(provider: string, externalPaymentId: string, liveMode: boolean) {
@@ -380,7 +399,26 @@ export default class RefundService {
       .where('order_id', orderId)
       .where('disposition', 'accepted')
       .first()
-    if (!accepted) return
+    const currencyMismatch = await trx
+      .from('refund_observations as observations')
+      .join('payments as captured', (join) => {
+        join
+          .on('captured.provider', 'observations.provider')
+          .andOn('captured.live_mode', 'observations.live_mode')
+          .andOn('captured.external_id', 'observations.external_payment_id')
+      })
+      .where('captured.order_id', orderId)
+      .whereNot('observations.state', 'failed')
+      .whereRaw('observations.currency <> captured.currency')
+      .first()
+    if (!accepted) {
+      if (currencyMismatch) {
+        order.lifecycleState = 'review_required'
+        order.reviewReason = 'A provider refund currency does not match its captured payment.'
+        await order.save()
+      }
+      return
+    }
     const refunds = await RefundObservation.query({ client: trx })
       .where({
         provider: accepted.provider,
@@ -388,6 +426,7 @@ export default class RefundService {
         externalPaymentId: accepted.externalId,
       })
       .where('state', 'succeeded')
+      .where('currency', accepted.currency)
     const amount = refunds.reduce((total, row) => this.money.add(total, row.amountMinor), 0)
     if (amount > accepted.amountMinor) {
       order.lifecycleState = 'review_required'
@@ -396,6 +435,12 @@ export default class RefundService {
       return
     }
     order.financialStatus = this.states.financial(accepted.amountMinor, amount)
+    if (currencyMismatch) {
+      order.lifecycleState = 'review_required'
+      order.reviewReason = 'A provider refund currency does not match its captured payment.'
+      await order.save()
+      return
+    }
     if (order.lifecycleState === 'review_required' && order.financialStatus === 'paid') {
       const others = await Payment.query({ client: trx })
         .where('order_id', orderId)
@@ -409,6 +454,7 @@ export default class RefundService {
             externalPaymentId: other.externalId,
           })
           .where('state', 'succeeded')
+          .where('currency', other.currency)
         if (
           confirmed.reduce((total, row) => this.money.add(total, row.amountMinor), 0) !==
           other.amountMinor

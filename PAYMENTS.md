@@ -41,7 +41,7 @@ Credentials use Adonis `Secret` values. Missing credentials permit application b
 
 ## Local payment simulator
 
-Set `PAYMENT_PROVIDER=fake_paymongo` with `NODE_ENV=development`, run `node ace migration:run`, and restart both the web server and queue worker. Keep `APP_URL` set to the origin you open in the browser. No PayMongo keys or external webhook tunnel are needed. The worker command and full walkthrough are in [checkout operations](docs/checkout-operations.md#local-payment-simulation).
+Set `PAYMENT_PROVIDER=fake_paymongo` with `NODE_ENV=development`, run `node ace migration:run`, and run `npm run dev` to start the web server and a worker for maintenance, payments and email notifications together. Keep `APP_URL` set to the origin you open in the browser. No PayMongo keys or external webhook tunnel are needed. SMTP setup and the full walkthrough are in [checkout operations](docs/checkout-operations.md#local-payment-simulation).
 
 “Pay now” opens a local Fake PayMongo page where you can simulate a successful payment, a failed payment followed by a retry, expiry, or payment without a notification. The page's controls belong to the fake provider fixture. Application confirmation uses the existing recovery workflow to look up the saved reference through `PaymentService`; missed notifications use the same path. Guest cancellation and staff fulfillment/refunds retain their normal authorization and transaction guards. Fake refund requests succeed through the normal queued refund operation.
 

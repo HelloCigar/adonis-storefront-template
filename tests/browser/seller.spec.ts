@@ -192,7 +192,7 @@ test.group('Store management pages', (group) => {
     const page = await visit('/seller/orders')
     await page.getByRole('button', { name: /Actions for MB-1001/ }).click()
     await page.getByRole('menuitem', { name: 'View order', exact: true }).click()
-    await page.getByRole('cell', { name: 'Bunny Lamp', exact: true }).waitFor()
+    await page.getByRole('cell', { name: /Bunny Lamp/ }).waitFor()
     await page.getByLabel('Fulfillment status', { exact: true }).click()
     await page.getByRole('option', { name: 'fulfilled', exact: true }).click()
     await page.getByLabel('Note', { exact: true }).fill('Shipped')

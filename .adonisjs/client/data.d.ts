@@ -23,6 +23,7 @@ import type CheckoutStatusTransformer from '#transformers/checkout/status_transf
 import type ContentContentTransformer from '#transformers/content/content_transformer'
 import type PaymentsSimulationTransformer from '#transformers/payments/simulation_transformer'
 import type SellerCollectionTransformer from '#transformers/seller/collection_transformer'
+import type SellerOrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
 import type SellerProductTransformer from '#transformers/seller/product_transformer'
 import type SellerUserTransformer from '#transformers/seller/user_transformer'
@@ -109,6 +110,10 @@ export namespace Data {
     export type Collection = InferData<SellerCollectionTransformer>
     export namespace Collection {
       export type Variants = InferVariants<SellerCollectionTransformer>
+    }
+    export type OrderOperations = InferData<SellerOrderOperationsTransformer>
+    export namespace OrderOperations {
+      export type Variants = InferVariants<SellerOrderOperationsTransformer>
     }
     export type Order = InferData<SellerOrderTransformer>
     export namespace Order {

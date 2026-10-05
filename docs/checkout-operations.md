@@ -53,12 +53,7 @@ SMTP can accept a message before a worker loses its acknowledgement. Delivery ca
 ### Local payment simulation
 
 1. Set `NODE_ENV=development`, `PAYMENT_PROVIDER=fake_paymongo`, `QUEUE_DRIVER=database`, and `APP_URL` to the origin you use in the browser in `.env`. Leave PayMongo credentials empty. Run `node ace migration:run` to add the persistent simulator resource table.
-2. Restart `npm run dev` and start a worker with the same environment/database:
-
-   ```sh
-   node ace queue:work --queue=maintenance,payments,notifications --concurrency=1
-   ```
-
+2. Run `npm run dev`. It uses `concurrently` to start the web server and a worker for `maintenance,payments,notifications` against the same environment/database. Stopping the dev command stops both processes. `npm run dev:web` and `npm run dev:worker` are available when separate terminals are needed. Email delivery uses the configured SMTP transport.
 3. Add an in-stock product, submit guest checkout, wait for the payment job, and click **Pay now**. The local simulator offers **Simulate successful payment**, **Simulate failed payment**, **Expire checkout**, and **Pay without notification**. A failed payment keeps the stock hold and allows another try. Expiry closes the checkout and releases the hold. A successful payment consumes stock once and creates a receipt intent; paying without notification is recovered by the normal payment lookup.
 4. Sign in as staff to pack and ship a paid order. To test refunds, cancel a separate paid, unshipped order; the worker confirms its fake refund and the normal order balance updates. Simulator data survives web/worker restarts. Switching the provider affects new orders; older simulated orders continue to use `fake_paymongo` for their controls, reconciliation and refunds in development/tests.
 5. Run Mailpit on `localhost:1025` (or configure another local SMTP sink) to inspect receipts and shipment emails. Payment simulation does not fake mail delivery. Without SMTP, notification jobs retry independently while payments and fulfillment continue.
