@@ -13,8 +13,7 @@ export default class OrderAccessController {
       typeof token === 'string' ? token : undefined
     )
     const grants = (session.get('store_order_grants') ?? {}) as Record<string, string>
-    grants[order.publicId!] = token
-    session.put('store_order_grants', Object.fromEntries(Object.entries(grants).slice(-20)))
+    session.put('store_order_grants', this.access.remember(grants, order.publicId!, token))
     response.header('Cache-Control', 'private, no-store').header('Referrer-Policy', 'no-referrer')
     return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })
   }

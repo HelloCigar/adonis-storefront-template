@@ -28,9 +28,11 @@ const calendarRange = computed({
     end: selected.value.end ? toCalendarDate(selected.value.end) : undefined,
   }),
   set: (newValue: { start: CalendarDate | undefined; end: CalendarDate | undefined }) => {
+    // The calendar reports the first click alone; wait for a complete range.
+    if (!newValue.start || !newValue.end) return
     selected.value = {
-      start: newValue.start ? newValue.start.toDate(getLocalTimeZone()) : new Date(),
-      end: newValue.end ? newValue.end.toDate(getLocalTimeZone()) : new Date(),
+      start: newValue.start.toDate(getLocalTimeZone()),
+      end: newValue.end.toDate(getLocalTimeZone()),
     }
   },
 })

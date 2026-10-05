@@ -21,6 +21,7 @@ import type CheckoutOrderTransformer from '#transformers/checkout/order_transfor
 import type CheckoutQuoteTransformer from '#transformers/checkout/quote_transformer'
 import type CheckoutStatusTransformer from '#transformers/checkout/status_transformer'
 import type ContentContentTransformer from '#transformers/content/content_transformer'
+import type DashboardSummaryTransformer from '#transformers/dashboard/summary_transformer'
 import type PaymentsSimulationTransformer from '#transformers/payments/simulation_transformer'
 import type SellerCollectionTransformer from '#transformers/seller/collection_transformer'
 import type SellerOrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
@@ -98,6 +99,12 @@ export namespace Data {
     export type Content = InferData<ContentContentTransformer>
     export namespace Content {
       export type Variants = InferVariants<ContentContentTransformer>
+    }
+  }
+  export namespace Dashboard {
+    export type Summary = InferData<DashboardSummaryTransformer>
+    export namespace Summary {
+      export type Variants = InferVariants<DashboardSummaryTransformer>
     }
   }
   export namespace Payments {

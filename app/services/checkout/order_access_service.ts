@@ -4,6 +4,7 @@ import AccessGrant from '#models/checkout/access_grant'
 import Order from '#models/checkout/order'
 import CheckoutException from '#exceptions/checkout_exception'
 import { affectedRows } from '#models/shared/affected_rows'
+import checkout from '#config/checkout'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 export default class OrderAccessService {
@@ -49,6 +50,13 @@ export default class OrderAccessService {
       }
       return Order.findOrFail(order.id, { client: trx })
     })
+  }
+
+  /** Moves `key` to the newest position and keeps the session map within the configured limit. */
+  remember(entries: Record<string, string>, key: string, value: string) {
+    const next = Object.entries(entries).filter(([existing]) => existing !== key)
+    next.push([key, value])
+    return Object.fromEntries(next.slice(-checkout.sessionEntryLimit))
   }
 
   private hash(token: string) {

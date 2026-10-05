@@ -1,109 +1,85 @@
 <script setup lang="ts">
-import { h, resolveComponent, ref, watch } from 'vue'
+import { h, resolveComponent } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import type { TableColumn } from '@nuxt/ui'
-import { randomInt, randomFrom } from '../../utils'
-import type { Period, Range, Sale } from '../../types'
+import type { Data } from '@generated/data'
+import { urlFor } from '~/client'
+import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/presentation'
 
-const props = defineProps<{
-  period: Period
-  range: Range
+type RecentOrder = Data.Dashboard.Summary['recentOrders'][number]
+
+defineProps<{
+  orders: RecentOrder[]
 }>()
 
+const page = usePage()
 const UBadge = resolveComponent('UBadge')
+const ULink = resolveComponent('ULink')
 
-const sampleEmails = [
-  'james.anderson@example.com',
-  'mia.white@example.com',
-  'william.brown@example.com',
-  'emma.davis@example.com',
-  'ethan.harris@example.com',
-]
+const statusColors: Record<string, 'success' | 'warning' | 'error' | 'neutral'> = {
+  paid: 'success',
+  pending: 'warning',
+  partially_refunded: 'neutral',
+  refunded: 'neutral',
+  voided: 'error',
+}
 
-const data = ref<Sale[]>([])
-
-watch(
-  [() => props.period, () => props.range],
-  () => {
-    const sales: Sale[] = []
-    const currentDate = new Date()
-
-    for (let i = 0; i < 5; i++) {
-      const hoursAgo = randomInt(0, 48)
-      const date = new Date(currentDate.getTime() - hoursAgo * 3600000)
-
-      sales.push({
-        id: (4600 - i).toString(),
-        date: date.toISOString(),
-        status: randomFrom(['paid', 'failed', 'refunded']),
-        email: randomFrom(sampleEmails),
-        amount: randomInt(100, 1000),
-      })
-    }
-
-    data.value = sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  },
-  { immediate: true }
-)
-
-const columns: TableColumn<Sale>[] = [
+const columns: TableColumn<RecentOrder>[] = [
   {
-    accessorKey: 'id',
-    header: 'ID',
-    cell: ({ row }) => `#${row.getValue('id')}`,
+    accessorKey: 'number',
+    header: 'Order',
+    cell: ({ row }) =>
+      page.props.permissions.manageStore
+        ? h(
+            ULink,
+            {
+              to: urlFor('seller.orders.show', { id: row.original.id }),
+              class: 'font-medium text-highlighted hover:underline',
+            },
+            () => row.original.number
+          )
+        : row.original.number,
   },
   {
-    accessorKey: 'date',
+    accessorKey: 'processedAt',
     header: 'Date',
-    cell: ({ row }) => {
-      return new Date(row.getValue('date')).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-    },
+    cell: ({ row }) => orderDate(row.original.processedAt),
   },
   {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-      const color = {
-        paid: 'success' as const,
-        failed: 'error' as const,
-        refunded: 'neutral' as const,
-      }[row.getValue('status') as string]
-
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-        row.getValue('status')
-      )
-    },
+    accessorKey: 'financialStatus',
+    header: 'Payment',
+    cell: ({ row }) =>
+      h(
+        UBadge,
+        {
+          variant: 'subtle',
+          color: statusColors[row.original.financialStatus] ?? 'neutral',
+        },
+        () => orderLabel(row.original.financialStatus)
+      ),
   },
   {
     accessorKey: 'email',
     header: 'Email',
   },
   {
-    accessorKey: 'amount',
-    header: () => h('div', { class: 'text-right' }, 'Amount'),
-    cell: ({ row }) => {
-      const amount = Number.parseFloat(row.getValue('amount'))
-
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR',
-      }).format(amount)
-
-      return h('div', { class: 'text-right font-medium' }, formatted)
-    },
+    accessorKey: 'totalAmount',
+    header: () => h('div', { class: 'text-right' }, 'Total'),
+    cell: ({ row }) =>
+      h(
+        'div',
+        { class: 'text-right font-medium' },
+        orderMoney(row.original.totalAmount, row.original.currencyCode)
+      ),
   },
 ]
 </script>
 
 <template>
   <UTable
-    :data="data"
+    :data="orders"
     :columns="columns"
+    empty="No orders in this period."
     class="shrink-0"
     :ui="{
       base: 'table-fixed border-separate border-spacing-0',

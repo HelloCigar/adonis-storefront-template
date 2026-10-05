@@ -52,6 +52,13 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
  * Learn more - https://japa.dev/docs/test-suites#lifecycle-hooks
  */
 export const configureSuite: Config['configureSuite'] = (suite) => {
+  // Every test shares one client IP; start each with fresh rate-limit counters.
+  const clearRateLimits = async () => {
+    const { default: limiter } = await import('@adonisjs/limiter/services/main')
+    await limiter.clear()
+  }
+  suite.onTest((test) => test.setup(clearRateLimits))
+  suite.onGroup((group) => group.each.setup(clearRateLimits))
   if (['browser', 'functional', 'e2e'].includes(suite.name)) {
     return suite.setup(() => testUtils.httpServer().start())
   }

@@ -1,6 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
+import { errors as limiterErrors } from '@adonisjs/limiter'
 import CheckoutException from '#exceptions/checkout_exception'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
@@ -31,6 +32,19 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * response to the client
    */
   async handle(error: unknown, ctx: HttpContext) {
+    if (
+      error instanceof limiterErrors.E_TOO_MANY_REQUESTS &&
+      ctx.request.header('X-Inertia') &&
+      ctx.request.method() !== 'GET'
+    ) {
+      const minutes = Math.max(1, Math.ceil(error.response.availableIn / 60))
+      ctx.response.header('Retry-After', error.response.availableIn)
+      ctx.session.flash(
+        'error',
+        `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`
+      )
+      return ctx.response.redirect().back()
+    }
     if (
       error instanceof CheckoutException &&
       [409, 422].includes(error.status) &&
