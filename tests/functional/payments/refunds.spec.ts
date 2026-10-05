@@ -21,10 +21,10 @@ import PaymentService, {
   type PaymentRefund,
 } from '#services/payments/payment_service'
 import DispatcherService from '#services/payments/dispatcher_service'
-import FakePaymentAdapter from '../helpers/fake_payment_adapter.js'
-import { OrderFactory } from '../../database/factories/order_factory.js'
-import { UserFactory } from '../../database/factories/user_factory.js'
-import { ProductVariantFactory } from '../../database/factories/product_variant_factory.js'
+import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import { OrderFactory } from '#database/factories/order_factory'
+import { UserFactory } from '#database/factories/user_factory'
+import { ProductVariantFactory } from '#database/factories/product_variant_factory'
 
 async function paidOrder(provider: string) {
   const order = await OrderFactory.merge({

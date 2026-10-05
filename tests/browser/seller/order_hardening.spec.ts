@@ -12,10 +12,10 @@ import RefundObservation from '#models/payments/refund_observation'
 import RefundOperation from '#models/payments/refund_operation'
 import Payment from '#models/payments/payment'
 import Shipment from '#models/checkout/shipment'
-import FakePaymentAdapter from '../helpers/fake_payment_adapter.js'
-import { simulatedCheckout } from '../helpers/simulated_checkout.js'
-import { UserFactory } from '../../database/factories/user_factory.js'
-import { OrderFactory } from '../../database/factories/order_factory.js'
+import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
+import { UserFactory } from '#database/factories/user_factory'
+import { OrderFactory } from '#database/factories/order_factory'
 
 test.group('Staff order hardening', (group) => {
   let adapter: FakePaymentAdapter

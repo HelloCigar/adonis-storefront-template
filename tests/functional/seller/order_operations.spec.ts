@@ -10,9 +10,9 @@ import RefundOperation from '#models/payments/refund_operation'
 import Shipment from '#models/checkout/shipment'
 import StockReservation from '#models/checkout/stock_reservation'
 import FulfillmentService from '#services/checkout/fulfillment_service'
-import { OrderFactory } from '../../database/factories/order_factory.js'
-import { UserFactory } from '../../database/factories/user_factory.js'
-import { ProductVariantFactory } from '../../database/factories/product_variant_factory.js'
+import { OrderFactory } from '#database/factories/order_factory'
+import { UserFactory } from '#database/factories/user_factory'
+import { ProductVariantFactory } from '#database/factories/product_variant_factory'
 
 async function paidOrder() {
   const order = await OrderFactory.merge({

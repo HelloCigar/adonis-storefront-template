@@ -5,10 +5,10 @@ import db from '@adonisjs/lucid/services/db'
 import User, { type UserRole } from '#models/account/user'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
-import MakeAdmin from '../../commands/make_admin.js'
-import MakeStaff from '../../commands/make_staff.js'
-import MakeSeller from '../../commands/make_seller.js'
-import StaffRoleMigration from '../../database/migrations/1791000000000_use_staff_role_for_single_store.js'
+import MakeAdmin from '../../../commands/make_admin.js'
+import MakeStaff from '../../../commands/make_staff.js'
+import MakeSeller from '../../../commands/make_seller.js'
+import StaffRoleMigration from '#database/migrations/1791000000000_use_staff_role_for_single_store'
 
 const account = (email: string, role: UserRole = 'customer') =>
   User.create({ email, role, fullName: email, password: 'secret-password' })

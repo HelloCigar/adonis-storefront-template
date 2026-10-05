@@ -5,7 +5,7 @@ import db from '@adonisjs/lucid/services/db'
 import { QueueManager } from '@adonisjs/queue'
 import paymentConfig from '#config/payment'
 import InventoryService from '#services/catalog/inventory_service'
-import { simulatedCheckout } from '../helpers/simulated_checkout.js'
+import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
 
 test.group('Local payment simulator controls', (group) => {
   group.each.setup(async () => {

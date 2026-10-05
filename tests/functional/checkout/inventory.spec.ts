@@ -10,8 +10,8 @@ import OutboxService from '#services/checkout/outbox_service'
 import emitter from '@adonisjs/core/services/emitter'
 import WorkflowOutboxReady from '#events/checkout/workflow_outbox_ready'
 import Order from '#models/checkout/order'
-import { ProductVariantFactory } from '../../database/factories/product_variant_factory.js'
-import { OrderFactory } from '../../database/factories/order_factory.js'
+import { ProductVariantFactory } from '#database/factories/product_variant_factory'
+import { OrderFactory } from '#database/factories/order_factory'
 
 test.group('Checkout stock invariants', (group) => {
   group.each.setup(async () => {
