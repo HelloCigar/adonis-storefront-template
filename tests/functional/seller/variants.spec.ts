@@ -7,7 +7,7 @@ import db from '@adonisjs/lucid/services/db'
 import { attachmentManager } from '@jrmc/adonis-attachment'
 import { DateTime } from 'luxon'
 import { optionCombinationKey } from '#services/catalog/options_service'
-import { inferLegacyOptionDefinitions } from '../../database/migrations/1791150000000_add_product_options.js'
+import { inferLegacyOptionDefinitions } from '#database/migrations/1791150000000_add_product_options'
 
 const staff = () =>
   User.create({ email: 'variants-staff@example.com', password: 'secret-password', role: 'staff' })

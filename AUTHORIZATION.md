@@ -30,4 +30,4 @@ Run `node ace migration:run` when deploying this change. The role migration conv
 
 The `/seller` URLs, `seller.*` named routes, and `seller/` source folders remain to preserve existing links and generated contracts. They represent shared store management. Historical `sellerId` fields record creator attribution only and never restrict access. Null or mixed creator attribution does not hide products, collections, or orders from staff.
 
-Authorization regressions are covered by the account/store policy tests, `tests/functional/authorization.spec.ts`, `tests/functional/seller_ownership.spec.ts`, and the store browser tests.
+Authorization regressions are covered by the account/store policy tests, `tests/functional/auth/authorization.spec.ts`, `tests/functional/seller/shared_access.spec.ts`, and the store browser tests.

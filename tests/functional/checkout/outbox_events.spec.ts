@@ -11,7 +11,7 @@ import WorkflowOutbox from '#models/checkout/workflow_outbox'
 import Order from '#models/checkout/order'
 import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
 import CreateCheckout from '#jobs/payments/create_checkout'
-import { OrderFactory } from '../../database/factories/order_factory.js'
+import { OrderFactory } from '#database/factories/order_factory'
 
 test.group('Workflow outbox events', (group) => {
   group.each.setup(() => testUtils.db().truncate())
