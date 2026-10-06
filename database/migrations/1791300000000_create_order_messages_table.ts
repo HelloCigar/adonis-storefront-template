@@ -2,7 +2,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 
 /**
  * One chat thread per confirmed order, between its account holder and store staff.
- * `public_id` comes from the realtime engine so a broadcast message and its stored row
+ * `public_id` identifies a message to clients, so a broadcast copy and a reloaded copy
  * match; the integer id keeps send order when several messages share a timestamp.
  */
 export default class extends BaseSchema {

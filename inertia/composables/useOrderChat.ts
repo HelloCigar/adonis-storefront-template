@@ -3,18 +3,11 @@ import { io, type Socket } from 'socket.io-client'
 import type { Data } from '@generated/data'
 
 type Side = Data.Chat.Message['senderRole']
-type Ack<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string } }
-
-/** The parts of a Ravex message the chat needs; the server fixes sender details. */
-interface LiveMessage {
-  id: string
-  roomId: string
-  senderId: string
-  senderName: string
-  content: string
-  deliveryStatus: 'sent' | 'delivered' | 'read'
-  metadata?: { senderRole?: Side }
-  createdAt: string
+type Reply<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string } }
+type LiveMessage = Data.Chat.Message & { roomKey: string }
+interface RoomEvent {
+  roomKey: string
+  side: Side
 }
 
 export type ChatConnection = 'connecting' | 'live' | 'offline'
@@ -23,38 +16,23 @@ const typingThrottleMs = 1500
 const typingTimeoutMs = 4000
 
 /**
- * Live order chat over the store's Socket.IO engine. Loaded messages come from the page;
- * the socket adds new ones, and every (re)join refills anything sent in between.
+ * Live order chat over the store's Socket.IO server. Loaded messages come from the page;
+ * every (re)join returns the stored thread, so anything sent while away is filled in.
  */
-export function useOrderChat(
-  conversation: Ref<Data.Chat.Conversation>,
-  options: { side: Side; viewerId: Ref<number | undefined> }
-) {
+export function useOrderChat(conversation: Ref<Data.Chat.Conversation>, options: { side: Side }) {
   const messages = ref<Data.Chat.Message[]>([...conversation.value.messages])
   const connection = ref<ChatConnection>('connecting')
   const error = ref<string | null>(null)
-  const typingUserId = ref<string | null>(null)
+  const typing = ref(false)
   const sending = ref(false)
 
   let socket: Socket | undefined
-  let roomId: string | undefined
+  let joinedRoom: string | undefined
   let typingTimer: ReturnType<typeof setTimeout> | undefined
   let lastTypingAt = 0
 
-  const viewer = () => String(options.viewerId.value ?? '')
-
-  function fromLive(message: LiveMessage): Data.Chat.Message {
-    const mine = message.senderId === viewer()
-    const otherSide: Side = options.side === 'staff' ? 'customer' : 'staff'
-    return {
-      id: message.id,
-      body: message.content,
-      senderName: message.senderName,
-      senderRole: message.metadata?.senderRole ?? (mine ? options.side : otherSide),
-      createdAt: new Date(message.createdAt).toISOString(),
-      read: message.deliveryStatus === 'read',
-    }
-  }
+  const fromOtherSide = (event: { side?: Side; senderRole?: Side }) =>
+    (event.side ?? event.senderRole) !== options.side
 
   /** Keeps arrival order; a known id is updated in place. */
   function merge(incoming: Data.Chat.Message[]) {
@@ -67,7 +45,7 @@ export function useOrderChat(
     messages.value = next
   }
 
-  /** Server history is authoritative; anything newer that arrived meanwhile stays after it. */
+  /** The stored thread is authoritative; anything newer that arrived meanwhile stays after it. */
   function replaceWith(history: Data.Chat.Message[]) {
     const ids = new Set(history.map((message) => message.id))
     messages.value = [...history, ...messages.value.filter((message) => !ids.has(message.id))]
@@ -76,37 +54,34 @@ export function useOrderChat(
   function join() {
     if (!socket) return
     const roomKey = conversation.value.roomKey
-    socket.emit('room:join', { roomId: roomKey }, (response: Ack<{ id: string }>) => {
-      if (roomKey !== conversation.value.roomKey) return
-      if (!response.ok) {
-        connection.value = 'offline'
-        error.value = response.error.message
-        return
+    socket.emit(
+      'order:join',
+      { roomKey },
+      (reply: Reply<{ roomKey: string; messages: Data.Chat.Message[] }>) => {
+        if (roomKey !== conversation.value.roomKey) return
+        if (!reply.ok) {
+          connection.value = 'offline'
+          error.value = reply.error.message
+          return
+        }
+        joinedRoom = roomKey
+        connection.value = 'live'
+        error.value = null
+        replaceWith(reply.data.messages)
+        markRead()
       }
-      roomId = response.data.id
-      connection.value = 'live'
-      error.value = null
-      // The page's copy may be stale after a reconnect or a reopened thread.
-      refill()
-    })
+    )
   }
 
-  function refill() {
-    const current = roomId
-    socket?.emit('message:history', { roomId: current }, (response: Ack<LiveMessage[]>) => {
-      if (response.ok && current === roomId) replaceWith(response.data.map(fromLive))
-    })
-  }
-
-  function markRead(messageId: string) {
-    if (roomId && document.visibilityState === 'visible') {
-      socket?.emit('message:read', { roomId, messageId })
+  function markRead() {
+    if (joinedRoom && document.visibilityState === 'visible') {
+      socket?.emit('message:read', { roomKey: joinedRoom }, () => {})
     }
   }
 
   function send(content: string) {
     const body = content.trim()
-    if (!body || !socket?.connected || !roomId || sending.value) return Promise.resolve(false)
+    if (!body || !socket?.connected || !joinedRoom || sending.value) return Promise.resolve(false)
     sending.value = true
     stopTyping()
     return new Promise<boolean>((resolve) => {
@@ -114,19 +89,19 @@ export function useOrderChat(
         .timeout(10_000)
         .emit(
           'message:send',
-          { roomId, content: body },
-          (timeout: Error | null, response?: Ack<LiveMessage>) => {
+          { roomKey: joinedRoom, body },
+          (timeout: Error | null, reply?: Reply<LiveMessage>) => {
             sending.value = false
-            if (timeout || !response) {
+            if (timeout || !reply) {
               error.value = 'The message could not be sent. Check your connection and try again.'
               return resolve(false)
             }
-            if (!response.ok) {
-              error.value = response.error.message
+            if (!reply.ok) {
+              error.value = reply.error.message
               return resolve(false)
             }
             error.value = null
-            merge([fromLive(response.data)])
+            merge([reply.data])
             resolve(true)
           }
         )
@@ -135,19 +110,19 @@ export function useOrderChat(
 
   function notifyTyping() {
     const now = Date.now()
-    if (!roomId || now - lastTypingAt < typingThrottleMs) return
+    if (!joinedRoom || now - lastTypingAt < typingThrottleMs) return
     lastTypingAt = now
-    socket?.emit('typing:start', { roomId })
+    socket?.emit('typing:start', { roomKey: joinedRoom })
   }
 
   function stopTyping() {
-    if (!roomId || !lastTypingAt) return
+    if (!joinedRoom || !lastTypingAt) return
     lastTypingAt = 0
-    socket?.emit('typing:stop', { roomId })
+    socket?.emit('typing:stop', { roomKey: joinedRoom })
   }
 
   function clearTyping() {
-    typingUserId.value = null
+    typing.value = false
     if (typingTimer) clearTimeout(typingTimer)
   }
 
@@ -155,34 +130,35 @@ export function useOrderChat(
     socket = io({ withCredentials: true })
     socket.on('connect', join)
     socket.on('disconnect', () => {
+      joinedRoom = undefined
       connection.value = 'connecting'
       clearTyping()
     })
     socket.on('connect_error', () => {
       connection.value = socket?.active ? 'connecting' : 'offline'
     })
-    socket.on('message:new', (live: LiveMessage) => {
-      if (live.roomId !== roomId) return
-      merge([fromLive(live)])
-      if (live.senderId !== viewer()) {
+    socket.on('message:new', (message: LiveMessage) => {
+      if (message.roomKey !== joinedRoom) return
+      merge([message])
+      if (fromOtherSide(message)) {
         clearTyping()
-        markRead(live.id)
+        markRead()
       }
     })
-    socket.on('message:read_receipt', (receipt: { roomId: string; readBy: string }) => {
-      if (receipt.roomId !== roomId || receipt.readBy === viewer()) return
+    socket.on('message:read', (event: RoomEvent) => {
+      if (event.roomKey !== joinedRoom || !fromOtherSide(event)) return
       messages.value = messages.value.map((message) =>
         message.senderRole === options.side ? { ...message, read: true } : message
       )
     })
-    socket.on('typing:start', (event: { roomId: string; userId: string }) => {
-      if (event.roomId !== roomId || event.userId === viewer()) return
-      typingUserId.value = event.userId
+    socket.on('typing:start', (event: RoomEvent) => {
+      if (event.roomKey !== joinedRoom || !fromOtherSide(event)) return
+      typing.value = true
       if (typingTimer) clearTimeout(typingTimer)
       typingTimer = setTimeout(clearTyping, typingTimeoutMs)
     })
-    socket.on('typing:stop', (event: { roomId: string; userId: string }) => {
-      if (event.roomId === roomId && event.userId === typingUserId.value) clearTyping()
+    socket.on('typing:stop', (event: RoomEvent) => {
+      if (event.roomKey === joinedRoom && fromOtherSide(event)) clearTyping()
     })
   })
 
@@ -197,8 +173,8 @@ export function useOrderChat(
     () => conversation.value,
     (next, previous) => {
       if (next.roomKey === previous.roomKey) return merge(next.messages)
-      if (roomId) socket?.emit('room:leave', { roomId }, () => {})
-      roomId = undefined
+      if (joinedRoom) socket?.emit('order:leave', { roomKey: joinedRoom }, () => {})
+      joinedRoom = undefined
       clearTyping()
       error.value = null
       messages.value = [...next.messages]
@@ -209,5 +185,5 @@ export function useOrderChat(
     }
   )
 
-  return { messages, connection, error, typingUserId, sending, send, notifyTyping, stopTyping }
+  return { messages, connection, error, typing, sending, send, notifyTyping, stopTyping }
 }

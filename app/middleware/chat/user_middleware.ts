@@ -6,6 +6,7 @@ import { Session } from '@adonisjs/session'
 import type { ResolvedSessionConfig } from '@adonisjs/session/types'
 import type { Socket } from 'socket.io'
 import env from '#start/env'
+import type { ChatSocketData } from '#sockets/chat/order_room_handler'
 
 export default class ChatUserMiddleware {
   async handle(socket: Socket, next: (error?: Error) => void) {
@@ -50,12 +51,8 @@ export default class ChatUserMiddleware {
       // Customers connect too; each order room checks access when joined.
       const user = await ctx.auth.use('web').authenticate()
 
-      // Replace every client-supplied field before Ravex copies this into socket.data.
-      socket.handshake.auth.user = {
-        id: String(user.id),
-        username: `user-${user.id}`,
-        displayName: user.fullName ?? undefined,
-      }
+      // Only the session decides identity; handshake auth data from the client is ignored.
+      socket.data = { userId: user.id } satisfies ChatSocketData
     } catch {
       return next(new Error('Authentication failed: Invalid or missing session'))
     }

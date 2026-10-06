@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import type User from '#models/account/user'
@@ -6,7 +7,7 @@ import OrderMessage, { type ChatSide } from '#models/chat/order_message'
 
 const roomPrefix = 'order:'
 const threadLimit = 100
-export const messageLimit = 200
+const messageLimit = 200
 export const maxMessageLength = 2000
 
 export const inboxFilters = ['all', 'unread'] as const
@@ -19,7 +20,7 @@ export interface ChatThread {
 }
 
 export default class OrderChatService {
-  /** The realtime room a client asks to join. Access is checked again on every join. */
+  /** The Socket.IO room for an order. Access is checked again on every join. */
   roomKey(order: Order) {
     return `${roomPrefix}${order.id}`
   }
@@ -36,29 +37,22 @@ export default class OrderChatService {
   }
 
   /** The newest messages, returned oldest first for display. */
-  async messages(orderId: number, options: { limit?: number; before?: Date } = {}) {
-    const query = OrderMessage.query()
+  async messages(orderId: number) {
+    const newestFirst = await OrderMessage.query()
       .where('order_id', orderId)
       .orderBy('id', 'desc')
-      .limit(Math.min(options.limit ?? messageLimit, messageLimit))
-    if (options.before) query.where('created_at', '<', this.toSql(options.before))
-    const newestFirst = await query
+      .limit(messageLimit)
     return newestFirst.reverse()
   }
 
-  async findByPublicId(publicId: string) {
-    return OrderMessage.findBy('publicId', publicId)
-  }
-
-  async post(input: { publicId: string; order: Order; sender: User; body: string; sentAt: Date }) {
+  async post(input: { order: Order; sender: User; body: string }) {
     return OrderMessage.create({
-      publicId: input.publicId,
+      publicId: randomUUID(),
       orderId: input.order.id,
       senderId: input.sender.id,
       senderRole: this.sideFor(input.sender, input.order),
       senderName: input.sender.fullName?.trim() || input.sender.email,
       body: input.body,
-      createdAt: DateTime.fromJSDate(input.sentAt),
     })
   }
 

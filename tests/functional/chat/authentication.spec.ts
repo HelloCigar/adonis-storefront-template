@@ -4,11 +4,9 @@ import { startChatServer, type ChatServer } from '#tests/helpers/chat_socket'
 
 test.group('Chat session authentication', (group) => {
   let chat: ChatServer
-  let engine: ChatServer['engine']
 
   group.setup(async () => {
     chat = await startChatServer()
-    engine = chat.engine
   })
   group.teardown(() => chat.close())
   group.each.setup(() => testUtils.db().truncate())
@@ -20,7 +18,7 @@ test.group('Chat session authentication', (group) => {
   test('rejects guests even when they supply a forged user and token', async ({ assert }) => {
     const error = await connect({ auth: { token: 'forged', user: { id: 'admin', role: 'admin' } } })
     assert.equal(error?.message, 'Authentication failed: Invalid or missing session')
-    assert.isUndefined(engine.getUser('admin'))
+    assert.lengthOf(chat.identities(), 0)
   })
 
   test('rejects malformed session cookies', async ({ assert }) => {
@@ -36,8 +34,7 @@ test.group('Chat session authentication', (group) => {
       }) => {
         const { user, cookie } = await login(client, role)
         assert.isUndefined(await connect({ cookie, transport }))
-        assert.equal(engine.getUser(String(user.id))?.username, `user-${user.id}`)
-        assert.equal(engine.getUser(String(user.id))?.displayName, user.fullName)
+        assert.deepEqual(chat.identities(), [{ userId: user.id }])
       })
     }
   }
@@ -61,11 +58,7 @@ test.group('Chat session authentication', (group) => {
         },
       })
     )
-    const trusted = engine.getUser(String(user.id))
-    assert.equal(trusted?.displayName, user.fullName)
-    assert.isUndefined(trusted?.metadata)
-    assert.notProperty(trusted!, 'role')
-    assert.isUndefined(engine.getUser('victim'))
+    assert.deepEqual(chat.identities(), [{ userId: user.id }])
   })
 
   test('gives customers their own identity even with a forged staff role', async ({
@@ -74,8 +67,7 @@ test.group('Chat session authentication', (group) => {
   }) => {
     const { user, cookie } = await login(client, 'customer')
     assert.isUndefined(await connect({ cookie, auth: { user: { id: 'staff', role: 'staff' } } }))
-    assert.isUndefined(engine.getUser('staff'))
-    assert.equal(engine.getUser(String(user.id))?.username, `user-${user.id}`)
+    assert.deepEqual(chat.identities(), [{ userId: user.id }])
   })
 
   test('rejects a session whose account was deleted', async ({ client, assert }) => {

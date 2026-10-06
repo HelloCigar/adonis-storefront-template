@@ -3,7 +3,10 @@ import { computed, nextTick, ref, toRef, useTemplateRef, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { useOrderChat } from '~/composables/useOrderChat'
+import { useMessageCopy } from '~/composables/useMessageCopy'
 import { type ChatMessagesProps } from '@nuxt/ui'
+
+const { copyMessage, isSupported: canCopy } = useMessageCopy()
 
 const props = defineProps<{
   conversation: Data.Chat.Conversation
@@ -13,11 +16,8 @@ const props = defineProps<{
 }>()
 
 const page = usePage()
-const chat = useOrderChat(toRef(props, 'conversation'), {
-  side: props.side,
-  viewerId: computed(() => page.props.user?.id),
-})
-const { messages, connection, typingUserId, sending } = chat
+const chat = useOrderChat(toRef(props, 'conversation'), { side: props.side })
+const { messages, connection, typing, sending } = chat
 
 const input = ref('')
 const scroller = useTemplateRef('scroller')
@@ -45,6 +45,20 @@ const userConfig = computed<ChatMessagesProps['user']>(() => {
       }
     : undefined
 })
+
+// The other party's messages can be copied, e.g. an address or tracking number.
+const assistantConfig = computed<ChatMessagesProps['assistant']>(() => ({
+  variant: 'outline',
+  actions: canCopy.value
+    ? [
+        {
+          label: 'Copy to clipboard',
+          icon: 'i-lucide-copy',
+          onClick: (_event, message) => void copyMessage(message),
+        },
+      ]
+    : undefined,
+}))
 
 function scrollToBottom(smooth: boolean) {
   const el = scroller.value
@@ -80,10 +94,8 @@ async function onSubmit() {
         v-if="uiMessages.length"
         :messages="uiMessages"
         :user="userConfig"
-        :assistant="{
-          variant: 'outline',
-        }"
-        :status="typingUserId ? 'submitted' : undefined"
+        :assistant="assistantConfig"
+        :status="typing ? 'submitted' : undefined"
       />
       <UEmpty
         v-else

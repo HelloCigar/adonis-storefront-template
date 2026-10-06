@@ -1,7 +1,7 @@
 import { BaseTransformer } from '@adonisjs/core/transformers'
 import type OrderMessage from '#models/chat/order_message'
 
-/** Uses the engine's message id so live and loaded copies of a message are the same. */
+/** Uses the public id so live and loaded copies of a message are the same. */
 export default class MessageTransformer extends BaseTransformer<OrderMessage> {
   toObject() {
     return {

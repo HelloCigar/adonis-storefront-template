@@ -4,15 +4,13 @@ import { configProvider } from '@adonisjs/core'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
 import app from '@adonisjs/core/services/app'
 import type { ResolvedSessionConfig, SessionStoreContract } from '@adonisjs/session/types'
-import type { ChatEngine } from '@ravex/server'
 import { Server } from 'socket.io'
 import { io, type Socket } from 'socket.io-client'
 import User, { type UserRole } from '#models/account/user'
-import ChatOrderRoomMiddleware from '#middleware/chat/order_room_middleware'
+import ChatOrderRoomHandler, { type ChatReply } from '#sockets/chat/order_room_handler'
 import ChatUserMiddleware from '#middleware/chat/user_middleware'
 import env from '#start/env'
 
-type Ack<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string } }
 interface OpenOptions {
   cookie?: string
   auth?: Record<string, unknown>
@@ -22,15 +20,15 @@ interface OpenOptions {
 
 /**
  * A real chat server wired like the provider: session authentication first, then the
- * order room guard. Tests connect over the network like a browser.
+ * order room handler. Tests connect over the network like a browser.
  */
 export async function startChatServer() {
   const httpServer = createServer()
   const socketServer = new Server(httpServer, { serveClient: false })
   const auth = await app.container.make(ChatUserMiddleware)
   socketServer.of('/').use((socket, next) => void auth.handle(socket, next))
-  const orderRooms = await app.container.make(ChatOrderRoomMiddleware)
-  const engine: ChatEngine = orderRooms.install(socketServer)
+  const orderRooms = await app.container.make(ChatOrderRoomHandler)
+  orderRooms.install(socketServer)
   await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve))
   const address = httpServer.address()
   if (!address || typeof address === 'string') throw new Error('Missing chat server address')
@@ -53,16 +51,20 @@ export async function startChatServer() {
   }
 
   return {
-    engine,
+    io: socketServer,
     url,
+
+    /** Server-side identity of every connected socket. */
+    identities() {
+      return [...socketServer.of('/').sockets.values()].map((socket) => socket.data)
+    },
 
     async login(client: ApiClient, user: User | UserRole = 'staff') {
       const account =
         typeof user === 'string'
           ? await User.create({
               email: `${user}@example.com`,
-              // The engine keeps a user's first display name for the whole group.
-              fullName: 'Store Staff',
+              fullName: user === 'customer' ? 'Casey Customer' : 'Store Staff',
               password: 'secret-password',
               role: user,
             })
@@ -117,25 +119,26 @@ export async function startChatServer() {
     async disconnectAll() {
       for (const socket of sockets.splice(0)) socket.disconnect()
       for (const session of sessions.splice(0)) await session.store.destroy(session.sessionId)
+      // Wait for the server to notice, so the next test starts with no sockets.
+      for (let attempt = 0; socketServer.of('/').sockets.size && attempt < 40; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 25))
+      }
     },
 
-    async close() {
-      engine.destroy()
-      await engine.io.close()
+    close() {
+      return socketServer.close()
     },
   }
 }
 
 export type ChatServer = Awaited<ReturnType<typeof startChatServer>>
 
-/** Emits with an acknowledgement and resolves with Ravex's `{ ok, data | error }` reply. */
+/** Emits with an acknowledgement and resolves with the `{ ok, data | error }` reply. */
 export function request<T>(socket: Socket, event: string, payload?: unknown) {
-  return new Promise<Ack<T>>((resolve, reject) => {
-    const reply = (error: Error | null, response: Ack<T>) =>
+  return new Promise<ChatReply<T>>((resolve, reject) => {
+    const reply = (error: Error | null, response: ChatReply<T>) =>
       error ? reject(error) : resolve(response)
-    // Some Ravex events, such as room:list, take the acknowledgement as their only argument.
-    if (payload === undefined) socket.timeout(5000).emit(event, reply)
-    else socket.timeout(5000).emit(event, payload, reply)
+    socket.timeout(5000).emit(event, payload, reply)
   })
 }
 

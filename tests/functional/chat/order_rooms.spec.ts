@@ -8,12 +8,11 @@ import { nextEvent, request, startChatServer, type ChatServer } from '#tests/hel
 
 interface Message {
   id: string
-  roomId: string
-  content: string
-  type: string
+  roomKey: string
+  body: string
   senderName: string
-  attachments: unknown[]
-  metadata: Record<string, unknown>
+  senderRole: 'customer' | 'staff'
+  read: boolean
 }
 
 test.group('Order chat rooms', (group) => {
@@ -43,36 +42,32 @@ test.group('Order chat rooms', (group) => {
     assert,
   }) => {
     const { customer, staff, order, customerSocket, staffSocket, roomKey } = await scenario(client)
-    const customerRoom = await request<{ id: string }>(customerSocket, 'room:join', {
-      roomId: roomKey,
+    const customerJoin = await request<{ roomKey: string }>(customerSocket, 'order:join', {
+      roomKey,
     })
-    const staffRoom = await request<{ id: string }>(staffSocket, 'room:join', { roomId: roomKey })
-    assert.isTrue(customerRoom.ok && staffRoom.ok)
-    if (!customerRoom.ok || !staffRoom.ok) return
-    assert.equal(customerRoom.data.id, staffRoom.data.id)
-    assert.notEqual(customerRoom.data.id, roomKey)
+    const staffJoin = await request<{ roomKey: string }>(staffSocket, 'order:join', { roomKey })
+    assert.isTrue(customerJoin.ok && staffJoin.ok)
 
     const delivered = nextEvent<Message>(staffSocket, 'message:new', 2000)
     const sent = await request<Message>(customerSocket, 'message:send', {
-      roomId: customerRoom.data.id,
-      content: '  Where is my parcel?  ',
-      type: 'system',
-      attachments: [{ id: 'x', name: 'invoice.pdf', url: 'https://evil.example', size: 1 }],
-      metadata: { senderRole: 'staff' },
+      roomKey,
+      body: '  Where is my parcel?  ',
+      senderRole: 'staff',
+      senderName: 'Store Owner',
+      attachments: [{ url: 'https://evil.example' }],
     })
     assert.isTrue(sent.ok)
     if (!sent.ok) return
-    assert.equal(sent.data.content, 'Where is my parcel?')
-    assert.equal(sent.data.type, 'text')
-    assert.deepEqual(sent.data.attachments, [])
-    assert.deepEqual(sent.data.metadata, { senderRole: 'customer' })
+    assert.equal(sent.data.body, 'Where is my parcel?')
+    assert.equal(sent.data.senderRole, 'customer')
     assert.equal(sent.data.senderName, customer.user.fullName)
+    assert.notProperty(sent.data, 'attachments')
     const received = await delivered
     assert.equal(received?.id, sent.data.id)
 
     const reply = await request<Message>(staffSocket, 'message:send', {
-      roomId: staffRoom.data.id,
-      content: 'It ships today.',
+      roomKey,
+      body: 'It ships today.',
     })
     assert.isTrue(reply.ok)
 
@@ -107,121 +102,107 @@ test.group('Order chat rooms', (group) => {
     }).create()
     const guest = await OrderFactory.merge({ lifecycleState: 'confirmed' }).create()
 
-    for (const roomId of [`order:${theirs.id}`, `order:${guest.id}`, 'order:999999', 'lobby']) {
-      const joined = await request(customerSocket, 'room:join', { roomId })
-      assert.isFalse(joined.ok, roomId)
-      if (!joined.ok) assert.equal(joined.error.code, 'ROOM_NOT_FOUND')
+    for (const roomKey of [`order:${theirs.id}`, `order:${guest.id}`, 'order:999999', 'lobby']) {
+      const joined = await request(customerSocket, 'order:join', { roomKey })
+      assert.isFalse(joined.ok, roomKey)
+      if (!joined.ok) assert.equal(joined.error.code, 'NOT_FOUND')
     }
-    const staffGuest = await request(staffSocket, 'room:join', { roomId: `order:${guest.id}` })
+    const staffGuest = await request(staffSocket, 'order:join', { roomKey: `order:${guest.id}` })
     assert.isFalse(staffGuest.ok)
   })
 
-  test('a known room id is not enough to read or write another order', async ({
-    client,
-    assert,
-  }) => {
+  test('a room key is not enough to read or write without joining', async ({ client, assert }) => {
     const { staffSocket, roomKey } = await scenario(client)
-    const room = await request<{ id: string }>(staffSocket, 'room:join', { roomId: roomKey })
-    assert.isTrue(room.ok)
-    if (!room.ok) return
-    await request(staffSocket, 'message:send', { roomId: room.data.id, content: 'Private note' })
+    await request(staffSocket, 'order:join', { roomKey })
+    await request(staffSocket, 'message:send', { roomKey, body: 'Private note' })
 
     const outsider = await chat.login(
       client,
       await User.create({ email: 'outsider@example.com', password: 'x', role: 'customer' })
     )
     const socket = await chat.connected(outsider.cookie)
-    const history = await request(socket, 'message:history', { roomId: room.data.id })
-    const send = await request(socket, 'message:send', { roomId: room.data.id, content: 'Hi' })
-    const join = await request(socket, 'room:join', { roomId: room.data.id })
-    assert.isFalse(history.ok)
+    const overheard = nextEvent(socket, 'message:new')
+    const send = await request(socket, 'message:send', { roomKey, body: 'Hi' })
+    const read = await request(socket, 'message:read', { roomKey })
+    const join = await request(socket, 'order:join', { roomKey })
     assert.isFalse(send.ok)
+    assert.isFalse(read.ok)
     assert.isFalse(join.ok)
+    await request(staffSocket, 'message:send', { roomKey, body: 'Second note' })
+    assert.isUndefined(await overheard)
     assert.lengthOf(await OrderMessage.query().where('body', 'Hi'), 0)
   })
 
   test('messages close when the order leaves the confirmed state', async ({ client, assert }) => {
     const { order, customerSocket, staffSocket, roomKey } = await scenario(client)
-    const room = await request<{ id: string }>(customerSocket, 'room:join', { roomId: roomKey })
-    await request(staffSocket, 'room:join', { roomId: roomKey })
-    assert.isTrue(room.ok)
-    if (!room.ok) return
+    await request(customerSocket, 'order:join', { roomKey })
+    await request(staffSocket, 'order:join', { roomKey })
 
     await order.merge({ lifecycleState: 'cancelled' }).save()
     const delivered = nextEvent(staffSocket, 'message:new')
     const sent = await request(customerSocket, 'message:send', {
-      roomId: room.data.id,
-      content: 'Can I still change it?',
+      roomKey,
+      body: 'Can I still change it?',
     })
     assert.isFalse(sent.ok)
     if (!sent.ok) assert.equal(sent.error.code, 'FORBIDDEN')
     assert.isUndefined(await delivered)
     assert.lengthOf(await OrderMessage.all(), 0)
 
-    // Reading the existing thread stays available to the account holder.
-    const history = await request(customerSocket, 'message:history', { roomId: room.data.id })
-    assert.isTrue(history.ok)
+    // The account holder can still open the existing thread.
+    const rejoin = await request(customerSocket, 'order:join', { roomKey })
+    assert.isTrue(rejoin.ok)
   })
 
-  test('clients cannot create, delete, edit, or react in rooms', async ({ client, assert }) => {
+  test('messages must have text within the length limit', async ({ client, assert }) => {
     const { customerSocket, roomKey } = await scenario(client)
-    const room = await request<{ id: string }>(customerSocket, 'room:join', { roomId: roomKey })
-    assert.isTrue(room.ok)
-    if (!room.ok) return
-    const before = chat.engine.getRoom(room.data.id)?.members.length
-
-    const created = await request(customerSocket, 'room:create', {
-      type: 'personal',
-      members: ['1'],
-    })
-    assert.isFalse(created.ok)
-    for (const [event, payload] of [
-      ['room:delete', { roomId: room.data.id }],
-      ['message:react', { roomId: room.data.id, messageId: 'x', emoji: '👍' }],
-      ['message:edit', { roomId: room.data.id, messageId: 'x', content: 'changed' }],
-      ['message:delete', { roomId: room.data.id, messageId: 'x' }],
-    ] as const) {
-      const response = await request(customerSocket, event, payload)
-      assert.isFalse(response.ok, event)
+    await request(customerSocket, 'order:join', { roomKey })
+    for (const body of ['   ', 42, 'x'.repeat(2001)]) {
+      const sent = await request(customerSocket, 'message:send', { roomKey, body })
+      assert.isFalse(sent.ok)
+      if (!sent.ok) assert.equal(sent.error.code, 'VALIDATION')
     }
-    assert.exists(chat.engine.getRoom(room.data.id))
-    assert.equal(chat.engine.getRoom(room.data.id)?.members.length, before)
-    const listed = await request<unknown[]>(customerSocket, 'room:list')
-    assert.isTrue(listed.ok && listed.data.length === 1)
+    assert.lengthOf(await OrderMessage.all(), 0)
   })
 
-  test('history comes from stored messages and reading marks the thread read', async ({
+  test('joining returns the stored thread and reading marks the other side read', async ({
     client,
     assert,
   }) => {
     const { order, customerSocket, staffSocket, roomKey } = await scenario(client)
-    const room = await request<{ id: string }>(customerSocket, 'room:join', { roomId: roomKey })
-    await request(staffSocket, 'room:join', { roomId: roomKey })
-    assert.isTrue(room.ok)
-    if (!room.ok) return
-    for (const content of ['First', 'Second'])
-      await request(customerSocket, 'message:send', { roomId: room.data.id, content })
+    await request(customerSocket, 'order:join', { roomKey })
+    for (const body of ['First', 'Second'])
+      await request(customerSocket, 'message:send', { roomKey, body })
 
-    const history = await request<Message[]>(staffSocket, 'message:history', {
-      roomId: room.data.id,
-    })
-    assert.isTrue(history.ok)
-    if (!history.ok) return
+    const joined = await request<{ messages: Message[] }>(staffSocket, 'order:join', { roomKey })
+    assert.isTrue(joined.ok)
+    if (!joined.ok) return
     assert.deepEqual(
-      history.data.map((message) => [message.content, message.metadata.senderRole]),
+      joined.data.messages.map((message) => [message.body, message.senderRole, message.read]),
       [
-        ['First', 'customer'],
-        ['Second', 'customer'],
+        ['First', 'customer', false],
+        ['Second', 'customer', false],
       ]
     )
 
-    staffSocket.emit('message:read', { roomId: room.data.id, messageId: history.data[1].id })
-    for (let attempt = 0; attempt < 20; attempt++) {
-      const unread = await OrderMessage.query().where('order_id', order.id).whereNull('read_at')
-      if (!unread.length) break
-      await new Promise((resolve) => setTimeout(resolve, 25))
-    }
+    const receipt = nextEvent<{ roomKey: string; side: string }>(customerSocket, 'message:read')
+    const read = await request(staffSocket, 'message:read', { roomKey })
+    assert.isTrue(read.ok)
+    assert.deepEqual(await receipt, { roomKey, side: 'staff' })
     const rows = await OrderMessage.query().where('order_id', order.id)
     assert.isTrue(rows.every((message) => message.readAt !== null))
+  })
+
+  test('typing reaches the other side without identifying the account', async ({
+    client,
+    assert,
+  }) => {
+    const { customerSocket, staffSocket, roomKey } = await scenario(client)
+    await request(customerSocket, 'order:join', { roomKey })
+    await request(staffSocket, 'order:join', { roomKey })
+
+    const typing = nextEvent(customerSocket, 'typing:start', 1000)
+    staffSocket.emit('typing:start', { roomKey })
+    assert.deepEqual(await typing, { roomKey, side: 'staff' })
   })
 })
