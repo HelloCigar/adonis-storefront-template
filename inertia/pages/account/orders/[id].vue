@@ -7,7 +7,11 @@ import type { Money } from '~/types/store'
 import { useLocalization } from '~/composables/localization'
 import type { BadgeProps } from '@nuxt/ui'
 import { Head } from '@inertiajs/vue3'
-const props = defineProps<{ order: Data.Checkout.Order }>()
+import OrderChat from '~/components/chat/OrderChat.vue'
+const props = defineProps<{
+  order: Data.Checkout.Order
+  conversation?: Data.Chat.Conversation | null
+}>()
 const { locale } = useLocalization()
 const items = computed(() => props.order.lineItems ?? [])
 const date = computed(() =>
@@ -173,5 +177,12 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
         </section>
       </div>
     </div>
+
+    <section v-if="conversation" class="mt-8 lg:mt-10">
+      <h2 class="text-2xl lg:text-3xl text-highlighted font-bold mb-6">Messages</h2>
+      <UCard :ui="{ body: 'p-0 sm:p-0 flex flex-col h-[28rem]' }">
+        <OrderChat :conversation="conversation" side="customer" />
+      </UCard>
+    </section>
   </UContainer>
 </template>

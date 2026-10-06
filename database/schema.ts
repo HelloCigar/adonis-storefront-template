@@ -633,6 +633,29 @@ export class RefundOperationSchema extends BaseModel {
   @column()
   declare externalId: string | null
   @column({ isPrimary: true })
+export class OrderMessageSchema extends BaseModel {
+  static $columns = ['body', 'createdAt', 'id', 'orderId', 'publicId', 'readAt', 'senderId', 'senderName', 'senderRole'] as const
+  $columns = OrderMessageSchema.$columns
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare orderId: number
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare readAt: DateTime | null
+  @column()
+  declare senderId: number | null
+  @column()
+  declare senderName: string
+  @column()
+  declare senderRole: string
+}
+
   declare id: number
   @column()
   declare idempotencyKey: string

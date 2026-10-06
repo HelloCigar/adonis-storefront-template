@@ -1,12 +1,17 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import OrderAccessService from '#services/checkout/order_access_service'
+import OrderChatService from '#services/chat/order_chat_service'
 import StatusTransformer from '#transformers/checkout/status_transformer'
+import ConversationTransformer from '#transformers/chat/conversation_transformer'
 
 @inject()
 export default class OrdersController {
-  constructor(private access: OrderAccessService) {}
-  async show({ params, auth, checkoutSession, inertia, response }: HttpContext) {
+  constructor(
+    private access: OrderAccessService,
+    private chat: OrderChatService
+  ) {}
+  async show({ params, auth, checkoutSession, inertia, response, bouncer }: HttpContext) {
     const order = await this.access.authorize(
       params.publicId,
       auth.user?.id,
@@ -22,6 +27,13 @@ export default class OrdersController {
     return inertia.render('checkout/order', {
       status: StatusTransformer.transform(order).depth(4),
       canClaim: !!auth.user && !order.userId,
+      // Only the account holder chats here; an order link alone never opens the thread.
+      conversation: async () => {
+        if (!auth.user || auth.user.id !== order.userId) return null
+        const canSend = await bouncer.with('ChatOrderPolicy').allows('send', order)
+        const thread = await this.chat.open(order, auth.user, canSend)
+        return canSend || thread.messages.length ? ConversationTransformer.transform(thread) : null
+      },
     })
   }
 }

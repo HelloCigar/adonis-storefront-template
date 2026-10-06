@@ -24,12 +24,16 @@ export default class ChatProvider {
     }
 
     const authMiddleware = await this.app.container.make(ChatUserMiddleware)
+    // Imported here: the guard loads models, which must not be evaluated before services boot.
+    const { default: ChatOrderRoomMiddleware } =
+      await import('#middleware/chat/order_room_middleware')
+    const orderRooms = await this.app.container.make(ChatOrderRoomMiddleware)
     const io = new Server(nodeServer, { serveClient: false })
     // Ravex installs its user check during construction, so authenticate first.
     io.of('/').use((socket, next) => {
       void authMiddleware.handle(socket, next)
     })
-    this.#io = new ChatEngine(io)
+    this.#io = orderRooms.install(io)
 
     this.app.container.singleton(ChatEngine, () => this.#io!)
     // Terminating hooks run before provider shutdown, in reverse order.

@@ -47,10 +47,8 @@ export default class ChatUserMiddleware {
       await ctx.session.initiate(true)
       const authManager = await app.container.make('auth.manager')
       ctx.auth = authManager.createAuthenticator(ctx)
+      // Customers connect too; each order room checks access when joined.
       const user = await ctx.auth.use('web').authenticate()
-      if (!user.isStoreStaff) {
-        return next(new Error('Authorization failed: Store staff access required'))
-      }
 
       // Replace every client-supplied field before Ravex copies this into socket.data.
       socket.handshake.auth.user = {
