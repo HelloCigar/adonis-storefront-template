@@ -63,6 +63,316 @@ export class AdonisAttachmentSchema extends BaseModel {
   declare variantKey: string | null
 }
 
+export class AgentActionProposalSchema extends BaseModel {
+  static $columns = ['createdAt', 'decision', 'deliveryLeaseExpiresAt', 'deliveryStatus', 'discoveryIndexVersion', 'executionStatus', 'id', 'insertToken', 'leaseExpiresAt', 'logicalSort', 'outcomeKey', 'payload', 'proposalExpiresAt', 'replacementGroupKey', 'scopeKey', 'updatedAt', 'version'] as const
+  $columns = AgentActionProposalSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare decision: string
+  @column()
+  declare deliveryLeaseExpiresAt: bigint | number | null
+  @column()
+  declare deliveryStatus: string | null
+  @column()
+  declare discoveryIndexVersion: number
+  @column()
+  declare executionStatus: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare insertToken: string
+  @column()
+  declare leaseExpiresAt: bigint | number | null
+  @column()
+  declare logicalSort: string
+  @column()
+  declare outcomeKey: string | null
+  @column()
+  declare payload: string
+  @column()
+  declare proposalExpiresAt: bigint | number | null
+  @column()
+  declare replacementGroupKey: string | null
+  @column()
+  declare scopeKey: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+  @column()
+  declare version: bigint | number
+}
+
+export class AgentConfirmTokenSchema extends BaseModel {
+  static $columns = ['actorRef', 'createdAt', 'expiresAt', 'hash', 'tool'] as const
+  $columns = AgentConfirmTokenSchema.$columns
+  @column()
+  declare actorRef: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare expiresAt: bigint | number
+  @column({ isPrimary: true })
+  declare hash: string
+  @column()
+  declare tool: string
+}
+
+export class AgentMessageSchema extends BaseModel {
+  static $columns = ['actionProposalOutcome', 'agentName', 'attachments', 'content', 'createdAt', 'feedback', 'followUps', 'id', 'persona', 'reasoning', 'reasoningMs', 'role', 'runId', 'seq', 'threadId', 'toolCalls', 'toolResults', 'ui', 'usage'] as const
+  $columns = AgentMessageSchema.$columns
+  @column()
+  declare actionProposalOutcome: string | null
+  @column()
+  declare agentName: string | null
+  @column()
+  declare attachments: string | null
+  @column()
+  declare content: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare feedback: string | null
+  @column()
+  declare followUps: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare persona: string | null
+  @column()
+  declare reasoning: string | null
+  @column()
+  declare reasoningMs: number | null
+  @column()
+  declare role: string
+  @column()
+  declare runId: string | null
+  @column()
+  declare seq: bigint | number
+  @column()
+  declare threadId: string
+  @column()
+  declare toolCalls: string | null
+  @column()
+  declare toolResults: string | null
+  @column()
+  declare ui: string | null
+  @column()
+  declare usage: string | null
+}
+
+export class AgentModelPricingSchema extends BaseModel {
+  static $columns = ['cacheReadPricePer1M', 'cacheWritePricePer1M', 'effectiveFrom', 'id', 'inputPricePer1M', 'isCurrent', 'modelId', 'outputPricePer1M'] as const
+  $columns = AgentModelPricingSchema.$columns
+  @column()
+  declare cacheReadPricePer1M: number | null
+  @column()
+  declare cacheWritePricePer1M: number | null
+  @column()
+  declare effectiveFrom: bigint | number
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare inputPricePer1M: number
+  @column()
+  declare isCurrent: number
+  @column()
+  declare modelId: string
+  @column()
+  declare outputPricePer1M: number
+}
+
+export class AgentQueuedMessageSchema extends BaseModel {
+  static $columns = ['actor', 'agentName', 'attachments', 'content', 'createdAt', 'id', 'interrupt', 'model', 'pageContext', 'persona', 'position', 'threadId', 'uiCapabilities', 'updatedAt'] as const
+  $columns = AgentQueuedMessageSchema.$columns
+  @column()
+  declare actor: string
+  @column()
+  declare agentName: string | null
+  @column()
+  declare attachments: string | null
+  @column()
+  declare content: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare interrupt: number
+  @column()
+  declare model: string | null
+  @column()
+  declare pageContext: string | null
+  @column()
+  declare persona: string | null
+  @column()
+  declare position: number
+  @column()
+  declare threadId: string
+  @column()
+  declare uiCapabilities: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class AgentRunSchema extends BaseModel {
+  static $columns = ['actorRef', 'agentName', 'costUsd', 'durable', 'error', 'finishedAt', 'id', 'inputTokens', 'outputTokens', 'parentRunId', 'startedAt', 'status', 'stepCount', 'tenantRef', 'threadId'] as const
+  $columns = AgentRunSchema.$columns
+  @column()
+  declare actorRef: string
+  @column()
+  declare agentName: string | null
+  @column()
+  declare costUsd: number | null
+  @column()
+  declare durable: number
+  @column()
+  declare error: string | null
+  @column()
+  declare finishedAt: bigint | number | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare inputTokens: number
+  @column()
+  declare outputTokens: number
+  @column()
+  declare parentRunId: string | null
+  @column()
+  declare startedAt: bigint | number
+  @column()
+  declare status: string
+  @column()
+  declare stepCount: number
+  @column()
+  declare tenantRef: string | null
+  @column()
+  declare threadId: string
+}
+
+export class AgentStreamFrameSchema extends BaseModel {
+  static $columns = ['createdAt', 'frame', 'runId', 'seq'] as const
+  $columns = AgentStreamFrameSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare frame: string | null
+  @column({ isPrimary: true })
+  declare runId: string
+  @column()
+  declare seq: bigint | number
+}
+
+export class AgentThreadSchema extends BaseModel {
+  static $columns = ['activeStreamId', 'actorRef', 'createdAt', 'defaultAgent', 'deletedAt', 'id', 'model', 'persona', 'pinnedAt', 'queuePause', 'summary', 'summaryMessageCount', 'tenantRef', 'title', 'transient', 'updatedAt'] as const
+  $columns = AgentThreadSchema.$columns
+  @column()
+  declare activeStreamId: string | null
+  @column()
+  declare actorRef: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare defaultAgent: string | null
+  @column()
+  declare deletedAt: bigint | number | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare model: string | null
+  @column()
+  declare persona: string
+  @column()
+  declare pinnedAt: bigint | number | null
+  @column()
+  declare queuePause: string | null
+  @column()
+  declare summary: string | null
+  @column()
+  declare summaryMessageCount: number
+  @column()
+  declare tenantRef: string | null
+  @column()
+  declare title: string
+  @column()
+  declare transient: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
+export class AgentTokenUsageSchema extends BaseModel {
+  static $columns = ['actorRef', 'cacheReadTokens', 'cacheWriteTokens', 'costUsd', 'createdAt', 'id', 'inputTokens', 'messageId', 'modelId', 'outputTokens', 'purpose', 'runId', 'threadId'] as const
+  $columns = AgentTokenUsageSchema.$columns
+  @column()
+  declare actorRef: string
+  @column()
+  declare cacheReadTokens: number | null
+  @column()
+  declare cacheWriteTokens: number | null
+  @column()
+  declare costUsd: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare inputTokens: number
+  @column()
+  declare messageId: string | null
+  @column()
+  declare modelId: string
+  @column()
+  declare outputTokens: number
+  @column()
+  declare purpose: string
+  @column()
+  declare runId: string | null
+  @column()
+  declare threadId: string
+}
+
+export class AgentToolCallSchema extends BaseModel {
+  static $columns = ['approver', 'confirmation', 'createdAt', 'decidedVia', 'error', 'executedAt', 'executedByRef', 'executionMs', 'expiresAt', 'id', 'input', 'messageId', 'output', 'proposalId', 'remember', 'runId', 'status', 'toolName', 'toolType'] as const
+  $columns = AgentToolCallSchema.$columns
+  @column()
+  declare approver: string | null
+  @column()
+  declare confirmation: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare decidedVia: string | null
+  @column()
+  declare error: string | null
+  @column()
+  declare executedAt: bigint | number | null
+  @column()
+  declare executedByRef: string | null
+  @column()
+  declare executionMs: number | null
+  @column()
+  declare expiresAt: bigint | number | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare input: string | null
+  @column()
+  declare messageId: string
+  @column()
+  declare output: string | null
+  @column()
+  declare proposalId: string | null
+  @column()
+  declare remember: number | null
+  @column()
+  declare runId: string | null
+  @column()
+  declare status: string
+  @column()
+  declare toolName: string
+  @column()
+  declare toolType: string
+}
+
 export class CartLineSchema extends BaseModel {
   static $columns = ['cartId', 'createdAt', 'currencyCode', 'id', 'productVariantId', 'quantity', 'unitPriceAmount', 'updatedAt'] as const
   $columns = CartLineSchema.$columns
@@ -321,6 +631,29 @@ export class OrderLineItemSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare variantTitle: string | null
+}
+
+export class OrderMessageSchema extends BaseModel {
+  static $columns = ['body', 'createdAt', 'id', 'orderId', 'publicId', 'readAt', 'senderId', 'senderName', 'senderRole'] as const
+  $columns = OrderMessageSchema.$columns
+  @column()
+  declare body: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare orderId: number
+  @column()
+  declare publicId: string
+  @column.dateTime()
+  declare readAt: DateTime | null
+  @column()
+  declare senderId: number | null
+  @column()
+  declare senderName: string
+  @column()
+  declare senderRole: string
 }
 
 export class OrderNotificationSchema extends BaseModel {
@@ -633,29 +966,6 @@ export class RefundOperationSchema extends BaseModel {
   @column()
   declare externalId: string | null
   @column({ isPrimary: true })
-export class OrderMessageSchema extends BaseModel {
-  static $columns = ['body', 'createdAt', 'id', 'orderId', 'publicId', 'readAt', 'senderId', 'senderName', 'senderRole'] as const
-  $columns = OrderMessageSchema.$columns
-  @column()
-  declare body: string
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
-  @column({ isPrimary: true })
-  declare id: number
-  @column()
-  declare orderId: number
-  @column()
-  declare publicId: string
-  @column.dateTime()
-  declare readAt: DateTime | null
-  @column()
-  declare senderId: number | null
-  @column()
-  declare senderName: string
-  @column()
-  declare senderRole: string
-}
-
   declare id: number
   @column()
   declare idempotencyKey: string

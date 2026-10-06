@@ -1,0 +1,47 @@
+import { BaseSchema } from '@adonisjs/lucid/schema'
+import db from '@adonisjs/lucid/services/db'
+import { createAgentTables, dropAgentTables } from '@adonis-agora/agent'
+
+/**
+ * The ten tables for the @adonis-agora/agent `lucid` store: threads, messages, tool calls, token
+ * usage, model pricing, the run lifecycle, the chat message queue, the spent confirm tokens, and the
+ * frame buffer of the Lucid token sink (`tokenSinks.lucid()`) — plus independent action proposals and their indexes.
+ *
+ * This migration DELEGATES to the library instead of reproducing its DDL. The schema belongs to the
+ * library: `LucidAgentStore`, the pricing store and the governance read-model all decide together what
+ * columns they read and write, so a hand-copied snapshot here can only ever be right until the next
+ * release. It was already wrong in two ways. It reproduced `createTable(...)` with no existence guard,
+ * which THROWS on a database where the tables are already there — and they usually are, because
+ * `autoCreateTables` defaults to `true` and any of those three stores provisions the shared schema on
+ * its first use. And it took two files to say what the library says in one: a second additive migration
+ * existed purely to ALTER in the `run_id` columns this one had been written before.
+ *
+ * `createAgentTables` is idempotent (`CREATE TABLE IF NOT EXISTS`) and additive-only: it creates what
+ * is missing and ALTERs the `run_id` columns into a database that predates run tracking, plus approval metadata including resolved confirmation. So it is safe
+ * against an empty database, against one the library already auto-created, and against one left over
+ * from an older version — which is exactly the set of states a real app is in.
+ *
+ * `db` (the `Database` manager from `@adonisjs/lucid/services/db`) rather than `this.db`: the manager
+ * checks out its own connection from the pool, which is what keeps the DDL out of the migrator's
+ * transaction (see `disableTransactions` below). `this.db` still supplies the connection NAME, so
+ * `node ace migration:run --connection=x` provisions the tables on connection `x` and not on the default.
+ */
+export default class extends BaseSchema {
+  /**
+   * REQUIRED, not a preference. The DDL below runs on a connection the `Database` manager checks out
+   * itself — it is not part of the transaction the migrator would otherwise open for this migration.
+   * With `pool: { max: 1 }` (Adonis's own SQLite guidance) that transaction would hold the only
+   * connection while `createAgentTables` waited for a free one, and the migration would hang until the
+   * acquire timeout. Nothing is lost by opting out: the statements were never inside that transaction
+   * anyway, and re-running an interrupted `createAgentTables` is a no-op.
+   */
+  static disableTransactions = true
+
+  async up() {
+    await createAgentTables(db.connection(this.db.connectionName))
+  }
+
+  async down() {
+    await dropAgentTables(db.connection(this.db.connectionName))
+  }
+}

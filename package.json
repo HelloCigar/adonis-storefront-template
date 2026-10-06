@@ -69,6 +69,7 @@
     "youch": "^4.1.1"
   },
   "dependencies": {
+    "@adonis-agora/agent": "^0.61.0",
     "@adonisjs/auth": "^10.1.0",
     "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.3.3",
@@ -82,6 +83,7 @@
     "@adonisjs/shield": "^9.0.0",
     "@adonisjs/static": "^2.0.1",
     "@adonisjs/vite": "^6.0.3",
+    "@ai-sdk/openai": "^4.0.84",
     "@iconify-json/lucide": "^1.2.116",
     "@inertiajs/core": "^3.7.1",
     "@inertiajs/vue3": "^3.7.1",
@@ -91,6 +93,8 @@
     "@unovis/vue": "^1.7.0",
     "@vinejs/vine": "^4.4.0",
     "@vue/server-renderer": "^3.5.43",
+    "@vueuse/core": "^15.0.0",
+    "ai": "^7.0.128",
     "axios": "^1.20.0",
     "better-sqlite3": "^12.10.0",
     "date-fns": "^4.4.0",
@@ -99,8 +103,7 @@
     "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.4",
     "tailwindcss": "^4.3.2",
-    "vue": "^3.5.43",
-    "zod": "^4.6.5"
+    "vue": "^3.5.43"
   },
   "hotHook": {
     "boundaries": [

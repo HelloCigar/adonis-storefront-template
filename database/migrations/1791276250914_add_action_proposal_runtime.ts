@@ -1,0 +1,16 @@
+import { BaseSchema } from '@adonisjs/lucid/schema'
+import db from '@adonisjs/lucid/services/db'
+import { createAgentTables } from '@adonis-agora/agent'
+
+/** Quiesce old writers before provisioning atomic outcome delivery and capability persistence. */
+export default class extends BaseSchema {
+  static disableTransactions = true
+
+  async up() {
+    await createAgentTables(db.connection(this.db.connectionName))
+  }
+
+  async down() {
+    throw new Error('Forward-only runtime upgrade: proposals, outcomes and history must be preserved')
+  }
+}

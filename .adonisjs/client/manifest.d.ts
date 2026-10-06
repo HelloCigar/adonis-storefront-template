@@ -4,6 +4,7 @@
  */
 
 /// <reference path="../../adonisrc.ts" />
+/// <reference path="../../config/agent.ts" />
 /// <reference path="../../config/attachment.ts" />
 /// <reference path="../../config/auth.ts" />
 /// <reference path="../../config/checkout.ts" />
@@ -11,6 +12,7 @@
 /// <reference path="../../config/limiter.ts" />
 /// <reference path="../../config/logger.ts" />
 /// <reference path="../../config/mail.ts" />
+/// <reference path="../../config/mcp.ts" />
 /// <reference path="../../config/payment.ts" />
 /// <reference path="../../config/queue.ts" />
 /// <reference path="../../config/storefront.ts" />
