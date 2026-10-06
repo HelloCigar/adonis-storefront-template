@@ -178,7 +178,7 @@ function rowActions(row: Data.Seller.Collection): DropdownMenuItem[] {
         </template>
         <template #empty>
           <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="size-8 text-dimmed mb-3" />
+            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
             <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
             <p class="text-sm text-muted mt-1">
               {{
