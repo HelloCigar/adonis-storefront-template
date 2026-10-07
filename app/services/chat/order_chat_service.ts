@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import type User from '#models/account/user'
 import Order from '#models/checkout/order'
@@ -76,52 +75,28 @@ export default class OrderChatService {
    * left that state. Most recent conversation first, then newest orders.
    */
   async threads(filter: InboxFilter = 'all'): Promise<ChatThread[]> {
-    const lastAt = db
-      .from('order_messages')
-      .whereColumn('order_messages.order_id', 'orders.id')
-      .max('created_at')
-    const unreadMessages = () =>
-      db
-        .from('order_messages')
-        .whereColumn('order_messages.order_id', 'orders.id')
-        .where('sender_role', 'customer')
-        .whereNull('read_at')
     const query = Order.query()
-      .whereNotNull('orders.user_id')
-      .where((scope) =>
-        scope
-          .where('lifecycle_state', 'confirmed')
-          .orWhereExists((messages) =>
-            messages.from('order_messages').whereColumn('order_messages.order_id', 'orders.id')
-          )
+      .whereNotNull('user_id')
+      .where((scope) => scope.where('lifecycle_state', 'confirmed').orHas('messages'))
+      .withAggregate('messages', (messages) => messages.max('created_at').as('last_message_at'))
+      .withCount('messages', (messages) =>
+        messages.where('sender_role', 'customer').whereNull('read_at').as('unread_count')
       )
-      .select('orders.*')
-      .select(lastAt.as('last_message_at'), unreadMessages().count('*').as('unread_count'))
       .preload('user')
+      // The latest message per order, still in one preload query.
+      .preload('messages', (messages) => messages.groupOrderBy('id', 'desc').groupLimit(1))
       .orderByRaw('last_message_at IS NULL, last_message_at DESC, orders.id DESC')
       .limit(threadLimit)
-    if (filter === 'unread') query.whereExists(unreadMessages().select('id'))
-    const orders = await query
-
-    const latest = new Map<number, OrderMessage>()
-    if (orders.length) {
-      const rows = await OrderMessage.query().whereIn(
-        'id',
-        db
-          .from('order_messages')
-          .whereIn(
-            'order_id',
-            orders.map((order) => order.id)
-          )
-          .groupBy('order_id')
-          .max('id')
+    if (filter === 'unread') {
+      query.whereHas('messages', (messages) =>
+        messages.where('sender_role', 'customer').whereNull('read_at')
       )
-      for (const row of rows) latest.set(row.orderId, row)
     }
 
+    const orders = await query
     return orders.map((order) => ({
       order,
-      lastMessage: latest.get(order.id) ?? null,
+      lastMessage: order.messages[0] ?? null,
       unreadCount: Number(order.$extras.unread_count ?? 0),
     }))
   }
