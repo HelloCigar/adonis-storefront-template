@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import ProductVariant from '#models/catalog/product_variant'
 import StockReservation from '#models/checkout/stock_reservation'
+import OrderLineItem from '#models/checkout/order_line_item'
 import CheckoutException from '#exceptions/checkout_exception'
 import { affectedRows } from '#models/shared/affected_rows'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
@@ -24,11 +25,10 @@ export default class InventoryService {
       const variant = await ProductVariant.findOrFail(variantId, { client: trx })
       if (!variant.availableForSale) this.unavailable()
       if (variant.inventoryQuantity === null) continue
-      const changed = await trx
-        .from('product_variants')
-        .where('id', variantId)
+      const changed = await ProductVariant.query({ client: trx })
+        .where('id', variant.id)
         .whereRaw('inventory_quantity - inventory_reserved_quantity >= ?', [quantity])
-        .increment('inventory_reserved_quantity', quantity)
+        .increment('inventoryReservedQuantity', quantity)
       if (affectedRows(changed) !== 1) this.unavailable()
       await StockReservation.create(
         { orderId, productVariantId: variantId, quantity, expiresAtMs, state: 'reserved' },
@@ -46,14 +46,14 @@ export default class InventoryService {
         .where('state', 'reserved')
         .update({ state: 'consumed', settledAt: DateTime.utc().toSQL({ includeOffset: false }) })
       if (affectedRows(claimed) !== 1) this.unavailable()
-      const changed = await trx
-        .from('product_variants')
-        .where('id', row.productVariantId)
+      const changed = await row
+        .related('variant')
+        .query()
         .where('inventory_reserved_quantity', '>=', row.quantity)
         .where('inventory_quantity', '>=', row.quantity)
         .update({
-          inventory_quantity: trx.raw('inventory_quantity - ?', [row.quantity]),
-          inventory_reserved_quantity: trx.raw('inventory_reserved_quantity - ?', [row.quantity]),
+          inventoryQuantity: trx.raw('inventory_quantity - ?', [row.quantity]),
+          inventoryReservedQuantity: trx.raw('inventory_reserved_quantity - ?', [row.quantity]),
         })
       if (affectedRows(changed) !== 1) this.unavailable()
     }
@@ -68,11 +68,12 @@ export default class InventoryService {
         .where('state', 'reserved')
         .update({ state: 'released', settledAt: DateTime.utc().toSQL({ includeOffset: false }) })
       if (affectedRows(claimed) !== 1) continue
-      const changed = await trx
-        .from('product_variants')
-        .where('id', row.productVariantId!)
+      if (row.productVariantId === null) this.unavailable()
+      const changed = await row
+        .related('variant')
+        .query()
         .where('inventory_reserved_quantity', '>=', row.quantity)
-        .decrement('inventory_reserved_quantity', row.quantity)
+        .decrement('inventoryReservedQuantity', row.quantity)
       if (affectedRows(changed) !== 1) this.unavailable()
     }
   }
@@ -87,10 +88,7 @@ export default class InventoryService {
         .whereNull('restockedAt')
         .update({ restockedAt: DateTime.utc().toSQL({ includeOffset: false }) })
       if (affectedRows(claimed) === 1 && row.productVariantId !== null)
-        await trx
-          .from('product_variants')
-          .where('id', row.productVariantId)
-          .increment('inventory_quantity', row.quantity)
+        await row.related('variant').query().increment('inventoryQuantity', row.quantity)
     }
   }
 
@@ -99,11 +97,9 @@ export default class InventoryService {
     trx: TransactionClientContract,
     target: { variantId: number } | { productId: number }
   ) {
-    const query = trx
-      .from('order_line_items')
-      .join('orders', 'orders.id', 'order_line_items.order_id')
-      .where('orders.source', 'online')
-      .where('orders.lifecycle_state', 'pending_payment')
+    const query = OrderLineItem.query({ client: trx }).whereHas('order', (order) =>
+      order.where('source', 'online').where('lifecycle_state', 'pending_payment')
+    )
     if ('variantId' in target) query.where('product_variant_id', target.variantId)
     else query.where('product_id', target.productId)
     return !!(await query.first())

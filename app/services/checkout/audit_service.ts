@@ -3,6 +3,7 @@ import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import MoneyService from '#services/checkout/money_service'
 import { unleased } from '#models/shared/lease'
+import Payment from '#models/payments/payment'
 
 @inject()
 export default class AuditService {
@@ -52,13 +53,13 @@ export default class AuditService {
         .from('payment_attempts')
         .where('needs_review', true)
         .select('id')
-      const unresolvedPayments = await trx
-        .from('payments')
-        .leftJoin('orders', 'orders.id', 'payments.order_id')
+      const unresolvedPayments = await Payment.query({ client: trx })
         .where((query) =>
-          query.whereNull('payments.order_id').orWhere('orders.lifecycle_state', 'review_required')
+          query
+            .whereNull('order_id')
+            .orWhereHas('order', (order) => order.where('lifecycle_state', 'review_required'))
         )
-        .select('payments.id')
+        .select('id')
       const reviewOrders = await trx
         .from('orders')
         .where('source', 'online')

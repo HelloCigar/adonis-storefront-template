@@ -1,7 +1,6 @@
 import { inject } from '@adonisjs/core'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import Order from '#models/checkout/order'
-import StockReservation from '#models/checkout/stock_reservation'
 import FulfillmentService, { type DispatchBlocker } from '#services/checkout/fulfillment_service'
 import BalanceService from '#services/payments/balance_service'
 
@@ -99,7 +98,7 @@ export default class OrderOperationsService {
       canShip: !blockers.length && shipment?.state === 'packing',
       issues: this.issues(order, blockers),
       canCancel: cancellable,
-      cancellation: cancellable ? await this.cancellation(trx, order, payments) : null,
+      cancellation: cancellable ? await this.cancellation(order, payments) : null,
       cancellationPending,
       cancelBlocker:
         canCancel && order.lifecycleState !== 'pending_payment' && cancellationRefundBlocker
@@ -189,11 +188,10 @@ export default class OrderOperationsService {
 
   /** What cancelling would do now, mirroring FulfillmentService.cancel and RecoveryService. */
   private async cancellation(
-    trx: TransactionClientContract,
     order: Order,
     payments: { paymentId: number; refundableAmountMinor: number }[]
   ) {
-    const reservations = await StockReservation.query({ client: trx }).where('order_id', order.id)
+    const reservations = await order.related('stockReservations').query()
     const held = reservations
       .filter((row) => row.state === 'reserved')
       .reduce((total, row) => total + row.quantity, 0)

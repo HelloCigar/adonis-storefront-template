@@ -7,7 +7,6 @@ import logger from '@adonisjs/core/services/logger'
 import db from '@adonisjs/lucid/services/db'
 import Notification from '#models/checkout/notification'
 import Order from '#models/checkout/order'
-import Shipment from '#models/checkout/shipment'
 import OrderAccessService from '#services/checkout/order_access_service'
 import OutboxService from '#services/checkout/outbox_service'
 import OrderNotification from '#mails/checkout/order_notification'
@@ -36,7 +35,7 @@ export default class NotificationService {
         .preload('lineItems', (items) => items.orderBy('id'))
         .preload('addresses')
         .firstOrFail()
-      const shipment = await Shipment.query().where('order_id', order.id).first()
+      const shipment = await order.related('shipments').query().first()
       const grant = await this.access.issue(order.id)
       const url = urlFor(
         'checkout.access.show',
@@ -88,12 +87,10 @@ export default class NotificationService {
       .where('state', 'pending')
       .where(unleased)
       .where('updated_at', '<', staleAt)
-      .whereNotExists((query) =>
-        query
-          .from('workflow_outbox')
-          .where('kind', 'notification')
-          .whereColumn('entity_id', 'order_notifications.id')
-          .where((recent) => recent.whereNull('published_at').orWhere('created_at', '>=', staleAt))
+      .whereDoesntHave('outboxEntries', (entries) =>
+        entries.where((recent) =>
+          recent.whereNull('published_at').orWhere('created_at', '>=', staleAt)
+        )
       )
       .orderBy('id')
       .limit(100)
