@@ -1,15 +1,202 @@
+@let(sans = "'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif")
+@let(heading = kind === 'receipt' ? 'Payment received' : 'Your order is on its way')
+@let(primaryUrl = kind === 'shipment' && shipment && shipment.trackingUrl ? shipment.trackingUrl : accessUrl)
+@let(primaryLabel = kind === 'shipment' && shipment && shipment.trackingUrl ? 'Track delivery' : 'View your order')
 <!doctype html>
-<html lang="en"><body>
-  <h1>{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}</h1>
-  <p>Order {{ order.number }}</p>
-  @if(kind === 'receipt')
-    <p>Thank you for your order. We received PHP {{ order.totalAmount.toFixed(2) }}, including PHP {{ order.shippingAmount.toFixed(2) }} shipping.</p>
-  @elseif(shipment)
-    <p>{{ shipment.carrier }} · {{ shipment.trackingNumber }}</p>
-    @if(shipment.trackingUrl)
-      <p><a href="{{ shipment.trackingUrl }}">Track delivery</a></p>
-    @endif
-  @endif
-  <p><a href="{{ accessUrl }}">View your order</a></p>
-  <p>This private link gives access to your order for 30 days. Keep it private.</p>
-</body></html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no, address=no, email=no">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>{{ heading }} · {{ orderNumber }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; }
+    table { border-collapse: collapse; }
+    .num { font-variant-numeric: tabular-nums; }
+    @media (max-width: 620px) {
+      .shell { padding: 24px 16px 32px !important; }
+      .card { padding: 20px 16px !important; }
+      .headline { font-size: 24px !important; line-height: 32px !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .canvas { background-color: #1d1816 !important; }
+      .card { background-color: #2b2422 !important; border-color: #473c39 !important; }
+      .rule { border-color: #473c39 !important; }
+      .ink { color: #fbfaf9 !important; }
+      .body { color: #e8e4e3 !important; }
+      .muted { color: #aba09c !important; }
+      .button { background-color: #ff8904 !important; box-shadow: none !important; }
+      .button a { color: #1d1816 !important; }
+      .link { color: #ff8904 !important; }
+    }
+  </style>
+</head>
+<body class="canvas" style="margin:0;padding:0;background-color:#fbfaf9;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#fbfaf9;opacity:0;">
+    @if(kind === 'receipt')
+      We received {{ total }} for order {{ orderNumber }}.
+    @elseif(shipment && shipment.trackingNumber)
+      {{ orderNumber }} is on its way{{ shipment.carrier ? ` with ${shipment.carrier}` : '' }}. Tracking number {{ shipment.trackingNumber }}.
+    @else
+      {{ orderNumber }} is on its way.
+    @end
+    &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;
+  </div>
+
+  <table role="presentation" class="canvas" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fbfaf9;">
+    <tr>
+      <td align="center" class="shell" style="padding:40px 24px 48px;">
+        <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+          {{-- Store and order identity --}}
+          <tr>
+            <td style="padding:0 0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="ink" style="font-family:{{{ sans }}};font-size:20px;line-height:28px;font-weight:800;letter-spacing:-0.01em;color:#1d1816;">{{ brandName }}</td>
+                  <td align="right" class="muted num" style="font-family:{{{ sans }}};font-size:14px;line-height:20px;font-weight:500;color:#7c6d67;font-variant-numeric:tabular-nums;white-space:nowrap;">Order {{ orderNumber }}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{-- Status --}}
+          <tr>
+            <td style="padding:0 0 12px;">
+              <h1 class="headline ink" style="margin:0;font-family:{{{ sans }}};font-size:30px;line-height:36px;font-weight:700;letter-spacing:-0.015em;color:#1d1816;">{{ heading }}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td class="body" style="padding:0 0 28px;font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">
+              @if(kind === 'receipt')
+                Thank you for your order. We received <strong class="ink num" style="font-weight:600;color:#1d1816;font-variant-numeric:tabular-nums;">{{ total }}</strong>, and we'll email you again when it ships.
+              @elseif(shipment && shipment.carrier)
+                {{ shipment.carrier }} has your parcel. Use the tracking number below to follow it to your door.
+              @else
+                Your parcel has left the store.
+              @end
+            </td>
+          </tr>
+
+          {{-- Tracking number: the thing to copy --}}
+          @if(kind === 'shipment' && shipment && shipment.trackingNumber)
+            <tr>
+              <td style="padding:0 0 28px;">
+                <div class="muted" style="font-family:{{{ sans }}};font-size:14px;line-height:20px;font-weight:500;color:#7c6d67;">Tracking number</div>
+                <div class="tracking ink num" style="font-family:{{{ sans }}};font-size:24px;line-height:32px;font-weight:700;letter-spacing:0.02em;color:#1d1816;font-variant-numeric:tabular-nums;word-break:break-all;">{{ shipment.trackingNumber }}</div>
+              </td>
+            </tr>
+          @end
+
+          {{-- Primary action --}}
+          <tr>
+            <td style="padding:0 0 12px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="button" bgcolor="#ca3500" style="mso-padding-alt:12px 22px;border-radius:15px;background-color:#ca3500;box-shadow:0 4px 6px -1px rgba(202,53,0,0.3),0 2px 4px -2px rgba(202,53,0,0.3);">
+                    <a href="{{ primaryUrl }}" style="display:inline-block;padding:12px 22px;font-family:{{{ sans }}};font-size:16px;line-height:20px;font-weight:500;color:#fbfaf9;text-decoration:none;border-radius:15px;">{{ primaryLabel }}</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          @if(primaryUrl !== accessUrl)
+            <tr>
+              <td class="body" style="padding:4px 0 0;font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">
+                Or <a href="{{ accessUrl }}" class="link" style="color:#ca3500;font-weight:500;text-decoration:underline;text-underline-offset:2px;">view your order</a>.
+              </td>
+            </tr>
+          @end
+          <tr>
+            <td class="muted" style="padding:12px 0 36px;font-family:{{{ sans }}};font-size:14px;line-height:20px;color:#7c6d67;">
+              This private link gives access to your order for 30 days. Keep it private.
+            </td>
+          </tr>
+
+          {{-- Order summary --}}
+          @if(items.length || address.length)
+            <tr>
+              <td>
+                <table role="presentation" class="card" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f7f5f5;border:1px solid #e8e4e3;border-radius:20px;padding:24px;border-collapse:separate;">
+                  @if(items.length)
+                    <tr>
+                      <td style="padding:0 0 4px;">
+                        <h2 class="ink" style="margin:0;font-family:{{{ sans }}};font-size:18px;line-height:28px;font-weight:600;color:#1d1816;">{{ kind === 'receipt' ? 'Order summary' : 'Your order' }}</h2>
+                      </td>
+                    </tr>
+                    @each(item in items)
+                      <tr>
+                        <td class="rule" style="padding:14px 0;border-bottom:1px solid #e8e4e3;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td valign="top" style="padding-right:16px;">
+                                <div class="ink" style="font-family:{{{ sans }}};font-size:16px;line-height:22px;font-weight:500;color:#1d1816;">{{ item.title }}</div>
+                                @if(item.variant)
+                                  <div class="muted" style="font-family:{{{ sans }}};font-size:14px;line-height:20px;color:#7c6d67;">{{ item.variant }}</div>
+                                @end
+                                <div class="muted num" style="font-family:{{{ sans }}};font-size:14px;line-height:20px;color:#7c6d67;font-variant-numeric:tabular-nums;">{{ item.quantity }} × {{ item.unitPrice }}</div>
+                              </td>
+                              <td valign="top" align="right" class="ink num" style="font-family:{{{ sans }}};font-size:16px;line-height:22px;font-weight:500;color:#1d1816;font-variant-numeric:tabular-nums;white-space:nowrap;">{{ item.total }}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    @end
+                    <tr>
+                      <td style="padding:14px 0 {{ address.length ? '20px' : '0' }};">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                          @each(row in totals)
+                            <tr>
+                              <td class="body" style="padding:3px 0;font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">{{ row.label }}</td>
+                              <td align="right" class="body num" style="padding:3px 0;font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;font-variant-numeric:tabular-nums;white-space:nowrap;">{{ row.amount }}</td>
+                            </tr>
+                          @end
+                          <tr>
+                            <td class="ink rule" style="padding:12px 0 0;border-top:1px solid #e8e4e3;font-family:{{{ sans }}};font-size:18px;line-height:26px;font-weight:700;color:#1d1816;">Total</td>
+                            <td align="right" class="ink num rule" style="padding:12px 0 0;border-top:1px solid #e8e4e3;font-family:{{{ sans }}};font-size:18px;line-height:26px;font-weight:700;color:#1d1816;font-variant-numeric:tabular-nums;white-space:nowrap;">{{ total }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  @end
+                  @if(address.length)
+                    <tr>
+                      <td class="rule" style="padding:{{ items.length ? '20px 0 0' : '0' }};{{ items.length ? 'border-top:1px solid #e8e4e3;' : '' }}">
+                        <h2 class="ink" style="margin:0 0 6px;font-family:{{{ sans }}};font-size:14px;line-height:20px;font-weight:600;color:#1d1816;">Delivering to</h2>
+                        @each(line in address)
+                          <div class="body" style="font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">{{ line }}</div>
+                        @end
+                      </td>
+                    </tr>
+                  @end
+                </table>
+              </td>
+            </tr>
+          @end
+
+          {{-- Fallback link and footer --}}
+          <tr>
+            <td class="muted" style="padding:32px 0 24px;font-family:{{{ sans }}};font-size:14px;line-height:20px;color:#7c6d67;">
+              {{ primaryUrl === accessUrl ? "If the button doesn't work, copy this link into your browser:" : 'To open your order, copy this link into your browser:' }}<br>
+              <a href="{{ accessUrl }}" class="link" style="color:#ca3500;word-break:break-all;">{{ accessUrl }}</a>
+            </td>
+          </tr>
+          <tr>
+            <td class="muted rule" style="padding:16px 0 0;border-top:1px solid #e8e4e3;font-family:{{{ sans }}};font-size:14px;line-height:20px;color:#7c6d67;">
+              <strong class="ink" style="font-weight:700;color:#1d1816;">{{ brandName }}</strong><br>
+              You're receiving this email because you placed order <span style="white-space:nowrap;">{{ orderNumber }}</span>.
+            </td>
+          </tr>
+        </table>
+        <!--[if mso]></td></tr></table><![endif]-->
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -3,6 +3,8 @@ import { defineConfig, transports } from '@adonisjs/mail'
 
 const username = env.get('SMTP_USERNAME')
 const password = env.get('SMTP_PASSWORD')?.release()
+/** One setting names the store as the sender and in the email wordmark. */
+const storeName = env.get('MAIL_FROM_NAME', 'MediaBunny')
 
 const mailConfig = defineConfig({
   default: env.get('MAIL_MAILER', 'smtp'),
@@ -14,18 +16,15 @@ const mailConfig = defineConfig({
    */
   from: {
     address: env.get('MAIL_FROM_ADDRESS', 'store@example.com'),
-    name: env.get('MAIL_FROM_NAME', 'MediaBunny'),
+    name: storeName,
   },
 
   /**
    * The globals are shared with all the templates rendered using the
    * configured template engine.
-   *
-   * This could be a nice place to define the logo URL, links base URL
-   * the brand name to be used within the emails
    */
   globals: {
-    brandName: 'MediaBunny',
+    brandName: storeName,
   },
 
   /**

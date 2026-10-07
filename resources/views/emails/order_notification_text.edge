@@ -1,10 +1,43 @@
-{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}
-Order {{ order.number }}
+{{{ brandName }}} · Order {{{ orderNumber }}}
+
+{{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}}
+
 @if(kind === 'receipt')
-Total: PHP {{ order.totalAmount.toFixed(2) }} (shipping: PHP {{ order.shippingAmount.toFixed(2) }})
-@elseif(shipment)
-Carrier: {{ shipment.carrier }}
-Tracking number: {{ shipment.trackingNumber }}
-@endif
-View your order: {{ accessUrl }}
+Thank you for your order. We received {{{ total }}}, and we'll email you again when it ships.
+@elseif(shipment && shipment.carrier)
+{{{ shipment.carrier }}} has your parcel.
+@else
+Your parcel has left the store.
+@end
+@if(kind === 'shipment' && shipment && shipment.trackingNumber)
+
+Tracking number: {{{ shipment.trackingNumber }}}
+@if(shipment.trackingUrl)
+Track delivery: {{{ shipment.trackingUrl }}}
+@end
+@end
+
+View your order: {{{ accessUrl }}}
 This private link gives access to your order for 30 days. Keep it private.
+@if(items.length)
+
+{{{ kind === 'receipt' ? 'Order summary' : 'Your order' }}}
+@each(item in items)
+- {{{ item.title }}}{{{ item.variant ? ` (${item.variant})` : '' }}}: {{{ item.quantity }}} × {{{ item.unitPrice }}} = {{{ item.total }}}
+@end
+
+@each(row in totals)
+{{{ row.label }}}: {{{ row.amount }}}
+@end
+Total: {{{ total }}}
+@end
+@if(address.length)
+
+Delivering to
+@each(line in address)
+{{{ line }}}
+@end
+@end
+
+{{{ brandName }}}
+You're receiving this email because you placed order {{{ orderNumber }}}.

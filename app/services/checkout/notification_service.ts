@@ -31,7 +31,11 @@ export default class NotificationService {
     if (affectedRows(claimed) !== 1) return
     try {
       const row = await Notification.findOrFail(id)
-      const order = await Order.findOrFail(row.orderId)
+      const order = await Order.query()
+        .where('id', row.orderId)
+        .preload('lineItems', (items) => items.orderBy('id'))
+        .preload('addresses')
+        .firstOrFail()
       const shipment = await Shipment.query().where('order_id', order.id).first()
       const grant = await this.access.issue(order.id)
       const url = urlFor(

@@ -423,7 +423,7 @@ test.group('Online checkout workflow', (group) => {
       1
     )
     await email.buildWithContents()
-    email.message.assertContent('html', 'PHP 1098.00')
+    email.message.assertContent('html', '₱1,098.00')
     await variant.refresh()
     assert.equal(variant.inventoryQuantity, 0)
   })
