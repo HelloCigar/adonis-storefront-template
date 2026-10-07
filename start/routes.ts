@@ -148,7 +148,8 @@ router
       .as('images.store')
     router
       .delete('/products/:productId/images/:id', [controllers.seller.Images, 'destroy'])
-      .where('id', router.matchers.uuid())
+      // Attachment ids are strings, so override the group's numeric id matcher.
+      .where('id', { match: /^[\w-]+$/ })
       .as('images.destroy')
     router
       .resource('collections', controllers.seller.Collections)

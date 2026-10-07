@@ -206,7 +206,7 @@ test.group('Store management pages', (group) => {
     await page.getByLabel('Note', { exact: true }).fill('')
     const clearedNote = page.waitForResponse(
       (response) =>
-        response.request().method() === 'PATCH' &&
+        ['PUT', 'PATCH'].includes(response.request().method()) &&
         new URL(response.url()).pathname === `/seller/orders/${order.id}`
     )
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
