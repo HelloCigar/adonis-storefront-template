@@ -9,7 +9,7 @@ export default class PackingController {
   async store({ params, auth, bouncer, response, session }: HttpContext) {
     const order = await Order.findOrFail(params.id)
     await bouncer.with('SellerOrderPolicy').authorize('update', order)
-    await this.fulfillment.pack(order.id, auth.user!)
+    await this.fulfillment.pack(order.id, auth.getUserOrFail())
     session.flash('success', 'Order is being packed')
     return response.redirect().toRoute('seller.orders.show', { id: order.id })
   }

@@ -7,9 +7,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class PagesController {
   constructor(private contentService: ContentService) {}
 
-  show({ params, inertia, response }: HttpContext) {
-    const page = this.contentService.findPage(params.handle)
-    if (!page) return response.notFound()
+  show({ params, inertia }: HttpContext) {
+    const page = this.contentService.findPageOrFail(params.handle)
     return inertia.render('pages/[handle]', { page: ContentTransformer.transform(page) })
   }
 }

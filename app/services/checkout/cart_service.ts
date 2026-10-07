@@ -99,7 +99,7 @@ export default class CartService {
     })
   }
 
-  async update(token: string, userId: number | undefined, id: number | string, quantity: number) {
+  async update(token: string, userId: number | undefined, id: number, quantity: number) {
     const cart = await this.findOrCreate(token, userId)
     return db.transaction(async (trx) => {
       cart.useTransaction(trx)
@@ -125,7 +125,7 @@ export default class CartService {
     })
   }
 
-  async remove(token: string, userId: number | undefined, id: number | string) {
+  async remove(token: string, userId: number | undefined, id: number) {
     const cart = await this.findOrCreate(token, userId)
     return db.transaction(async (trx) => {
       cart.useTransaction(trx)

@@ -56,10 +56,10 @@ export type ScannedRoutes = {
     'seller.products.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
-    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
-    'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.variants.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
+    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.images.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
@@ -179,8 +179,8 @@ export type ScannedRoutes = {
     'account.profile.update': { paramsTuple?: []; params?: {} }
     'account.addresses.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
+    'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -194,6 +194,13 @@ export type ScannedRoutes = {
     'seller.images.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  PUT: {
+    'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
+    'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

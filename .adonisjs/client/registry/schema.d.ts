@@ -584,7 +584,7 @@ export interface Registry {
     }
   }
   'seller.products.update': {
-    methods: ["PATCH"]
+    methods: ["PUT","PATCH"]
     pattern: '/seller/products/:id'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/seller/product').productUpdateValidator)>>
@@ -631,6 +631,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'seller.variants.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/seller/products/:productId/variants/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/variant').variantUpdateValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/variant').variantUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.variants.destroy': {
+    methods: ["DELETE"]
+    pattern: '/seller/products/:productId/variants/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['destroy']>>>
+    }
+  }
   'seller.options.update': {
     methods: ["PATCH"]
     pattern: '/seller/products/:productId/options'
@@ -653,30 +677,6 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/seller/variant_generation').variantGenerationValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'seller.variants.update': {
-    methods: ["PATCH"]
-    pattern: '/seller/products/:productId/variants/:id'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/seller/variant').variantUpdateValidator)>>
-      paramsTuple: [ParamValue, ParamValue]
-      params: { productId: ParamValue; id: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/seller/variant').variantUpdateValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'seller.variants.destroy': {
-    methods: ["DELETE"]
-    pattern: '/seller/products/:productId/variants/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue, ParamValue]
-      params: { productId: ParamValue; id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['destroy']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variants_controller').default['destroy']>>>
     }
   }
   'seller.images.store': {
@@ -728,7 +728,7 @@ export interface Registry {
     }
   }
   'seller.collections.update': {
-    methods: ["PATCH"]
+    methods: ["PUT","PATCH"]
     pattern: '/seller/collections/:id'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/seller/collection').collectionUpdateValidator)>>
@@ -776,7 +776,7 @@ export interface Registry {
     }
   }
   'seller.orders.update': {
-    methods: ["PATCH"]
+    methods: ["PUT","PATCH"]
     pattern: '/seller/orders/:id'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/seller/order').orderUpdateValidator)>>
@@ -872,7 +872,7 @@ export interface Registry {
     }
   }
   'seller.users.update': {
-    methods: ["PATCH"]
+    methods: ["PUT","PATCH"]
     pattern: '/seller/users/:id'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/seller/user').userUpdateValidator)>>

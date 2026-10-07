@@ -5,7 +5,7 @@ import server from '@adonisjs/core/services/server'
 import { Session } from '@adonisjs/session'
 import type { ResolvedSessionConfig } from '@adonisjs/session/types'
 import type { Socket } from 'socket.io'
-import env from '#start/env'
+import checkout from '#config/checkout'
 import type { ChatSocketData } from '#sockets/chat/order_room_handler'
 
 export default class ChatUserMiddleware {
@@ -15,9 +15,8 @@ export default class ChatUserMiddleware {
       const request = socket.request
       const origin = request.headers.origin
       if (origin) {
-        const appUrl = env.get('APP_URL')
-        const allowedOrigin = appUrl
-          ? new URL(appUrl).origin
+        const allowedOrigin = checkout.publicUrl
+          ? new URL(checkout.publicUrl).origin
           : `${app.inProduction ? 'https' : 'http'}://${request.headers.host}`
         if (new URL(origin).origin !== allowedOrigin) {
           return next(new Error('Authentication failed: Invalid origin'))

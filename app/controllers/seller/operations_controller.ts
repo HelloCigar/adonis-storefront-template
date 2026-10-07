@@ -12,7 +12,7 @@ export default class OperationsController {
     await bouncer.with('SellerOrderPolicy').authorize('update', order)
     await this.operations.retry(
       order.id,
-      auth.user!,
+      auth.getUserOrFail(),
       await request.validateUsing(operationRetryValidator)
     )
     session.flash('success', 'Recovery requested')

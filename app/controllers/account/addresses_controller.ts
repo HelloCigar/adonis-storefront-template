@@ -8,34 +8,27 @@ export default class AddressesController {
   constructor(private addressService: CustomerAddressService) {}
 
   async store({ auth, request, response, bouncer }: HttpContext) {
-    await bouncer.with('AccountAddressPolicy').authorize('create', auth.getUserOrFail())
+    const user = auth.getUserOrFail()
+    await bouncer.with('AccountAddressPolicy').authorize('create', user)
     const data = await request.validateUsing(addressValidator)
-    await this.addressService.create(auth.getUserOrFail(), data)
+    await this.addressService.create(user, data)
     return response.redirect().toRoute('account.show')
   }
 
   async update({ auth, params, request, response, bouncer }: HttpContext) {
-    const address = await auth
-      .getUserOrFail()
-      .related('addresses')
-      .query()
-      .where('id', params.id)
-      .firstOrFail()
+    const user = auth.getUserOrFail()
+    const address = await user.related('addresses').query().where('id', params.id).firstOrFail()
     await bouncer.with('AccountAddressPolicy').authorize('update', address)
     const data = await request.validateUsing(addressValidator)
-    await this.addressService.update(auth.getUserOrFail(), params.id, data)
+    await this.addressService.update(user, address, data)
     return response.redirect().toRoute('account.show')
   }
 
   async destroy({ auth, params, response, bouncer }: HttpContext) {
-    const address = await auth
-      .getUserOrFail()
-      .related('addresses')
-      .query()
-      .where('id', params.id)
-      .firstOrFail()
+    const user = auth.getUserOrFail()
+    const address = await user.related('addresses').query().where('id', params.id).firstOrFail()
     await bouncer.with('AccountAddressPolicy').authorize('delete', address)
-    await this.addressService.delete(auth.getUserOrFail(), params.id)
+    await this.addressService.delete(user, address)
     return response.redirect().toRoute('account.show')
   }
 }

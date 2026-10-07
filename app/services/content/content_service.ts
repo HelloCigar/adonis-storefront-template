@@ -1,26 +1,31 @@
+import { Exception } from '@adonisjs/core/exceptions'
 import storefront from '#config/storefront'
 
+/** Thrown so the exception handler renders the 404 status page, as `firstOrFail` does. */
+function notFound(): never {
+  throw new Exception('Content not found', { status: 404, code: 'E_CONTENT_NOT_FOUND' })
+}
+
 export default class ContentService {
-  findPage(handle: string) {
-    return storefront.pages.find((item) => item.handle === handle)
+  findPageOrFail(handle: string) {
+    return storefront.pages.find((item) => item.handle === handle) ?? notFound()
   }
 
   policies() {
     return storefront.policies
   }
 
-  findPolicy(handle: string) {
-    return storefront.policies.find((item) => item.handle === handle)
+  findPolicyOrFail(handle: string) {
+    return storefront.policies.find((item) => item.handle === handle) ?? notFound()
   }
 
-  findBlog(handle: string) {
-    return storefront.blogs.find((item) => item.handle === handle)
+  findBlogOrFail(handle: string) {
+    return storefront.blogs.find((item) => item.handle === handle) ?? notFound()
   }
 
-  findArticle(handle: string, articleHandle: string) {
-    const blog = this.findBlog(handle)
-    const article = blog?.articles.find((item) => item.handle === articleHandle)
-    if (!blog || !article) return null
+  findArticleOrFail(handle: string, articleHandle: string) {
+    const blog = this.findBlogOrFail(handle)
+    const article = blog.articles.find((item) => item.handle === articleHandle) ?? notFound()
     return { blog, article }
   }
 }

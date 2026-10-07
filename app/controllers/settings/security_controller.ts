@@ -12,13 +12,10 @@ export default class SecurityController {
   }
 
   async update({ request, auth, response, session, bouncer }: HttpContext) {
-    await bouncer.with('AccountUserPolicy').authorize('update', auth.getUserOrFail())
+    const user = auth.getUserOrFail()
+    await bouncer.with('AccountUserPolicy').authorize('update', user)
     const data = await request.validateUsing(updatePasswordValidator)
-    const errors = await this.profileService.updatePassword(auth.getUserOrFail(), data)
-    if (errors) {
-      session.flash('inputErrorsBag', errors)
-      return response.redirect().back()
-    }
+    await this.profileService.updatePassword(user, data)
     session.flash('success', 'Your password has been updated.')
     return response.redirect().toRoute('settings.security')
   }

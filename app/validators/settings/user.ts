@@ -1,7 +1,6 @@
 import vine from '@vinejs/vine'
 import { emailAddress } from '#validators/shared/email'
-
-const password = () => vine.string().minLength(8).maxLength(32)
+import { newPassword } from '#validators/shared/password'
 
 export const updateProfileValidator = vine.withMetaData<{ userId: number }>().create({
   fullName: vine.string().trim().minLength(2).maxLength(100),
@@ -17,6 +16,6 @@ export const updateProfileValidator = vine.withMetaData<{ userId: number }>().cr
 
 export const updatePasswordValidator = vine.create({
   currentPassword: vine.string(),
-  password: password(),
+  password: newPassword(),
   passwordConfirmation: vine.string().sameAs('password'),
 })

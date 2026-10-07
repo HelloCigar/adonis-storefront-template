@@ -13,7 +13,7 @@ export default class UsersController {
     await bouncer.with('SellerUserPolicy').authorize('viewAny')
     return inertia.render('seller/users', {
       users: SellerUserTransformer.transform(await User.query().orderBy('id', 'desc')),
-      currentUserId: auth.user!.id,
+      currentUserId: auth.getUserOrFail().id,
       canAssignAdmin: await bouncer.with('SellerUserPolicy').allows('assignRole', 'admin'),
     })
   }
@@ -30,14 +30,14 @@ export default class UsersController {
     await bouncer.with('SellerUserPolicy').authorize('update', user)
     const payload = await request.validateUsing(userUpdateValidator, { meta: { id: user.id } })
     await bouncer.with('SellerUserPolicy').authorize('assignRole', payload.role, user)
-    await this.users.update(auth.user!, user, payload)
+    await this.users.update(auth.getUserOrFail(), user, payload)
     session.flash('success', 'User updated')
     return response.redirect().toRoute('seller.users.index')
   }
   async destroy({ params, auth, response, session, bouncer }: HttpContext) {
     const user = await User.findOrFail(params.id)
     await bouncer.with('SellerUserPolicy').authorize('delete', user)
-    await this.users.destroy(auth.user!, user)
+    await this.users.destroy(auth.getUserOrFail(), user)
     session.flash('success', 'User deleted')
     return response.redirect().toRoute('seller.users.index')
   }
