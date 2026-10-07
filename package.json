@@ -14,8 +14,9 @@
     "dev:web": "node ace serve --hmr",
     "dev:worker": "node ace queue:work --queue=maintenance,payments,notifications --concurrency=1",
     "test": "node ace test",
-    "lint": "eslint .",
+    "lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ && npm run format:check",
     "format": "prettier --write .",
+    "format:check": "prettier --check --cache --end-of-line auto \"**/*.{ts,vue}\" \"!database/schema.ts\"",
     "pretypecheck": "node --input-type=module -e \"import { resolveConfig } from 'vite'; await resolveConfig({}, 'serve')\"",
     "typecheck": "tsc --noEmit && vue-tsc --noEmit --project inertia/tsconfig.json"
   },
