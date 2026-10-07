@@ -36,6 +36,7 @@ import { UserFactory } from '#database/factories/user_factory'
 import { QueueManager, Worker } from '@adonisjs/queue'
 import CreateCheckout from '#jobs/payments/create_checkout'
 import ExpireCheckout from '#jobs/payments/expire_checkout'
+import SendNotification from '#jobs/checkout/send_notification'
 import OrderNotification from '#mails/checkout/order_notification'
 import mail from '@adonisjs/mail/services/main'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
@@ -1199,6 +1200,56 @@ test.group('Online checkout workflow', (group) => {
     assert.equal(order.financialStatus, 'paid')
     assert.equal(variant.inventoryQuantity, 0)
     assert.lengthOf(await Payment.all(), 1)
+  })
+
+  test('the recovery sweep re-queues a pending notification whose job was lost, once per window', async ({
+    assert,
+  }) => {
+    using queue = QueueManager.fake()
+    using mails = mail.fake()
+    await capturedSubmission(adapter)
+    const row = await Notification.firstOrFail()
+    assert.equal(row.state, 'pending')
+    const notifications = await app.container.make(NotificationService)
+    const outboxFor = () =>
+      WorkflowOutbox.query().where('kind', 'notification').where('entity_id', row.id)
+    const stale = DateTime.utc().minus({ minutes: 5 }).toSQL({ includeOffset: false })!
+
+    // Fresh work is left alone.
+    await notifications.sweep()
+    assert.lengthOf(await outboxFor(), 1)
+
+    // Outbox work still waiting for the queue is not duplicated, however old.
+    await Notification.query().where('id', row.id).update({ updatedAt: stale })
+    await outboxFor().update({ createdAt: stale, publishedAt: null })
+    await notifications.sweep()
+    assert.lengthOf(await outboxFor(), 1)
+
+    // Published long ago but never delivered: the job was lost, so the sweep re-queues it.
+    await outboxFor().update({ publishedAt: stale })
+    await notifications.sweep()
+    const swept = await outboxFor()
+    assert.lengthOf(swept, 2)
+    assert.isTrue(swept.some((item) => item.operationKey.startsWith('notification-sweep:')))
+    const publisher = await app.container.make(OutboxPublisherService)
+    await publisher.publish()
+    queue.assertPushed(SendNotification.name, { payload: { entityId: row.id } })
+
+    // The fresh sweep row holds off another re-queue until it is stale too.
+    await notifications.sweep()
+    assert.lengthOf(await outboxFor(), 2)
+
+    // Failed notifications stay with staff, and sent ones are never re-queued.
+    await outboxFor().update({ createdAt: stale })
+    await Notification.query().where('id', row.id).update({ state: 'failed', updatedAt: stale })
+    await notifications.sweep()
+    assert.lengthOf(await outboxFor(), 2)
+    await Notification.query().where('id', row.id).update({ state: 'pending' })
+    await notifications.run(row.id)
+    await Notification.query().where('id', row.id).update({ updatedAt: stale })
+    await notifications.sweep()
+    assert.lengthOf(await outboxFor(), 2)
+    mails.mails.assertSentCount(1)
   })
 
   test('staff routes authorize shared-store operations and online status cannot be manually forged', async ({

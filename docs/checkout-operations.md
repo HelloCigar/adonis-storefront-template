@@ -46,7 +46,7 @@ Paid cancellation atomically restores stock once and saves any outstanding full-
 
 Receipt/shipment intents are unique per order/event and are saved in the settlement/shipping transaction. The durable worker awaits SMTP delivery before recording `sent`; retries never repeat payment settlement or dispatch. Emails contain a private order link valid for 30 days, which exchanges the token into a session and redirects to a clean URL. Account claims require that capability, not just the same email.
 
-SMTP can accept a message before a worker loses its acknowledgement. Delivery can therefore repeat despite a deterministic Message-ID; no exactly-once email guarantee is claimed. Failed notifications are visible to staff and can be retried after the transport is restored. Mail failure never reverses payment or shipment.
+SMTP can accept a message before a worker loses its acknowledgement. Delivery can therefore repeat despite a deterministic Message-ID; no exactly-once email guarantee is claimed. Failed notifications are visible to staff and can be retried after the transport is restored. A notification still `pending` two minutes after its last queue publication, for example because the queue dropped a stalled job, is re-queued by the `payment-operation-recovery` sweep; failed notifications are left for staff. Mail failure never reverses payment or shipment.
 
 ## Local verification
 
