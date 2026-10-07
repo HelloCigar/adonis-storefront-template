@@ -2,6 +2,7 @@ import type User from '#models/account/user'
 import type { Infer } from '@vinejs/vine/types'
 import type { updateProfileValidator, updatePasswordValidator } from '#validators/settings/user'
 import hash from '@adonisjs/core/services/hash'
+import { errors } from '@vinejs/vine'
 import { attachmentManager } from '@jrmc/adonis-attachment'
 
 export default class ProfileService {
@@ -21,13 +22,24 @@ export default class ProfileService {
     { currentPassword, password }: Infer<typeof updatePasswordValidator>
   ) {
     if (!(await hash.verify(user.password, currentPassword))) {
-      return { currentPassword: ['The current password is incorrect.'] }
+      throw new errors.E_VALIDATION_ERROR([
+        {
+          field: 'currentPassword',
+          rule: 'current_password',
+          message: 'The current password is incorrect.',
+        },
+      ])
     }
     if (await hash.verify(user.password, password)) {
-      return { password: ['Choose a password different from your current password.'] }
+      throw new errors.E_VALIDATION_ERROR([
+        {
+          field: 'password',
+          rule: 'new_password',
+          message: 'Choose a password different from your current password.',
+        },
+      ])
     }
     user.password = password
     await user.save()
-    return null
   }
 }

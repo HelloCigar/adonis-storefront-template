@@ -7,9 +7,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class BlogsController {
   constructor(private contentService: ContentService) {}
 
-  show({ params, inertia, response }: HttpContext) {
-    const blog = this.contentService.findBlog(params.handle)
-    if (!blog) return response.notFound()
+  show({ params, inertia }: HttpContext) {
+    const blog = this.contentService.findBlogOrFail(params.handle)
     return inertia.render('blog/[handle]/index', {
       blog: ContentTransformer.transform(blog),
       articles: ContentTransformer.transform(blog.articles),

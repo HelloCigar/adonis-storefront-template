@@ -4,6 +4,7 @@ import { inject } from '@adonisjs/core'
 import RecoveryService from '#services/payments/recovery_service'
 import RefundService from '#services/payments/refund_service'
 import RefundLookupService from '#services/payments/refund_lookup_service'
+import NotificationService from '#services/checkout/notification_service'
 
 @inject()
 export default class SweepPaymentOperations extends Job<Record<string, never>> {
@@ -16,7 +17,8 @@ export default class SweepPaymentOperations extends Job<Record<string, never>> {
   constructor(
     private recovery: RecoveryService,
     private refunds: RefundService,
-    private lookups: RefundLookupService
+    private lookups: RefundLookupService,
+    private notifications: NotificationService
   ) {
     super()
   }
@@ -24,5 +26,6 @@ export default class SweepPaymentOperations extends Job<Record<string, never>> {
     await this.recovery.sweep()
     await this.refunds.sweep()
     await this.lookups.sweep()
+    await this.notifications.sweep()
   }
 }

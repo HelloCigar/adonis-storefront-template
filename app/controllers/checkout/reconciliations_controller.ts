@@ -2,7 +2,6 @@ import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import OrderAccessService from '#services/checkout/order_access_service'
 import RecoveryService from '#services/payments/recovery_service'
-import Attempt from '#models/payments/attempt'
 
 @inject()
 export default class ReconciliationsController {
@@ -10,16 +9,14 @@ export default class ReconciliationsController {
     private access: OrderAccessService,
     private recovery: RecoveryService
   ) {}
+
   async store({ params, auth, checkoutSession, response }: HttpContext) {
     const order = await this.access.authorize(
       params.publicId,
       auth.user?.id,
       checkoutSession.orderGrant(params.publicId)
     )
-    const attempt = await Attempt.query()
-      .where('order_id', order.id)
-      .orderBy('id', 'desc')
-      .firstOrFail()
+    const attempt = await order.related('attempts').query().orderBy('id', 'desc').firstOrFail()
     await this.recovery.requestReconciliation(attempt)
     return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })
   }

@@ -13,9 +13,8 @@ export default class PoliciesController {
     })
   }
 
-  show({ params, inertia, response }: HttpContext) {
-    const policy = this.contentService.findPolicy(params.handle)
-    if (!policy) return response.notFound()
+  show({ params, inertia }: HttpContext) {
+    const policy = this.contentService.findPolicyOrFail(params.handle)
     return inertia.render('policies/[handle]', { policy: ContentTransformer.transform(policy) })
   }
 }

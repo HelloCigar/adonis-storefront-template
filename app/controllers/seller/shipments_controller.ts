@@ -12,7 +12,7 @@ export default class ShipmentsController {
     await bouncer.with('SellerOrderPolicy').authorize('update', order)
     await this.fulfillment.ship(
       order.id,
-      auth.user!,
+      auth.getUserOrFail(),
       await request.validateUsing(shipmentValidator)
     )
     session.flash('success', 'Shipment recorded')

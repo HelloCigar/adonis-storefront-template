@@ -1,0 +1,52 @@
+// import { defineMcpConfig, authKitAuth } from '@adonis-agora/agent/mcp'
+// // import { anyOf, apiKeyAuth } from '@adonis-agora/agent/mcp'
+// // import env from '#start/env'
+
+// /**
+//  * Configuration for the MCP (Model Context Protocol) endpoint. The provider exposes the agent's tool
+//  * registry over Streamable HTTP: `tools/list` mirrors the tools the acting actor may call and
+//  * `tools/call` runs them through the same role-checked registry the agent loop uses.
+//  *
+//  * Requires `@adonis-agora/agent`'s agent provider (which owns the ToolRegistry singleton) to be
+//  * registered. Register the MCP provider in adonisrc.ts:
+//  *
+//  *   providers: [
+//  *     ...existing,
+//  *     () => import('@adonis-agora/agent/mcp_provider'),
+//  *   ]
+//  *
+//  * The endpoint mounts at `/mcp`. When `auth` exposes OAuth metadata (authKitAuth), MCP clients discover
+//  * the login flow at `/.well-known/oauth-protected-resource/mcp`.
+//  */
+// export default defineMcpConfig({
+//   name: 'Agent MCP Server',
+//   version: '1.0.0',
+
+//   // path: 'mcp',
+
+//   // The public origin clients reach the app at. Set it when TLS terminates at a proxy, or the OAuth
+//   // discovery URLs are built from the request and come out `http://`.
+//   // publicUrl: env.get('APP_URL'),
+
+//   // Authenticate MCP clients against @adonis-agora/authkit-server (OAuth OIDC): verifies the bearer
+//   // token against the authkit provider and advertises OAuth metadata so clients can log in.
+//   auth: authKitAuth(),
+
+//   // Or static API keys for trusted gateway integrations (no OAuth metadata):
+//   // auth: apiKeyAuth({ apiKeys: ['mcp_xxx'] }),
+
+//   // Or both on the same endpoint (first to verify wins; OAuth metadata from authKitAuth):
+//   // auth: anyOf(authKitAuth(), apiKeyAuth({ apiKeys: ['mcp_xxx'] })),
+
+//   // Open/dev mode — run every request under a fixed identity. Fail-closed: omit this (and auth) and
+//   // requests are rejected 401.
+//   // actor: { id: 'mcp', roles: ['ADMIN'] },
+
+//   // Roles a tool requires when it declares none (default ['ADMIN']). An empty list is open unless
+//   // emptyRoles is 'deny', which makes it reach nobody.
+//   // defaultRoles: ['ADMIN'],
+//   // emptyRoles: 'deny',
+
+//   // Restrict the exposed tools to an allow-list by name.
+//   // allowedTools: ['calcular_estatisticas', 'estatistica_inferencial'],
+// })

@@ -20,5 +20,11 @@ export default configApp(
     rules: {
       '@unicorn/filename-case': 'off',
     },
+  },
+  {
+    name: 'formatting runs through prettier --check',
+    rules: {
+      'prettier/prettier': 'off',
+    },
   }
 )

@@ -1,0 +1,56 @@
+// import { defineConfig, stores } from '@adonis-agora/agent'
+// // import { AuthActorResolver } from '@adonis-agora/agent'
+// // import { attachmentStores } from '@adonis-agora/agent'
+// import { aiSdkModel } from '@adonis-agora/agent/ai-sdk'
+
+// /**
+//  * Configuration for @adonis-agora/agent. Only `model` is required. Pick a `store` by name from the
+//  * `stores` map (each driver's peer is imported lazily, only when selected); omit `store` for the
+//  * in-memory store. The runner is in-process by default (`durable` is deferred). With no
+//  * `actorResolver` the endpoints are PUBLIC: every browser is its own anonymous actor (an HttpOnly
+//  * cookie). Uncomment the `actorResolver` line below to require login.
+//  *
+//  * Publish the tables with `node ace migration:run` after configuring.
+//  */
+// export default defineConfig({
+//   /**
+//    * The LLM provider. Wrap the Vercel AI SDK via `aiSdkModel(...)` (from `@adonis-agora/agent/ai-sdk`)
+//    * or supply any `ModelProvider`. A lazy thunk keeps the provider SDK peer imported only at boot:
+//    *
+//    *   model: () => aiSdkModel({ model: openai('gpt-4o-mini') }),
+//    */
+//   model: () => aiSdkModel('openai/gpt-4o-mini'),
+
+//   store: 'lucid',
+//   stores: {
+//     memory: stores.memory(),
+//     lucid: stores.lucid(),
+//   },
+
+//   // Identity. Omitted → public, one anonymous actor per browser. This line requires login instead
+//   // (reads ctx.auth.user; 401 without). Or HeaderActorResolver behind a trusted gateway.
+//   // actorResolver: new AuthActorResolver(),
+
+//   // path: 'agent',            // → /agent/chat, /agent/threads, ...
+//   // defaultRoles: ['ADMIN'],  // roles a tool requires when it declares none (default: none — open)
+//   // emptyRoles: 'deny',       // an empty roles list reaches nobody (default: 'allow' — open)
+//   // maxSteps: 8,              // cap on model↔tool iterations per turn
+
+//   // Governance console — served automatically at <path>/dashboard (default /agent/dashboard), no
+//   // separate install. It only mounts once `governanceAuthorize` is set (every panel but Quota reads
+//   // the cross-actor governance routes, which need that gate too — see the docs). Toggle it off,
+//   // relocate it, or add an extra gate on top of governanceAuthorize:
+//   // dashboard: { enabled: true, path: '/agent/dashboard', authorize: (actor) => actor.roles?.includes('ADMIN') ?? false },
+//   // governanceAuthorize: (actor) => actor.roles?.includes('ADMIN') ?? false,
+
+//   // Chat attachments — where uploads live (bring your own store, or @adonis-agora/media on any Drive
+//   // disk). Mounts POST /agent/attachments; a send names uploads as { mediaId }, resolved server-side.
+//   // attachments: attachmentStores.media(),
+
+//   // The implicit default agent (base prompt, personas, tool allow-list). Omit for a bare assistant.
+//   // defaultAgent: {
+//   //   systemPrompt: 'You are a helpful assistant.',
+//   //   personas: [{ id: 'default', label: 'Default', systemPrompt: 'You are a helpful assistant.' }],
+//   //   defaultPersona: 'default',
+//   // },
+// })

@@ -20,7 +20,7 @@ export default class CancellationsController {
         'Cancellation requested. Stock stays held until the checkout is confirmed closed.'
       )
     } else {
-      await this.fulfillment.cancel(order.id, auth.user!)
+      await this.fulfillment.cancel(order.id, auth.getUserOrFail())
       session.flash(
         'success',
         'Order cancelled. Any required refund is queued and awaits provider confirmation.'

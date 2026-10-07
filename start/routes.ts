@@ -25,9 +25,13 @@ router.get('/policies', [controllers.content.Policies, 'index']).as('policies.in
 router.get('/policies/:handle', [controllers.content.Policies, 'show']).as('policies.show')
 router.get('/blog/:handle', [controllers.content.Blogs, 'show']).as('blogs.show')
 router.get('/blog/:handle/:article', [controllers.content.Articles, 'show']).as('articles.show')
-router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')
-router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
-router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
+router
+  .group(() => {
+    router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')
+    router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
+    router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
+  })
+  .where('id', router.matchers.number())
 router.get('/checkout', [controllers.checkout.Checkout, 'create']).as('checkout.create')
 router
   .post('/checkout', [controllers.checkout.Checkout, 'store'])
@@ -94,13 +98,11 @@ router
     router.get('/account/orders', [controllers.account.Orders, 'index']).as('orders.index')
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
     router
-      .get('/dashboard', [controllers.dashboard.Dashboard, 'index'])
-      .as('dashboard')
-      .use(middleware.staff())
-    router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox').use(middleware.staff())
-    router
-      .get('/customers', [controllers.seller.Customers, 'index'])
-      .as('customers')
+      .group(() => {
+        router.get('/dashboard', [controllers.dashboard.Dashboard, 'index']).as('dashboard')
+        router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox')
+        router.get('/customers', [controllers.seller.Customers, 'index']).as('customers')
+      })
       .use(middleware.staff())
     router.get('/settings', [controllers.settings.Settings, 'index']).as('settings')
     router.post('/settings', [controllers.settings.Settings, 'update']).as('settings.update')
@@ -119,20 +121,19 @@ router
       .as('settings.password.update')
     router.post('logout', [controllers.auth.Session, 'destroy']).as('session.destroy')
   })
+  .where('id', router.matchers.number())
   .use(middleware.auth())
 
 router
   .group(() => {
-    router.get('/products', [controllers.seller.Products, 'index']).as('products.index')
-    router.post('/products', [controllers.seller.Products, 'store']).as('products.store')
-    router.patch('/products/:id', [controllers.seller.Products, 'update']).as('products.update')
-    router.delete('/products/:id', [controllers.seller.Products, 'destroy']).as('products.destroy')
     router
-      .get('/products/:productId/variants', [controllers.seller.Variants, 'index'])
-      .as('variants.index')
+      .resource('products', controllers.seller.Products)
+      .only(['index', 'store', 'update', 'destroy'])
     router
-      .post('/products/:productId/variants', [controllers.seller.Variants, 'store'])
-      .as('variants.store')
+      .resource('products.variants', controllers.seller.Variants)
+      .only(['index', 'store', 'update', 'destroy'])
+      .params({ products: 'productId' })
+      .as('variants')
     router
       .patch('/products/:productId/options', [controllers.seller.Options, 'update'])
       .as('options.update')
@@ -143,28 +144,17 @@ router
       ])
       .as('variant_generation.store')
     router
-      .patch('/products/:productId/variants/:id', [controllers.seller.Variants, 'update'])
-      .as('variants.update')
-    router
-      .delete('/products/:productId/variants/:id', [controllers.seller.Variants, 'destroy'])
-      .as('variants.destroy')
-    router
       .post('/products/:productId/images', [controllers.seller.Images, 'store'])
       .as('images.store')
     router
       .delete('/products/:productId/images/:id', [controllers.seller.Images, 'destroy'])
+      // Attachment ids are strings, so override the group's numeric id matcher.
+      .where('id', { match: /^[\w-]+$/ })
       .as('images.destroy')
-    router.get('/collections', [controllers.seller.Collections, 'index']).as('collections.index')
-    router.post('/collections', [controllers.seller.Collections, 'store']).as('collections.store')
     router
-      .patch('/collections/:id', [controllers.seller.Collections, 'update'])
-      .as('collections.update')
-    router
-      .delete('/collections/:id', [controllers.seller.Collections, 'destroy'])
-      .as('collections.destroy')
-    router.get('/orders', [controllers.seller.Orders, 'index']).as('orders.index')
-    router.get('/orders/:id', [controllers.seller.Orders, 'show']).as('orders.show')
-    router.patch('/orders/:id', [controllers.seller.Orders, 'update']).as('orders.update')
+      .resource('collections', controllers.seller.Collections)
+      .only(['index', 'store', 'update', 'destroy'])
+    router.resource('orders', controllers.seller.Orders).only(['index', 'show', 'update'])
     router.post('/orders/:id/packing', [controllers.seller.Packing, 'store']).as('packing.store')
     router
       .post('/orders/:id/shipment', [controllers.seller.Shipments, 'store'])
@@ -176,11 +166,10 @@ router
     router
       .post('/orders/:id/operations', [controllers.seller.Operations, 'store'])
       .as('operations.store')
-    router.get('/users', [controllers.seller.Users, 'index']).as('users.index')
-    router.post('/users', [controllers.seller.Users, 'store']).as('users.store')
-    router.patch('/users/:id', [controllers.seller.Users, 'update']).as('users.update')
-    router.delete('/users/:id', [controllers.seller.Users, 'destroy']).as('users.destroy')
+    router.resource('users', controllers.seller.Users).only(['index', 'store', 'update', 'destroy'])
   })
   .prefix('/seller')
   .as('seller')
+  .where('id', router.matchers.number())
+  .where('productId', router.matchers.number())
   .use([middleware.auth(), middleware.staff()])

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted } from 'vue'
-import { Head, usePoll, usePage } from '@inertiajs/vue3'
+import { Head, usePoll, usePage, router as inertiaRouter } from '@inertiajs/vue3'
 import { Form, Link, useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-const props = defineProps<{ status: Data.Checkout.Status; canClaim: boolean }>()
+import OrderChat from '~/components/chat/OrderChat.vue'
+const props = defineProps<{
+  status: Data.Checkout.Status
+  canClaim: boolean
+  conversation?: Data.Chat.Conversation | null
+}>()
 const page = usePage()
 const router = useRouter()
 const waiting = computed(
@@ -24,6 +29,14 @@ const money = (amount: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount / 100)
 const { start, stop } = usePoll(3000, { only: ['status'] }, { autoStart: false })
 watch(waiting, (value) => (value ? start() : stop()), { immediate: true })
+// Messaging opens once payment confirms the order.
+watch(
+  () => props.status.lifecycleState,
+  (state, previous) => {
+    if (state === 'confirmed' && previous !== 'confirmed')
+      inertiaRouter.reload({ only: ['conversation'] })
+  }
+)
 let pollingDeadline: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
   pollingDeadline = setTimeout(stop, 10 * 60 * 1000)
@@ -152,6 +165,13 @@ onUnmounted(() => {
       <p v-for="refund in status.refunds" :key="refund.id" class="text-sm mt-4">
         Refund {{ money(refund.amountMinor) }} · {{ refund.state }}
       </p>
+    </UCard>
+    <UCard v-if="conversation" class="mt-6" :ui="{ body: 'p-0 sm:p-0 flex flex-col h-[28rem]' }">
+      <template #header>
+        <h2 class="font-semibold">Messages</h2>
+        <p class="text-sm text-muted mt-1">Ask the store team anything about this order.</p>
+      </template>
+      <OrderChat :conversation="conversation" side="customer" />
     </UCard>
     <div class="flex flex-wrap items-center gap-4 mt-6">
       <Form

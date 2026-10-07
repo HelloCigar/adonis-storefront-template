@@ -14,8 +14,9 @@
     "dev:web": "node ace serve --hmr",
     "dev:worker": "node ace queue:work --queue=maintenance,payments,notifications --concurrency=1",
     "test": "node ace test",
-    "lint": "eslint .",
+    "lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ && npm run format:check",
     "format": "prettier --write .",
+    "format:check": "prettier --check --cache --end-of-line auto \"**/*.{ts,vue}\" \"!database/schema.ts\"",
     "pretypecheck": "node --input-type=module -e \"import { resolveConfig } from 'vite'; await resolveConfig({}, 'serve')\"",
     "typecheck": "tsc --noEmit && vue-tsc --noEmit --project inertia/tsconfig.json"
   },
@@ -27,6 +28,7 @@
     "#jobs/*": "./app/jobs/*.js",
     "#services/*": "./app/services/*.js",
     "#listeners/*": "./app/listeners/*.js",
+    "#sockets/*": "./app/sockets/*.js",
     "#events/*": "./app/events/*.js",
     "#generated/*": "./.adonisjs/server/*.js",
     "#middleware/*": "./app/middleware/*.js",
@@ -68,6 +70,7 @@
     "youch": "^4.1.1"
   },
   "dependencies": {
+    "@adonis-agora/agent": "^0.61.0",
     "@adonisjs/auth": "^10.1.0",
     "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.3.3",
@@ -81,16 +84,18 @@
     "@adonisjs/shield": "^9.0.0",
     "@adonisjs/static": "^2.0.1",
     "@adonisjs/vite": "^6.0.3",
+    "@ai-sdk/openai": "^4.0.84",
     "@iconify-json/lucide": "^1.2.116",
     "@inertiajs/core": "^3.7.1",
     "@inertiajs/vue3": "^3.7.1",
     "@jrmc/adonis-attachment": "^6.0.0-beta.1",
     "@nuxt/ui": "^4.9.0",
-    "@ravex/server": "^0.1.1",
     "@tuyau/core": "^1.2.2",
     "@unovis/vue": "^1.7.0",
     "@vinejs/vine": "^4.4.0",
     "@vue/server-renderer": "^3.5.43",
+    "@vueuse/core": "^15.0.0",
+    "ai": "^7.0.128",
     "axios": "^1.20.0",
     "better-sqlite3": "^12.10.0",
     "date-fns": "^4.4.0",
@@ -99,8 +104,7 @@
     "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.4",
     "tailwindcss": "^4.3.2",
-    "vue": "^3.5.43",
-    "zod": "^4.6.5"
+    "vue": "^3.5.43"
   },
   "hotHook": {
     "boundaries": [

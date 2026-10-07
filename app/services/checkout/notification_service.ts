@@ -4,10 +4,12 @@ import { urlFor } from '@adonisjs/core/services/url_builder'
 import { DateTime } from 'luxon'
 import mail from '@adonisjs/mail/services/main'
 import logger from '@adonisjs/core/services/logger'
+import db from '@adonisjs/lucid/services/db'
 import Notification from '#models/checkout/notification'
 import Order from '#models/checkout/order'
 import Shipment from '#models/checkout/shipment'
 import OrderAccessService from '#services/checkout/order_access_service'
+import OutboxService from '#services/checkout/outbox_service'
 import OrderNotification from '#mails/checkout/order_notification'
 import checkout from '#config/checkout'
 import { affectedRows } from '#models/shared/affected_rows'
@@ -15,7 +17,10 @@ import { leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease
 
 @inject()
 export default class NotificationService {
-  constructor(private access: OrderAccessService) {}
+  constructor(
+    private access: OrderAccessService,
+    private outbox: OutboxService
+  ) {}
   async run(id: number) {
     const token = randomUUID()
     const claimed = await Notification.query()
@@ -67,5 +72,34 @@ export default class NotificationService {
         ...leaseReleased(),
       })
     logger.error({ notificationId: id }, 'Order notification retries exhausted')
+  }
+
+  /**
+   * Re-queues pending notifications whose job was lost, e.g. a stalled job the queue dropped.
+   * Failed notifications stay with staff. Skips rows with outbox work still waiting or recent.
+   */
+  async sweep() {
+    const staleAt = DateTime.utc().minus({ minutes: 2 }).toSQL({ includeOffset: false })!
+    const rows = await Notification.query()
+      .where('state', 'pending')
+      .where(unleased)
+      .where('updated_at', '<', staleAt)
+      .whereNotExists((query) =>
+        query
+          .from('workflow_outbox')
+          .where('kind', 'notification')
+          .whereColumn('entity_id', 'order_notifications.id')
+          .where((recent) => recent.whereNull('published_at').orWhere('created_at', '>=', staleAt))
+      )
+      .orderBy('id')
+      .limit(100)
+    for (const row of rows)
+      await db.transaction((trx) =>
+        this.outbox.record(trx, {
+          key: `notification-sweep:${row.id}:${Math.floor(Date.now() / 60_000)}`,
+          kind: 'notification',
+          entityId: row.id,
+        })
+      )
   }
 }

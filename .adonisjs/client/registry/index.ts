@@ -295,7 +295,7 @@ const routes = {
     types: placeholder as Registry['seller.products.store']['types'],
   },
   'seller.products.update': {
-    methods: ["PATCH"],
+    methods: ["PUT","PATCH"],
     pattern: '/seller/products/:id',
     tokens: [{"old":"/seller/products/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.products.update']['types'],
@@ -318,6 +318,18 @@ const routes = {
     tokens: [{"old":"/seller/products/:productId/variants","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants","type":0,"val":"variants","end":""}],
     types: placeholder as Registry['seller.variants.store']['types'],
   },
+  'seller.variants.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/seller/products/:productId/variants/:id',
+    tokens: [{"old":"/seller/products/:productId/variants/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.variants.update']['types'],
+  },
+  'seller.variants.destroy': {
+    methods: ["DELETE"],
+    pattern: '/seller/products/:productId/variants/:id',
+    tokens: [{"old":"/seller/products/:productId/variants/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.variants.destroy']['types'],
+  },
   'seller.options.update': {
     methods: ["PATCH"],
     pattern: '/seller/products/:productId/options',
@@ -329,18 +341,6 @@ const routes = {
     pattern: '/seller/products/:productId/variants/generate',
     tokens: [{"old":"/seller/products/:productId/variants/generate","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/generate","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"generate","end":""}],
     types: placeholder as Registry['seller.variant_generation.store']['types'],
-  },
-  'seller.variants.update': {
-    methods: ["PATCH"],
-    pattern: '/seller/products/:productId/variants/:id',
-    tokens: [{"old":"/seller/products/:productId/variants/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['seller.variants.update']['types'],
-  },
-  'seller.variants.destroy': {
-    methods: ["DELETE"],
-    pattern: '/seller/products/:productId/variants/:id',
-    tokens: [{"old":"/seller/products/:productId/variants/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:id","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['seller.variants.destroy']['types'],
   },
   'seller.images.store': {
     methods: ["POST"],
@@ -367,7 +367,7 @@ const routes = {
     types: placeholder as Registry['seller.collections.store']['types'],
   },
   'seller.collections.update': {
-    methods: ["PATCH"],
+    methods: ["PUT","PATCH"],
     pattern: '/seller/collections/:id',
     tokens: [{"old":"/seller/collections/:id","type":0,"val":"seller","end":""},{"old":"/seller/collections/:id","type":0,"val":"collections","end":""},{"old":"/seller/collections/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.collections.update']['types'],
@@ -391,7 +391,7 @@ const routes = {
     types: placeholder as Registry['seller.orders.show']['types'],
   },
   'seller.orders.update': {
-    methods: ["PATCH"],
+    methods: ["PUT","PATCH"],
     pattern: '/seller/orders/:id',
     tokens: [{"old":"/seller/orders/:id","type":0,"val":"seller","end":""},{"old":"/seller/orders/:id","type":0,"val":"orders","end":""},{"old":"/seller/orders/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.orders.update']['types'],
@@ -439,7 +439,7 @@ const routes = {
     types: placeholder as Registry['seller.users.store']['types'],
   },
   'seller.users.update': {
-    methods: ["PATCH"],
+    methods: ["PUT","PATCH"],
     pattern: '/seller/users/:id',
     tokens: [{"old":"/seller/users/:id","type":0,"val":"seller","end":""},{"old":"/seller/users/:id","type":0,"val":"users","end":""},{"old":"/seller/users/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.users.update']['types'],

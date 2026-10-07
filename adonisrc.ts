@@ -63,7 +63,6 @@ export default defineConfig({
     () => import('@adonisjs/cors/cors_provider'),
     () => import('@adonisjs/inertia/inertia_provider'),
     () => import('@adonisjs/auth/auth_provider'),
-    () => import('#providers/api_provider'),
     () => import('#providers/payment_provider'),
     () => import('@jrmc/adonis-attachment/attachment_provider'),
     () => import('@adonisjs/bouncer/bouncer_provider'),
@@ -71,6 +70,8 @@ export default defineConfig({
     () => import('@adonisjs/mail/mail_provider'),
     () => import('#providers/chat_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
+    // () => import('@adonis-agora/agent/agent_provider'),
+    // () => import('@adonis-agora/agent/dashboard_provider')
   ],
 
   /*
@@ -154,6 +155,7 @@ export default defineConfig({
       indexPages({ framework: 'vue3' }),
       generateRegistry(),
       indexPolicies(),
+      // () => import('@adonis-agora/agent/hooks/tools')
     ],
     buildStarting: [() => import('@adonisjs/vite/build_hook')],
   },

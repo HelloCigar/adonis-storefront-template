@@ -1,0 +1,46 @@
+import { BaseSchema } from '@adonisjs/lucid/schema'
+import db from '@adonisjs/lucid/services/db'
+import { PgVectorStore } from '@adonis-agora/agent'
+
+/**
+ * The pgvector chunk table for the @adonis-agora/agent `retrievers.pgvector({...})` store: one row per
+ * embedded chunk (id `${documentId}#<n>`), the chunk text, an optional citation source, a `jsonb`
+ * metadata column filtered with `@>`, and the `vector(N)` embedding ranked with the `<=>`/`<->`/`<#>`
+ * operators. Requires the pgvector extension — Postgres only. Delete this file if you do not use
+ * pgvector RAG.
+ *
+ * Like the agent tables migration, this DELEGATES rather than copying DDL: `PgVectorStore` owns the
+ * column names and the index operator class its own queries depend on, and it exposes the same
+ * provisioning the store runs for itself under `ensureSchema: true`. Every statement is
+ * `IF NOT EXISTS`, so this is safe against a database that already has the table.
+ *
+ * SET THESE to match your retriever config in `config/agent.ts` — they must agree, or the store will
+ * query a table shaped differently from the one this created:
+ *   - `DIMENSION` — your embedding model's width (1536 for text-embedding-3-small).
+ *   - `METRIC` — 'cosine' (default), 'l2', or 'inner'. Picks the index operator class.
+ *   - `TABLE` — only if you overrode `table` on the retriever.
+ */
+const TABLE = 'agent_rag_chunks'
+const DIMENSION = 1536
+const METRIC = 'cosine'
+
+export default class extends BaseSchema {
+  /** Same reason as the agent tables migration: the DDL runs on the manager's own pooled connection. */
+  static disableTransactions = true
+
+  async up() {
+    // Postgres only: skipped on the store's SQLite databases (development and tests).
+    if (this.db.dialect.name !== 'postgres') return
+    const store = new PgVectorStore(db.connection(this.db.connectionName), {
+      table: TABLE,
+      dimension: DIMENSION,
+      metric: METRIC,
+    })
+    await store.ensureSchema()
+  }
+
+  async down() {
+    if (this.db.dialect.name !== 'postgres') return
+    this.schema.dropTableIfExists(TABLE)
+  }
+}

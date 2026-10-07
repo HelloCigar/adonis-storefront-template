@@ -17,9 +17,10 @@ export default class OrderAccessController {
     return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })
   }
   async store({ params, auth, checkoutSession, session, response }: HttpContext) {
+    const userId = auth.getUserOrFail().id
     const grant = checkoutSession.orderGrant(params.publicId)
-    const order = await this.access.authorize(params.publicId, auth.user!.id, grant)
-    await this.access.claim(order, auth.user!.id, grant)
+    const order = await this.access.authorize(params.publicId, userId, grant)
+    await this.access.claim(order, userId, grant)
     session.flash('success', 'Order added to your account')
     return response.redirect().toRoute('checkout.orders.show', { publicId: order.publicId! })
   }

@@ -9,7 +9,7 @@ export const addressValidator = vine.create({
   address2: optionalText(),
   city: vine.string().trim().maxLength(255),
   zip: vine.string().trim().maxLength(30),
-  territoryCode: vine.string().trim().fixedLength(2),
+  territoryCode: vine.string().trim().toUpperCase().fixedLength(2),
   zoneCode: optionalText(),
   phoneNumber: optionalText(),
   defaultAddress: vine.boolean().optional(),

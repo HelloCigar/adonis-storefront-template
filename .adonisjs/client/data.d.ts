@@ -13,6 +13,9 @@ import type CatalogCollectionTransformer from '#transformers/catalog/collection_
 import type CatalogProductTransformer from '#transformers/catalog/product_transformer'
 import type CatalogProductVariantTransformer from '#transformers/catalog/product_variant_transformer'
 import type CatalogSearchResultTransformer from '#transformers/catalog/search_result_transformer'
+import type ChatConversationTransformer from '#transformers/chat/conversation_transformer'
+import type ChatMessageTransformer from '#transformers/chat/message_transformer'
+import type ChatThreadTransformer from '#transformers/chat/thread_transformer'
 import type CheckoutCartLineTransformer from '#transformers/checkout/cart_line_transformer'
 import type CheckoutCartTransformer from '#transformers/checkout/cart_transformer'
 import type CheckoutOrderAddressTransformer from '#transformers/checkout/order_address_transformer'
@@ -63,6 +66,20 @@ export namespace Data {
     export type SearchResult = InferData<CatalogSearchResultTransformer>
     export namespace SearchResult {
       export type Variants = InferVariants<CatalogSearchResultTransformer>
+    }
+  }
+  export namespace Chat {
+    export type Conversation = InferData<ChatConversationTransformer>
+    export namespace Conversation {
+      export type Variants = InferVariants<ChatConversationTransformer>
+    }
+    export type Message = InferData<ChatMessageTransformer>
+    export namespace Message {
+      export type Variants = InferVariants<ChatMessageTransformer>
+    }
+    export type Thread = InferData<ChatThreadTransformer>
+    export namespace Thread {
+      export type Variants = InferVariants<ChatThreadTransformer>
     }
   }
   export namespace Checkout {

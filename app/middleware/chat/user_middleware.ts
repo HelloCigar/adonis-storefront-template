@@ -5,7 +5,8 @@ import server from '@adonisjs/core/services/server'
 import { Session } from '@adonisjs/session'
 import type { ResolvedSessionConfig } from '@adonisjs/session/types'
 import type { Socket } from 'socket.io'
-import env from '#start/env'
+import checkout from '#config/checkout'
+import type { ChatSocketData } from '#sockets/chat/order_room_handler'
 
 export default class ChatUserMiddleware {
   async handle(socket: Socket, next: (error?: Error) => void) {
@@ -14,9 +15,8 @@ export default class ChatUserMiddleware {
       const request = socket.request
       const origin = request.headers.origin
       if (origin) {
-        const appUrl = env.get('APP_URL')
-        const allowedOrigin = appUrl
-          ? new URL(appUrl).origin
+        const allowedOrigin = checkout.publicUrl
+          ? new URL(checkout.publicUrl).origin
           : `${app.inProduction ? 'https' : 'http'}://${request.headers.host}`
         if (new URL(origin).origin !== allowedOrigin) {
           return next(new Error('Authentication failed: Invalid origin'))
@@ -47,17 +47,11 @@ export default class ChatUserMiddleware {
       await ctx.session.initiate(true)
       const authManager = await app.container.make('auth.manager')
       ctx.auth = authManager.createAuthenticator(ctx)
+      // Customers connect too; each order room checks access when joined.
       const user = await ctx.auth.use('web').authenticate()
-      if (!user.isStoreStaff) {
-        return next(new Error('Authorization failed: Store staff access required'))
-      }
 
-      // Replace every client-supplied field before Ravex copies this into socket.data.
-      socket.handshake.auth.user = {
-        id: String(user.id),
-        username: `user-${user.id}`,
-        displayName: user.fullName ?? undefined,
-      }
+      // Only the session decides identity; handshake auth data from the client is ignored.
+      socket.data = { userId: user.id } satisfies ChatSocketData
     } catch {
       return next(new Error('Authentication failed: Invalid or missing session'))
     }

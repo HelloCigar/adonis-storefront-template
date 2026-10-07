@@ -3,7 +3,7 @@ import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import server from '@adonisjs/core/services/server'
 import type { ApplicationService } from '@adonisjs/core/types'
-import { ChatEngine } from '@ravex/server'
+import { Server } from 'socket.io'
 import ChatProvider from '#providers/chat_provider'
 
 test('chat termination closes active WebSocket transports before provider shutdown', async ({
@@ -41,11 +41,11 @@ test('chat termination closes active WebSocket transports before provider shutdo
     socket.addEventListener('open', () => resolve(), { once: true })
     socket.addEventListener('error', () => reject(new Error('WebSocket failed')), { once: true })
   })
-  const engine = await app.container.make(ChatEngine)
-  assert.equal(engine.io.engine.clientsCount, 1)
+  const io = await app.container.make(Server)
+  assert.equal(io.engine.clientsCount, 1)
   assert.isFunction(terminate)
   await terminate!()
   assert.isFalse(httpServer.listening)
-  assert.equal(engine.io.engine.clientsCount, 0)
+  assert.equal(io.engine.clientsCount, 0)
   await provider.shutdown()
 }).timeout(5000)

@@ -2,15 +2,19 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Order from '#models/checkout/order'
 import SellerOrderTransformer from '#transformers/seller/order_transformer'
 import { orderUpdateValidator } from '#validators/seller/order'
-import CheckoutException from '#exceptions/checkout_exception'
 import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import OrderOperationsService from '#services/checkout/order_operations_service'
+import SellerOrderService from '#services/seller/order_service'
 import OrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
 
 @inject()
 export default class OrdersController {
-  constructor(private operations: OrderOperationsService) {}
+  constructor(
+    private operations: OrderOperationsService,
+    private orders: SellerOrderService
+  ) {}
+
   async index({ inertia, bouncer }: HttpContext) {
     await bouncer.with('SellerOrderPolicy').authorize('viewAny')
     return inertia.render('seller/orders', {
@@ -44,18 +48,7 @@ export default class OrdersController {
   async update({ params, request, response, session, bouncer }: HttpContext) {
     const order = await Order.findOrFail(params.id)
     await bouncer.with('SellerOrderPolicy').authorize('update', order)
-    const input = await request.validateUsing(orderUpdateValidator)
-    if (
-      order.source === 'online' &&
-      (input.financialStatus !== order.financialStatus ||
-        input.fulfillmentStatus !== order.fulfillmentStatus)
-    ) {
-      throw new CheckoutException(
-        'Use the payment and shipment actions for online orders',
-        'E_ONLINE_STATUS_MANUAL'
-      )
-    }
-    await order.merge(order.source === 'online' ? { note: input.note } : input).save()
+    await this.orders.update(order, await request.validateUsing(orderUpdateValidator))
     session.flash('success', 'Order updated')
     return response.redirect().toRoute('seller.orders.show', { id: order.id })
   }
