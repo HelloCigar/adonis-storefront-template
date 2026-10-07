@@ -10,6 +10,7 @@ import Activity from '#models/checkout/activity'
 import Payment from '#models/payments/payment'
 import Notification from '#models/checkout/notification'
 import OrderMessage from '#models/chat/order_message'
+import StockReservation from '#models/checkout/stock_reservation'
 import { belongsTo, hasMany, column } from '@adonisjs/lucid/orm'
 import { toMajor, toMinor } from '#models/shared/money'
 import type { OrderState } from '#services/checkout/state_service'
@@ -23,6 +24,7 @@ export default class Order extends OrderSchema {
   @hasMany(() => Payment) declare payments: HasMany<typeof Payment>
   @hasMany(() => Notification) declare notifications: HasMany<typeof Notification>
   @hasMany(() => OrderMessage) declare messages: HasMany<typeof OrderMessage>
+  @hasMany(() => StockReservation) declare stockReservations: HasMany<typeof StockReservation>
   @column() declare lifecycleState: OrderState
   @column() declare source: 'legacy' | 'online'
   /** Money is stored only as integer centavos; peso values are derived for display. */

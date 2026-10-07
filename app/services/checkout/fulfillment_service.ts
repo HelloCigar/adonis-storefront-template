@@ -5,8 +5,6 @@ import Order from '#models/checkout/order'
 import User from '#models/account/user'
 import Shipment from '#models/checkout/shipment'
 import Attempt from '#models/payments/attempt'
-import StockReservation from '#models/checkout/stock_reservation'
-import RefundOperation from '#models/payments/refund_operation'
 import Payment from '#models/payments/payment'
 import InventoryService from '#services/catalog/inventory_service'
 import StateService from '#services/checkout/state_service'
@@ -161,27 +159,29 @@ export default class FulfillmentService {
   }
   /** The detail page and mutations share the same dispatch prerequisites. */
   async inspectDispatch(trx: TransactionClientContract, order: Order) {
-    const payment = await Payment.query({ client: trx })
-      .where('order_id', order.id)
-      .where('disposition', 'accepted')
-      .first()
-    const blockedAttempt = await Attempt.query({ client: trx })
-      .where('order_id', order.id)
+    // Order rows are loaded inside `trx`, so their relation queries run in it too.
+    const payment = await order.related('payments').query().where('disposition', 'accepted').first()
+    const blockedAttempt = await order
+      .related('attempts')
+      .query()
       .where('needs_review', true)
       .first()
     const refund = payment
-      ? await RefundOperation.query({ client: trx })
+      ? await order
+          .related('refunds')
+          .query()
           .where('payment_id', payment.id)
           .whereNot('state', 'failed')
           .first()
       : null
-    const invalidStock = await StockReservation.query({ client: trx })
-      .where('order_id', order.id)
+    const invalidStock = await order
+      .related('stockReservations')
+      .query()
       .where((q) => q.whereNot('state', 'consumed').orWhereNotNull('restocked_at'))
       .first()
     const balance = payment ? await this.balances.forPayment(trx, payment) : null
     const observedRefund = !!balance?.active
-    const shipment = await Shipment.query({ client: trx }).where('order_id', order.id).first()
+    const shipment = await order.related('shipments').query().first()
     const blockers: DispatchBlocker[] = []
     if (order.lifecycleState === 'review_required')
       blockers.push({

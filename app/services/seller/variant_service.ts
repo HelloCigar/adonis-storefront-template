@@ -189,10 +189,7 @@ export default class SellerVariantService {
         if (!previous) projected.set(combination.key, combination)
       }
       // Clear and rebuild keys atomically; existing duplicate rows stay unkeyed.
-      await trx
-        .from('product_variants')
-        .where('product_id', current.id)
-        .update({ option_combination_key: null })
+      await current.related('variants').query().update({ optionCombinationKey: null })
       const seen = new Set<string>()
       for (const { variant, options, key } of combinations) {
         await trx

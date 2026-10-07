@@ -419,11 +419,11 @@ export default class RefundService {
       if (resolved) {
         order.lifecycleState = 'confirmed'
         order.reviewReason = null
-        await trx
-          .from('payment_attempts')
-          .where('order_id', orderId)
+        await order
+          .related('attempts')
+          .query()
           .where('state', 'paid')
-          .update({ needs_review: false })
+          .update({ needsReview: false })
         await this.activities.record(trx, orderId, 'payment.review_resolved')
       }
     }
