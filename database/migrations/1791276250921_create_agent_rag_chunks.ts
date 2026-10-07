@@ -29,6 +29,8 @@ export default class extends BaseSchema {
   static disableTransactions = true
 
   async up() {
+    // Postgres only: skipped on the store's SQLite databases (development and tests).
+    if (this.db.dialect.name !== 'postgres') return
     const store = new PgVectorStore(db.connection(this.db.connectionName), {
       table: TABLE,
       dimension: DIMENSION,
@@ -38,6 +40,7 @@ export default class extends BaseSchema {
   }
 
   async down() {
+    if (this.db.dialect.name !== 'postgres') return
     this.schema.dropTableIfExists(TABLE)
   }
 }

@@ -23,6 +23,8 @@ export default class extends BaseSchema {
   static disableTransactions = true
 
   async up() {
+    // Postgres only: skipped on the store's SQLite databases (development and tests).
+    if (this.db.dialect.name !== 'postgres') return
     const store = new PgDocumentTreeStore(db.connection(this.db.connectionName), {
       table: TABLE,
       unitsTable: UNITS_TABLE,
@@ -31,6 +33,7 @@ export default class extends BaseSchema {
   }
 
   async down() {
+    if (this.db.dialect.name !== 'postgres') return
     this.schema.dropTableIfExists(UNITS_TABLE)
     this.schema.dropTableIfExists(TABLE)
   }
