@@ -59,6 +59,14 @@ const links = computed(
                 },
               },
               {
+                label: 'Blog',
+                icon: 'i-lucide-newspaper',
+                to: urlFor('seller.posts.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+              {
                 label: 'Orders',
                 icon: 'i-lucide-shopping-bag',
                 to: urlFor('seller.orders.index'),

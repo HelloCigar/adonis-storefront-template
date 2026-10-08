@@ -883,6 +883,78 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['destroy']>>>
     }
   }
+  'seller.posts.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/posts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['index']>>>
+    }
+  }
+  'seller.posts.create': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/posts/create'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['create']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['create']>>>
+    }
+  }
+  'seller.posts.store': {
+    methods: ["POST"]
+    pattern: '/seller/posts'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/post').postValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/post').postValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.posts.edit': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/posts/:id/edit'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['edit']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['edit']>>>
+    }
+  }
+  'seller.posts.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/seller/posts/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/post').postValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/post').postValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.posts.destroy': {
+    methods: ["DELETE"]
+    pattern: '/seller/posts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/posts_controller').default['destroy']>>>
+    }
+  }
   'seller.orders.index': {
     methods: ["GET","HEAD"]
     pattern: '/seller/orders'

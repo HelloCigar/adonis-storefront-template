@@ -373,6 +373,35 @@ export class AgentToolCallSchema extends BaseModel {
   declare toolType: string
 }
 
+export class BlogPostSchema extends BaseModel {
+  static $columns = ['authorId', 'badge', 'content', 'contentHtml', 'createdAt', 'excerpt', 'handle', 'id', 'publishedAt', 'status', 'title', 'updatedAt'] as const
+  $columns = BlogPostSchema.$columns
+  @column()
+  declare authorId: number | null
+  @column()
+  declare badge: string | null
+  @column()
+  declare content: Record<string, unknown>
+  @column()
+  declare contentHtml: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare excerpt: string | null
+  @column()
+  declare handle: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare publishedAt: DateTime | null
+  @column()
+  declare status: string
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class CartLineSchema extends BaseModel {
   static $columns = ['cartId', 'createdAt', 'currencyCode', 'id', 'productVariantId', 'quantity', 'unitPriceAmount', 'updatedAt'] as const
   $columns = CartLineSchema.$columns

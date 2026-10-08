@@ -56,6 +56,7 @@ export const controllers = {
     Options: () => import('#controllers/seller/options_controller'),
     Orders: () => import('#controllers/seller/orders_controller'),
     Packing: () => import('#controllers/seller/packing_controller'),
+    Posts: () => import('#controllers/seller/posts_controller'),
     Products: () => import('#controllers/seller/products_controller'),
     Refunds: () => import('#controllers/seller/refunds_controller'),
     Shipments: () => import('#controllers/seller/shipments_controller'),

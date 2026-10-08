@@ -11,7 +11,13 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
-import { chatImageThrottle, checkoutThrottle, discountThrottle, loginThrottle, signupThrottle } from '#start/limiter'
+import {
+  chatImageThrottle,
+  checkoutThrottle,
+  discountThrottle,
+  loginThrottle,
+  signupThrottle,
+} from '#start/limiter'
 
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
@@ -191,6 +197,9 @@ router
     router
       .resource('discounts', controllers.seller.Discounts)
       .only(['index', 'store', 'update', 'destroy'])
+    router
+      .resource('posts', controllers.seller.Posts)
+      .only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
     router.resource('orders', controllers.seller.Orders).only(['index', 'show', 'update'])
     router.post('/orders/:id/packing', [controllers.seller.Packing, 'store']).as('packing.store')
     router

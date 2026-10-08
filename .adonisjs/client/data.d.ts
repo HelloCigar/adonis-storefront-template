@@ -31,6 +31,7 @@ import type SellerDiscountTransformer from '#transformers/seller/discount_transf
 import type SellerEmailPreviewTransformer from '#transformers/seller/email_preview_transformer'
 import type SellerOrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
+import type SellerPostTransformer from '#transformers/seller/post_transformer'
 import type SellerProductTransformer from '#transformers/seller/product_transformer'
 import type SellerStockAdjustmentTransformer from '#transformers/seller/stock_adjustment_transformer'
 import type SellerUserTransformer from '#transformers/seller/user_transformer'
@@ -153,6 +154,10 @@ export namespace Data {
     export type Order = InferData<SellerOrderTransformer>
     export namespace Order {
       export type Variants = InferVariants<SellerOrderTransformer>
+    }
+    export type Post = InferData<SellerPostTransformer>
+    export namespace Post {
+      export type Variants = InferVariants<SellerPostTransformer>
     }
     export type Product = InferData<SellerProductTransformer>
     export namespace Product {
