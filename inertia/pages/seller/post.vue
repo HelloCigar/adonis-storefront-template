@@ -39,6 +39,7 @@ const form = useForm({
   title: props.post?.title ?? '',
   handle: props.post?.handle ?? '',
   excerpt: props.post?.excerpt ?? '',
+  badge: props.post?.badge ?? '',
   content: (props.post?.content ?? { type: 'doc', content: [] }) as JSONContent,
   status: (props.post?.status === 'published' ? 'published' : 'draft') as 'draft' | 'published',
   publishedAt: toLocalInput(props.post?.publishedAt),
@@ -59,7 +60,7 @@ const scheduled = computed(
     !!form.publishedAt &&
     new Date(form.publishedAt).getTime() > Date.now()
 )
-const badge = computed(() => {
+const statusBadge = computed(() => {
   if (!props.post) return null
   if (props.post.status === 'draft') return { label: 'Draft', color: 'neutral' as const }
   if (props.post.publishedAt && new Date(props.post.publishedAt).getTime() > Date.now())
@@ -81,6 +82,7 @@ function save() {
     title: data.title,
     handle: data.handle,
     excerpt: data.excerpt.trim() || null,
+    badge: data.badge.trim() || null,
     // A string, so the body parser's whitespace trimming cannot reach the text nodes.
     content: JSON.stringify(data.content),
     status: data.status,
@@ -131,7 +133,12 @@ onBeforeUnmount(() => {
       <UDashboardNavbar :title="post ? 'Edit post' : 'New post'">
         <template #leading><UDashboardSidebarCollapse /></template>
         <template #right>
-          <UBadge v-if="badge" :label="badge.label" :color="badge.color" variant="subtle" />
+          <UBadge
+            v-if="statusBadge"
+            :label="statusBadge.label"
+            :color="statusBadge.color"
+            variant="subtle"
+          />
           <span v-if="form.isDirty" class="hidden text-sm text-muted sm:inline">Unsaved</span>
           <UButton
             :label="saveLabel"
@@ -219,6 +226,14 @@ onBeforeUnmount(() => {
                 maxlength="500"
                 class="w-full"
               />
+            </UFormField>
+            <UFormField
+              name="badge"
+              label="Badge"
+              description="Optional. A short label on the blog timeline, like Release or Guide."
+              :error="form.errors.badge"
+            >
+              <UInput v-model="form.badge" class="w-full" maxlength="40" />
             </UFormField>
           </UCard>
           <p v-if="post" class="text-xs text-muted px-1">

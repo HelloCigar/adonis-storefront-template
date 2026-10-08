@@ -12,6 +12,8 @@ export default class extends BaseSchema {
       table.string('handle', 255).notNullable().unique()
       table.string('title', 255).notNullable()
       table.string('excerpt', 500).nullable()
+      // Short label shown beside the post on the public blog timeline, such as "Release".
+      table.string('badge', 40).nullable()
       table.text('content').notNullable()
       table.text('content_html').notNullable()
       table.enum('status', ['draft', 'published']).notNullable().defaultTo('draft')

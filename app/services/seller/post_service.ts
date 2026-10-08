@@ -28,6 +28,7 @@ export default class SellerPostService {
       title: payload.title,
       handle: payload.handle,
       excerpt: payload.excerpt || null,
+      badge: payload.badge || null,
       content,
       contentHtml: this.richText.toHtml(content),
       status: payload.status,

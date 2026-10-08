@@ -27,6 +27,7 @@ export const postValidator = vine.create({
   title: vine.string().trim().minLength(1).maxLength(255),
   handle: handle('blog_posts'),
   excerpt: vine.string().trim().maxLength(500).nullable(),
+  badge: vine.string().trim().maxLength(40).nullable(),
   /**
    * The editor's Tiptap JSON, sent as a string because the body parser trims every JSON string
    * value, which would drop spaces at the edges of bold or linked text. RichTextService keeps

@@ -10,6 +10,7 @@ export default class SellerPostTransformer extends BaseTransformer<BlogPost> {
         'title',
         'handle',
         'excerpt',
+        'badge',
         'status',
         'publishedAt',
         'createdAt',

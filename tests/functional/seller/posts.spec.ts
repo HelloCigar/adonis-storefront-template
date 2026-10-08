@@ -19,6 +19,7 @@ const draftPayload = {
   title: 'Spring arrivals',
   handle: 'spring-arrivals',
   excerpt: 'What is new this season',
+  badge: 'Release',
   content: { type: 'doc', content: [paragraph('Fresh stock is here.')] },
   status: 'draft',
   publishedAt: null as string | null,
@@ -121,6 +122,7 @@ test.group('Seller posts', (group) => {
     assert.equal(post.status, 'draft')
     assert.isNull(post.publishedAt)
     assert.equal(post.authorId, owner.id)
+    assert.equal(post.badge, 'Release')
     assert.deepEqual(post.content, {
       type: 'doc',
       content: [

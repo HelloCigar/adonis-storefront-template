@@ -374,10 +374,12 @@ export class AgentToolCallSchema extends BaseModel {
 }
 
 export class BlogPostSchema extends BaseModel {
-  static $columns = ['authorId', 'content', 'contentHtml', 'createdAt', 'excerpt', 'handle', 'id', 'publishedAt', 'status', 'title', 'updatedAt'] as const
+  static $columns = ['authorId', 'badge', 'content', 'contentHtml', 'createdAt', 'excerpt', 'handle', 'id', 'publishedAt', 'status', 'title', 'updatedAt'] as const
   $columns = BlogPostSchema.$columns
   @column()
   declare authorId: number | null
+  @column()
+  declare badge: string | null
   @column()
   declare content: Record<string, unknown>
   @column()
