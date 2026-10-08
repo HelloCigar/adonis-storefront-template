@@ -10,9 +10,8 @@ export type StoreContent = {
   seo?: { title?: string; description?: string }
 }
 
-// Trusted, authored HTML only. No extra CMS tables or external commerce provider.
+// Trusted, authored HTML only. Blog posts live in the blog_posts table.
 export default {
   pages: [] as StoreContent[],
   policies: [] as StoreContent[],
-  blogs: [] as Array<StoreContent & { articles: StoreContent[] }>,
 }

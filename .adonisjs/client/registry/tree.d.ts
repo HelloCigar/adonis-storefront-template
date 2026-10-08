@@ -20,11 +20,9 @@ export interface ApiDefinition {
     index: typeof routes['policies.index']
     show: typeof routes['policies.show']
   }
-  blogs: {
-    show: typeof routes['blogs.show']
-  }
-  articles: {
-    show: typeof routes['articles.show']
+  blog: {
+    index: typeof routes['blog.index']
+    show: typeof routes['blog.show']
   }
   cart: {
     add: typeof routes['cart.add']

@@ -54,17 +54,17 @@ const routes = {
     tokens: [{"old":"/policies/:handle","type":0,"val":"policies","end":""},{"old":"/policies/:handle","type":1,"val":"handle","end":""}],
     types: placeholder as Registry['policies.show']['types'],
   },
-  'blogs.show': {
+  'blog.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/blog',
+    tokens: [{"old":"/blog","type":0,"val":"blog","end":""}],
+    types: placeholder as Registry['blog.index']['types'],
+  },
+  'blog.show': {
     methods: ["GET","HEAD"],
     pattern: '/blog/:handle',
     tokens: [{"old":"/blog/:handle","type":0,"val":"blog","end":""},{"old":"/blog/:handle","type":1,"val":"handle","end":""}],
-    types: placeholder as Registry['blogs.show']['types'],
-  },
-  'articles.show': {
-    methods: ["GET","HEAD"],
-    pattern: '/blog/:handle/:article',
-    tokens: [{"old":"/blog/:handle/:article","type":0,"val":"blog","end":""},{"old":"/blog/:handle/:article","type":1,"val":"handle","end":""},{"old":"/blog/:handle/:article","type":1,"val":"article","end":""}],
-    types: placeholder as Registry['articles.show']['types'],
+    types: placeholder as Registry['blog.show']['types'],
   },
   'cart.add': {
     methods: ["POST"],

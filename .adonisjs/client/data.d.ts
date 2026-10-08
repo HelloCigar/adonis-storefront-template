@@ -23,6 +23,7 @@ import type CheckoutOrderLineItemTransformer from '#transformers/checkout/order_
 import type CheckoutOrderTransformer from '#transformers/checkout/order_transformer'
 import type CheckoutQuoteTransformer from '#transformers/checkout/quote_transformer'
 import type CheckoutStatusTransformer from '#transformers/checkout/status_transformer'
+import type ContentBlogPostTransformer from '#transformers/content/blog_post_transformer'
 import type ContentContentTransformer from '#transformers/content/content_transformer'
 import type DashboardSummaryTransformer from '#transformers/dashboard/summary_transformer'
 import type PaymentsSimulationTransformer from '#transformers/payments/simulation_transformer'
@@ -117,6 +118,10 @@ export namespace Data {
     }
   }
   export namespace Content {
+    export type BlogPost = InferData<ContentBlogPostTransformer>
+    export namespace BlogPost {
+      export type Variants = InferVariants<ContentBlogPostTransformer>
+    }
     export type Content = InferData<ContentContentTransformer>
     export namespace Content {
       export type Variants = InferVariants<ContentContentTransformer>

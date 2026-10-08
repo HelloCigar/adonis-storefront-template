@@ -104,6 +104,8 @@ declare module 'vue' {
     UCalendar: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Calendar.vue')['default']
     UCard: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
     UCarousel: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Carousel.vue')['default']
+    UChangelogVersion: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/ChangelogVersion.vue')['default']
+    UChangelogVersions: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/ChangelogVersions.vue')['default']
     UChatMessages: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/ChatMessages.vue')['default']
     UChatPrompt: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/ChatPrompt.vue')['default']
     UChatPromptSubmit: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/ChatPromptSubmit.vue')['default']

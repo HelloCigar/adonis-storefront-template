@@ -29,8 +29,7 @@ export const controllers = {
     Reconciliations: () => import('#controllers/checkout/reconciliations_controller'),
   },
   content: {
-    Articles: () => import('#controllers/content/articles_controller'),
-    Blogs: () => import('#controllers/content/blogs_controller'),
+    BlogPosts: () => import('#controllers/content/blog_posts_controller'),
     Pages: () => import('#controllers/content/pages_controller'),
     Policies: () => import('#controllers/content/policies_controller'),
   },

@@ -33,8 +33,8 @@ router.get('/product/:handle', [controllers.storefront.Products, 'show']).as('pr
 router.get('/pages/:handle', [controllers.content.Pages, 'show']).as('pages.show')
 router.get('/policies', [controllers.content.Policies, 'index']).as('policies.index')
 router.get('/policies/:handle', [controllers.content.Policies, 'show']).as('policies.show')
-router.get('/blog/:handle', [controllers.content.Blogs, 'show']).as('blogs.show')
-router.get('/blog/:handle/:article', [controllers.content.Articles, 'show']).as('articles.show')
+router.get('/blog', [controllers.content.BlogPosts, 'index']).as('blog.index')
+router.get('/blog/:handle', [controllers.content.BlogPosts, 'show']).as('blog.show')
 router
   .group(() => {
     router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')

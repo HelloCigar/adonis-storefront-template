@@ -29,18 +29,9 @@ test.group('Storefront', (group) => {
       title: 'Returns',
       body: '<p>Returns policy.</p>',
     })
-    storefront.blogs.push({
-      id: 'journal',
-      handle: 'journal',
-      title: 'Journal',
-      articles: [
-        { id: 'welcome', handle: 'welcome', title: 'Welcome', contentHtml: '<p>Hello.</p>' },
-      ],
-    })
     cleanup(() => {
       storefront.pages.splice(0)
       storefront.policies.splice(0)
-      storefront.blogs.splice(0)
     })
 
     const page = await client.get('/pages/about').withInertia()
@@ -55,22 +46,7 @@ test.group('Storefront', (group) => {
     policy.assertStatus(200)
     policy.assertInertiaComponent('policies/[handle]')
     assert.equal(policy.inertiaProps.policy.body, '<p>Returns policy.</p>')
-    const blog = await client.get('/blog/journal').withInertia()
-    blog.assertStatus(200)
-    blog.assertInertiaComponent('blog/[handle]/index')
-    assert.equal(blog.inertiaProps.articles[0].handle, 'welcome')
-    const article = await client.get('/blog/journal/welcome').withInertia()
-    article.assertStatus(200)
-    article.assertInertiaComponent('blog/[handle]/[article]')
-    assert.equal(article.inertiaProps.blog.handle, 'journal')
-    assert.equal(article.inertiaProps.articleData.contentHtml, '<p>Hello.</p>')
-
-    for (const url of [
-      '/pages/missing',
-      '/policies/missing',
-      '/blog/missing',
-      '/blog/journal/missing',
-    ]) {
+    for (const url of ['/pages/missing', '/policies/missing']) {
       const missing = await client.get(url).withInertia()
       missing.assertStatus(404)
     }

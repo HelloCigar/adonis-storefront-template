@@ -103,7 +103,19 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/policies_controller').default['show']>>>
     }
   }
-  'blogs.show': {
+  'blog.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/blog'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/content/blog_posts_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/blog_posts_controller').default['index']>>>
+    }
+  }
+  'blog.show': {
     methods: ["GET","HEAD"]
     pattern: '/blog/:handle'
     types: {
@@ -111,20 +123,8 @@ export interface Registry {
       paramsTuple: [ParamValue]
       params: { handle: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/content/blogs_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/blogs_controller').default['show']>>>
-    }
-  }
-  'articles.show': {
-    methods: ["GET","HEAD"]
-    pattern: '/blog/:handle/:article'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue, ParamValue]
-      params: { handle: ParamValue; article: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/content/articles_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/articles_controller').default['show']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/content/blog_posts_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/blog_posts_controller').default['show']>>>
     }
   }
   'cart.add': {
