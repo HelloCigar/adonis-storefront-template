@@ -1,51 +1,58 @@
-import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { readonly, ref } from 'vue'
+import { useRouter } from '@adonisjs/inertia/vue'
+import type { VisitOptions } from '@inertiajs/core'
 import type { registry } from '@generated/registry'
-import { urlFor } from '~/client'
 
 type AddressInput = (typeof registry.routes)['account.addresses.create']['types']['body']
 type ProfileInput = (typeof registry.routes)['account.profile.update']['types']['body']
 
 export const useAccount = () => {
-  const form = useForm({})
+  const router = useRouter()
+  const loading = ref(false)
   const toast = useToast()
-  const submit = (
-    method: 'post' | 'patch' | 'delete',
-    url: string,
-    body: AddressInput | ProfileInput = {}
-  ) =>
+
+  /** Shared visit behavior; each call resolves whether the change was saved. */
+  const save = (visit: (options: VisitOptions) => void) =>
     new Promise<boolean>((resolve) => {
       let saved = false
-      form
-        .transform(() => body)
-        .submit(method, url, {
-          only: ['customer', 'errors'],
-          preserveScroll: true,
-          preserveState: true,
-          onSuccess: () => {
-            saved = true
-            toast.add({ title: 'Changes saved', color: 'success' })
-          },
-          onError: (errors) =>
-            toast.add({
-              title: 'Unable to save changes',
-              description: Object.values(errors).flat().join(' '),
-              color: 'error',
-            }),
-          onFinish: () => resolve(saved),
-        })
+      visit({
+        only: ['customer', 'errors'],
+        preserveScroll: true,
+        preserveState: true,
+        onStart: () => {
+          loading.value = true
+        },
+        onSuccess: () => {
+          saved = true
+          toast.add({ title: 'Changes saved', color: 'success' })
+        },
+        onError: (errors) =>
+          toast.add({
+            title: 'Unable to save changes',
+            description: Object.values(errors).flat().join(' '),
+            color: 'error',
+          }),
+        onFinish: () => {
+          loading.value = false
+          resolve(saved)
+        },
+      })
     })
 
   return {
-    loading: computed(() => form.processing),
-    updateProfile: (body: ProfileInput) => submit('patch', urlFor('account.profile.update'), body),
+    loading: readonly(loading),
+    updateProfile: (body: ProfileInput) =>
+      save((options) => router.patch({ route: 'account.profile.update' }, body, options)),
     createAddress: ({
       address,
       defaultAddress,
     }: {
       address: AddressInput
       defaultAddress?: boolean
-    }) => submit('post', urlFor('account.addresses.create'), { ...address, defaultAddress }),
+    }) =>
+      save((options) =>
+        router.post({ route: 'account.addresses.create' }, { ...address, defaultAddress }, options)
+      ),
     updateAddress: ({
       addressId,
       address,
@@ -55,12 +62,23 @@ export const useAccount = () => {
       address: AddressInput
       defaultAddress?: boolean
     }) =>
-      submit('patch', urlFor('account.addresses.update', { id: addressId }), {
-        ...address,
-        defaultAddress,
-      }),
-    setDefaultAddress: (id: number) => submit('post', urlFor('account.addresses.default', { id })),
+      save((options) =>
+        router.patch(
+          { route: 'account.addresses.update', routeParams: { id: addressId } },
+          { ...address, defaultAddress },
+          options
+        )
+      ),
+    setDefaultAddress: (id: number) =>
+      save((options) =>
+        router.post({ route: 'account.addresses.default', routeParams: { id } }, {}, options)
+      ),
     deleteAddress: ({ addressId }: { addressId: number }) =>
-      submit('delete', urlFor('account.addresses.delete', { id: addressId })),
+      save((options) =>
+        router.delete(
+          { route: 'account.addresses.delete', routeParams: { id: addressId } },
+          options
+        )
+      ),
   }
 }

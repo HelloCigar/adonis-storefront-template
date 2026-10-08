@@ -41,8 +41,9 @@ let pollingDeadline: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
   pollingDeadline = setTimeout(stop, 10 * 60 * 1000)
   if (waiting.value)
-    router.visit(
+    router.post(
       { route: 'checkout.reconciliations.store', routeParams: { publicId: props.status.publicId } },
+      {},
       { preserveScroll: true, preserveState: true }
     )
 })

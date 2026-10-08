@@ -158,7 +158,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
     {
       label: 'Log out',
       icon: 'i-lucide-log-out',
-      onSelect: () => router.visit({ route: 'session.destroy' }),
+      onSelect: () => router.post({ route: 'session.destroy' }),
     },
   ],
 ])

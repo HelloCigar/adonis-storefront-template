@@ -29,7 +29,7 @@ function onSaved() {
 }
 
 function removeAvatar() {
-  router.visit(
+  router.delete(
     { route: 'settings.avatar.destroy' },
     {
       onSuccess: () => {
