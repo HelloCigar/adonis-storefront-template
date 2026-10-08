@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { DateTime } from 'luxon'
+import type { MultipartFile } from '@adonisjs/core/bodyparser'
+import { attachmentManager } from '@jrmc/adonis-attachment'
+import { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
+import OrderMessagePosted from '#events/chat/order_message_posted'
 import type User from '#models/account/user'
 import Order from '#models/checkout/order'
 import OrderMessage, { type ChatSide } from '#models/chat/order_message'
@@ -8,6 +12,7 @@ const roomPrefix = 'order:'
 const threadLimit = 100
 const messageLimit = 200
 export const maxMessageLength = 2000
+export const maxImagesPerMessage = 4
 
 export const inboxFilters = ['all', 'unread'] as const
 export type InboxFilter = (typeof inboxFilters)[number]
@@ -20,7 +25,7 @@ export interface ChatThread {
 
 export default class OrderChatService {
   /** The Socket.IO room for an order. Access is checked again on every join. */
-  roomKey(order: Order) {
+  roomKey(order: Pick<Order, 'id'>) {
     return `${roomPrefix}${order.id}`
   }
 
@@ -35,24 +40,74 @@ export default class OrderChatService {
     return order.userId === user.id ? 'customer' : 'staff'
   }
 
-  /** The newest messages, returned oldest first for display. */
+  /** The newest messages, returned oldest first for display, with their images. */
   async messages(orderId: number) {
     const newestFirst = await OrderMessage.query()
       .where('order_id', orderId)
       .orderBy('id', 'desc')
       .limit(messageLimit)
-    return newestFirst.reverse()
+    const messages = newestFirst.reverse()
+    return { messages, images: await this.imagesFor(messages) }
   }
 
-  async post(input: { order: Order; sender: User; body: string }) {
-    return OrderMessage.create({
-      publicId: randomUUID(),
-      orderId: input.order.id,
-      senderId: input.sender.id,
-      senderRole: this.sideFor(input.sender, input.order),
-      senderName: input.sender.fullName?.trim() || input.sender.email,
-      body: input.body,
+  /**
+   * Stores a message and its images together, then announces it to the order's room.
+   * A failed upload rolls the message back, so a message never appears without its images.
+   */
+  async post(input: { order: Order; sender: User; body: string; images?: MultipartFile[] }) {
+    const message = await OrderMessage.transaction(async (trx) => {
+      const row = new OrderMessage().useTransaction(trx).merge({
+        publicId: randomUUID(),
+        orderId: input.order.id,
+        senderId: input.sender.id,
+        senderRole: this.sideFor(input.sender, input.order),
+        senderName: input.sender.fullName?.trim() || input.sender.email,
+        body: input.body,
+      })
+      if (input.images?.length) {
+        row.images.addMany(await attachmentManager.createFromFiles(input.images))
+      }
+      return row.save()
     })
+    const images = input.images?.length ? await message.images.all() : []
+    await OrderMessagePosted.dispatch(message, images)
+    return { message, images }
+  }
+
+  /**
+   * Image links for many messages in one query, in each message's upload order. Lucid
+   * stores the owner id as text, so match on the stringified message id.
+   */
+  async imagesFor(messages: OrderMessage[]) {
+    if (!messages.length) return []
+    return AttachmentLinkModel.query()
+      .where('attachable_type', OrderMessage.table)
+      .where('field', 'images')
+      .whereIn(
+        'attachable_id',
+        messages.map((message) => String(message.id))
+      )
+      .preload('attachment')
+      .orderBy('position', 'asc')
+  }
+
+  /** The stored image, if it was sent in this order's chat. Access is the caller's job. */
+  async image(order: Order, attachmentId: string) {
+    const links = await AttachmentLinkModel.query()
+      .where('attachable_type', OrderMessage.table)
+      .where('field', 'images')
+      .where('attachment_id', attachmentId)
+      .preload('attachment')
+    if (!links.length) return null
+    const message = await order
+      .related('messages')
+      .query()
+      .whereIn(
+        'id',
+        links.map((link) => Number(link.attachableId))
+      )
+      .first()
+    return links.find((link) => link.attachableId === String(message?.id))?.attachment ?? null
   }
 
   /** Marks everything the other side sent as read by the reader's side. */
@@ -68,7 +123,7 @@ export default class OrderChatService {
   /** Opening a thread reads it; access is the caller's responsibility. */
   async open(order: Order, reader: User, canSend: boolean) {
     await this.markRead(order, reader)
-    return { order, roomKey: this.roomKey(order), canSend, messages: await this.messages(order.id) }
+    return { order, roomKey: this.roomKey(order), canSend, ...(await this.messages(order.id)) }
   }
 
   /**

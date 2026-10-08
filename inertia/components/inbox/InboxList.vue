@@ -54,7 +54,9 @@ function when(thread: Data.Chat.Thread) {
 function preview(thread: Data.Chat.Thread) {
   const message = thread.lastMessage
   if (!message) return 'No messages yet'
-  return message.senderRole === 'staff' ? `${message.senderName}: ${message.body}` : message.body
+  // A message without text carries photos only.
+  const text = message.body || 'Sent a photo'
+  return message.senderRole === 'staff' ? `${message.senderName}: ${text}` : text
 }
 </script>
 

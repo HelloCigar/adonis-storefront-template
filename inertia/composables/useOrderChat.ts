@@ -1,5 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { io, type Socket } from 'socket.io-client'
+import { useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 
 type Side = Data.Chat.Message['senderRole']
@@ -18,6 +19,7 @@ const typingTimeoutMs = 4000
 /**
  * Live order chat over the store's Socket.IO server. Loaded messages come from the page;
  * every (re)join returns the stored thread, so anything sent while away is filled in.
+ * Photos are uploaded over HTTP; the server broadcasts them to the room like any message.
  */
 export function useOrderChat(conversation: Ref<Data.Chat.Conversation>, options: { side: Side }) {
   const messages = ref<Data.Chat.Message[]>([...conversation.value.messages])
@@ -25,6 +27,7 @@ export function useOrderChat(conversation: Ref<Data.Chat.Conversation>, options:
   const error = ref<string | null>(null)
   const typing = ref(false)
   const sending = ref(false)
+  const router = useRouter()
 
   let socket: Socket | undefined
   let joinedRoom: string | undefined
@@ -108,6 +111,37 @@ export function useOrderChat(conversation: Ref<Data.Chat.Conversation>, options:
     })
   }
 
+  /** Uploads photos with an optional caption, then reloads the stored thread. */
+  function sendImages(images: File[], caption: string) {
+    if (!images.length || sending.value) return Promise.resolve(false)
+    sending.value = true
+    stopTyping()
+    return new Promise<boolean>((resolve) => {
+      let sent = false
+      router.post(
+        { route: 'chat.messages.store', routeParams: { orderId: conversation.value.orderId } },
+        { body: caption.trim() || undefined, images },
+        {
+          forceFormData: true,
+          only: ['conversation'],
+          preserveState: true,
+          preserveScroll: true,
+          onSuccess: () => {
+            sent = true
+            error.value = null
+          },
+          onError: (errors: Record<string, string | string[]>) => {
+            error.value = Object.values(errors).flat().join(' ')
+          },
+          onFinish: () => {
+            sending.value = false
+            resolve(sent)
+          },
+        }
+      )
+    })
+  }
+
   function notifyTyping() {
     const now = Date.now()
     if (!joinedRoom || now - lastTypingAt < typingThrottleMs) return
@@ -185,5 +219,15 @@ export function useOrderChat(conversation: Ref<Data.Chat.Conversation>, options:
     }
   )
 
-  return { messages, connection, error, typing, sending, send, notifyTyping, stopTyping }
+  return {
+    messages,
+    connection,
+    error,
+    typing,
+    sending,
+    send,
+    sendImages,
+    notifyTyping,
+    stopTyping,
+  }
 }

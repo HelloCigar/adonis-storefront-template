@@ -24,3 +24,11 @@ export const signupThrottle = limiter.define('signup', (ctx) =>
 export const checkoutThrottle = limiter.define('checkout', (ctx) =>
   limiter.allowRequests(10).every('10 minutes').usingKey(`checkout_${ctx.request.ip()}`)
 )
+
+/** Chat photo uploads per account; text messages are limited inside the chat socket. */
+export const chatImageThrottle = limiter.define('chat_images', (ctx) =>
+  limiter
+    .allowRequests(10)
+    .every('1 minute')
+    .usingKey(`chat_images_${ctx.auth.user?.id ?? ctx.request.ip()}`)
+)

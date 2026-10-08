@@ -19,6 +19,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/storefront_controller').default['index']>>>
     }
   }
+  'attachments.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/attachments/:id/:name?'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/media/attachments_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/media/attachments_controller').default['show']>>>
+    }
+  }
   'collections.index': {
     methods: ["GET","HEAD"]
     pattern: '/collections'
@@ -425,6 +437,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/orders_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/orders_controller').default['show']>>>
+    }
+  }
+  'chat.messages.store': {
+    methods: ["POST"]
+    pattern: '/chat/orders/:orderId/messages'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/chat/message').imageMessageValidator)>>
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/chat/message').imageMessageValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/chat/messages_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/chat/messages_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'chat.images.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/chat/orders/:orderId/images/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { orderId: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/chat/images_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/chat/images_controller').default['show']>>>
     }
   }
   'dashboard': {
