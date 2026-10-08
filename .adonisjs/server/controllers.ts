@@ -16,6 +16,10 @@ export const controllers = {
     NewAccount: () => import('#controllers/auth/new_account_controller'),
     Session: () => import('#controllers/auth/session_controller'),
   },
+  chat: {
+    Images: () => import('#controllers/chat/images_controller'),
+    Messages: () => import('#controllers/chat/messages_controller'),
+  },
   checkout: {
     Cancellations: () => import('#controllers/checkout/cancellations_controller'),
     Checkout: () => import('#controllers/checkout/checkout_controller'),
@@ -33,6 +37,9 @@ export const controllers = {
   dashboard: {
     Dashboard: () => import('#controllers/dashboard/dashboard_controller'),
     Inbox: () => import('#controllers/dashboard/inbox_controller'),
+  },
+  media: {
+    Attachments: () => import('#controllers/media/attachments_controller'),
   },
   payments: {
     Webhooks: () => import('#controllers/payments/webhooks_controller'),
@@ -52,6 +59,7 @@ export const controllers = {
     Products: () => import('#controllers/seller/products_controller'),
     Refunds: () => import('#controllers/seller/refunds_controller'),
     Shipments: () => import('#controllers/seller/shipments_controller'),
+    StockAdjustments: () => import('#controllers/seller/stock_adjustments_controller'),
     Users: () => import('#controllers/seller/users_controller'),
     VariantGeneration: () => import('#controllers/seller/variant_generation_controller'),
     Variants: () => import('#controllers/seller/variants_controller'),

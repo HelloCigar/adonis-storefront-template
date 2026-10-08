@@ -9,6 +9,7 @@ const props = defineProps<{ product: Data.Seller.Product; images: Data.Shared.Me
 const emit = defineEmits<{
   create: []
   edit: [row: Data.Seller.Variant]
+  stock: [row: Data.Seller.Variant]
   delete: [row: Data.Seller.Variant]
   images: []
   generate: []
@@ -38,7 +39,12 @@ const resourceColumns: TableColumn<Data.Seller.Variant>[] = [
   {
     accessorKey: 'inventoryQuantity',
     header: 'Stock',
-    cell: ({ row }) => row.original.inventoryQuantity ?? 'Untracked',
+    cell: ({ row }) =>
+      row.original.inventoryQuantity === null
+        ? 'Untracked'
+        : row.original.inventoryReservedQuantity
+          ? `${row.original.inventoryQuantity} (${row.original.inventoryReservedQuantity} held)`
+          : row.original.inventoryQuantity,
   },
   {
     accessorKey: 'availableForSale',
@@ -109,6 +115,11 @@ const columns = computed<TableColumn<Data.Seller.Variant>[]>(() =>
 function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
   return [
     { label: 'Edit variant', icon: 'i-lucide-pencil', onSelect: () => emit('edit', row) },
+    {
+      label: row.inventoryQuantity === null ? 'Stock history' : 'Adjust stock',
+      icon: 'i-lucide-package-plus',
+      onSelect: () => emit('stock', row),
+    },
     {
       label: 'Delete variant',
       icon: 'i-lucide-trash',

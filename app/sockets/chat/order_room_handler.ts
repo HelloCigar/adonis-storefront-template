@@ -1,11 +1,14 @@
 import { inject } from '@adonisjs/core'
 import app from '@adonisjs/core/services/app'
+import emitter from '@adonisjs/core/services/emitter'
 import logger from '@adonisjs/core/services/logger'
 import { BaseSerializer } from '@adonisjs/core/transformers'
 import { Bouncer } from '@adonisjs/bouncer'
 import limiter from '@adonisjs/limiter/services/main'
 import type { Server, Socket } from 'socket.io'
+import type { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
 import * as abilities from '#abilities/main'
+import OrderMessagePosted from '#events/chat/order_message_posted'
 import { policies } from '#generated/policies'
 import User from '#models/account/user'
 import Order from '#models/checkout/order'
@@ -48,6 +51,8 @@ const notFound = () => new ChatError('NOT_FOUND', 'Conversation not found')
  * Order chat over plain Socket.IO. Every room is one order (`order:<id>`): joining checks
  * order access, every message re-checks that the order still accepts messages, and a
  * message is stored before it is broadcast. Clients choose only the room and the text.
+ * Every stored message, including photos uploaded over HTTP, reaches the room through
+ * `OrderMessagePosted`.
  *
  * Client → server (each takes an acknowledgement callback):
  *   order:join    { roomKey }          → { roomKey, messages }
@@ -61,7 +66,9 @@ const notFound = () => new ChatError('NOT_FOUND', 'Conversation not found')
 export default class ChatOrderRoomHandler {
   constructor(private chat: OrderChatService) {}
 
+  /** Wires the handler to a server. Returns a function that stops room broadcasts. */
   install(io: Server) {
+    const unsubscribe = emitter.on(OrderMessagePosted, (event) => this.broadcast(io, event))
     io.of('/').on('connection', (socket: ChatSocket) => {
       this.handle(socket, 'order:join', (payload) => this.join(socket, payload))
       this.handle(socket, 'order:leave', async (payload) => {
@@ -69,23 +76,37 @@ export default class ChatOrderRoomHandler {
         if (roomKey) await socket.leave(roomKey)
         return null
       })
-      this.handle(socket, 'message:send', (payload) => this.send(io, socket, payload))
+      this.handle(socket, 'message:send', (payload) => this.send(socket, payload))
       this.handle(socket, 'message:read', (payload) => this.read(socket, payload))
       for (const event of ['typing:start', 'typing:stop'] as const) {
         socket.on(event, (payload: unknown) => void this.typing(socket, event, payload))
       }
     })
+    return unsubscribe
   }
 
   private async join(socket: ChatSocket, payload: unknown) {
     const { order } = await this.access(socket, payload, 'view')
     const roomKey = this.chat.roomKey(order)
     await socket.join(roomKey)
-    const messages = await this.chat.messages(order.id)
-    return { roomKey, messages: await Promise.all(messages.map((m) => this.serialize(m))) }
+    const { messages, images } = await this.chat.messages(order.id)
+    return {
+      roomKey,
+      messages: await Promise.all(messages.map((message) => this.serialize(message, images))),
+    }
   }
 
-  private async send(io: Server, socket: ChatSocket, payload: unknown) {
+  /** The message is already stored; a failed broadcast is logged, and a rejoin catches up. */
+  private async broadcast(io: Server, { message, images }: OrderMessagePosted) {
+    try {
+      const roomKey = this.chat.roomKey({ id: message.orderId })
+      io.to(roomKey).emit('message:new', { roomKey, ...(await this.serialize(message, images)) })
+    } catch (error) {
+      logger.error({ err: error, messageId: message.id }, 'order chat broadcast failed')
+    }
+  }
+
+  private async send(socket: ChatSocket, payload: unknown) {
     const roomKey = this.memberRoom(socket, payload)
     const raw = (payload as { body?: unknown } | undefined)?.body
     const body = typeof raw === 'string' ? raw.trim() : ''
@@ -100,10 +121,8 @@ export default class ChatOrderRoomHandler {
     if (!allowed) throw new ChatError('RATE_LIMITED', 'You are sending messages too quickly')
 
     const { user, order } = await this.access(socket, { roomKey }, 'send')
-    const message = await this.chat.post({ order, sender: user, body })
-    const data = { roomKey, ...(await this.serialize(message)) }
-    io.to(roomKey).emit('message:new', data)
-    return data
+    const { message } = await this.chat.post({ order, sender: user, body })
+    return { roomKey, ...(await this.serialize(message)) }
   }
 
   private async read(socket: ChatSocket, payload: unknown) {
@@ -171,9 +190,9 @@ export default class ChatOrderRoomHandler {
     return typeof roomKey === 'string' ? roomKey : null
   }
 
-  private serialize(message: OrderMessage) {
+  private serialize(message: OrderMessage, images: AttachmentLinkModel[] = []) {
     return serializer.serialize(
-      MessageTransformer.transform(message),
+      MessageTransformer.transform(message, images),
       app.container.createResolver()
     )
   }

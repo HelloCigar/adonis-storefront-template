@@ -16,6 +16,10 @@ export default class VariantPolicy extends BasePolicy {
     return this.viewAny(user, product) && variant.productId === product.id
   }
 
+  adjustStock(user: User, variant: ProductVariant, product: Product) {
+    return this.update(user, variant, product)
+  }
+
   delete(user: User, variant: ProductVariant, product: Product) {
     return this.update(user, variant, product)
   }

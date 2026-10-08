@@ -3,6 +3,9 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   home: typeof routes['home']
+  attachments: {
+    show: typeof routes['attachments.show']
+  }
   collections: {
     index: typeof routes['collections.index']
     show: typeof routes['collections.show']
@@ -84,6 +87,14 @@ export interface ApiDefinition {
     index: typeof routes['orders.index']
     show: typeof routes['orders.show']
   }
+  chat: {
+    messages: {
+      store: typeof routes['chat.messages.store']
+    }
+    images: {
+      show: typeof routes['chat.images.show']
+    }
+  }
   dashboard: typeof routes['dashboard']
   inbox: typeof routes['inbox']
   customers: typeof routes['customers']
@@ -117,6 +128,10 @@ export interface ApiDefinition {
     }
     variantGeneration: {
       store: typeof routes['seller.variant_generation.store']
+    }
+    stockAdjustments: {
+      index: typeof routes['seller.stock_adjustments.index']
+      store: typeof routes['seller.stock_adjustments.store']
     }
     images: {
       store: typeof routes['seller.images.store']

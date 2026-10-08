@@ -10,11 +10,15 @@
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
-import { checkoutThrottle, discountThrottle, loginThrottle, signupThrottle } from '#start/limiter'
+
+import { chatImageThrottle, checkoutThrottle, discountThrottle, loginThrottle, signupThrottle } from '#start/limiter'
 
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
 router.get('/', [controllers.storefront.Storefront, 'index']).as('home')
+router
+  .get('/attachments/:id/:name?', [controllers.media.Attachments, 'show'])
+  .as('attachments.show')
 router.get('/collections', [controllers.storefront.Collections, 'index']).as('collections.index')
 router
   .get('/collection/:handle', [controllers.storefront.Collections, 'show'])
@@ -105,6 +109,17 @@ router
     router.get('/account/orders', [controllers.account.Orders, 'index']).as('orders.index')
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
     router
+      .post('/chat/orders/:orderId/messages', [controllers.chat.Messages, 'store'])
+      .where('orderId', router.matchers.number())
+      .as('chat.messages.store')
+      .use(chatImageThrottle)
+    router
+      .get('/chat/orders/:orderId/images/:id', [controllers.chat.Images, 'show'])
+      .where('orderId', router.matchers.number())
+      // Attachment ids are UUIDs, so override the group's numeric id matcher.
+      .where('id', { match: /^[\w-]+$/ })
+      .as('chat.images.show')
+    router
       .group(() => {
         router.get('/dashboard', [controllers.dashboard.Dashboard, 'index']).as('dashboard')
         router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox')
@@ -151,6 +166,18 @@ router
       ])
       .as('variant_generation.store')
     router
+      .get('/products/:productId/variants/:variantId/stock', [
+        controllers.seller.StockAdjustments,
+        'index',
+      ])
+      .as('stock_adjustments.index')
+    router
+      .post('/products/:productId/variants/:variantId/stock', [
+        controllers.seller.StockAdjustments,
+        'store',
+      ])
+      .as('stock_adjustments.store')
+    router
       .post('/products/:productId/images', [controllers.seller.Images, 'store'])
       .as('images.store')
     router
@@ -187,4 +214,5 @@ router
   .as('seller')
   .where('id', router.matchers.number())
   .where('productId', router.matchers.number())
+  .where('variantId', router.matchers.number())
   .use([middleware.auth(), middleware.staff()])

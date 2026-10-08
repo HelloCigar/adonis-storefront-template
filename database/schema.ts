@@ -1082,6 +1082,29 @@ export class ShipmentSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class StockAdjustmentSchema extends BaseModel {
+  static $columns = ['actorId', 'createdAt', 'id', 'note', 'productVariantId', 'quantityAfter', 'quantityBefore', 'reason', 'updatedAt'] as const
+  $columns = StockAdjustmentSchema.$columns
+  @column()
+  declare actorId: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare note: string | null
+  @column()
+  declare productVariantId: number
+  @column()
+  declare quantityAfter: number | null
+  @column()
+  declare quantityBefore: number | null
+  @column()
+  declare reason: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class StockReservationSchema extends BaseModel {
   static $columns = ['createdAt', 'expiresAtMs', 'id', 'orderId', 'productVariantId', 'quantity', 'restockedAt', 'settledAt', 'state', 'updatedAt'] as const
   $columns = StockReservationSchema.$columns

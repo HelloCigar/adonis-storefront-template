@@ -2,6 +2,7 @@ import { ProductVariantSchema } from '#database/schema'
 import CartLine from '#models/checkout/cart_line'
 import OrderLineItem from '#models/checkout/order_line_item'
 import Product from '#models/catalog/product'
+import StockAdjustment from '#models/catalog/stock_adjustment'
 import {
   hasInvalidOptionData,
   optionCombinationKey,
@@ -64,4 +65,7 @@ export default class ProductVariant extends ProductVariantSchema {
 
   @hasMany(() => OrderLineItem, { foreignKey: 'productVariantId' })
   declare orderLineItems: HasMany<typeof OrderLineItem>
+
+  @hasMany(() => StockAdjustment, { foreignKey: 'productVariantId' })
+  declare stockAdjustments: HasMany<typeof StockAdjustment>
 }

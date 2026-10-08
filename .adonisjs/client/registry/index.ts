@@ -12,6 +12,12 @@ const routes = {
     tokens: [{"old":"/","type":0,"val":"/","end":""}],
     types: placeholder as Registry['home']['types'],
   },
+  'attachments.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/attachments/:id/:name?',
+    tokens: [{"old":"/attachments/:id/:name?","type":0,"val":"attachments","end":""},{"old":"/attachments/:id/:name?","type":1,"val":"id","end":""},{"old":"/attachments/:id/:name?","type":3,"val":"name","end":""}],
+    types: placeholder as Registry['attachments.show']['types'],
+  },
   'collections.index': {
     methods: ["GET","HEAD"],
     pattern: '/collections',
@@ -228,6 +234,18 @@ const routes = {
     tokens: [{"old":"/account/orders/:id","type":0,"val":"account","end":""},{"old":"/account/orders/:id","type":0,"val":"orders","end":""},{"old":"/account/orders/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['orders.show']['types'],
   },
+  'chat.messages.store': {
+    methods: ["POST"],
+    pattern: '/chat/orders/:orderId/messages',
+    tokens: [{"old":"/chat/orders/:orderId/messages","type":0,"val":"chat","end":""},{"old":"/chat/orders/:orderId/messages","type":0,"val":"orders","end":""},{"old":"/chat/orders/:orderId/messages","type":1,"val":"orderId","end":""},{"old":"/chat/orders/:orderId/messages","type":0,"val":"messages","end":""}],
+    types: placeholder as Registry['chat.messages.store']['types'],
+  },
+  'chat.images.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/chat/orders/:orderId/images/:id',
+    tokens: [{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"chat","end":""},{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"orders","end":""},{"old":"/chat/orders/:orderId/images/:id","type":1,"val":"orderId","end":""},{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"images","end":""},{"old":"/chat/orders/:orderId/images/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['chat.images.show']['types'],
+  },
   'dashboard': {
     methods: ["GET","HEAD"],
     pattern: '/dashboard',
@@ -353,6 +371,18 @@ const routes = {
     pattern: '/seller/products/:productId/variants/generate',
     tokens: [{"old":"/seller/products/:productId/variants/generate","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/generate","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"generate","end":""}],
     types: placeholder as Registry['seller.variant_generation.store']['types'],
+  },
+  'seller.stock_adjustments.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/products/:productId/variants/:variantId/stock',
+    tokens: [{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"variantId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"stock","end":""}],
+    types: placeholder as Registry['seller.stock_adjustments.index']['types'],
+  },
+  'seller.stock_adjustments.store': {
+    methods: ["POST"],
+    pattern: '/seller/products/:productId/variants/:variantId/stock',
+    tokens: [{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"variantId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"stock","end":""}],
+    types: placeholder as Registry['seller.stock_adjustments.store']['types'],
   },
   'seller.images.store': {
     methods: ["POST"],

@@ -9,14 +9,16 @@ const binaries = {
 }
 
 /**
- * Store attachments locally with Lucid-backed relations. The attachment
- * provider serves public files through its /attachments route.
+ * Store attachments locally with Lucid-backed relations. The package route is off:
+ * `attachments.show` serves public files at the same /attachments URL, and chat
+ * photos are served only through the authorized `chat.images.show` route.
  */
 const attachmentConfig = defineConfig({
   storage: (app) =>
     app.inTest
       ? new LocalFileStorage({ location: app.tmpPath('test-attachments') })
       : LocalFileStorage.fromApp(app),
+  route: false,
   integrations: {
     lucid: {},
   },

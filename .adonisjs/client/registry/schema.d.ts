@@ -19,6 +19,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/storefront_controller').default['index']>>>
     }
   }
+  'attachments.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/attachments/:id/:name?'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/media/attachments_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/media/attachments_controller').default['show']>>>
+    }
+  }
   'collections.index': {
     methods: ["GET","HEAD"]
     pattern: '/collections'
@@ -451,6 +463,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/orders_controller').default['show']>>>
     }
   }
+  'chat.messages.store': {
+    methods: ["POST"]
+    pattern: '/chat/orders/:orderId/messages'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/chat/message').imageMessageValidator)>>
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/chat/message').imageMessageValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/chat/messages_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/chat/messages_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'chat.images.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/chat/orders/:orderId/images/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { orderId: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/chat/images_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/chat/images_controller').default['show']>>>
+    }
+  }
   'dashboard': {
     methods: ["GET","HEAD"]
     pattern: '/dashboard'
@@ -701,6 +737,30 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/seller/variant_generation').variantGenerationValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.stock_adjustments.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/products/:productId/variants/:variantId/stock'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; variantId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['index']>>>
+    }
+  }
+  'seller.stock_adjustments.store': {
+    methods: ["POST"]
+    pattern: '/seller/products/:productId/variants/:variantId/stock'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/stock_adjustment').stockAdjustmentValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; variantId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/stock_adjustment').stockAdjustmentValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'seller.images.store': {
