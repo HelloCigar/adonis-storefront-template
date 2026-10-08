@@ -79,6 +79,8 @@ export type ScannedRoutes = {
     'seller.users.store': { paramsTuple?: []; params?: {} }
     'seller.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.emails.index': { paramsTuple?: []; params?: {} }
+    'seller.emails.show': { paramsTuple: [ParamValue]; params: {'email': ParamValue} }
   }
   GET: {
     'home': { paramsTuple?: []; params?: {} }
@@ -113,6 +115,8 @@ export type ScannedRoutes = {
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
+    'seller.emails.index': { paramsTuple?: []; params?: {} }
+    'seller.emails.show': { paramsTuple: [ParamValue]; params: {'email': ParamValue} }
   }
   HEAD: {
     'home': { paramsTuple?: []; params?: {} }
@@ -147,6 +151,8 @@ export type ScannedRoutes = {
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
+    'seller.emails.index': { paramsTuple?: []; params?: {} }
+    'seller.emails.show': { paramsTuple: [ParamValue]; params: {'email': ParamValue} }
   }
   POST: {
     'cart.add': { paramsTuple?: []; params?: {} }

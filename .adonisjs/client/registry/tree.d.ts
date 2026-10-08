@@ -153,5 +153,9 @@ export interface ApiDefinition {
       update: typeof routes['seller.users.update']
       destroy: typeof routes['seller.users.destroy']
     }
+    emails: {
+      index: typeof routes['seller.emails.index']
+      show: typeof routes['seller.emails.show']
+    }
   }
 }
