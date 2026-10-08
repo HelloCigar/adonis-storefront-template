@@ -3,9 +3,13 @@
  * DO NOT EDIT manually
  */
 
+import ChatOrderMessagePosted from '#events/chat/order_message_posted'
 import CheckoutWorkflowOutboxReady from '#events/checkout/workflow_outbox_ready'
 
 export const events = {
+  chat: {
+    OrderMessagePosted: ChatOrderMessagePosted,
+  },
   checkout: {
     WorkflowOutboxReady: CheckoutWorkflowOutboxReady,
   },

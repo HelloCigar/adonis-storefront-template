@@ -3,6 +3,9 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   home: typeof routes['home']
+  attachments: {
+    show: typeof routes['attachments.show']
+  }
   collections: {
     index: typeof routes['collections.index']
     show: typeof routes['collections.show']
@@ -79,6 +82,14 @@ export interface ApiDefinition {
   orders: {
     index: typeof routes['orders.index']
     show: typeof routes['orders.show']
+  }
+  chat: {
+    messages: {
+      store: typeof routes['chat.messages.store']
+    }
+    images: {
+      show: typeof routes['chat.images.show']
+    }
   }
   dashboard: typeof routes['dashboard']
   inbox: typeof routes['inbox']

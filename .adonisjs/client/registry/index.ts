@@ -12,6 +12,12 @@ const routes = {
     tokens: [{"old":"/","type":0,"val":"/","end":""}],
     types: placeholder as Registry['home']['types'],
   },
+  'attachments.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/attachments/:id/:name?',
+    tokens: [{"old":"/attachments/:id/:name?","type":0,"val":"attachments","end":""},{"old":"/attachments/:id/:name?","type":1,"val":"id","end":""},{"old":"/attachments/:id/:name?","type":3,"val":"name","end":""}],
+    types: placeholder as Registry['attachments.show']['types'],
+  },
   'collections.index': {
     methods: ["GET","HEAD"],
     pattern: '/collections',
@@ -215,6 +221,18 @@ const routes = {
     pattern: '/account/orders/:id',
     tokens: [{"old":"/account/orders/:id","type":0,"val":"account","end":""},{"old":"/account/orders/:id","type":0,"val":"orders","end":""},{"old":"/account/orders/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['orders.show']['types'],
+  },
+  'chat.messages.store': {
+    methods: ["POST"],
+    pattern: '/chat/orders/:orderId/messages',
+    tokens: [{"old":"/chat/orders/:orderId/messages","type":0,"val":"chat","end":""},{"old":"/chat/orders/:orderId/messages","type":0,"val":"orders","end":""},{"old":"/chat/orders/:orderId/messages","type":1,"val":"orderId","end":""},{"old":"/chat/orders/:orderId/messages","type":0,"val":"messages","end":""}],
+    types: placeholder as Registry['chat.messages.store']['types'],
+  },
+  'chat.images.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/chat/orders/:orderId/images/:id',
+    tokens: [{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"chat","end":""},{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"orders","end":""},{"old":"/chat/orders/:orderId/images/:id","type":1,"val":"orderId","end":""},{"old":"/chat/orders/:orderId/images/:id","type":0,"val":"images","end":""},{"old":"/chat/orders/:orderId/images/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['chat.images.show']['types'],
   },
   'dashboard': {
     methods: ["GET","HEAD"],

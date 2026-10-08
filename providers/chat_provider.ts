@@ -5,6 +5,7 @@ import ChatUserMiddleware from '#middleware/chat/user_middleware'
 
 export default class ChatProvider {
   #io?: Server
+  #stopBroadcasts?: () => void
   #closing?: Promise<void>
 
   constructor(protected app: ApplicationService) {}
@@ -31,7 +32,7 @@ export default class ChatProvider {
     io.of('/').use((socket, next) => {
       void authMiddleware.handle(socket, next)
     })
-    orderRooms.install(io)
+    this.#stopBroadcasts = orderRooms.install(io)
     this.#io = io
 
     this.app.container.singleton(Server, () => this.#io!)
@@ -47,6 +48,7 @@ export default class ChatProvider {
     if (this.#closing) return this.#closing
     if (!this.#io) return
 
+    this.#stopBroadcasts?.()
     this.#closing = this.#io.close()
     return this.#closing
   }

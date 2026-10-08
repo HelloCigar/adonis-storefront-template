@@ -28,7 +28,7 @@ export async function startChatServer() {
   const auth = await app.container.make(ChatUserMiddleware)
   socketServer.of('/').use((socket, next) => void auth.handle(socket, next))
   const orderRooms = await app.container.make(ChatOrderRoomHandler)
-  orderRooms.install(socketServer)
+  const stopBroadcasts = orderRooms.install(socketServer)
   await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve))
   const address = httpServer.address()
   if (!address || typeof address === 'string') throw new Error('Missing chat server address')
@@ -126,6 +126,7 @@ export async function startChatServer() {
     },
 
     close() {
+      stopBroadcasts()
       return socketServer.close()
     },
   }
