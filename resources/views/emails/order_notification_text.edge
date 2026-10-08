@@ -1,9 +1,11 @@
 {{{ brandName }}} · Order {{{ orderNumber }}}
 
-{{{ kind === 'receipt' ? 'Payment received' : 'Your order is on its way' }}}
+{{{ kind === 'receipt' ? 'Payment received' : kind === 'delivery' ? 'Your order was delivered' : 'Your order is on its way' }}}
 
 @if(kind === 'receipt')
 Thank you for your order. We received {{{ total }}}, and we'll email you again when it ships.
+@elseif(kind === 'delivery')
+{{{ shipment && shipment.carrier ? shipment.carrier : 'The carrier' }}} has delivered your parcel. Thank you for shopping with us.
 @elseif(shipment && shipment.carrier)
 {{{ shipment.carrier }}} has your parcel.
 @else
@@ -33,7 +35,7 @@ Total: {{{ total }}}
 @end
 @if(address.length)
 
-Delivering to
+{{{ kind === 'delivery' ? 'Delivered to' : 'Delivering to' }}}
 @each(line in address)
 {{{ line }}}
 @end

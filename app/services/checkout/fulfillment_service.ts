@@ -7,7 +7,7 @@ import Shipment from '#models/checkout/shipment'
 import Attempt from '#models/payments/attempt'
 import Payment from '#models/payments/payment'
 import InventoryService from '#services/catalog/inventory_service'
-import StateService from '#services/checkout/state_service'
+import StateService, { isDispatched } from '#services/checkout/state_service'
 import ActivityService from '#services/checkout/activity_service'
 import NotificationIntentService from '#services/checkout/notification_intent_service'
 import CheckoutException from '#exceptions/checkout_exception'
@@ -68,7 +68,7 @@ export default class FulfillmentService {
     return db.transaction(async (trx) => {
       const order = await this.claimOrder(trx, orderId)
       const current = await Shipment.query({ client: trx }).where('order_id', orderId).firstOrFail()
-      if (current.state === 'shipped') {
+      if (isDispatched(current.state)) {
         if (
           current.carrier !== details.carrier ||
           current.trackingNumber !== details.trackingNumber ||
@@ -103,6 +103,36 @@ export default class FulfillmentService {
     })
   }
 
+  /**
+   * Records that the carrier delivered a dispatched parcel. Delivery is a fact staff confirm
+   * after shipping, so it skips the dispatch prerequisites and only requires the shipped state.
+   */
+  async deliver(orderId: number, actor: User) {
+    this.staff(actor)
+    return db.transaction(async (trx) => {
+      await this.claimOrder(trx, orderId)
+      const shipment = await Shipment.query({ client: trx }).where('order_id', orderId).first()
+      if (shipment?.state === 'delivered') return shipment
+      if (shipment?.state !== 'shipped')
+        throw new CheckoutException(
+          'Only a shipped order can be marked as delivered',
+          'E_SHIPMENT_NOT_SHIPPED'
+        )
+      shipment.state = this.states.transition('shipment', shipment.state, 'delivered')
+      shipment.merge({ actorId: actor.id, deliveredAt: DateTime.utc() })
+      await shipment.save()
+      await this.activities.record(
+        trx,
+        orderId,
+        'shipment.delivered',
+        { shipmentId: shipment.id },
+        actor.id
+      )
+      await this.notifications.record(trx, orderId, 'delivery')
+      return shipment
+    })
+  }
+
   async cancel(orderId: number, actor: User) {
     this.staff(actor)
     return db.transaction(async (trx) => {
@@ -114,7 +144,7 @@ export default class FulfillmentService {
           'E_ORDER_CANCEL'
         )
       const shipment = await Shipment.query({ client: trx }).where('order_id', orderId).first()
-      if (shipment?.state === 'shipped')
+      if (isDispatched(shipment?.state))
         throw new CheckoutException('A shipped order cannot be cancelled', 'E_ORDER_CANCEL_SHIPPED')
       const active = await Attempt.query({ client: trx })
         .where('order_id', orderId)

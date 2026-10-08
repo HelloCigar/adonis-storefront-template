@@ -44,6 +44,8 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
             carrier: this.resource.shipments[0].carrier,
             trackingNumber: this.resource.shipments[0].trackingNumber,
             trackingUrl: this.resource.shipments[0].trackingUrl,
+            shippedAt: this.resource.shipments[0].shippedAt,
+            deliveredAt: this.resource.shipments[0].deliveredAt,
           }
         : null,
       payments: (this.resource.payments ?? []).map((payment) => ({

@@ -282,6 +282,35 @@ test.group('Staff order hardening', (group) => {
     assert.equal(await page.getByRole('link', { name: 'Track shipment', exact: true }).count(), 0)
   })
 
+  test('staff confirm delivery of a shipped order from the detail page', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const { order, staff } = await confirmedOrder()
+    const fulfillment = await app.container.make(FulfillmentService)
+    await fulfillment.pack(order.id, staff)
+    await fulfillment.ship(order.id, staff, {
+      carrier: 'Sample Carrier',
+      trackingNumber: 'DELIVER-ME',
+    })
+    await browserContext.loginAs(staff)
+    const page = await visit(`/seller/orders/${order.id}`)
+    await page.getByRole('heading', { name: 'Shipment recorded', exact: true }).waitFor()
+    await page.getByText('In transit', { exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Mark as delivered', exact: true }).click()
+    await page.getByRole('heading', { name: 'Order delivered', exact: true }).waitFor()
+    await page.getByText('Delivery recorded', { exact: true }).first().waitFor()
+    assert.equal(
+      await page.getByRole('button', { name: 'Mark as delivered', exact: true }).count(),
+      0
+    )
+    const shipment = await Shipment.findByOrFail('orderId', order.id)
+    assert.equal(shipment.state, 'delivered')
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: '.impeccable/review/delivered-mobile.png', fullPage: true })
+  })
+
   test('captured payment and refund records retain their original currency', async ({
     visit,
     browserContext,

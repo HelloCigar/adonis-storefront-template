@@ -6,7 +6,7 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 @inject()
 export default class NotificationIntentService {
   constructor(private outbox: OutboxService) {}
-  async record(trx: TransactionClientContract, orderId: number, kind: 'receipt' | 'shipment') {
+  async record(trx: TransactionClientContract, orderId: number, kind: Notification['kind']) {
     const notification = await Notification.firstOrCreate(
       { orderId, kind },
       { state: 'pending' },

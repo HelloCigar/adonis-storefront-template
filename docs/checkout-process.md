@@ -27,15 +27,22 @@ flowchart TD
   shippable -->|No| review["Staff resolves payment or refund review"]
   review --> shippable
   ship --> shipped["Shipped order"]
+  shipped --> deliver["Delivery transaction<br/>Staff confirm the carrier delivered it<br/>Save activity and delivery notification intent"]
+  deliver --> delivered["Delivered order"]
   settle -.-> receipt["Queued receipt email"]
   ship -.-> notice["Queued shipping email"]
+  deliver -.-> deliveryNotice["Queued delivery email"]
   hosted -.-> return["Browser return: private order status page"]
   receipt -.-> return
   notice -.-> return
+  deliveryNotice -.-> return
   shipped -.-> return
+  delivered -.-> return
 ```
 
 The return page reads saved status; payment confirmation comes from a verified provider observation. Duplicate captures do not consume stock again. Mismatched totals, extra captures, or a payment arriving after stock release require review before fulfillment. Guest links use hashed capabilities; linking an optional account requires valid order access.
+
+Delivery is a staff confirmation after dispatch, not a carrier integration. Only a shipped shipment moves to `delivered`; repeating the action returns the saved delivery without a second activity or email. A delivered order keeps every shipped-order guard, so it cannot be cancelled or refunded through these actions.
 
 ## Events and durable work
 
@@ -89,6 +96,6 @@ flowchart TD
   outcome -->|Failed or unsafe to replay| refundReview["Staff refund review"]
 ```
 
-Cancellation restores goods and requests refunds atomically; financial status changes only when refund success is confirmed. A refund requested without cancellation does not restock goods. Shipped orders cannot use these cancellation or refund actions. Pending refunds and unresolved payment/refund review block shipment.
+Cancellation restores goods and requests refunds atomically; financial status changes only when refund success is confirmed. A refund requested without cancellation does not restock goods. Shipped and delivered orders cannot use these cancellation or refund actions. Pending refunds and unresolved payment/refund review block shipment.
 
 See [payment contracts](../PAYMENTS.md), [operations and recovery](checkout-operations.md), and the [technical plan](plans/2026-10-03-cart-to-shipping.md).

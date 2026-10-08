@@ -14,13 +14,24 @@ const router = useRouter()
 const waiting = computed(
   () => props.status.lifecycleState === 'pending_payment' && !props.status.reviewRequired
 )
+const shipmentState = computed(() => props.status.shipment?.state)
+const dispatched = computed(() => ['shipped', 'delivered'].includes(shipmentState.value ?? ''))
+const deliveredOn = computed(() =>
+  props.status.shipment?.deliveredAt
+    ? new Intl.DateTimeFormat('en-PH', { dateStyle: 'long', timeZone: 'Asia/Manila' }).format(
+        new Date(props.status.shipment.deliveredAt)
+      )
+    : null
+)
 const title = computed(() => {
   if (props.status.reviewRequired) return 'We’re checking your payment'
   if (props.status.closing && waiting.value) return 'Cancelling your checkout'
   if (props.status.lifecycleState === 'confirmed')
-    return props.status.shipment?.state === 'shipped'
-      ? 'Your order is on its way'
-      : 'Payment received'
+    return shipmentState.value === 'delivered'
+      ? 'Your order was delivered'
+      : dispatched.value
+        ? 'Your order is on its way'
+        : 'Payment received'
   if (props.status.lifecycleState === 'cancelled') return 'Order cancelled'
   if (props.status.lifecycleState === 'expired') return 'Checkout expired'
   return props.status.checkoutUrl ? 'Your order is ready to pay' : 'Preparing your payment'
@@ -61,6 +72,10 @@ onUnmounted(() => {
       <p v-if="status.reviewRequired" class="text-muted mt-3">
         Keep this page and your receipt. Our team will check the payment before dispatching your
         order.
+      </p>
+      <p v-else-if="shipmentState === 'delivered'" class="text-muted mt-3">
+        {{ deliveredOn ? `Delivered on ${deliveredOn}.` : 'Your parcel was delivered.' }}
+        Thank you for shopping with us.
       </p>
       <p v-else-if="status.lifecycleState === 'confirmed'" class="text-muted mt-3">
         Your receipt is being sent to {{ status.order.email }}.
@@ -110,8 +125,10 @@ onUnmounted(() => {
         Stock hold ends {{ new Date(status.expiresAtMs).toLocaleTimeString() }}.
       </p>
     </UCard>
-    <UCard v-if="status.shipment?.state === 'shipped'" class="mb-6">
-      <h2 class="font-semibold">Delivery tracking</h2>
+    <UCard v-if="status.shipment && dispatched" class="mb-6">
+      <h2 class="font-semibold">
+        {{ shipmentState === 'delivered' ? 'Delivered' : 'Delivery tracking' }}
+      </h2>
       <p class="text-sm mt-2">
         {{ status.shipment.carrier }} · {{ status.shipment.trackingNumber }}
       </p>

@@ -135,6 +135,9 @@ export interface ApiDefinition {
     shipments: {
       store: typeof routes['seller.shipments.store']
     }
+    deliveries: {
+      store: typeof routes['seller.deliveries.store']
+    }
     refunds: {
       store: typeof routes['seller.refunds.store']
     }

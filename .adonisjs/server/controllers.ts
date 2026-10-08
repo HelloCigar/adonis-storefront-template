@@ -40,6 +40,7 @@ export const controllers = {
     Cancellations: () => import('#controllers/seller/cancellations_controller'),
     Collections: () => import('#controllers/seller/collections_controller'),
     Customers: () => import('#controllers/seller/customers_controller'),
+    Deliveries: () => import('#controllers/seller/deliveries_controller'),
     Images: () => import('#controllers/seller/images_controller'),
     Operations: () => import('#controllers/seller/operations_controller'),
     Options: () => import('#controllers/seller/options_controller'),
