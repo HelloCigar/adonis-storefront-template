@@ -14,6 +14,7 @@ import QuoteService from '#services/checkout/quote_service'
 import OrderAccessService from '#services/checkout/order_access_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
+import DiscountService from '#services/checkout/discount_service'
 import InventoryService from '#services/catalog/inventory_service'
 import PaymentService from '#services/payments/payment_service'
 import CheckoutException from '#exceptions/checkout_exception'
@@ -30,6 +31,7 @@ export default class CheckoutService {
     private outbox: OutboxService,
     private activities: ActivityService,
     private inventory: InventoryService,
+    private discounts: DiscountService,
     private payments: PaymentService
   ) {}
 
@@ -53,6 +55,7 @@ export default class CheckoutService {
         const deadline = Date.now() + checkout.reservationTtlMs
         const order = await this.createOrder(trx, { cart, userId, input, quote, fingerprint })
         await this.inventory.reserve(trx, order.id, quote.lines, deadline)
+        if (quote.discount) await this.discounts.redeem(trx, order, quote.discount, input.email)
         const attempt = await this.createAttempt(trx, {
           order,
           input,
@@ -141,7 +144,8 @@ export default class CheckoutService {
         subtotalMinor: quote.subtotalMinor,
         shippingMinor: quote.shippingMinor,
         totalMinor: quote.totalMinor,
-        discountMinor: 0,
+        discountMinor: quote.discountMinor,
+        discountCode: quote.discount?.code ?? null,
         taxMinor: 0,
         processedAt: DateTime.utc(),
         note: input.note ?? null,
@@ -167,7 +171,7 @@ export default class CheckoutService {
         quantity: line.quantity,
         unitPriceMinor: line.unitAmount,
         totalMinor: line.totalAmount,
-        discountMinor: 0,
+        discountMinor: line.discountAmount,
         currencyCode: quote.currency,
       }))
     )
@@ -214,11 +218,7 @@ export default class CheckoutService {
           currency: quote.currency,
           idempotencyKey,
           items: [
-            ...quote.lines.map((line) => ({
-              name: `${line.title} — ${line.variantTitle}`,
-              unitAmount: line.unitAmount,
-              quantity: line.quantity,
-            })),
+            ...this.providerLines(quote),
             { name: 'Shipping', unitAmount: quote.shippingMinor, quantity: 1 },
           ],
           successUrl: orderUrl,
@@ -233,6 +233,22 @@ export default class CheckoutService {
       },
       { client: trx }
     )
+  }
+
+  /**
+   * Provider line items must sum to the frozen total and carry positive amounts. A discounted
+   * line keeps its quantity when the discount divides evenly per unit; otherwise it is sent as
+   * one line at its discounted total. A fully discounted line is left out.
+   */
+  private providerLines(quote: Quote) {
+    return quote.lines.flatMap((line) => {
+      const name = `${line.title} — ${line.variantTitle}`
+      const net = line.totalAmount - line.discountAmount
+      if (net <= 0) return []
+      if (net % line.quantity === 0)
+        return [{ name, unitAmount: net / line.quantity, quantity: line.quantity }]
+      return [{ name: `${name} × ${line.quantity}`, unitAmount: net, quantity: 1 }]
+    })
   }
 
   private async replay(cartToken: string, key: string, fingerprint: string) {

@@ -25,6 +25,10 @@ export const checkoutThrottle = limiter.define('checkout', (ctx) =>
   limiter.allowRequests(10).every('10 minutes').usingKey(`checkout_${ctx.request.ip()}`)
 )
 
+/** Discount code attempts, so codes cannot be guessed by enumeration. */
+export const discountThrottle = limiter.define('discount', (ctx) =>
+  limiter.allowRequests(20).every('10 minutes').usingKey(`discount_${ctx.request.ip()}`)
+                                               
 /** Chat photo uploads per account; text messages are limited inside the chat socket. */
 export const chatImageThrottle = limiter.define('chat_images', (ctx) =>
   limiter

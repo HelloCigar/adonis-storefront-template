@@ -6,11 +6,11 @@ This is the implemented flow for one shared store: guest checkout with an option
 
 ```mermaid
 flowchart TD
-  cart["Customer edits cart"] --> quote["Server quotes current prices and stock<br/>Items plus PHP 100 shipping"]
+  cart["Customer edits cart"] --> quote["Server quotes current prices, stock and any discount code<br/>Items less discount plus PHP 100 shipping"]
   quote --> submit["Customer submits contact and shipping details"]
   submit --> valid{"Quote, cart version<br/>and stock still valid?"}
   valid -->|No| quote
-  valid -->|Yes| freeze["Checkout transaction<br/>Freeze cart and order snapshots<br/>Reserve stock and save payment attempt<br/>Save private access grant, activity and outbox work"]
+  valid -->|Yes| freeze["Checkout transaction<br/>Freeze cart and order snapshots<br/>Reserve stock and save payment attempt<br/>Count discount code use<br/>Save private access grant, activity and outbox work"]
   freeze --> committed["Commit: order awaits payment"]
   committed -.-> create["Queued checkout creation"]
   create --> service["Unified PaymentService<br/>Routes the saved provider and mode"]
@@ -81,13 +81,13 @@ flowchart TD
   unpaid["Unpaid order: cancellation or hold deadline"] --> close["Queue closure of original hosted checkout"]
   close --> result{"Verified provider outcome?"}
   result -->|Captured payment| settle["Apply verified settlement<br/>Late captures require review"]
-  result -->|Closed unpaid| release["Transaction releases stock once<br/>Order becomes cancelled or expired"]
+  result -->|Closed unpaid| release["Transaction releases stock and discount use once<br/>Order becomes cancelled or expired"]
   result -->|Unknown| hold["Keep stock holds and saved operation<br/>Reconcile original resource"]
   hold -.-> reconcile["Recovery sweep or authorized staff retry"]
   reconcile --> result
   hold --> unsafe["Replay window elapsed, account changed<br/>or retries exhausted: staff review"]
 
-  paid["Paid, unshipped order"] --> cancel["Staff cancellation transaction<br/>Serialize with shipping and refund creation<br/>Restock once, cancel order and shipment<br/>Save outstanding full-refund intents"]
+  paid["Paid, unshipped order"] --> cancel["Staff cancellation transaction<br/>Serialize with shipping and refund creation<br/>Restock and release discount use once, cancel order and shipment<br/>Save outstanding full-refund intents"]
   cancel -.-> refund["Queued refund through unified PaymentService<br/>Use original provider, mode and stable key"]
   refund --> outcome{"Verified refund outcome?"}
   outcome -->|Succeeded| refunded["Save confirmed refund observation<br/>Update financial balance"]

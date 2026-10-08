@@ -10,7 +10,8 @@
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
-import { chatImageThrottle, checkoutThrottle, loginThrottle, signupThrottle } from '#start/limiter'
+
+import { chatImageThrottle, checkoutThrottle, discountThrottle, loginThrottle, signupThrottle } from '#start/limiter'
 
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
@@ -40,6 +41,13 @@ router
   .post('/checkout', [controllers.checkout.Checkout, 'store'])
   .as('checkout.store')
   .use(checkoutThrottle)
+router
+  .post('/checkout/discount', [controllers.checkout.Discounts, 'store'])
+  .as('checkout.discount.store')
+  .use(discountThrottle)
+router
+  .delete('/checkout/discount', [controllers.checkout.Discounts, 'destroy'])
+  .as('checkout.discount.destroy')
 router
   .get('/checkout/orders/:publicId/access', [controllers.checkout.OrderAccess, 'show'])
   .as('checkout.access.show')
@@ -179,6 +187,9 @@ router
       .as('images.destroy')
     router
       .resource('collections', controllers.seller.Collections)
+      .only(['index', 'store', 'update', 'destroy'])
+    router
+      .resource('discounts', controllers.seller.Discounts)
       .only(['index', 'store', 'update', 'destroy'])
     router.resource('orders', controllers.seller.Orders).only(['index', 'show', 'update'])
     router.post('/orders/:id/packing', [controllers.seller.Packing, 'store']).as('packing.store')

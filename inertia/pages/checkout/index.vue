@@ -4,6 +4,7 @@ import { Head, usePage } from '@inertiajs/vue3'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import AddressFields from '~/components/checkout/AddressFields.vue'
+import DiscountCode from '~/components/checkout/DiscountCode.vue'
 defineProps<{ quote: Data.Checkout.Quote | null; checkoutError: string | null }>()
 const page = usePage()
 const separateBilling = ref(false)
@@ -85,10 +86,15 @@ const money = (amount: number) =>
             <span class="shrink-0">{{ money(line.totalAmount) }}</span>
           </li>
         </ul>
+        <DiscountCode :discount="quote.discount" :error="quote.discountError" />
         <dl class="space-y-3 border-t border-default mt-5 pt-5 text-sm">
           <div class="flex justify-between">
             <dt>Subtotal</dt>
             <dd>{{ money(quote.subtotalMinor) }}</dd>
+          </div>
+          <div v-if="quote.discount" class="flex justify-between text-success">
+            <dt>Discount ({{ quote.discount.code }})</dt>
+            <dd>−{{ money(quote.discount.amountMinor) }}</dd>
           </div>
           <div class="flex justify-between">
             <dt>Shipping</dt>

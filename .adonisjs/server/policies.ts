@@ -5,6 +5,7 @@ export const policies = {
   ChatOrderPolicy: () => import('#policies/chat/order_policy'),
   SellerAccessPolicy: () => import('#policies/seller/access_policy'),
   SellerCollectionPolicy: () => import('#policies/seller/collection_policy'),
+  SellerDiscountPolicy: () => import('#policies/seller/discount_policy'),
   SellerImagePolicy: () => import('#policies/seller/image_policy'),
   SellerOrderPolicy: () => import('#policies/seller/order_policy'),
   SellerProductPolicy: () => import('#policies/seller/product_policy'),

@@ -395,7 +395,7 @@ export class CartLineSchema extends BaseModel {
 }
 
 export class CartSchema extends BaseModel {
-  static $columns = ['completedAt', 'createdAt', 'currencyCode', 'email', 'expiresAt', 'id', 'status', 'submissionKey', 'token', 'updatedAt', 'userId', 'version'] as const
+  static $columns = ['completedAt', 'createdAt', 'currencyCode', 'discountCode', 'email', 'expiresAt', 'id', 'status', 'submissionKey', 'token', 'updatedAt', 'userId', 'version'] as const
   $columns = CartSchema.$columns
   @column.dateTime()
   declare completedAt: DateTime | null
@@ -403,6 +403,8 @@ export class CartSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare currencyCode: string
+  @column()
+  declare discountCode: string | null
   @column()
   declare email: string | null
   @column.dateTime()
@@ -515,6 +517,62 @@ export class DevPaymentResourceSchema extends BaseModel {
   declare paymentId: string | null
   @column()
   declare version: number
+}
+
+export class DiscountCodeSchema extends BaseModel {
+  static $columns = ['active', 'amountOffMinor', 'code', 'createdAt', 'createdById', 'description', 'endsAt', 'id', 'kind', 'minimumSubtotalMinor', 'oncePerCustomer', 'percentOff', 'startsAt', 'timesUsed', 'updatedAt', 'usageLimit'] as const
+  $columns = DiscountCodeSchema.$columns
+  @column({ consume: (value)=>Boolean(value) })
+  declare active: boolean
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountOffMinor: number | null
+  @column()
+  declare code: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare createdById: number | null
+  @column()
+  declare description: string | null
+  @column.dateTime()
+  declare endsAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare kind: string
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare minimumSubtotalMinor: number
+  @column({ consume: (value)=>Boolean(value) })
+  declare oncePerCustomer: boolean
+  @column()
+  declare percentOff: number | null
+  @column.dateTime()
+  declare startsAt: DateTime | null
+  @column()
+  declare timesUsed: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare usageLimit: number | null
+}
+
+export class DiscountRedemptionSchema extends BaseModel {
+  static $columns = ['amountMinor', 'createdAt', 'customerKey', 'discountCodeId', 'id', 'orderId', 'releasedAt'] as const
+  $columns = DiscountRedemptionSchema.$columns
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountMinor: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare customerKey: string | null
+  @column()
+  declare discountCodeId: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare orderId: number
+  @column.dateTime()
+  declare releasedAt: DateTime | null
 }
 
 export class OrderAccessGrantSchema extends BaseModel {
@@ -682,7 +740,7 @@ export class OrderNotificationSchema extends BaseModel {
 }
 
 export class OrderSchema extends BaseModel {
-  static $columns = ['cancelledAt', 'cartId', 'createdAt', 'currencyCode', 'discountMinor', 'email', 'financialStatus', 'fulfillmentStatus', 'id', 'inputFingerprint', 'lifecycleState', 'note', 'number', 'paidAt', 'phoneNumber', 'processedAt', 'publicId', 'reviewReason', 'shippingMinor', 'source', 'submissionKey', 'subtotalMinor', 'taxMinor', 'totalMinor', 'updatedAt', 'userId', 'version'] as const
+  static $columns = ['cancelledAt', 'cartId', 'createdAt', 'currencyCode', 'discountCode', 'discountMinor', 'email', 'financialStatus', 'fulfillmentStatus', 'id', 'inputFingerprint', 'lifecycleState', 'note', 'number', 'paidAt', 'phoneNumber', 'processedAt', 'publicId', 'reviewReason', 'shippingMinor', 'source', 'submissionKey', 'subtotalMinor', 'taxMinor', 'totalMinor', 'updatedAt', 'userId', 'version'] as const
   $columns = OrderSchema.$columns
   @column.dateTime()
   declare cancelledAt: DateTime | null
@@ -692,6 +750,8 @@ export class OrderSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare currencyCode: string
+  @column()
+  declare discountCode: string | null
   @column({ consume: (value)=>value === null ? null : Number(value) })
   declare discountMinor: number
   @column()

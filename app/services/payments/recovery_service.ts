@@ -15,6 +15,7 @@ import CheckoutException from '#exceptions/checkout_exception'
 import PaymentService, { type CheckoutSession } from '#services/payments/payment_service'
 import SettlementService from '#services/payments/settlement_service'
 import InventoryService from '#services/catalog/inventory_service'
+import DiscountService from '#services/checkout/discount_service'
 import StateService from '#services/checkout/state_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
@@ -27,7 +28,8 @@ export default class RecoveryService {
     private inventory: InventoryService,
     private states: StateService,
     private outbox: OutboxService,
-    private activities: ActivityService
+    private activities: ActivityService,
+    private discounts: DiscountService
   ) {}
 
   async run(id: number, expire = false) {
@@ -309,6 +311,7 @@ export default class RecoveryService {
     const order = await Order.findOrFail(attempt.orderId, { client: trx })
     if (order.lifecycleState !== 'pending_payment') return
     await this.inventory.release(trx, order.id)
+    await this.discounts.release(trx, order.id)
     attempt.state = 'expired'
     attempt.merge(leaseReleased())
     attempt.checkoutUrl = null

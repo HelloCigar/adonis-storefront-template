@@ -51,6 +51,14 @@ const links = computed(
                 },
               },
               {
+                label: 'Discounts',
+                icon: 'i-lucide-ticket-percent',
+                to: urlFor('seller.discounts.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
+              {
                 label: 'Orders',
                 icon: 'i-lucide-shopping-bag',
                 to: urlFor('seller.orders.index'),

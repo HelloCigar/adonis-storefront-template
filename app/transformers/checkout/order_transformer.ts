@@ -21,6 +21,7 @@ export default class OrderTransformer extends BaseTransformer<Order> {
         'fulfillmentStatus',
         'subtotalAmount',
         'discountAmount',
+        'discountCode',
         'shippingAmount',
         'taxAmount',
         'totalAmount',
