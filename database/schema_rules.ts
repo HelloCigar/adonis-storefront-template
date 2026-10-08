@@ -25,6 +25,14 @@ export default {
     },
   },
   tables: {
+    blog_posts: {
+      columns: {
+        content: {
+          tsType: 'Record<string, unknown>',
+          decorators: [{ name: '@column' }],
+        },
+      },
+    },
     products: {
       columns: {
         option_definitions: {

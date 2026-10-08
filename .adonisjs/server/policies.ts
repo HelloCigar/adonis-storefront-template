@@ -8,6 +8,7 @@ export const policies = {
   SellerDiscountPolicy: () => import('#policies/seller/discount_policy'),
   SellerImagePolicy: () => import('#policies/seller/image_policy'),
   SellerOrderPolicy: () => import('#policies/seller/order_policy'),
+  SellerPostPolicy: () => import('#policies/seller/post_policy'),
   SellerProductPolicy: () => import('#policies/seller/product_policy'),
   SellerUserPolicy: () => import('#policies/seller/user_policy'),
   SellerVariantPolicy: () => import('#policies/seller/variant_policy'),

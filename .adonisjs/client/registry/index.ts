@@ -444,6 +444,42 @@ const routes = {
     tokens: [{"old":"/seller/discounts/:id","type":0,"val":"seller","end":""},{"old":"/seller/discounts/:id","type":0,"val":"discounts","end":""},{"old":"/seller/discounts/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.discounts.destroy']['types'],
   },
+  'seller.posts.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/posts',
+    tokens: [{"old":"/seller/posts","type":0,"val":"seller","end":""},{"old":"/seller/posts","type":0,"val":"posts","end":""}],
+    types: placeholder as Registry['seller.posts.index']['types'],
+  },
+  'seller.posts.create': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/posts/create',
+    tokens: [{"old":"/seller/posts/create","type":0,"val":"seller","end":""},{"old":"/seller/posts/create","type":0,"val":"posts","end":""},{"old":"/seller/posts/create","type":0,"val":"create","end":""}],
+    types: placeholder as Registry['seller.posts.create']['types'],
+  },
+  'seller.posts.store': {
+    methods: ["POST"],
+    pattern: '/seller/posts',
+    tokens: [{"old":"/seller/posts","type":0,"val":"seller","end":""},{"old":"/seller/posts","type":0,"val":"posts","end":""}],
+    types: placeholder as Registry['seller.posts.store']['types'],
+  },
+  'seller.posts.edit': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/posts/:id/edit',
+    tokens: [{"old":"/seller/posts/:id/edit","type":0,"val":"seller","end":""},{"old":"/seller/posts/:id/edit","type":0,"val":"posts","end":""},{"old":"/seller/posts/:id/edit","type":1,"val":"id","end":""},{"old":"/seller/posts/:id/edit","type":0,"val":"edit","end":""}],
+    types: placeholder as Registry['seller.posts.edit']['types'],
+  },
+  'seller.posts.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/seller/posts/:id',
+    tokens: [{"old":"/seller/posts/:id","type":0,"val":"seller","end":""},{"old":"/seller/posts/:id","type":0,"val":"posts","end":""},{"old":"/seller/posts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.posts.update']['types'],
+  },
+  'seller.posts.destroy': {
+    methods: ["DELETE"],
+    pattern: '/seller/posts/:id',
+    tokens: [{"old":"/seller/posts/:id","type":0,"val":"seller","end":""},{"old":"/seller/posts/:id","type":0,"val":"posts","end":""},{"old":"/seller/posts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.posts.destroy']['types'],
+  },
   'seller.orders.index': {
     methods: ["GET","HEAD"],
     pattern: '/seller/orders',

@@ -77,6 +77,12 @@ export type ScannedRoutes = {
     'seller.discounts.store': { paramsTuple?: []; params?: {} }
     'seller.discounts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.discounts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.index': { paramsTuple?: []; params?: {} }
+    'seller.posts.create': { paramsTuple?: []; params?: {} }
+    'seller.posts.store': { paramsTuple?: []; params?: {} }
+    'seller.posts.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -127,6 +133,9 @@ export type ScannedRoutes = {
     'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
     'seller.discounts.index': { paramsTuple?: []; params?: {} }
+    'seller.posts.index': { paramsTuple?: []; params?: {} }
+    'seller.posts.create': { paramsTuple?: []; params?: {} }
+    'seller.posts.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
@@ -167,6 +176,9 @@ export type ScannedRoutes = {
     'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
     'seller.discounts.index': { paramsTuple?: []; params?: {} }
+    'seller.posts.index': { paramsTuple?: []; params?: {} }
+    'seller.posts.create': { paramsTuple?: []; params?: {} }
+    'seller.posts.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
@@ -197,6 +209,7 @@ export type ScannedRoutes = {
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.collections.store': { paramsTuple?: []; params?: {} }
     'seller.discounts.store': { paramsTuple?: []; params?: {} }
+    'seller.posts.store': { paramsTuple?: []; params?: {} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.shipments.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.deliveries.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -214,6 +227,7 @@ export type ScannedRoutes = {
     'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.discounts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
@@ -227,6 +241,7 @@ export type ScannedRoutes = {
     'seller.images.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.discounts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   PUT: {
@@ -234,6 +249,7 @@ export type ScannedRoutes = {
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.discounts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.posts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }

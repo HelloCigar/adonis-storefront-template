@@ -1,0 +1,48 @@
+import { inject } from '@adonisjs/core'
+import { errors } from '@vinejs/vine'
+import type { Infer } from '@vinejs/vine/types'
+import { DateTime } from 'luxon'
+import type BlogPost from '#models/content/blog_post'
+import RichTextService from '#services/content/rich_text_service'
+import type { postValidator } from '#validators/seller/post'
+
+export type PostPayload = Infer<typeof postValidator>
+
+/** Largest stored document, so one post cannot bloat every page that lists it. */
+const MAX_CONTENT_BYTES = 512 * 1024
+
+@inject()
+export default class SellerPostService {
+  constructor(private richText: RichTextService) {}
+
+  /**
+   * Saves the normalized document and the HTML rendered from it together, so `content_html`
+   * always matches `content`. Publishing without a date publishes now and keeps the original
+   * date on later edits; a future date schedules the post.
+   */
+  async save(post: BlogPost, payload: PostPayload, actorId: number) {
+    const content = this.richText.normalize(payload.content)
+    if (Buffer.byteLength(JSON.stringify(content)) > MAX_CONTENT_BYTES)
+      throw new errors.E_VALIDATION_ERROR([
+        { field: 'content', rule: 'maxSize', message: 'The post is too long' },
+      ])
+    const published = payload.status === 'published'
+    if (published && !this.richText.hasContent(content))
+      throw new errors.E_VALIDATION_ERROR([
+        { field: 'content', rule: 'required', message: 'Write the post before publishing it' },
+      ])
+    post.merge({
+      title: payload.title,
+      handle: payload.handle,
+      excerpt: payload.excerpt || null,
+      content,
+      contentHtml: this.richText.toHtml(content),
+      status: payload.status,
+      publishedAt:
+        payload.publishedAt?.toUTC() ?? (published ? (post.publishedAt ?? DateTime.utc()) : null),
+    })
+    if (!post.$isPersisted) post.authorId = actorId
+    await post.save()
+    return post
+  }
+}
