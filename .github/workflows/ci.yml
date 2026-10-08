@@ -14,6 +14,10 @@ permissions:
 
 env:
   NODE_VERSION: 24
+  # Runners resolve localhost to both ::1 and 127.0.0.1. Tests run the HTTP server and client in
+  # one process, so a busy event loop can time out the first connection attempt and fall through to
+  # the address the server is not bound to. One address avoids that. Overrides HOST from .env.
+  HOST: 127.0.0.1
 
 jobs:
   checks:
