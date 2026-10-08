@@ -8,9 +8,6 @@ import type { postValidator } from '#validators/seller/post'
 
 export type PostPayload = Infer<typeof postValidator>
 
-/** Largest stored document, so one post cannot bloat every page that lists it. */
-const MAX_CONTENT_BYTES = 512 * 1024
-
 @inject()
 export default class SellerPostService {
   constructor(private richText: RichTextService) {}
@@ -22,10 +19,6 @@ export default class SellerPostService {
    */
   async save(post: BlogPost, payload: PostPayload, actorId: number) {
     const content = this.richText.normalize(payload.content)
-    if (Buffer.byteLength(JSON.stringify(content)) > MAX_CONTENT_BYTES)
-      throw new errors.E_VALIDATION_ERROR([
-        { field: 'content', rule: 'maxSize', message: 'The post is too long' },
-      ])
     const published = payload.status === 'published'
     if (published && !this.richText.hasContent(content))
       throw new errors.E_VALIDATION_ERROR([

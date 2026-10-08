@@ -52,7 +52,12 @@ function stringAttr(attrs: unknown, key: string, maxLength = 2048) {
  */
 function safeUrl(value: string | null, schemes: string[]) {
   if (!value) return null
-  const compact = value.replace(/[\u0000- \u007f-\u009f]/g, '')
+  const compact = [...value]
+    .filter((char) => {
+      const code = char.codePointAt(0)!
+      return code > 0x20 && (code < 0x7f || code > 0x9f)
+    })
+    .join('')
   if (compact.startsWith('/') || compact.startsWith('#')) return value
   const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(compact)?.[1]?.toLowerCase()
   return scheme && schemes.includes(scheme) ? value : null
@@ -123,7 +128,7 @@ export default class RichTextService {
         return node
       }
       case 'heading': {
-        const level = isRecord(attrs) ? Number(attrs.level) : NaN
+        const level = isRecord(attrs) ? Number(attrs.level) : Number.NaN
         return {
           type,
           attrs: { level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2 },

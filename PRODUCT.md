@@ -35,6 +35,7 @@ The following are implemented defaults, not independently confirmed business req
 - PHP prices, an en-PH locale, and a frozen PHP 100 shipping fee per order.
 - PayMongo hosted checkout and a development-only local payment simulator.
 - Staff-managed discount codes (percentage or fixed amount off merchandise, never shipping) with optional minimum spend, schedule, usage limit and one use per customer email.
+- Staff-written blog posts in the Nuxt UI rich text editor, saved as drafts, published, or scheduled. The server renders each post's HTML from the editor's document and keeps only known formatting and safe links.
 - Payment confirmation requires verified provider evidence. A browser return alone cannot mark an order paid.
 - Private guest order access and ownership checks protect personal account data.
 - One staff-managed shipment per order. Partial shipments, returns, and post-shipment refunds are outside the documented rollout.
