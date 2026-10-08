@@ -56,7 +56,6 @@
     "@tailwindcss/typography": "^0.5.20",
     "@types/luxon": "^3.7.1",
     "@types/node": "~25.9.1",
-    "@types/pdfkit": "^0.17.6",
     "@vitejs/plugin-vue": "^6.0.7",
     "concurrently": "^10.0.5",
     "eslint": "^10.4.0",
@@ -102,10 +101,10 @@
     "date-fns": "^4.4.0",
     "edge.js": "^6.5.1",
     "luxon": "^3.7.2",
-    "pdfkit": "^0.20.2",
     "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.4",
     "tailwindcss": "^4.3.2",
+    "takumi-pdf": "^0.15.0",
     "vue": "^3.5.43"
   },
   "hotHook": {

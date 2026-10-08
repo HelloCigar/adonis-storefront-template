@@ -114,7 +114,7 @@ test.group('Invoices', (group) => {
     const invoices = await app.container.make(InvoiceService)
     const pdf = await invoices.render(created)
     assert.isTrue(isPdf(pdf))
-    const pages = pdf.toString('latin1').match(/\/Type \/Page\b/g) ?? []
+    const pages = pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) ?? []
     assert.isAbove(pages.length, 1)
   })
 
