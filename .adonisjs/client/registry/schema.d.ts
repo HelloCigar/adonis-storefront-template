@@ -907,4 +907,28 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/users_controller').default['destroy']>>>
     }
   }
+  'seller.emails.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/emails'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/emails_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/emails_controller').default['index']>>>
+    }
+  }
+  'seller.emails.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/emails/:email'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { email: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/emails_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/emails_controller').default['show']>>>
+    }
+  }
 }

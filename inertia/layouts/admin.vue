@@ -58,6 +58,14 @@ const links = computed(
                   open.value = false
                 },
               },
+              {
+                label: 'Emails',
+                icon: 'i-lucide-mail',
+                to: urlFor('seller.emails.index'),
+                onSelect: () => {
+                  open.value = false
+                },
+              },
             ]
           : []),
         ...(page.props.permissions.manageUsers

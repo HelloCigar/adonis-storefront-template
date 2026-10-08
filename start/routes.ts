@@ -170,6 +170,8 @@ router
       .post('/orders/:id/operations', [controllers.seller.Operations, 'store'])
       .as('operations.store')
     router.resource('users', controllers.seller.Users).only(['index', 'store', 'update', 'destroy'])
+    router.get('/emails', [controllers.seller.Emails, 'index']).as('emails.index')
+    router.get('/emails/:email', [controllers.seller.Emails, 'show']).as('emails.show')
   })
   .prefix('/seller')
   .as('seller')

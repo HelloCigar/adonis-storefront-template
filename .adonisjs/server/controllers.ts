@@ -41,6 +41,7 @@ export const controllers = {
     Collections: () => import('#controllers/seller/collections_controller'),
     Customers: () => import('#controllers/seller/customers_controller'),
     Deliveries: () => import('#controllers/seller/deliveries_controller'),
+    Emails: () => import('#controllers/seller/emails_controller'),
     Images: () => import('#controllers/seller/images_controller'),
     Operations: () => import('#controllers/seller/operations_controller'),
     Options: () => import('#controllers/seller/options_controller'),

@@ -456,6 +456,18 @@ const routes = {
     tokens: [{"old":"/seller/users/:id","type":0,"val":"seller","end":""},{"old":"/seller/users/:id","type":0,"val":"users","end":""},{"old":"/seller/users/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.users.destroy']['types'],
   },
+  'seller.emails.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/emails',
+    tokens: [{"old":"/seller/emails","type":0,"val":"seller","end":""},{"old":"/seller/emails","type":0,"val":"emails","end":""}],
+    types: placeholder as Registry['seller.emails.index']['types'],
+  },
+  'seller.emails.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/emails/:email',
+    tokens: [{"old":"/seller/emails/:email","type":0,"val":"seller","end":""},{"old":"/seller/emails/:email","type":0,"val":"emails","end":""},{"old":"/seller/emails/:email","type":1,"val":"email","end":""}],
+    types: placeholder as Registry['seller.emails.show']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }
