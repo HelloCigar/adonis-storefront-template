@@ -27,6 +27,7 @@ import type ContentContentTransformer from '#transformers/content/content_transf
 import type DashboardSummaryTransformer from '#transformers/dashboard/summary_transformer'
 import type PaymentsSimulationTransformer from '#transformers/payments/simulation_transformer'
 import type SellerCollectionTransformer from '#transformers/seller/collection_transformer'
+import type SellerDiscountTransformer from '#transformers/seller/discount_transformer'
 import type SellerEmailPreviewTransformer from '#transformers/seller/email_preview_transformer'
 import type SellerOrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
@@ -135,6 +136,10 @@ export namespace Data {
     export type Collection = InferData<SellerCollectionTransformer>
     export namespace Collection {
       export type Variants = InferVariants<SellerCollectionTransformer>
+    }
+    export type Discount = InferData<SellerDiscountTransformer>
+    export namespace Discount {
+      export type Variants = InferVariants<SellerDiscountTransformer>
     }
     export type EmailPreview = InferData<SellerEmailPreviewTransformer>
     export namespace EmailPreview {

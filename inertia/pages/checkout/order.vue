@@ -161,6 +161,10 @@ onUnmounted(() => {
         </li>
       </ul>
       <dl class="mt-5 pt-5 border-t border-default space-y-3">
+        <div v-if="status.discountMinor" class="flex justify-between text-sm">
+          <dt>Discount{{ status.order.discountCode ? ` (${status.order.discountCode})` : '' }}</dt>
+          <dd>−{{ money(status.discountMinor) }}</dd>
+        </div>
         <div class="flex justify-between text-sm">
           <dt>Shipping</dt>
           <dd>{{ money(status.shippingMinor) }}</dd>

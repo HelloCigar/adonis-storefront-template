@@ -45,7 +45,7 @@ export default class OrderNotification extends BaseMail {
     const totals = [
       { label: 'Subtotal', amount: money.format(order.subtotalAmount) },
       order.discountAmount > 0 && {
-        label: 'Discount',
+        label: order.discountCode ? `Discount (${order.discountCode})` : 'Discount',
         amount: `−${money.format(order.discountAmount)}`,
       },
       { label: 'Shipping', amount: money.format(order.shippingAmount) },

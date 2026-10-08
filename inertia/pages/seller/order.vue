@@ -49,7 +49,11 @@ const quantity = computed(
 const totals = computed(() =>
   [
     { label: 'Subtotal', amount: props.order.subtotalAmount, always: true },
-    { label: 'Discount', amount: -props.order.discountAmount, always: false },
+    {
+      label: props.order.discountCode ? `Discount (${props.order.discountCode})` : 'Discount',
+      amount: -props.order.discountAmount,
+      always: false,
+    },
     { label: 'Shipping', amount: props.order.shippingAmount, always: true },
     { label: 'Tax', amount: props.order.taxAmount, always: false },
   ].filter((row) => row.always || row.amount !== 0)

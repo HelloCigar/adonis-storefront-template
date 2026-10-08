@@ -26,6 +26,16 @@ Amounts are integer minor units: PHP 499 is `49_900` centavos. `MoneyService` co
 
 To add a provider, implement `PaymentAdapter` and register it in `providers/payment_provider.ts`. Supply normalized captured payments, refund resources, webhook events, mode, and conservative `mutationReplayWindowMs`/`idempotencyScope` capabilities. An adapter without a replay guarantee defaults to zero: uncertain mutation replay then requires staff review or the original resource reference. Test its contract using a different ID format; domain code must not inspect provider ID prefixes.
 
+## Discount codes
+
+Staff manage codes under Store management → Discounts. A code takes a whole percentage (1–100) or a fixed peso amount off the merchandise subtotal; shipping is never discounted, so a fully discounted cart still pays the frozen shipping fee. Codes can require a minimum subtotal, start and end at set times, stop after a total number of uses, and allow one use per customer email. Codes are matched case-insensitively and stored upper case.
+
+`DiscountService` prices codes in exact centavos: a percentage rounds half up once on the subtotal, and the order discount is spread across lines by largest remainder, so line discounts always sum to it. The cart keeps only the code. Every quote rechecks it; a code that stops applying is reported on the checkout page and drops out of the quote fingerprint, so a stale quote fails with `E_QUOTE_CHANGED` rather than charging a different amount. Each order snapshots its code, `discount_minor` and per-line discounts.
+
+The provider request still sums to the frozen total. A discounted line keeps its quantity when the discount divides evenly per unit and is otherwise sent as one line at its discounted total; a fully discounted line is left out.
+
+Checkout counts a use inside the order transaction with a conditional update, so concurrent checkouts cannot pass the usage limit. A once-per-customer use is held by a unique `(discount_code_id, customer_key)` redemption. When an unpaid checkout closes, or staff cancel a paid order, the use is released once and the customer may use the code again. A used code cannot be deleted; staff turn it off instead. Applying a code is rate limited per client to slow guessing.
+
 ## Configuration
 
 Use `.env.example` as the configuration reference:

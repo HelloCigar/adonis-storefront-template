@@ -31,6 +31,15 @@ const money = (value?: Money | null) =>
 const totals = computed(() =>
   [
     { label: t('account.orders.detail.subtotal'), value: money(props.order.subtotal) },
+    {
+      label: props.order.discountCode
+        ? `${t('account.orders.detail.discount')} (${props.order.discountCode})`
+        : t('account.orders.detail.discount'),
+      value:
+        props.order.discountAmount > 0
+          ? `−${money({ amount: props.order.discountAmount, currencyCode: props.order.currencyCode })}`
+          : undefined,
+    },
     { label: t('account.orders.detail.shipping'), value: money(props.order.totalShipping) },
     { label: t('account.orders.detail.tax'), value: money(props.order.totalTax) },
   ].filter((row) => row.value)

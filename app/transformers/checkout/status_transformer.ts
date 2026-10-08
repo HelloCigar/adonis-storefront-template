@@ -13,6 +13,7 @@ export default class StatusTransformer extends BaseTransformer<Order> {
       lifecycleState: order.lifecycleState,
       amountMinor: order.totalMinor!,
       shippingMinor: order.shippingMinor!,
+      discountMinor: order.discountMinor,
       paymentState: attempt?.state ?? null,
       reviewRequired: order.lifecycleState === 'review_required' || !!attempt?.needsReview,
       expiresAtMs: attempt?.expiresAtMs ?? null,

@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import Cart from '#models/checkout/cart'
+import DiscountCode from '#models/checkout/discount_code'
 import ProductVariant from '#models/catalog/product_variant'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
@@ -6,12 +8,25 @@ import { errors } from '@vinejs/vine'
 import { randomUUID } from 'node:crypto'
 import { affectedRows } from '#models/shared/affected_rows'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
+import QuoteService from '#services/checkout/quote_service'
+import DiscountService from '#services/checkout/discount_service'
+import CheckoutException from '#exceptions/checkout_exception'
 
 function invalidCart(message: string): never {
   throw new errors.E_VALIDATION_ERROR([{ field: 'cart', rule: 'available', message }])
 }
 
+function invalidDiscount(message: string): never {
+  throw new errors.E_VALIDATION_ERROR([{ field: 'code', rule: 'discount', message }])
+}
+
+@inject()
 export default class CartService {
+  constructor(
+    private quotes: QuoteService,
+    private discounts: DiscountService
+  ) {}
+
   async findOrCreate(token: string, userId?: number) {
     const existing = await Cart.findBy('token', token)
     if (existing && existing.status !== 'active')
@@ -132,6 +147,36 @@ export default class CartService {
       await this.claim(cart, trx)
       const line = await cart.related('lines').query().where('id', id).firstOrFail()
       await line.delete()
+    })
+  }
+
+  /**
+   * Saves a discount code on the cart after checking it against the current subtotal, or
+   * removes it when `code` is null. The quote rechecks the code every time it is priced.
+   */
+  async applyDiscount(token: string, userId: number | undefined, code: string | null) {
+    const cart = await this.findOrCreate(token, userId)
+    const discountCode = code === null ? null : DiscountCode.normalize(code)
+    if (discountCode !== null) {
+      let subtotalMinor: number
+      try {
+        const quote = await this.quotes.quote(cart)
+        subtotalMinor = quote.subtotalMinor
+      } catch (error) {
+        if (!(error instanceof CheckoutException)) throw error
+        invalidDiscount(error.message)
+      }
+      const evaluation = this.discounts.evaluate(
+        await this.discounts.find(discountCode),
+        subtotalMinor
+      )
+      if ('error' in evaluation) invalidDiscount(evaluation.error)
+    }
+    await db.transaction(async (trx) => {
+      cart.useTransaction(trx)
+      await this.claim(cart, trx)
+      cart.discountCode = discountCode
+      await cart.save()
     })
   }
 

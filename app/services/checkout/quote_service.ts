@@ -2,13 +2,17 @@ import { createHash } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import Cart from '#models/checkout/cart'
 import MoneyService from '#services/checkout/money_service'
+import DiscountService from '#services/checkout/discount_service'
 import checkout from '#config/checkout'
 import CheckoutException from '#exceptions/checkout_exception'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 @inject()
 export default class QuoteService {
-  constructor(private money: MoneyService) {}
+  constructor(
+    private money: MoneyService,
+    private discounts: DiscountService
+  ) {}
 
   async quote(cart: Cart, trx?: TransactionClientContract) {
     if (cart.status !== 'active' || (cart.expiresAt && cart.expiresAt.toMillis() <= Date.now())) {
@@ -51,16 +55,40 @@ export default class QuoteService {
       }
     })
     const subtotalMinor = lines.reduce((total, line) => this.money.add(total, line.totalAmount), 0)
-    const totalMinor = this.money.add(subtotalMinor, checkout.flatShippingAmountMinor)
+    const evaluation = cart.discountCode
+      ? this.discounts.evaluate(await this.discounts.find(cart.discountCode, trx), subtotalMinor)
+      : null
+    const discount = evaluation && 'discount' in evaluation ? evaluation.discount : null
+    const discountMinor = discount?.amountMinor ?? 0
+    const lineDiscounts = this.discounts.allocate(
+      discountMinor,
+      lines.map((line) => line.totalAmount)
+    )
+    const totalMinor = this.money.add(
+      subtotalMinor - discountMinor,
+      checkout.flatShippingAmountMinor
+    )
     const value = {
       cartVersion: cart.version,
       currency: checkout.currency,
-      lines,
+      lines: lines.map((line, index) => ({ ...line, discountAmount: lineDiscounts[index] })),
       subtotalMinor,
+      discount: discount && {
+        code: discount.code,
+        kind: discount.kind,
+        amountMinor: discountMinor,
+      },
+      discountMinor,
       shippingMinor: checkout.flatShippingAmountMinor,
       totalMinor,
     }
     const fingerprint = createHash('sha256').update(JSON.stringify(value)).digest('hex')
-    return { ...value, fingerprint, submissionKey: cart.submissionKey! }
+    return {
+      ...value,
+      fingerprint,
+      submissionKey: cart.submissionKey!,
+      /** Why the cart's saved code does not apply now, if it does not. */
+      discountError: evaluation && 'error' in evaluation ? evaluation.error : null,
+    }
   }
 }

@@ -175,6 +175,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/checkout_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'checkout.discount.store': {
+    methods: ["POST"]
+    pattern: '/checkout/discount'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/checkout/cart').discountCodeValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/checkout/cart').discountCodeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/discounts_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/discounts_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'checkout.discount.destroy': {
+    methods: ["DELETE"]
+    pattern: '/checkout/discount'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/discounts_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/discounts_controller').default['destroy']>>>
+    }
+  }
   'checkout.access.show': {
     methods: ["GET","HEAD"]
     pattern: '/checkout/orders/:publicId/access'
@@ -749,6 +773,54 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/collections_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/collections_controller').default['destroy']>>>
+    }
+  }
+  'seller.discounts.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/discounts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['index']>>>
+    }
+  }
+  'seller.discounts.store': {
+    methods: ["POST"]
+    pattern: '/seller/discounts'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/discount').discountValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/discount').discountValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.discounts.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/seller/discounts/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/discount').discountValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/discount').discountValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.discounts.destroy': {
+    methods: ["DELETE"]
+    pattern: '/seller/discounts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['destroy']>>>
     }
   }
   'seller.orders.index': {

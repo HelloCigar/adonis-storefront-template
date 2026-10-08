@@ -31,6 +31,10 @@ export interface ApiDefinition {
   checkout: {
     create: typeof routes['checkout.create']
     store: typeof routes['checkout.store']
+    discount: {
+      store: typeof routes['checkout.discount.store']
+      destroy: typeof routes['checkout.discount.destroy']
+    }
     access: {
       show: typeof routes['checkout.access.show']
       store: typeof routes['checkout.access.store']
@@ -123,6 +127,12 @@ export interface ApiDefinition {
       store: typeof routes['seller.collections.store']
       update: typeof routes['seller.collections.update']
       destroy: typeof routes['seller.collections.destroy']
+    }
+    discounts: {
+      index: typeof routes['seller.discounts.index']
+      store: typeof routes['seller.discounts.store']
+      update: typeof routes['seller.discounts.update']
+      destroy: typeof routes['seller.discounts.destroy']
     }
     orders: {
       index: typeof routes['seller.orders.index']

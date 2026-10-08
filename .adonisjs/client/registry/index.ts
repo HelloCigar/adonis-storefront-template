@@ -90,6 +90,18 @@ const routes = {
     tokens: [{"old":"/checkout","type":0,"val":"checkout","end":""}],
     types: placeholder as Registry['checkout.store']['types'],
   },
+  'checkout.discount.store': {
+    methods: ["POST"],
+    pattern: '/checkout/discount',
+    tokens: [{"old":"/checkout/discount","type":0,"val":"checkout","end":""},{"old":"/checkout/discount","type":0,"val":"discount","end":""}],
+    types: placeholder as Registry['checkout.discount.store']['types'],
+  },
+  'checkout.discount.destroy': {
+    methods: ["DELETE"],
+    pattern: '/checkout/discount',
+    tokens: [{"old":"/checkout/discount","type":0,"val":"checkout","end":""},{"old":"/checkout/discount","type":0,"val":"discount","end":""}],
+    types: placeholder as Registry['checkout.discount.destroy']['types'],
+  },
   'checkout.access.show': {
     methods: ["GET","HEAD"],
     pattern: '/checkout/orders/:publicId/access',
@@ -377,6 +389,30 @@ const routes = {
     pattern: '/seller/collections/:id',
     tokens: [{"old":"/seller/collections/:id","type":0,"val":"seller","end":""},{"old":"/seller/collections/:id","type":0,"val":"collections","end":""},{"old":"/seller/collections/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.collections.destroy']['types'],
+  },
+  'seller.discounts.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/discounts',
+    tokens: [{"old":"/seller/discounts","type":0,"val":"seller","end":""},{"old":"/seller/discounts","type":0,"val":"discounts","end":""}],
+    types: placeholder as Registry['seller.discounts.index']['types'],
+  },
+  'seller.discounts.store': {
+    methods: ["POST"],
+    pattern: '/seller/discounts',
+    tokens: [{"old":"/seller/discounts","type":0,"val":"seller","end":""},{"old":"/seller/discounts","type":0,"val":"discounts","end":""}],
+    types: placeholder as Registry['seller.discounts.store']['types'],
+  },
+  'seller.discounts.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/seller/discounts/:id',
+    tokens: [{"old":"/seller/discounts/:id","type":0,"val":"seller","end":""},{"old":"/seller/discounts/:id","type":0,"val":"discounts","end":""},{"old":"/seller/discounts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.discounts.update']['types'],
+  },
+  'seller.discounts.destroy': {
+    methods: ["DELETE"],
+    pattern: '/seller/discounts/:id',
+    tokens: [{"old":"/seller/discounts/:id","type":0,"val":"seller","end":""},{"old":"/seller/discounts/:id","type":0,"val":"discounts","end":""},{"old":"/seller/discounts/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.discounts.destroy']['types'],
   },
   'seller.orders.index': {
     methods: ["GET","HEAD"],

@@ -17,6 +17,7 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
         'totalAmount',
         'subtotalAmount',
         'discountAmount',
+        'discountCode',
         'shippingAmount',
         'taxAmount',
         'note',

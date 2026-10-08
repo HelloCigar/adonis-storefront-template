@@ -12,10 +12,11 @@ import Notification from '#models/checkout/notification'
 import OrderMessage from '#models/chat/order_message'
 import StockReservation from '#models/checkout/stock_reservation'
 import AccessGrant from '#models/checkout/access_grant'
-import { belongsTo, hasMany, column } from '@adonisjs/lucid/orm'
+import DiscountRedemption from '#models/checkout/discount_redemption'
+import { belongsTo, hasMany, hasOne, column } from '@adonisjs/lucid/orm'
 import { toMajor, toMinor } from '#models/shared/money'
 import type { OrderState } from '#services/checkout/state_service'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 
 export default class Order extends OrderSchema {
   @hasMany(() => Attempt) declare attempts: HasMany<typeof Attempt>
@@ -27,6 +28,7 @@ export default class Order extends OrderSchema {
   @hasMany(() => OrderMessage) declare messages: HasMany<typeof OrderMessage>
   @hasMany(() => StockReservation) declare stockReservations: HasMany<typeof StockReservation>
   @hasMany(() => AccessGrant) declare accessGrants: HasMany<typeof AccessGrant>
+  @hasOne(() => DiscountRedemption) declare discountRedemption: HasOne<typeof DiscountRedemption>
   @column() declare lifecycleState: OrderState
   @column() declare source: 'legacy' | 'online'
   /** Money is stored only as integer centavos; peso values are derived for display. */

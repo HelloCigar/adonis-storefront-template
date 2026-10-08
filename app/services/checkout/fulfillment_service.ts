@@ -7,6 +7,7 @@ import Shipment from '#models/checkout/shipment'
 import Attempt from '#models/payments/attempt'
 import Payment from '#models/payments/payment'
 import InventoryService from '#services/catalog/inventory_service'
+import DiscountService from '#services/checkout/discount_service'
 import StateService, { isDispatched } from '#services/checkout/state_service'
 import ActivityService from '#services/checkout/activity_service'
 import NotificationIntentService from '#services/checkout/notification_intent_service'
@@ -39,7 +40,8 @@ export default class FulfillmentService {
     private activities: ActivityService,
     private notifications: NotificationIntentService,
     private refunds: RefundService,
-    private balances: BalanceService
+    private balances: BalanceService,
+    private discounts: DiscountService
   ) {}
 
   async pack(orderId: number, actor: User) {
@@ -157,6 +159,7 @@ export default class FulfillmentService {
         )
       await this.inventory.restock(trx, orderId)
       await this.inventory.release(trx, orderId)
+      await this.discounts.release(trx, orderId)
       order.lifecycleState = this.states.transition('order', order.lifecycleState, 'cancelled')
       order.cancelledAt = DateTime.utc()
       await order.save()

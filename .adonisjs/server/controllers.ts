@@ -19,6 +19,7 @@ export const controllers = {
   checkout: {
     Cancellations: () => import('#controllers/checkout/cancellations_controller'),
     Checkout: () => import('#controllers/checkout/checkout_controller'),
+    Discounts: () => import('#controllers/checkout/discounts_controller'),
     OrderAccess: () => import('#controllers/checkout/order_access_controller'),
     Orders: () => import('#controllers/checkout/orders_controller'),
     Reconciliations: () => import('#controllers/checkout/reconciliations_controller'),
@@ -41,6 +42,7 @@ export const controllers = {
     Collections: () => import('#controllers/seller/collections_controller'),
     Customers: () => import('#controllers/seller/customers_controller'),
     Deliveries: () => import('#controllers/seller/deliveries_controller'),
+    Discounts: () => import('#controllers/seller/discounts_controller'),
     Emails: () => import('#controllers/seller/emails_controller'),
     Images: () => import('#controllers/seller/images_controller'),
     Operations: () => import('#controllers/seller/operations_controller'),

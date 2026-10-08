@@ -34,6 +34,7 @@ The following are implemented defaults, not independently confirmed business req
 - AdonisJS backend with Vue, Inertia, Nuxt UI, Tailwind CSS, and Lucid/SQLite.
 - PHP prices, an en-PH locale, and a frozen PHP 100 shipping fee per order.
 - PayMongo hosted checkout and a development-only local payment simulator.
+- Staff-managed discount codes (percentage or fixed amount off merchandise, never shipping) with optional minimum spend, schedule, usage limit and one use per customer email.
 - Payment confirmation requires verified provider evidence. A browser return alone cannot mark an order paid.
 - Private guest order access and ownership checks protect personal account data.
 - One staff-managed shipment per order. Partial shipments, returns, and post-shipment refunds are outside the documented rollout.
