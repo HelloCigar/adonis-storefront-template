@@ -43,13 +43,9 @@ export const plugins: Config['plugins'] = [
  * The teardown functions are executed after all the tests
  */
 export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
-  // Discard migrate()'s rollback cleanup: agent runtime migrations are forward-only, and
-  // the next run re-migrates tmp/test.sqlite3 while suites truncate their own records.
-  setup: [
-    async () => {
-      await testUtils.db().migrate()
-    },
-  ],
+  // truncate() migrates up and, on teardown, empties every table instead of running
+  // migration:reset; the agent runtime migrations are forward-only and refuse down().
+  setup: [() => testUtils.db().truncate()],
   teardown: [],
 }
 
