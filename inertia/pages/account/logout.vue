@@ -2,7 +2,7 @@
 import { useRouter } from '@adonisjs/inertia/vue'
 import { onMounted } from 'vue'
 const router = useRouter()
-onMounted(() => router.visit({ route: 'session.destroy' }))
+onMounted(() => router.post({ route: 'session.destroy' }))
 </script>
 <template>
   <div class="flex justify-center py-16">
