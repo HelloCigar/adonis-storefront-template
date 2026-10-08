@@ -11,6 +11,8 @@ export default class extends BaseSchema {
   }
 
   async down() {
-    throw new Error('Forward-only runtime upgrade: proposals, outcomes and history must be preserved')
+    throw new Error(
+      'Forward-only runtime upgrade: proposals, outcomes and history must be preserved'
+    )
   }
 }
