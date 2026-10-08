@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import Order from '#models/checkout/order'
 import Cart from '#models/checkout/cart'
 import Attempt from '#models/payments/attempt'
@@ -61,10 +62,7 @@ export default class SettlementService {
       )
       const captured = checkout.payments.filter((payment) => payment.status === 'paid')
       let accepted = order
-        ? await Payment.query({ client: trx })
-            .where('order_id', order.id)
-            .where('disposition', 'accepted')
-            .first()
+        ? await order.related('payments').query().where('disposition', 'accepted').first()
         : null
       let review = false
       let refundCurrencyReview = false
@@ -168,7 +166,7 @@ export default class SettlementService {
             .where('status', 'submitted')
             .update({
               status: 'completed',
-              completedAt: DateTime.utc().toSQL({ includeOffset: false }),
+              completedAt: sqlDateTime(),
             })
         await Shipment.firstOrCreate({ orderId: order!.id }, { state: 'pending' }, { client: trx })
         await this.activities.record(trx, order!.id, 'payment.accepted', {

@@ -55,8 +55,8 @@ export class AdonisAttachmentSchema extends BaseModel {
   declare parentId: string | null
   @column()
   declare path: string
-  @column()
-  declare size: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare size: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
@@ -70,8 +70,8 @@ export class AgentActionProposalSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare decision: string
-  @column()
-  declare deliveryLeaseExpiresAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare deliveryLeaseExpiresAt: number | null
   @column()
   declare deliveryStatus: string | null
   @column()
@@ -82,24 +82,24 @@ export class AgentActionProposalSchema extends BaseModel {
   declare id: string
   @column()
   declare insertToken: string
-  @column()
-  declare leaseExpiresAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare leaseExpiresAt: number | null
   @column()
   declare logicalSort: string
   @column()
   declare outcomeKey: string | null
   @column()
   declare payload: string
-  @column()
-  declare proposalExpiresAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare proposalExpiresAt: number | null
   @column()
   declare replacementGroupKey: string | null
   @column()
   declare scopeKey: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
-  @column()
-  declare version: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare version: number
 }
 
 export class AgentConfirmTokenSchema extends BaseModel {
@@ -109,8 +109,8 @@ export class AgentConfirmTokenSchema extends BaseModel {
   declare actorRef: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
-  @column()
-  declare expiresAt: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare expiresAt: number
   @column({ isPrimary: true })
   declare hash: string
   @column()
@@ -146,8 +146,8 @@ export class AgentMessageSchema extends BaseModel {
   declare role: string
   @column()
   declare runId: string | null
-  @column()
-  declare seq: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare seq: number
   @column()
   declare threadId: string
   @column()
@@ -167,8 +167,8 @@ export class AgentModelPricingSchema extends BaseModel {
   declare cacheReadPricePer1M: number | null
   @column()
   declare cacheWritePricePer1M: number | null
-  @column()
-  declare effectiveFrom: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare effectiveFrom: number
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -227,8 +227,8 @@ export class AgentRunSchema extends BaseModel {
   declare durable: number
   @column()
   declare error: string | null
-  @column()
-  declare finishedAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare finishedAt: number | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -237,8 +237,8 @@ export class AgentRunSchema extends BaseModel {
   declare outputTokens: number
   @column()
   declare parentRunId: string | null
-  @column()
-  declare startedAt: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare startedAt: number
   @column()
   declare status: string
   @column()
@@ -258,8 +258,8 @@ export class AgentStreamFrameSchema extends BaseModel {
   declare frame: string | null
   @column({ isPrimary: true })
   declare runId: string
-  @column()
-  declare seq: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare seq: number
 }
 
 export class AgentThreadSchema extends BaseModel {
@@ -273,16 +273,16 @@ export class AgentThreadSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare defaultAgent: string | null
-  @column()
-  declare deletedAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare deletedAt: number | null
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare model: string | null
   @column()
   declare persona: string
-  @column()
-  declare pinnedAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare pinnedAt: number | null
   @column()
   declare queuePause: string | null
   @column()
@@ -343,14 +343,14 @@ export class AgentToolCallSchema extends BaseModel {
   declare decidedVia: string | null
   @column()
   declare error: string | null
-  @column()
-  declare executedAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare executedAt: number | null
   @column()
   declare executedByRef: string | null
   @column()
   declare executionMs: number | null
-  @column()
-  declare expiresAt: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare expiresAt: number | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -522,8 +522,8 @@ export class OrderAccessGrantSchema extends BaseModel {
   $columns = OrderAccessGrantSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
-  @column()
-  declare expiresAtMs: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare expiresAtMs: number
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -599,8 +599,8 @@ export class OrderLineItemSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare currencyCode: string
-  @column()
-  declare discountMinor: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare discountMinor: number
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -623,10 +623,10 @@ export class OrderLineItemSchema extends BaseModel {
   declare sku: string | null
   @column()
   declare title: string
-  @column()
-  declare totalMinor: bigint | number | null
-  @column()
-  declare unitPriceMinor: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare totalMinor: number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare unitPriceMinor: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
@@ -659,8 +659,8 @@ export class OrderMessageSchema extends BaseModel {
 export class OrderNotificationSchema extends BaseModel {
   static $columns = ['claimExpiresAtMs', 'claimToken', 'createdAt', 'id', 'kind', 'lastError', 'orderId', 'sentAt', 'state', 'updatedAt'] as const
   $columns = OrderNotificationSchema.$columns
-  @column()
-  declare claimExpiresAtMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare claimExpiresAtMs: number | null
   @column()
   declare claimToken: string | null
   @column.dateTime({ autoCreate: true })
@@ -692,8 +692,8 @@ export class OrderSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare currencyCode: string
-  @column()
-  declare discountMinor: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare discountMinor: number
   @column()
   declare email: string
   @column()
@@ -720,18 +720,18 @@ export class OrderSchema extends BaseModel {
   declare publicId: string | null
   @column()
   declare reviewReason: string | null
-  @column()
-  declare shippingMinor: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare shippingMinor: number | null
   @column()
   declare source: string
   @column()
   declare submissionKey: string | null
-  @column()
-  declare subtotalMinor: bigint | number | null
-  @column()
-  declare taxMinor: bigint | number
-  @column()
-  declare totalMinor: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare subtotalMinor: number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare taxMinor: number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare totalMinor: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
@@ -743,12 +743,12 @@ export class OrderSchema extends BaseModel {
 export class PaymentAttemptSchema extends BaseModel {
   static $columns = ['amountMinor', 'checkoutUrl', 'claimExpiresAtMs', 'claimToken', 'closeReason', 'createdAt', 'currency', 'expiresAtMs', 'externalId', 'id', 'idempotencyKey', 'lastError', 'liveMode', 'needsReview', 'orderId', 'provider', 'publicId', 'replayScope', 'replayUntilMs', 'requestSnapshot', 'state', 'updatedAt', 'version'] as const
   $columns = PaymentAttemptSchema.$columns
-  @column()
-  declare amountMinor: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountMinor: number
   @column()
   declare checkoutUrl: string | null
-  @column()
-  declare claimExpiresAtMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare claimExpiresAtMs: number | null
   @column()
   declare claimToken: string | null
   @column()
@@ -757,8 +757,8 @@ export class PaymentAttemptSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare currency: string
-  @column()
-  declare expiresAtMs: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare expiresAtMs: number
   @column()
   declare externalId: string | null
   @column({ isPrimary: true })
@@ -767,9 +767,9 @@ export class PaymentAttemptSchema extends BaseModel {
   declare idempotencyKey: string
   @column()
   declare lastError: string | null
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare liveMode: boolean
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare needsReview: boolean
   @column()
   declare orderId: number
@@ -779,8 +779,8 @@ export class PaymentAttemptSchema extends BaseModel {
   declare publicId: string
   @column()
   declare replayScope: string | null
-  @column()
-  declare replayUntilMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare replayUntilMs: number | null
   @column()
   declare requestSnapshot: any
   @column()
@@ -794,8 +794,8 @@ export class PaymentAttemptSchema extends BaseModel {
 export class PaymentSchema extends BaseModel {
   static $columns = ['amountMinor', 'attemptId', 'capturedAt', 'createdAt', 'currency', 'disposition', 'externalId', 'id', 'liveMode', 'orderId', 'provider', 'updatedAt'] as const
   $columns = PaymentSchema.$columns
-  @column()
-  declare amountMinor: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountMinor: number
   @column()
   declare attemptId: number | null
   @column.dateTime()
@@ -810,7 +810,7 @@ export class PaymentSchema extends BaseModel {
   declare externalId: string
   @column({ isPrimary: true })
   declare id: number
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare liveMode: boolean
   @column()
   declare orderId: number | null
@@ -823,7 +823,7 @@ export class PaymentSchema extends BaseModel {
 export class ProductVariantSchema extends BaseModel {
   static $columns = ['availableForSale', 'barcode', 'compareAtPriceAmount', 'createdAt', 'currencyCode', 'featuredMediaId', 'id', 'inventoryQuantity', 'inventoryReservedQuantity', 'optionCombinationKey', 'options', 'position', 'priceAmount', 'productId', 'sku', 'title', 'updatedAt'] as const
   $columns = ProductVariantSchema.$columns
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare availableForSale: boolean
   @column()
   declare barcode: string | null
@@ -872,7 +872,7 @@ export class ProductSchema extends BaseModel {
   declare handle: string
   @column({ isPrimary: true })
   declare id: number
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare isGiftCard: boolean
   @column()
   declare optionDefinitions: { name: string; values: string[] }[]
@@ -901,8 +901,8 @@ export class ProductSchema extends BaseModel {
 export class RefundLookupSchema extends BaseModel {
   static $columns = ['claimExpiresAtMs', 'claimToken', 'createdAt', 'externalId', 'id', 'lastError', 'liveMode', 'provider', 'state', 'updatedAt'] as const
   $columns = RefundLookupSchema.$columns
-  @column()
-  declare claimExpiresAtMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare claimExpiresAtMs: number | null
   @column()
   declare claimToken: string | null
   @column.dateTime({ autoCreate: true })
@@ -913,7 +913,7 @@ export class RefundLookupSchema extends BaseModel {
   declare id: number
   @column()
   declare lastError: string | null
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare liveMode: boolean
   @column()
   declare provider: string
@@ -926,8 +926,8 @@ export class RefundLookupSchema extends BaseModel {
 export class RefundObservationSchema extends BaseModel {
   static $columns = ['amountMinor', 'createdAt', 'currency', 'externalId', 'externalPaymentId', 'id', 'liveMode', 'provider', 'refundOperationId', 'state', 'updatedAt'] as const
   $columns = RefundObservationSchema.$columns
-  @column()
-  declare amountMinor: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountMinor: number
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -938,7 +938,7 @@ export class RefundObservationSchema extends BaseModel {
   declare externalPaymentId: string
   @column({ isPrimary: true })
   declare id: number
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare liveMode: boolean
   @column()
   declare provider: string
@@ -955,10 +955,10 @@ export class RefundOperationSchema extends BaseModel {
   $columns = RefundOperationSchema.$columns
   @column()
   declare actorId: number | null
-  @column()
-  declare amountMinor: bigint | number
-  @column()
-  declare claimExpiresAtMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare amountMinor: number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare claimExpiresAtMs: number | null
   @column()
   declare claimToken: string | null
   @column.dateTime({ autoCreate: true })
@@ -971,9 +971,9 @@ export class RefundOperationSchema extends BaseModel {
   declare idempotencyKey: string
   @column()
   declare lastError: string | null
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare liveMode: boolean
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare needsReview: boolean
   @column()
   declare orderId: number
@@ -985,8 +985,8 @@ export class RefundOperationSchema extends BaseModel {
   declare reason: string
   @column()
   declare replayScope: string | null
-  @column()
-  declare replayUntilMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare replayUntilMs: number | null
   @column()
   declare state: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -1025,8 +1025,8 @@ export class StockReservationSchema extends BaseModel {
   $columns = StockReservationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
-  @column()
-  declare expiresAtMs: bigint | number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare expiresAtMs: number
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -1048,7 +1048,7 @@ export class StockReservationSchema extends BaseModel {
 export class UserSchema extends BaseModel {
   static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'updatedAt'] as const
   $columns = UserSchema.$columns
-  @column()
+  @column({ consume: (value)=>Boolean(value) })
   declare acceptsMarketing: boolean
   @column()
   declare avatarPath: string | null
@@ -1079,10 +1079,10 @@ export class UserSchema extends BaseModel {
 export class WorkflowOutboxSchema extends BaseModel {
   static $columns = ['availableAtMs', 'claimExpiresAtMs', 'claimToken', 'createdAt', 'entityId', 'id', 'jobId', 'kind', 'lastError', 'operationKey', 'publicationAttempts', 'publishedAt', 'updatedAt'] as const
   $columns = WorkflowOutboxSchema.$columns
-  @column()
-  declare availableAtMs: bigint | number
-  @column()
-  declare claimExpiresAtMs: bigint | number | null
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare availableAtMs: number
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare claimExpiresAtMs: number | null
   @column()
   declare claimToken: string | null
   @column.dateTime({ autoCreate: true })

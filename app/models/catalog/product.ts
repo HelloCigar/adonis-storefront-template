@@ -4,10 +4,16 @@ import ProductVariant from '#models/catalog/product_variant'
 import User from '#models/account/user'
 import type { OptionDefinition } from '#services/catalog/options_service'
 import { attachments, type AttachmentCollectionRelation } from '@jrmc/adonis-attachment/lucid'
-import { belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import { belongsTo, column, hasMany, manyToMany, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { jsonColumn } from '#models/shared/json_column'
 
 export default class Product extends ProductSchema {
+  /** Products shoppers can see: active and published. */
+  static published = scope((query) => {
+    query.where('status', 'active').whereNotNull('published_at')
+  })
+
   @column({
     prepare: (value) => JSON.stringify(value ?? []),
     consume: (value) => (typeof value === 'string' ? JSON.parse(value) : (value ?? [])),
@@ -17,11 +23,7 @@ export default class Product extends ProductSchema {
   @belongsTo(() => User, { foreignKey: 'sellerId' })
   declare seller: BelongsTo<typeof User>
 
-  @column({
-    prepare: (value) => (value === null ? null : JSON.stringify(value)),
-    consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),
-  })
-  declare tags: string[] | null
+  @column(jsonColumn) declare tags: string[] | null
 
   @attachments({ folder: 'products' })
   declare media: AttachmentCollectionRelation

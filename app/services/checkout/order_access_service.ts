@@ -19,8 +19,9 @@ export default class OrderAccessService {
   async canAccess(order: Order, userId?: number, token?: string) {
     if (userId && order.userId === userId) return true
     if (!token || token.length > 128) return false
-    return !!(await AccessGrant.query()
-      .where('order_id', order.id)
+    return !!(await order
+      .related('accessGrants')
+      .query()
       .where('token_hash', this.hash(token))
       .whereNull('revoked_at')
       .where('expires_at_ms', '>', Date.now())

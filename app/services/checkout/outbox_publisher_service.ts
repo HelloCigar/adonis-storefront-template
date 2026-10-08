@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import logger from '@adonisjs/core/services/logger'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
 import { affectedRows } from '#models/shared/affected_rows'
@@ -45,7 +45,7 @@ export default class OutboxPublisherService {
           .where('id', row.id)
           .where('claim_token', token)
           .update({
-            publishedAt: DateTime.utc().toSQL({ includeOffset: false }),
+            publishedAt: sqlDateTime(),
             jobId: result.jobId,
             ...leaseReleased(),
             lastError: null,

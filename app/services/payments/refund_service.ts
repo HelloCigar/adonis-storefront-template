@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 import User from '#models/account/user'
@@ -8,7 +9,6 @@ import Order from '#models/checkout/order'
 import Payment from '#models/payments/payment'
 import RefundOperation from '#models/payments/refund_operation'
 import RefundObservation from '#models/payments/refund_observation'
-import Shipment from '#models/checkout/shipment'
 import PaymentService, { type PaymentRefund } from '#services/payments/payment_service'
 import StateService from '#services/checkout/state_service'
 import MoneyService from '#services/checkout/money_service'
@@ -45,10 +45,7 @@ export default class RefundService {
     CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
     const order = await Order.findOrFail(orderId, { client: trx })
-    const shipped = await Shipment.query({ client: trx })
-      .where('order_id', order.id)
-      .where('state', 'shipped')
-      .first()
+    const shipped = await order.related('shipments').query().where('state', 'shipped').first()
     if (order.source !== 'online' || shipped)
       throw new CheckoutException(
         'Only unshipped online payments can be refunded here',
@@ -58,9 +55,10 @@ export default class RefundService {
     if (paymentId) query.where('id', paymentId)
     else query.where('disposition', 'accepted')
     const payment = await query.firstOrFail()
-    const existing = await RefundOperation.query({ client: trx })
-      .where('payment_id', payment.id)
-      .whereIn('state', ['requested', 'pending', 'unknown'])
+    const existing = await payment
+      .related('refunds')
+      .query()
+      .withScopes((scopes) => scopes.inFlight())
       .first()
     if (existing) return existing
     const balance = await this.balances.forPayment(trx, payment)
@@ -119,7 +117,7 @@ export default class RefundService {
     const claim = await db.transaction(async (trx) => {
       const changed = await RefundOperation.query({ client: trx })
         .where('id', id)
-        .whereIn('state', ['requested', 'unknown', 'pending'])
+        .withScopes((scopes) => scopes.inFlight())
         .where('needs_review', false)
         .where(unleased)
         .update(leaseFor(token, leaseMs.operation))
@@ -296,21 +294,18 @@ export default class RefundService {
       .where({ provider, externalId: externalPaymentId, liveMode })
       .first()
     if (!payment) return
-    const refunds = await RefundOperation.query()
-      .where('payment_id', payment.id)
-      .whereIn('state', ['requested', 'pending', 'unknown'])
+    const refunds = await payment
+      .related('refunds')
+      .query()
+      .withScopes((scopes) => scopes.inFlight())
     for (const refund of refunds) await this.enqueue(refund.id)
   }
 
   async sweep() {
     const rows = await RefundOperation.query()
-      .whereIn('state', ['requested', 'pending', 'unknown'])
+      .withScopes((scopes) => scopes.inFlight())
       .where('needs_review', false)
-      .where(
-        'updated_at',
-        '<',
-        DateTime.utc().minus({ minutes: 1 }).toSQL({ includeOffset: false })!
-      )
+      .where('updated_at', '<', sqlDateTime(DateTime.utc().minus({ minutes: 1 })))
       .limit(100)
     for (const row of rows) await this.enqueue(row.id)
   }

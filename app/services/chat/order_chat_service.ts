@@ -57,8 +57,9 @@ export default class OrderChatService {
 
   /** Marks everything the other side sent as read by the reader's side. */
   async markRead(order: Order, reader: User) {
-    await OrderMessage.query()
-      .where('order_id', order.id)
+    await order
+      .related('messages')
+      .query()
       .whereNot('sender_role', this.sideFor(reader, order))
       .whereNull('read_at')
       .update({ read_at: this.toSql(new Date()) })

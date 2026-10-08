@@ -5,8 +5,7 @@ import type { CollectionQuery } from '#validators/catalog/collection'
 export default class CatalogueService {
   private publishedProducts() {
     return Product.query()
-      .where('status', 'active')
-      .whereNotNull('published_at')
+      .withScopes((scopes) => scopes.published())
       .preload('variants', (query) => query.orderBy('position', 'asc'))
   }
 
@@ -27,15 +26,17 @@ export default class CatalogueService {
   }
 
   newestCollections() {
-    return Collection.query().whereNotNull('published_at').orderBy('published_at', 'desc').limit(6)
+    return Collection.query()
+      .withScopes((scopes) => scopes.published())
+      .orderBy('published_at', 'desc')
+      .limit(6)
   }
 
   async collectionProducts(collection: Collection, params: CollectionQuery) {
     const query = collection
       .related('products')
       .query()
-      .where('status', 'active')
-      .whereNotNull('published_at')
+      .withScopes((scopes) => scopes.published())
       .orderBy('collection_products.position', 'asc')
       .orderBy('products.id', 'asc')
 
@@ -72,8 +73,7 @@ export default class CatalogueService {
     const [requestedPage, vendors] = await Promise.all([
       loadPage(params.page ?? 1),
       Product.query()
-        .where('status', 'active')
-        .whereNotNull('published_at')
+        .withScopes((scopes) => scopes.published())
         .whereHas('collections', (collections) =>
           collections.where('collections.id', collection.id)
         )
@@ -106,7 +106,7 @@ export default class CatalogueService {
     const [products, collections] = await Promise.all([
       this.publishedProducts().whereILike('title', pattern).orderBy('title').limit(8),
       Collection.query()
-        .whereNotNull('published_at')
+        .withScopes((scopes) => scopes.published())
         .whereILike('title', pattern)
         .orderBy('title')
         .limit(8),

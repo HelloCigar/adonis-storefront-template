@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 import Attempt from '#models/payments/attempt'
@@ -179,14 +180,10 @@ export default class RecoveryService {
 
   async sweep() {
     const stale = await Attempt.query()
-      .whereIn('state', ['creating', 'pending', 'closing', 'unknown', 'failed'])
+      .withScopes((scopes) => scopes.recoverable())
       .where('needs_review', false)
       .where(unleased)
-      .where(
-        'updated_at',
-        '<',
-        DateTime.utc().minus({ minutes: 1 }).toSQL({ includeOffset: false })!
-      )
+      .where('updated_at', '<', sqlDateTime(DateTime.utc().minus({ minutes: 1 })))
       .orderBy('id')
       .limit(100)
     for (const attempt of stale)

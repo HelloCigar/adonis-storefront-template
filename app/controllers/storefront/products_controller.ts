@@ -11,8 +11,7 @@ export default class ProductsController {
   async show({ params, inertia }: HttpContext) {
     const product = await Product.query()
       .where('handle', params.handle)
-      .where('status', 'active')
-      .whereNotNull('published_at')
+      .withScopes((scopes) => scopes.published())
       .preload('variants', (query) => query.orderBy('position', 'asc'))
       .firstOrFail()
 
