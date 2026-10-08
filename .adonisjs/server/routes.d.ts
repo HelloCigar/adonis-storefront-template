@@ -71,6 +71,7 @@ export type ScannedRoutes = {
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.shipments.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.deliveries.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.refunds.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.cancellations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.operations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -169,6 +170,7 @@ export type ScannedRoutes = {
     'seller.collections.store': { paramsTuple?: []; params?: {} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.shipments.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.deliveries.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.refunds.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.cancellations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.operations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

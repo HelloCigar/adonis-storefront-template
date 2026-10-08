@@ -811,6 +811,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/shipments_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'seller.deliveries.store': {
+    methods: ["POST"]
+    pattern: '/seller/orders/:id/delivery'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/deliveries_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/deliveries_controller').default['store']>>>
+    }
+  }
   'seller.refunds.store': {
     methods: ["POST"]
     pattern: '/seller/orders/:id/refund'

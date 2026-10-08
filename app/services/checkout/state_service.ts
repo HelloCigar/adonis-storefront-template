@@ -6,7 +6,11 @@ export type OrderState =
 export type AttemptState =
   'creating' | 'pending' | 'paid' | 'closing' | 'expired' | 'failed' | 'unknown'
 export type ReservationState = 'reserved' | 'consumed' | 'released'
-export type ShipmentState = 'pending' | 'packing' | 'shipped' | 'cancelled'
+export type ShipmentState = 'pending' | 'packing' | 'shipped' | 'delivered' | 'cancelled'
+/** Shipment states after the parcel leaves the store. Cancellation and refunds stop here. */
+export const dispatchedShipmentStates = ['shipped', 'delivered'] as const satisfies ShipmentState[]
+export const isDispatched = (state: ShipmentState | null | undefined) =>
+  dispatchedShipmentStates.some((dispatched) => dispatched === state)
 export type RefundState = 'requested' | 'pending' | 'succeeded' | 'failed' | 'unknown'
 export type FinancialState = 'pending' | 'paid' | 'partially_refunded' | 'refunded' | 'voided'
 
@@ -46,7 +50,8 @@ const transitions: { [K in keyof States]: Record<States[K], readonly States[K][]
   shipment: {
     pending: ['packing', 'cancelled'],
     packing: ['shipped', 'cancelled'],
-    shipped: [],
+    shipped: ['delivered'],
+    delivered: [],
     cancelled: [],
   },
   refund: {

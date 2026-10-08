@@ -408,6 +408,12 @@ const routes = {
     tokens: [{"old":"/seller/orders/:id/shipment","type":0,"val":"seller","end":""},{"old":"/seller/orders/:id/shipment","type":0,"val":"orders","end":""},{"old":"/seller/orders/:id/shipment","type":1,"val":"id","end":""},{"old":"/seller/orders/:id/shipment","type":0,"val":"shipment","end":""}],
     types: placeholder as Registry['seller.shipments.store']['types'],
   },
+  'seller.deliveries.store': {
+    methods: ["POST"],
+    pattern: '/seller/orders/:id/delivery',
+    tokens: [{"old":"/seller/orders/:id/delivery","type":0,"val":"seller","end":""},{"old":"/seller/orders/:id/delivery","type":0,"val":"orders","end":""},{"old":"/seller/orders/:id/delivery","type":1,"val":"id","end":""},{"old":"/seller/orders/:id/delivery","type":0,"val":"delivery","end":""}],
+    types: placeholder as Registry['seller.deliveries.store']['types'],
+  },
   'seller.refunds.store': {
     methods: ["POST"],
     pattern: '/seller/orders/:id/refund',

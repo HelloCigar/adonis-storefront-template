@@ -38,9 +38,12 @@ const trackingUrl = computed(() => {
   }
 })
 const closed = computed(() => ['cancelled', 'expired'].includes(props.order.lifecycleState))
-const shipped = computed(() => props.order.shipment?.state === 'shipped')
+/** Shipped stays true once the parcel is delivered; delivery only adds to it. */
+const shipped = computed(() => ['shipped', 'delivered'].includes(props.order.shipment?.state ?? ''))
+const delivered = computed(() => props.order.shipment?.state === 'delivered')
 const canPack = computed(() => props.operations.canPack)
 const canShip = computed(() => props.operations.canShip)
+const canDeliver = computed(() => props.operations.canDeliver)
 const paymentReview = computed(
   () => !!props.order.attempt?.needsReview || props.order.lifecycleState === 'review_required'
 )
@@ -68,11 +71,11 @@ const shippingAddress = computed(
     null
 )
 const lineItems = computed(() => props.order.lineItems ?? [])
-const shipmentEmail = computed(
-  () =>
-    !!props.order.email &&
-    props.order.notifications.some((notification) => notification.kind === 'shipment')
-)
+const emailed = (kind: string) =>
+  !!props.order.email &&
+  props.order.notifications.some((notification) => notification.kind === kind)
+const shipmentEmail = computed(() => emailed('shipment'))
+const deliveryEmail = computed(() => emailed('delivery'))
 
 const nextAction = computed(() => {
   if (closed.value)
@@ -83,13 +86,24 @@ const nextAction = computed(() => {
         'Fulfillment is closed. Outstanding refunds and customer updates stay visible below.',
       icon: 'i-lucide-circle-slash',
     }
+  if (delivered.value)
+    return {
+      key: 'delivered',
+      title: 'Order delivered',
+      description: deliveryEmail.value
+        ? `Delivery was recorded on ${orderDate(props.order.shipment?.deliveredAt)}. Check customer updates for the delivery email.`
+        : `Delivery was recorded on ${orderDate(props.order.shipment?.deliveredAt)}. No delivery email is recorded for this order.`,
+      icon: 'i-lucide-package-check',
+    }
   if (shipped.value)
     return {
       key: 'shipped',
       title: 'Shipment recorded',
-      description: shipmentEmail.value
-        ? 'Tracking is saved. Check customer updates for delivery of the shipment email.'
-        : 'Tracking is saved. No shipment email is recorded for this order.',
+      description: `${
+        shipmentEmail.value
+          ? 'Tracking is saved. Check customer updates for the shipment email.'
+          : 'Tracking is saved. No shipment email is recorded for this order.'
+      } Mark the order as delivered once the carrier confirms delivery.`,
       icon: 'i-lucide-truck',
     }
   if (props.operations.cancellationPending)
@@ -169,6 +183,14 @@ const stages = computed(() => {
       currentText: 'Add tracking',
       blockedText: 'Blocked',
     },
+    {
+      title: 'Delivery',
+      icon: 'i-lucide-package-check',
+      done: delivered.value,
+      doneText: 'Delivered',
+      currentText: 'In transit',
+      blockedText: 'Blocked',
+    },
   ]
   const currentIndex = steps.findIndex((step) => !step.done)
   return steps.map((step, index) => {
@@ -199,6 +221,7 @@ const transitionMessages: Record<string, string> = {
   pack: 'Ready to pack.',
   ship: 'Packing started. Add the carrier and tracking number to record the shipment.',
   shipped: 'Shipment recorded.',
+  delivered: 'Delivery recorded.',
   cancelling: 'Cancellation requested.',
   waiting: 'Waiting for payment confirmation.',
 }
@@ -230,6 +253,7 @@ const activityNames: Record<string, string> = {
   'order.cancelled': 'Order cancelled',
   'shipment.packing': 'Packing started',
   'shipment.shipped': 'Shipment recorded',
+  'shipment.delivered': 'Delivery recorded',
   'notification.retry_requested': 'Customer update retry requested',
   'payment.accepted': 'Payment confirmed',
   'refund.requested': 'Refund requested',
@@ -249,7 +273,7 @@ const detailValue = (value: unknown) =>
   <div class="space-y-8">
     <ol
       aria-label="Fulfillment progress"
-      class="grid grid-cols-3 gap-x-4 border-y border-default py-5"
+      class="grid grid-cols-2 gap-x-4 gap-y-5 border-y border-default py-5 sm:grid-cols-4"
     >
       <li
         v-for="stage in stages"
@@ -501,6 +525,18 @@ const detailValue = (value: unknown) =>
           <template v-else-if="shipped">
             <dl class="mt-5 grid gap-4 sm:grid-cols-2 text-sm">
               <div>
+                <dt class="text-muted">Shipped</dt>
+                <dd class="mt-1 font-medium text-highlighted">
+                  {{ orderDate(order.shipment?.shippedAt) }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-muted">Delivered</dt>
+                <dd class="mt-1 font-medium text-highlighted">
+                  {{ delivered ? orderDate(order.shipment?.deliveredAt) : 'Not yet confirmed' }}
+                </dd>
+              </div>
+              <div>
                 <dt class="text-muted">Carrier</dt>
                 <dd class="mt-1 font-medium text-highlighted break-words">
                   {{ order.shipment?.carrier || 'Not provided' }}
@@ -524,6 +560,33 @@ const detailValue = (value: unknown) =>
               color="neutral"
               class="mt-4"
             />
+            <Form
+              v-if="canDeliver"
+              v-slot="{ processing }"
+              v-bind="callbacks"
+              :options="requestOptions"
+              disable-while-processing
+              route="seller.deliveries.store"
+              :params="{ id: order.id }"
+              class="mt-5 border-t border-default pt-5"
+            >
+              <p class="text-sm text-default max-w-prose [overflow-wrap:anywhere]">
+                Confirm delivery only after the carrier reports it.
+                <template v-if="order.email"
+                  >Saving emails a delivery confirmation to
+                  <bdi class="font-medium">{{ order.email }}</bdi
+                  >.</template
+                >
+              </p>
+              <UButton
+                type="submit"
+                label="Mark as delivered"
+                icon="i-lucide-package-check"
+                class="mt-3"
+                :loading="processing"
+                :disabled="processing || locked"
+              />
+            </Form>
           </template>
         </section>
 
@@ -734,7 +797,8 @@ const detailValue = (value: unknown) =>
             />
           </div>
           <p class="text-sm text-muted mt-2">
-            Receipt and shipment emails. Delivery failures do not reverse payment or fulfillment.
+            Receipt, shipment, and delivery emails. Email failures do not reverse payment or
+            fulfillment.
           </p>
           <p v-if="!order.notifications.length" class="text-sm text-muted mt-4">
             No updates have been queued yet.

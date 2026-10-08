@@ -2,6 +2,7 @@ import { BaseMail } from '@adonisjs/mail'
 import type Order from '#models/checkout/order'
 import type OrderAddress from '#models/checkout/order_address'
 import type Shipment from '#models/checkout/shipment'
+import type Notification from '#models/checkout/notification'
 
 /** Matches the storefront's en-PH number and currency formatting. */
 const locale = 'en-PH'
@@ -9,7 +10,7 @@ const locale = 'en-PH'
 export default class OrderNotification extends BaseMail {
   constructor(
     private order: Order,
-    private kind: 'receipt' | 'shipment',
+    private kind: Notification['kind'],
     private accessUrl: string,
     private shipment: Shipment | null,
     private notificationId: number
@@ -24,7 +25,9 @@ export default class OrderNotification extends BaseMail {
       .subject(
         this.kind === 'receipt'
           ? `Payment received · ${this.order.number}`
-          : `Your order has shipped · ${this.order.number}`
+          : this.kind === 'delivery'
+            ? `Your order was delivered · ${this.order.number}`
+            : `Your order has shipped · ${this.order.number}`
       )
       .messageId(`order-notification-${this.notificationId}@${new URL(this.accessUrl).hostname}`)
       .htmlView('emails/order_notification', view)

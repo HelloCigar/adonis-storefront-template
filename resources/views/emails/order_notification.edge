@@ -1,5 +1,5 @@
 @let(sans = "'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif")
-@let(heading = kind === 'receipt' ? 'Payment received' : 'Your order is on its way')
+@let(heading = kind === 'receipt' ? 'Payment received' : kind === 'delivery' ? 'Your order was delivered' : 'Your order is on its way')
 @let(primaryUrl = kind === 'shipment' && shipment && shipment.trackingUrl ? shipment.trackingUrl : accessUrl)
 @let(primaryLabel = kind === 'shipment' && shipment && shipment.trackingUrl ? 'Track delivery' : 'View your order')
 <!doctype html>
@@ -40,6 +40,8 @@
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#fbfaf9;opacity:0;">
     @if(kind === 'receipt')
       We received {{ total }} for order {{ orderNumber }}.
+    @elseif(kind === 'delivery')
+      {{ orderNumber }} was delivered{{ shipment && shipment.carrier ? ` by ${shipment.carrier}` : '' }}.
     @elseif(shipment && shipment.trackingNumber)
       {{ orderNumber }} is on its way{{ shipment.carrier ? ` with ${shipment.carrier}` : '' }}. Tracking number {{ shipment.trackingNumber }}.
     @else
@@ -76,6 +78,8 @@
             <td class="body" style="padding:0 0 28px;font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">
               @if(kind === 'receipt')
                 Thank you for your order. We received <strong class="ink num" style="font-weight:600;color:#1d1816;font-variant-numeric:tabular-nums;">{{ total }}</strong>, and we'll email you again when it ships.
+              @elseif(kind === 'delivery')
+                {{ shipment && shipment.carrier ? shipment.carrier : 'The carrier' }} has delivered your parcel. Thank you for shopping with us.
               @elseif(shipment && shipment.carrier)
                 {{ shipment.carrier }} has your parcel. Use the tracking number below to follow it to your door.
               @else
@@ -168,7 +172,7 @@
                   @if(address.length)
                     <tr>
                       <td class="rule" style="padding:{{ items.length ? '20px 0 0' : '0' }};{{ items.length ? 'border-top:1px solid #e8e4e3;' : '' }}">
-                        <h2 class="ink" style="margin:0 0 6px;font-family:{{{ sans }}};font-size:14px;line-height:20px;font-weight:600;color:#1d1816;">Delivering to</h2>
+                        <h2 class="ink" style="margin:0 0 6px;font-family:{{{ sans }}};font-size:14px;line-height:20px;font-weight:600;color:#1d1816;">{{ kind === 'delivery' ? 'Delivered to' : 'Delivering to' }}</h2>
                         @each(line in address)
                           <div class="body" style="font-family:{{{ sans }}};font-size:16px;line-height:24px;color:#473c39;">{{ line }}</div>
                         @end

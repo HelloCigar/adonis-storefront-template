@@ -32,6 +32,7 @@ export default class StatusTransformer extends BaseTransformer<Order> {
             trackingNumber: shipment.trackingNumber,
             trackingUrl: shipment.trackingUrl,
             shippedAt: shipment.shippedAt,
+            deliveredAt: shipment.deliveredAt,
           }
         : null,
       refunds: (order.refunds ?? []).map((refund) => ({

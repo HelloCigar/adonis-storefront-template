@@ -159,6 +159,9 @@ router
     router
       .post('/orders/:id/shipment', [controllers.seller.Shipments, 'store'])
       .as('shipments.store')
+    router
+      .post('/orders/:id/delivery', [controllers.seller.Deliveries, 'store'])
+      .as('deliveries.store')
     router.post('/orders/:id/refund', [controllers.seller.Refunds, 'store']).as('refunds.store')
     router
       .post('/orders/:id/cancel', [controllers.seller.Cancellations, 'store'])

@@ -3,6 +3,7 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import Order from '#models/checkout/order'
 import FulfillmentService, { type DispatchBlocker } from '#services/checkout/fulfillment_service'
 import BalanceService from '#services/payments/balance_service'
+import { isDispatched } from '#services/checkout/state_service'
 
 export type OrderIssueCause = 'payment' | 'refund' | 'inventory' | 'shipment'
 export type OrderIssueFix =
@@ -29,7 +30,7 @@ export default class OrderOperationsService {
   /** Read alongside the order snapshot. Mutations always recheck their own guards. */
   async read(trx: TransactionClientContract, order: Order) {
     const { blockers, shipment } = await this.fulfillment.inspectDispatch(trx, order)
-    const shipped = shipment?.state === 'shipped'
+    const shipped = isDispatched(shipment?.state)
     const activePayment = order.attempts.some((attempt) =>
       ['creating', 'pending', 'unknown', 'closing'].includes(attempt.state)
     )
@@ -96,6 +97,7 @@ export default class OrderOperationsService {
     return {
       canPack: !blockers.length && shipment?.state === 'pending',
       canShip: !blockers.length && shipment?.state === 'packing',
+      canDeliver: order.source === 'online' && shipment?.state === 'shipped',
       issues: this.issues(order, blockers),
       canCancel: cancellable,
       cancellation: cancellable ? await this.cancellation(order, payments) : null,

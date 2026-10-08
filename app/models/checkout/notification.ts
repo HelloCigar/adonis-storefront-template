@@ -5,7 +5,7 @@ import WorkflowOutbox from '#models/checkout/workflow_outbox'
 
 export default class Notification extends OrderNotificationSchema {
   static table = 'order_notifications'
-  @column() declare kind: 'receipt' | 'shipment'
+  @column() declare kind: 'receipt' | 'shipment' | 'delivery'
   @column() declare state: 'pending' | 'sent' | 'failed'
 
   /** Outbox rows are keyed by kind and entity id; these are the ones that deliver this notification. */

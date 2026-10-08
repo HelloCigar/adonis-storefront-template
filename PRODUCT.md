@@ -25,7 +25,7 @@ Repository evidence establishes the current baseline:
 - One shared store and catalogue. Customer, staff, and admin are the supported roles.
 - Shoppers browse collections and products, choose variants, manage a cart, and check out as guests or with an account.
 - Customers manage their profile, saved addresses, and their own order history.
-- Staff manage the shared catalogue and orders, including packing, shipment tracking, cancellation, refunds, and payment review. Administrators additionally manage users and roles.
+- Staff manage the shared catalogue and orders, including packing, shipment tracking, delivery confirmation, cancellation, refunds, and payment review. Administrators additionally manage users and roles.
 
 ## Capabilities and Constraints
 

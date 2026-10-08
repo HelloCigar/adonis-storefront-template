@@ -994,7 +994,7 @@ export class RefundOperationSchema extends BaseModel {
 }
 
 export class ShipmentSchema extends BaseModel {
-  static $columns = ['actorId', 'carrier', 'createdAt', 'id', 'orderId', 'packingAt', 'shippedAt', 'state', 'trackingNumber', 'trackingUrl', 'updatedAt'] as const
+  static $columns = ['actorId', 'carrier', 'createdAt', 'deliveredAt', 'id', 'orderId', 'packingAt', 'shippedAt', 'state', 'trackingNumber', 'trackingUrl', 'updatedAt'] as const
   $columns = ShipmentSchema.$columns
   @column()
   declare actorId: number | null
@@ -1002,6 +1002,8 @@ export class ShipmentSchema extends BaseModel {
   declare carrier: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column.dateTime()
+  declare deliveredAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
   @column()

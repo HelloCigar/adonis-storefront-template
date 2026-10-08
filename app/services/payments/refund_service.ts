@@ -10,7 +10,7 @@ import Payment from '#models/payments/payment'
 import RefundOperation from '#models/payments/refund_operation'
 import RefundObservation from '#models/payments/refund_observation'
 import PaymentService, { type PaymentRefund } from '#services/payments/payment_service'
-import StateService from '#services/checkout/state_service'
+import StateService, { dispatchedShipmentStates } from '#services/checkout/state_service'
 import MoneyService from '#services/checkout/money_service'
 import OutboxService from '#services/checkout/outbox_service'
 import ActivityService from '#services/checkout/activity_service'
@@ -45,7 +45,11 @@ export default class RefundService {
     CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
     const order = await Order.findOrFail(orderId, { client: trx })
-    const shipped = await order.related('shipments').query().where('state', 'shipped').first()
+    const shipped = await order
+      .related('shipments')
+      .query()
+      .whereIn('state', dispatchedShipmentStates)
+      .first()
     if (order.source !== 'online' || shipped)
       throw new CheckoutException(
         'Only unshipped online payments can be refunded here',
