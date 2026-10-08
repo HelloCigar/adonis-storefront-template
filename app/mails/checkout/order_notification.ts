@@ -1,6 +1,5 @@
 import { BaseMail } from '@adonisjs/mail'
 import type Order from '#models/checkout/order'
-import type OrderAddress from '#models/checkout/order_address'
 import type Shipment from '#models/checkout/shipment'
 import type Notification from '#models/checkout/notification'
 
@@ -13,7 +12,8 @@ export default class OrderNotification extends BaseMail {
     private kind: Notification['kind'],
     private accessUrl: string,
     private shipment: Shipment | null,
-    private notificationId: number
+    private notificationId: number,
+    private invoice: { filename: string; content: Buffer } | null = null
   ) {
     super()
   }
@@ -32,6 +32,11 @@ export default class OrderNotification extends BaseMail {
       .messageId(`order-notification-${this.notificationId}@${new URL(this.accessUrl).hostname}`)
       .htmlView('emails/order_notification', view)
       .textView('emails/order_notification_text', view)
+    if (this.invoice)
+      this.message.attachData(this.invoice.content, {
+        filename: this.invoice.filename,
+        contentType: 'application/pdf',
+      })
   }
 
   /** Both views receive display-ready values, so templates hold no formatting rules. */
@@ -54,6 +59,7 @@ export default class OrderNotification extends BaseMail {
 
     return {
       kind: this.kind,
+      invoiceAttached: this.invoice !== null,
       accessUrl: this.accessUrl,
       orderNumber: order.number,
       total: money.format(order.totalAmount),
@@ -65,9 +71,9 @@ export default class OrderNotification extends BaseMail {
         unitPrice: money.format(item.unitPriceAmount),
         total: money.format(item.totalAmount),
       })),
-      address: this.addressLines(
-        order.addresses?.find((address) => address.type === 'shipping') ?? order.addresses?.[0]
-      ),
+      address:
+        (order.addresses?.find((address) => address.type === 'shipping') ?? order.addresses?.[0])
+          ?.displayLines ?? [],
       shipment: shipment
         ? {
             carrier: shipment.carrier,
@@ -76,19 +82,6 @@ export default class OrderNotification extends BaseMail {
           }
         : null,
     }
-  }
-
-  private addressLines(address: OrderAddress | undefined) {
-    if (!address) return []
-    const region = new Intl.DisplayNames(['en'], { type: 'region' })
-    return [
-      [address.firstName, address.lastName].filter(Boolean).join(' '),
-      address.company,
-      address.address1,
-      address.address2,
-      [address.city, address.zoneCode, address.postalCode].filter(Boolean).join(', '),
-      region.of(address.countryCode) ?? address.countryCode,
-    ].filter((line): line is string => Boolean(line))
   }
 
   /** Staff enter tracking links by hand; only HTTP(S) links are rendered as buttons. */

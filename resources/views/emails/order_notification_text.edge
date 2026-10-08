@@ -3,7 +3,7 @@
 {{{ kind === 'receipt' ? 'Payment received' : kind === 'delivery' ? 'Your order was delivered' : 'Your order is on its way' }}}
 
 @if(kind === 'receipt')
-Thank you for your order. We received {{{ total }}}, and we'll email you again when it ships.
+Thank you for your order. We received {{{ total }}}, and we'll email you again when it ships.{{{ invoiceAttached ? ' Your invoice is attached.' : '' }}}
 @elseif(kind === 'delivery')
 {{{ shipment && shipment.carrier ? shipment.carrier : 'The carrier' }}} has delivered your parcel. Thank you for shopping with us.
 @elseif(shipment && shipment.carrier)

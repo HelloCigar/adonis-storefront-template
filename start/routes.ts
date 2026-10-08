@@ -65,6 +65,9 @@ router
   .get('/checkout/orders/:publicId', [controllers.checkout.Orders, 'show'])
   .as('checkout.orders.show')
 router
+  .get('/checkout/orders/:publicId/invoice', [controllers.checkout.Invoices, 'show'])
+  .as('checkout.invoices.show')
+router
   .post('/checkout/orders/:publicId/cancel', [controllers.checkout.Cancellations, 'store'])
   .as('checkout.cancellations.store')
 router

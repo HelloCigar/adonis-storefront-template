@@ -24,6 +24,7 @@ export type ScannedRoutes = {
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.access.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
+    'checkout.invoices.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.cancellations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.reconciliations.store': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'payments.webhooks.store': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
@@ -113,6 +114,7 @@ export type ScannedRoutes = {
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
+    'checkout.invoices.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
@@ -156,6 +158,7 @@ export type ScannedRoutes = {
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
+    'checkout.invoices.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }

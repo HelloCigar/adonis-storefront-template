@@ -4,9 +4,11 @@ import { Head, usePoll, usePage, router as inertiaRouter } from '@inertiajs/vue3
 import { Form, Link, useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import OrderChat from '~/components/chat/OrderChat.vue'
+import { urlFor } from '~/client'
 const props = defineProps<{
   status: Data.Checkout.Status
   canClaim: boolean
+  hasInvoice: boolean
   conversation?: Data.Chat.Conversation | null
 }>()
 const page = usePage()
@@ -142,7 +144,21 @@ onUnmounted(() => {
       />
     </UCard>
     <UCard>
-      <template #header><h2 class="font-semibold">Order details</h2></template>
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="font-semibold">Order details</h2>
+          <UButton
+            v-if="hasInvoice"
+            :href="urlFor('checkout.invoices.show', { publicId: status.publicId })"
+            external
+            label="Download invoice"
+            icon="i-lucide-file-down"
+            color="neutral"
+            variant="soft"
+            size="sm"
+          />
+        </div>
+      </template>
       <ul class="space-y-4">
         <li
           v-for="line in status.order.lineItems"
