@@ -163,10 +163,10 @@ test.group('Stock adjustments', (group) => {
     const owner = await staff()
     const item = await product()
     const held = await variant(item, { inventoryQuantity: 6, inventoryReservedQuantity: 4 })
-    const untracked = await variant(item, {
+    const untrackedProduct = await product('untracked-stock-product')
+    const untracked = await variant(untrackedProduct, {
       title: 'Untracked',
       inventoryQuantity: null,
-      position: 1,
     })
     for (const [row, body, message] of [
       [held, { mode: 'remove', quantity: 7, reason: 'lost' }, 'Stock cannot go below zero'],
@@ -178,7 +178,7 @@ test.group('Stock adjustments', (group) => {
       [untracked, { mode: 'add', quantity: 1, reason: 'received' }, 'does not track stock'],
     ] as const) {
       const response = await client
-        .post(stockUrl(item, row))
+        .post(stockUrl(row === untracked ? untrackedProduct : item, row))
         .loginAs(owner)
         .withCsrfToken()
         .accept('json')
