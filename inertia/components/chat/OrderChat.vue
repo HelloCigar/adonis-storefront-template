@@ -70,11 +70,13 @@ const canSubmit = computed(() =>
   pending.value.length ? !sending.value : !!input.value.trim() && connection.value === 'live'
 )
 
-// The viewer's own messages take the "user" side; the other party's take the other.
+// The viewer's own messages take the "user" side; the other party's take the other and
+// show the sender's initials, since staff replies can come from different people.
 const uiMessages = computed<NonNullable<ChatMessagesProps['messages']>>(() =>
   messages.value.map((message) => ({
     id: message.id,
     role: message.senderRole === props.side ? 'user' : 'assistant',
+    ...(message.senderRole === props.side ? {} : { avatar: { alt: message.senderName } }),
     parts: [
       ...message.images.map((image) => ({
         type: 'file' as const,
@@ -137,6 +139,14 @@ watch(
   () => props.conversation.roomKey,
   () => nextTick(() => scrollToBottom(false))
 )
+
+// The prompt ignores Enter on an empty text box, so a photo-only message sends here.
+function onEnter(event: KeyboardEvent) {
+  if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return
+  if (!pending.value.length || input.value.trim()) return
+  event.preventDefault()
+  void onSubmit()
+}
 
 async function onSubmit() {
   if (!canSubmit.value) return
@@ -211,6 +221,7 @@ async function onSubmit() {
           autoresize
           maxlength="2000"
           @submit="onSubmit"
+          @keydown.enter="onEnter"
           @update:model-value="chat.notifyTyping()"
           @blur="chat.stopTyping()"
         >
@@ -253,7 +264,14 @@ async function onSubmit() {
                 @click="picker?.click()"
               />
             </UTooltip>
-            <UChatPromptSubmit :loading="sending" :disabled="!canSubmit" class="ms-auto" />
+            <!-- A plain button: the prompt's own submit skips an empty text box. -->
+            <UChatPromptSubmit
+              type="button"
+              :loading="sending"
+              :disabled="!canSubmit"
+              class="ms-auto"
+              @click="onSubmit"
+            />
           </template>
         </UChatPrompt>
       </template>
