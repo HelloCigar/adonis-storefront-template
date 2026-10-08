@@ -2,6 +2,7 @@ import { sqlDateTime } from '#models/shared/sql_datetime'
 import ProductVariant from '#models/catalog/product_variant'
 import StockReservation from '#models/checkout/stock_reservation'
 import OrderLineItem from '#models/checkout/order_line_item'
+import StockAdjustment, { type StockAdjustmentReason } from '#models/catalog/stock_adjustment'
 import CheckoutException from '#exceptions/checkout_exception'
 import { affectedRows } from '#models/shared/affected_rows'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
@@ -90,6 +91,48 @@ export default class InventoryService {
       if (affectedRows(claimed) === 1 && row.productVariantId !== null)
         await row.related('variant').query().increment('inventoryQuantity', row.quantity)
     }
+  }
+
+  /**
+   * Sets tracked on-hand stock from a staff adjustment and logs it. Returns null, without
+   * writing, when stock moved since `variant` was read or would fall below held reservations.
+   */
+  async adjust(
+    trx: TransactionClientContract,
+    variant: ProductVariant,
+    quantityAfter: number,
+    entry: { reason: StockAdjustmentReason; note: string | null; actorId: number | null }
+  ) {
+    if (variant.inventoryQuantity === null || !Number.isSafeInteger(quantityAfter)) return null
+    const changed = await ProductVariant.query({ client: trx })
+      .where('id', variant.id)
+      .where('inventory_quantity', variant.inventoryQuantity)
+      .where('inventory_reserved_quantity', '<=', quantityAfter)
+      .update({ inventoryQuantity: quantityAfter })
+    if (affectedRows(changed) !== 1) return null
+    return this.record(trx, variant.id, variant.inventoryQuantity, quantityAfter, entry)
+  }
+
+  /** Logs a staff stock change that the caller already wrote. Unchanged stock is not logged. */
+  async record(
+    trx: TransactionClientContract,
+    variantId: number,
+    quantityBefore: number | null,
+    quantityAfter: number | null,
+    entry: { reason: StockAdjustmentReason; note?: string | null; actorId: number | null }
+  ) {
+    if (quantityBefore === quantityAfter) return null
+    return StockAdjustment.create(
+      {
+        productVariantId: variantId,
+        actorId: entry.actorId,
+        reason: entry.reason,
+        quantityBefore,
+        quantityAfter,
+        note: entry.note ?? null,
+      },
+      { client: trx }
+    )
   }
 
   /** Whether an unpaid online checkout still references this variant or product. */

@@ -57,6 +57,7 @@ export const controllers = {
     Products: () => import('#controllers/seller/products_controller'),
     Refunds: () => import('#controllers/seller/refunds_controller'),
     Shipments: () => import('#controllers/seller/shipments_controller'),
+    StockAdjustments: () => import('#controllers/seller/stock_adjustments_controller'),
     Users: () => import('#controllers/seller/users_controller'),
     VariantGeneration: () => import('#controllers/seller/variant_generation_controller'),
     Variants: () => import('#controllers/seller/variants_controller'),

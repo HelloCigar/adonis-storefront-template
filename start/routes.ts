@@ -158,6 +158,18 @@ router
       ])
       .as('variant_generation.store')
     router
+      .get('/products/:productId/variants/:variantId/stock', [
+        controllers.seller.StockAdjustments,
+        'index',
+      ])
+      .as('stock_adjustments.index')
+    router
+      .post('/products/:productId/variants/:variantId/stock', [
+        controllers.seller.StockAdjustments,
+        'store',
+      ])
+      .as('stock_adjustments.store')
+    router
       .post('/products/:productId/images', [controllers.seller.Images, 'store'])
       .as('images.store')
     router
@@ -191,4 +203,5 @@ router
   .as('seller')
   .where('id', router.matchers.number())
   .where('productId', router.matchers.number())
+  .where('variantId', router.matchers.number())
   .use([middleware.auth(), middleware.staff()])

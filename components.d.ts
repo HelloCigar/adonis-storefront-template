@@ -75,6 +75,8 @@ declare module 'vue' {
     SellerProductsEditModal: typeof import('./inertia/components/seller/products/EditModal.vue')['default']
     SellerProductsImagesModal: typeof import('./inertia/components/seller/products/ImagesModal.vue')['default']
     SellerProductsTable: typeof import('./inertia/components/seller/products/Table.vue')['default']
+    SellerStockAdjustForm: typeof import('./inertia/components/seller/stock/AdjustForm.vue')['default']
+    SellerStockHistory: typeof import('./inertia/components/seller/stock/History.vue')['default']
     SellerUsersDeleteModal: typeof import('./inertia/components/seller/users/DeleteModal.vue')['default']
     SellerUsersEditModal: typeof import('./inertia/components/seller/users/EditModal.vue')['default']
     SellerUsersTable: typeof import('./inertia/components/seller/users/Table.vue')['default']

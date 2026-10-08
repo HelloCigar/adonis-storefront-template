@@ -8,6 +8,10 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import type { variantCreateValidator } from '#validators/seller/variant'
 import type { optionsUpdateValidator } from '#validators/seller/options'
 import type { variantGenerationValidator } from '#validators/seller/variant_generation'
+import {
+  stockQuantityLimit,
+  type stockAdjustmentValidator,
+} from '#validators/seller/stock_adjustment'
 import OptionsService, { optionCombinationKey } from '#services/catalog/options_service'
 import InventoryService from '#services/catalog/inventory_service'
 import { inject } from '@adonisjs/core'
@@ -23,7 +27,8 @@ export default class SellerVariantService {
   async saveVariant(
     product: Product,
     variant: ProductVariant,
-    { options, featuredMediaId, ...payload }: Infer<typeof variantCreateValidator>
+    { options, featuredMediaId, ...payload }: Infer<typeof variantCreateValidator>,
+    actorId: number | null
   ) {
     if (
       payload.compareAtPriceAmount !== null &&
@@ -52,8 +57,10 @@ export default class SellerVariantService {
         combination,
         variant.$isPersisted
       )
+      let stockBefore: number | null = null
       if (variant.$isPersisted) {
         const current = await ProductVariant.findOrFail(variant.id, { client: trx })
+        stockBefore = current.inventoryQuantity
         const held = current.inventoryReservedQuantity
         const pending = await this.inventory.hasPendingCheckout(trx, { variantId: variant.id })
         if (
@@ -101,7 +108,12 @@ export default class SellerVariantService {
         optionCombinationKey: key,
         ...(featuredMediaId !== undefined ? { featuredMediaId } : {}),
       })
+      const isNew = !variant.$isPersisted
       await variant.save()
+      await this.inventory.record(trx, variant.id, stockBefore, variant.inventoryQuantity, {
+        reason: isNew ? 'initial' : 'edited',
+        actorId,
+      })
       if (currentProduct.status === 'active' && !currentProduct.publishedAt) {
         currentProduct.publishedAt = DateTime.utc()
         await currentProduct.save()
@@ -207,7 +219,11 @@ export default class SellerVariantService {
     })
   }
 
-  async generateVariants(product: Product, payload: Infer<typeof variantGenerationValidator>) {
+  async generateVariants(
+    product: Product,
+    payload: Infer<typeof variantGenerationValidator>,
+    actorId: number | null
+  ) {
     if (payload.compareAtPriceAmount !== null && payload.compareAtPriceAmount < payload.priceAmount)
       this.options.fail(
         'compareAtPriceAmount',
@@ -229,7 +245,7 @@ export default class SellerVariantService {
         .combinations(current.optionDefinitions)
         .filter((options) => !seen.has(optionCombinationKey(options)))
       const firstPosition = Math.max(-1, ...variants.map((variant) => variant.position)) + 1
-      await current.related('variants').createMany(
+      const created = await current.related('variants').createMany(
         missing.map((options, index) => ({
           ...payload,
           title: (Object.values(options).join(' / ') || 'Default').slice(0, 255),
@@ -241,6 +257,11 @@ export default class SellerVariantService {
           position: firstPosition + index,
         }))
       )
+      for (const variant of created)
+        await this.inventory.record(trx, variant.id, null, variant.inventoryQuantity, {
+          reason: 'initial',
+          actorId,
+        })
       if (missing.length && current.status === 'active' && !current.publishedAt) {
         current.publishedAt = DateTime.utc()
         await current.save()
@@ -276,6 +297,49 @@ export default class SellerVariantService {
       variant.useTransaction(trx)
       await variant.delete()
     })
+  }
+
+  /** Applies a staff stock adjustment to a tracked variant and logs it. */
+  async adjustStock(
+    product: Product,
+    variant: ProductVariant,
+    { mode, quantity, reason, note }: Infer<typeof stockAdjustmentValidator>,
+    actorId: number | null
+  ) {
+    if (mode !== 'set' && quantity < 1) this.stockError('Enter how many units to add or remove.')
+    return db.transaction(async (trx) => {
+      // Acquire SQLite's write lock so the on-hand and held counts read below stay current.
+      await this.lockProduct(trx, product.id)
+      const current = await ProductVariant.findOrFail(variant.id, { client: trx })
+      const onHand = current.inventoryQuantity
+      if (onHand === null)
+        this.stockError(
+          'This variant does not track stock. Edit the variant and enter a stock quantity first.'
+        )
+      const next =
+        mode === 'set' ? quantity : mode === 'add' ? onHand + quantity : onHand - quantity
+      if (next === onHand) this.stockError(`Stock is already ${onHand}.`)
+      if (next < 0) this.stockError(`Only ${onHand} on hand. Stock cannot go below zero.`)
+      if (next > stockQuantityLimit)
+        this.stockError(`Stock cannot exceed ${stockQuantityLimit.toLocaleString('en')}.`)
+      const held = current.inventoryReservedQuantity
+      if (next < held)
+        this.stockError(
+          `${held} on hand ${held === 1 ? 'is' : 'are'} held by pending orders. Keep at least ${held}.`
+        )
+      const adjustment = await this.inventory.adjust(trx, current, next, {
+        reason,
+        note: note ?? null,
+        actorId,
+      })
+      if (!adjustment)
+        this.stockError('Stock changed while you were saving. Review it and try again.')
+      return adjustment
+    })
+  }
+
+  private stockError(message: string): never {
+    throw new errors.E_VALIDATION_ERROR([{ field: 'quantity', rule: 'stock', message }])
   }
 
   /** Takes SQLite's write lock before reading the product's options or variant combinations. */

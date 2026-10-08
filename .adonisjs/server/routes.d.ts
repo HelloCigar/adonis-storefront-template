@@ -63,6 +63,8 @@ export type ScannedRoutes = {
     'seller.variants.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.options.update': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
+    'seller.stock_adjustments.store': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.images.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
@@ -116,6 +118,7 @@ export type ScannedRoutes = {
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -154,6 +157,7 @@ export type ScannedRoutes = {
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -180,6 +184,7 @@ export type ScannedRoutes = {
     'seller.products.store': { paramsTuple?: []; params?: {} }
     'seller.variants.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.variant_generation.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
+    'seller.stock_adjustments.store': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.images.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.collections.store': { paramsTuple?: []; params?: {} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

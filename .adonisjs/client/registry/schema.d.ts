@@ -715,6 +715,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/variant_generation_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'seller.stock_adjustments.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/products/:productId/variants/:variantId/stock'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; variantId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['index']>>>
+    }
+  }
+  'seller.stock_adjustments.store': {
+    methods: ["POST"]
+    pattern: '/seller/products/:productId/variants/:variantId/stock'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/stock_adjustment').stockAdjustmentValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { productId: ParamValue; variantId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/stock_adjustment').stockAdjustmentValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/stock_adjustments_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'seller.images.store': {
     methods: ["POST"]
     pattern: '/seller/products/:productId/images'
