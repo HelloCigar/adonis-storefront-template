@@ -11,7 +11,13 @@ import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
-import { chatImageThrottle, checkoutThrottle, discountThrottle, loginThrottle, signupThrottle } from '#start/limiter'
+import {
+  chatImageThrottle,
+  checkoutThrottle,
+  discountThrottle,
+  loginThrottle,
+  signupThrottle,
+} from '#start/limiter'
 
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
