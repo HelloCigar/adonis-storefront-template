@@ -60,7 +60,7 @@ No store-specific voice, approved marketing claims, or binding visual constraint
 - `AUTHORIZATION.md`: single-store roles, permissions, and compatibility constraints.
 - `PAYMENTS.md`, `docs/checkout-process.md`, and `docs/checkout-operations.md`: implemented checkout, payment, fulfillment, and recovery behavior.
 - `database/seeders/main_seeder.ts`: development/test catalogue examples for everyday essentials, home goods, and workspace items. These are demo content.
-- `config/storefront.ts`: authored content slots for pages, policies, and blogs; currently empty in the checked-in configuration.
+- `config/storefront.ts`: authored content slots for pages and policies; currently empty in the checked-in configuration. Blog posts live in the `blog_posts` table and appear at `/blog`.
 - `inertia/`: existing storefront, account, and store-management interface.
 
 No approved customer testimonials, business metrics, store policies, or launch claims have been supplied. Future work must not invent them.

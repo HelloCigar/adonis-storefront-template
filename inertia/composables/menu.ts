@@ -11,6 +11,7 @@ export const useMenu = (name: 'main-menu' | 'footer') => {
         ? [
             { label: 'Home', to: urlFor('home') },
             { label: 'Collections', to: urlFor('collections.index') },
+            { label: 'Blog', to: urlFor('blog.index') },
           ]
         : (page.props.policies ?? []).map((policy) => ({
             label: policy.title,

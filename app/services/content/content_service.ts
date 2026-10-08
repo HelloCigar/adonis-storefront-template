@@ -18,14 +18,4 @@ export default class ContentService {
   findPolicyOrFail(handle: string) {
     return storefront.policies.find((item) => item.handle === handle) ?? notFound()
   }
-
-  findBlogOrFail(handle: string) {
-    return storefront.blogs.find((item) => item.handle === handle) ?? notFound()
-  }
-
-  findArticleOrFail(handle: string, articleHandle: string) {
-    const blog = this.findBlogOrFail(handle)
-    const article = blog.articles.find((item) => item.handle === articleHandle) ?? notFound()
-    return { blog, article }
-  }
 }

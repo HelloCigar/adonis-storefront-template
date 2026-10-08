@@ -15,8 +15,8 @@ declare module '@adonisjs/inertia/types' {
     'account/orders/index': ExtractProps<(typeof import('../../inertia/pages/account/orders/index.vue'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.vue'))['default']>
     'auth/signup': ExtractProps<(typeof import('../../inertia/pages/auth/signup.vue'))['default']>
-    'blog/[handle]/[article]': ExtractProps<(typeof import('../../inertia/pages/blog/[handle]/[article].vue'))['default']>
-    'blog/[handle]/index': ExtractProps<(typeof import('../../inertia/pages/blog/[handle]/index.vue'))['default']>
+    'blog/[handle]': ExtractProps<(typeof import('../../inertia/pages/blog/[handle].vue'))['default']>
+    'blog/index': ExtractProps<(typeof import('../../inertia/pages/blog/index.vue'))['default']>
     'checkout/index': ExtractProps<(typeof import('../../inertia/pages/checkout/index.vue'))['default']>
     'checkout/order': ExtractProps<(typeof import('../../inertia/pages/checkout/order.vue'))['default']>
     'collection/[handle]': ExtractProps<(typeof import('../../inertia/pages/collection/[handle].vue'))['default']>

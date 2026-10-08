@@ -12,8 +12,8 @@ export type ScannedRoutes = {
     'pages.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'policies.index': { paramsTuple?: []; params?: {} }
     'policies.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'blogs.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'articles.show': { paramsTuple: [ParamValue,ParamValue]; params: {'handle': ParamValue,'article': ParamValue} }
+    'blog.index': { paramsTuple?: []; params?: {} }
+    'blog.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'cart.add': { paramsTuple?: []; params?: {} }
     'cart.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'cart.remove': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -108,8 +108,8 @@ export type ScannedRoutes = {
     'pages.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'policies.index': { paramsTuple?: []; params?: {} }
     'policies.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'blogs.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'articles.show': { paramsTuple: [ParamValue,ParamValue]; params: {'handle': ParamValue,'article': ParamValue} }
+    'blog.index': { paramsTuple?: []; params?: {} }
+    'blog.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
@@ -151,8 +151,8 @@ export type ScannedRoutes = {
     'pages.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'policies.index': { paramsTuple?: []; params?: {} }
     'policies.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'blogs.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
-    'articles.show': { paramsTuple: [ParamValue,ParamValue]; params: {'handle': ParamValue,'article': ParamValue} }
+    'blog.index': { paramsTuple?: []; params?: {} }
+    'blog.show': { paramsTuple: [ParamValue]; params: {'handle': ParamValue} }
     'checkout.create': { paramsTuple?: []; params?: {} }
     'checkout.access.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
     'checkout.orders.show': { paramsTuple: [ParamValue]; params: {'publicId': ParamValue} }
