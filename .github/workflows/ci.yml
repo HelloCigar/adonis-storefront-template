@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+  # Runners resolve localhost to both ::1 and 127.0.0.1. Tests run the HTTP server and client in
+  # one process, so a busy event loop can time out the first connection attempt and fall through to
+  # the address the server is not bound to. One address avoids that. Overrides HOST from .env.
+  HOST: 127.0.0.1
+
+jobs:
+  checks:
+    name: Typecheck and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  tests:
+    name: Unit and functional tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # Tests use SQLite at tmp/test.sqlite3 (config/database.ts), so no database service is needed.
+      - name: Create .env
+        run: cp .env.example .env && node ace generate:key
+      - run: node ace test unit functional
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Create .env
+        run: cp .env.example .env && node ace generate:key
+      - run: node ace test browser
