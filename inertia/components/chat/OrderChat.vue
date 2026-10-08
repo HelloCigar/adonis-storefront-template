@@ -70,13 +70,11 @@ const canSubmit = computed(() =>
   pending.value.length ? !sending.value : !!input.value.trim() && connection.value === 'live'
 )
 
-// The viewer's own messages take the "user" side; the other party's take the other and
-// show the sender's initials, since staff replies can come from different people.
+// The viewer's own messages take the "user" side; the other party's take the other.
 const uiMessages = computed<NonNullable<ChatMessagesProps['messages']>>(() =>
   messages.value.map((message) => ({
     id: message.id,
     role: message.senderRole === props.side ? 'user' : 'assistant',
-    ...(message.senderRole === props.side ? {} : { avatar: { alt: message.senderName } }),
     parts: [
       ...message.images.map((image) => ({
         type: 'file' as const,
@@ -104,9 +102,15 @@ const userConfig = computed<ChatMessagesProps['user']>(() => {
     : undefined
 })
 
-// The other party's messages can be copied, e.g. an address or tracking number.
+// The other party's messages can be copied, e.g. an address or tracking number. Customers
+// see the store team as one sender; staff see the customer's initials. The typing
+// indicator uses the same avatar.
 const assistantConfig = computed<ChatMessagesProps['assistant']>(() => ({
   variant: 'outline',
+  avatar:
+    props.side === 'customer'
+      ? { icon: 'i-lucide-store', alt: 'Store team' }
+      : { alt: props.customerName ?? 'Customer' },
   actions: canCopy.value
     ? [
         {
