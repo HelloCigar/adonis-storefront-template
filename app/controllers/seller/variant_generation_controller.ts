@@ -8,12 +8,13 @@ import { variantGenerationValidator } from '#validators/seller/variant_generatio
 export default class VariantGenerationController {
   constructor(private variants: SellerVariantService) {}
 
-  async store({ params, request, response, session, bouncer }: HttpContext) {
+  async store({ params, request, response, session, bouncer, auth }: HttpContext) {
     const product = await Product.findOrFail(params.productId)
     await bouncer.with('SellerVariantPolicy').authorize('create', product)
     const count = await this.variants.generateVariants(
       product,
-      await request.validateUsing(variantGenerationValidator)
+      await request.validateUsing(variantGenerationValidator),
+      auth.user!.id
     )
     session.flash(
       'success',

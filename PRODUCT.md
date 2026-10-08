@@ -43,6 +43,8 @@ Keep the current behavior unless a subsequent task explicitly changes it. Deploy
 
 Approved catalogue workflow: staff define up to three shared product options, edit unique variant combinations, assign images from the same product, and generate only missing combinations within a 100-combination limit using explicit starting details. Generation preserves existing variant IDs, prices, SKUs, stock, and images. Staff may remove an option dimension when the remaining combinations stay distinct; conflicting saves name affected variants and never merge or delete their records. Legacy inconsistencies are flagged and pause generation; additive option expansion can provide repair choices while invalid historical selections remain unchanged until explicit edits. Shoppers select available combinations, and the cart uses the selected variant's image.
 
+Stock adjustments: staff open a tracked variant's stock page to add received or returned units, remove damaged or lost units, or set a counted total, with a required reason and an optional note. On hand never drops below zero or below units held by pending orders, and an adjustment never changes whether the variant is available for sale. Every staff stock change is logged with who made it, including stock set through the variant form or variant generation. Order reservations, sales, and cancellation restocks stay in the order workflow and are not part of this log.
+
 ## Brand Commitments
 
 The final product and store name are undecided. MediaBunny appears in mail configuration, while Nuxt Shopify and Nuxt UI demo copy remain in the storefront. These are existing implementation references, not a confirmed brand commitment.

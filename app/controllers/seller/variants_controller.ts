@@ -22,25 +22,27 @@ export default class VariantsController {
       images: MediaTransformer.transform(await product.media.all()),
     })
   }
-  async store({ params, request, response, session, bouncer }: HttpContext) {
+  async store({ params, request, response, session, bouncer, auth }: HttpContext) {
     const product = await Product.findOrFail(params.productId)
     await bouncer.with('SellerVariantPolicy').authorize('create', product)
     await this.variants.saveVariant(
       product,
       new ProductVariant(),
-      await request.validateUsing(variantCreateValidator)
+      await request.validateUsing(variantCreateValidator),
+      auth.user!.id
     )
     session.flash('success', 'Variant created')
     return response.redirect().toRoute('seller.variants.index', { productId: product.id })
   }
-  async update({ params, request, response, session, bouncer }: HttpContext) {
+  async update({ params, request, response, session, bouncer, auth }: HttpContext) {
     const product = await Product.findOrFail(params.productId)
     const variant = await product.related('variants').query().where('id', params.id).firstOrFail()
     await bouncer.with('SellerVariantPolicy').authorize('update', variant, product)
     await this.variants.saveVariant(
       product,
       variant,
-      await request.validateUsing(variantUpdateValidator, { meta: { id: variant.id } })
+      await request.validateUsing(variantUpdateValidator, { meta: { id: variant.id } }),
+      auth.user!.id
     )
     session.flash('success', 'Variant updated')
     return response.redirect().toRoute('seller.variants.index', { productId: product.id })

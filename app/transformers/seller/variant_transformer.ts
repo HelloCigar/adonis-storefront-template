@@ -12,6 +12,7 @@ export default class SellerVariantTransformer extends BaseTransformer<ProductVar
         'compareAtPriceAmount',
         'currencyCode',
         'inventoryQuantity',
+        'inventoryReservedQuantity',
         'availableForSale',
         'options',
         'featuredMediaId',

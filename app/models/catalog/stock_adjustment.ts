@@ -1,0 +1,34 @@
+import { StockAdjustmentSchema } from '#database/schema'
+import { belongsTo, column } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import User from '#models/account/user'
+import ProductVariant from '#models/catalog/product_variant'
+
+/** Reasons staff choose when adjusting stock by hand. */
+export const manualStockReasons = [
+  'received',
+  'returned',
+  'count',
+  'damaged',
+  'lost',
+  'correction',
+] as const
+/** Reasons recorded when the variant form creates stock or changes it directly. */
+export const variantFormStockReasons = ['initial', 'edited'] as const
+export type StockAdjustmentReason =
+  (typeof manualStockReasons)[number] | (typeof variantFormStockReasons)[number]
+
+export default class StockAdjustment extends StockAdjustmentSchema {
+  @column() declare reason: StockAdjustmentReason
+
+  get change() {
+    return this.quantityBefore === null || this.quantityAfter === null
+      ? null
+      : this.quantityAfter - this.quantityBefore
+  }
+
+  @belongsTo(() => ProductVariant, { foreignKey: 'productVariantId' })
+  declare variant: BelongsTo<typeof ProductVariant>
+
+  @belongsTo(() => User, { foreignKey: 'actorId' }) declare actor: BelongsTo<typeof User>
+}

@@ -342,6 +342,18 @@ const routes = {
     tokens: [{"old":"/seller/products/:productId/variants/generate","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/generate","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/generate","type":0,"val":"generate","end":""}],
     types: placeholder as Registry['seller.variant_generation.store']['types'],
   },
+  'seller.stock_adjustments.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/products/:productId/variants/:variantId/stock',
+    tokens: [{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"variantId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"stock","end":""}],
+    types: placeholder as Registry['seller.stock_adjustments.index']['types'],
+  },
+  'seller.stock_adjustments.store': {
+    methods: ["POST"],
+    pattern: '/seller/products/:productId/variants/:variantId/stock',
+    tokens: [{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"seller","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"products","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"productId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"variants","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":1,"val":"variantId","end":""},{"old":"/seller/products/:productId/variants/:variantId/stock","type":0,"val":"stock","end":""}],
+    types: placeholder as Registry['seller.stock_adjustments.store']['types'],
+  },
   'seller.images.store': {
     methods: ["POST"],
     pattern: '/seller/products/:productId/images',

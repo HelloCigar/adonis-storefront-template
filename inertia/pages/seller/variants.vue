@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
+import { useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import VariantsTable from '~/components/seller/variants/Table.vue'
 import EditModal from '~/components/seller/variants/EditModal.vue'
 import DeleteModal from '~/components/seller/variants/DeleteModal.vue'
 import ImagesModal from '~/components/seller/products/ImagesModal.vue'
 import GenerateModal from '~/components/seller/variants/GenerateModal.vue'
-defineProps<{ product: Data.Seller.Product; images: Data.Shared.Media[] }>()
+const props = defineProps<{ product: Data.Seller.Product; images: Data.Shared.Media[] }>()
+const router = useRouter()
 const selected = ref<Data.Seller.Variant>()
 const open = ref(false)
 const deleting = ref(false)
@@ -16,6 +18,12 @@ const generating = ref(false)
 function edit(variant?: Data.Seller.Variant) {
   selected.value = variant
   open.value = true
+}
+function adjustStock(variant: Data.Seller.Variant) {
+  router.visit({
+    route: 'seller.stock_adjustments.index',
+    routeParams: { productId: props.product.id, variantId: variant.id },
+  })
 }
 function requestDelete(variant: Data.Seller.Variant) {
   selected.value = variant
@@ -30,6 +38,7 @@ function requestDelete(variant: Data.Seller.Variant) {
     @images="imagesOpen = true"
     @create="edit()"
     @edit="edit"
+    @stock="adjustStock"
     @delete="requestDelete"
     @generate="generating = true"
   />

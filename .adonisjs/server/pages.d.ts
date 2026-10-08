@@ -37,6 +37,7 @@ declare module '@adonisjs/inertia/types' {
     'seller/order': ExtractProps<(typeof import('../../inertia/pages/seller/order.vue'))['default']>
     'seller/orders': ExtractProps<(typeof import('../../inertia/pages/seller/orders.vue'))['default']>
     'seller/products': ExtractProps<(typeof import('../../inertia/pages/seller/products.vue'))['default']>
+    'seller/stock': ExtractProps<(typeof import('../../inertia/pages/seller/stock.vue'))['default']>
     'seller/users': ExtractProps<(typeof import('../../inertia/pages/seller/users.vue'))['default']>
     'seller/variants': ExtractProps<(typeof import('../../inertia/pages/seller/variants.vue'))['default']>
     'settings/index': ExtractProps<(typeof import('../../inertia/pages/settings/index.vue'))['default']>

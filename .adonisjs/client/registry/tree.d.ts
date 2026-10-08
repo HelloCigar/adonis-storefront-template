@@ -114,6 +114,10 @@ export interface ApiDefinition {
     variantGeneration: {
       store: typeof routes['seller.variant_generation.store']
     }
+    stockAdjustments: {
+      index: typeof routes['seller.stock_adjustments.index']
+      store: typeof routes['seller.stock_adjustments.store']
+    }
     images: {
       store: typeof routes['seller.images.store']
       destroy: typeof routes['seller.images.destroy']
