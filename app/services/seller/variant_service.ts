@@ -228,9 +228,9 @@ export default class SellerVariantService {
       const missing = this.options
         .combinations(current.optionDefinitions)
         .filter((options) => !seen.has(optionCombinationKey(options)))
-      let position = Math.max(-1, ...variants.map((variant) => variant.position)) + 1
-      for (const options of missing) {
-        await current.related('variants').create({
+      const firstPosition = Math.max(-1, ...variants.map((variant) => variant.position)) + 1
+      await current.related('variants').createMany(
+        missing.map((options, index) => ({
           ...payload,
           title: (Object.values(options).join(' / ') || 'Default').slice(0, 255),
           options,
@@ -238,9 +238,9 @@ export default class SellerVariantService {
           sku: null,
           featuredMediaId: null,
           availableForSale: payload.availableForSale && payload.inventoryQuantity !== 0,
-          position: position++,
-        })
-      }
+          position: firstPosition + index,
+        }))
+      )
       if (missing.length && current.status === 'active' && !current.publishedAt) {
         current.publishedAt = DateTime.utc()
         await current.save()

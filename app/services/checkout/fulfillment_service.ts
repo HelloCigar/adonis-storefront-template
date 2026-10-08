@@ -118,7 +118,7 @@ export default class FulfillmentService {
         throw new CheckoutException('A shipped order cannot be cancelled', 'E_ORDER_CANCEL_SHIPPED')
       const active = await Attempt.query({ client: trx })
         .where('order_id', orderId)
-        .whereIn('state', ['creating', 'pending', 'unknown', 'closing'])
+        .withScopes((scopes) => scopes.open())
         .first()
       if (active)
         throw new CheckoutException(
@@ -167,12 +167,7 @@ export default class FulfillmentService {
       .where('needs_review', true)
       .first()
     const refund = payment
-      ? await order
-          .related('refunds')
-          .query()
-          .where('payment_id', payment.id)
-          .whereNot('state', 'failed')
-          .first()
+      ? await payment.related('refunds').query().whereNot('state', 'failed').first()
       : null
     const invalidStock = await order
       .related('stockReservations')

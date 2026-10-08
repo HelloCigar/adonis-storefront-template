@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import { urlFor } from '@adonisjs/core/services/url_builder'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import mail from '@adonisjs/mail/services/main'
 import logger from '@adonisjs/core/services/logger'
 import db from '@adonisjs/lucid/services/db'
@@ -49,7 +50,7 @@ export default class NotificationService {
         .where('claim_token', token)
         .update({
           state: 'sent',
-          sentAt: DateTime.utc().toSQL({ includeOffset: false }),
+          sentAt: sqlDateTime(),
           ...leaseReleased(),
           lastError: null,
         })
@@ -82,7 +83,7 @@ export default class NotificationService {
    * Failed notifications stay with staff. Skips rows with outbox work still waiting or recent.
    */
   async sweep() {
-    const staleAt = DateTime.utc().minus({ minutes: 2 }).toSQL({ includeOffset: false })!
+    const staleAt = sqlDateTime(DateTime.utc().minus({ minutes: 2 }))
     const rows = await Notification.query()
       .where('state', 'pending')
       .where(unleased)

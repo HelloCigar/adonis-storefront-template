@@ -1,15 +1,18 @@
 import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import MoneyService from '#services/checkout/money_service'
 import { unleased } from '#models/shared/lease'
 import Payment from '#models/payments/payment'
+import Attempt from '#models/payments/attempt'
+import RefundOperation from '#models/payments/refund_operation'
 
 @inject()
 export default class AuditService {
   constructor(private money: MoneyService) {}
   async read() {
-    const staleAt = DateTime.utc().minus({ minutes: 2 }).toSQL({ includeOffset: false })!
+    const staleAt = sqlDateTime(DateTime.utc().minus({ minutes: 2 }))
     return db.transaction(async (trx) => {
       const variants = await trx
         .from('product_variants')
@@ -45,7 +48,7 @@ export default class AuditService {
         .select('id', 'created_at')
       const staleAttempts = await trx
         .from('payment_attempts')
-        .whereIn('state', ['creating', 'pending', 'unknown', 'closing', 'failed'])
+        .whereIn('state', [...Attempt.recoverableStates])
         .where('updated_at', '<', staleAt)
         .where(unleased)
         .select('id')
@@ -72,7 +75,7 @@ export default class AuditService {
             .where('needs_review', true)
             .orWhere((q) =>
               q
-                .whereIn('state', ['requested', 'pending', 'unknown'])
+                .whereIn('state', [...RefundOperation.inFlightStates])
                 .where('updated_at', '<', staleAt)
             )
         )

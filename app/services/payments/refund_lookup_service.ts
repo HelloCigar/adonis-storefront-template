@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import db from '@adonisjs/lucid/services/db'
 import logger from '@adonisjs/core/services/logger'
 import RefundLookup from '#models/payments/refund_lookup'
@@ -104,11 +105,7 @@ export default class RefundLookupService {
   async sweep() {
     const rows = await RefundLookup.query()
       .where('state', 'pending')
-      .where(
-        'updated_at',
-        '<',
-        DateTime.utc().minus({ minutes: 1 }).toSQL({ includeOffset: false })!
-      )
+      .where('updated_at', '<', sqlDateTime(DateTime.utc().minus({ minutes: 1 })))
       .limit(100)
     for (const row of rows)
       await db.transaction((trx) =>

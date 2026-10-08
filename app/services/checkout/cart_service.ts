@@ -56,7 +56,7 @@ export default class CartService {
   async add(token: string, userId: number | undefined, variantId: number, quantity: number) {
     const variant = await ProductVariant.query()
       .where('id', variantId)
-      .whereHas('product', (query) => query.where('status', 'active').whereNotNull('published_at'))
+      .whereHas('product', (query) => query.withScopes((scopes) => scopes.published()))
       .firstOrFail()
     if (!variant.isSellable) invalidCart('This variant is unavailable.')
     const cart = await this.findOrCreate(token, userId)

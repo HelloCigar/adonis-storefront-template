@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import ProductVariant from '#models/catalog/product_variant'
 import StockReservation from '#models/checkout/stock_reservation'
 import OrderLineItem from '#models/checkout/order_line_item'
@@ -44,7 +44,7 @@ export default class InventoryService {
       const claimed = await StockReservation.query({ client: trx })
         .where('id', row.id)
         .where('state', 'reserved')
-        .update({ state: 'consumed', settledAt: DateTime.utc().toSQL({ includeOffset: false }) })
+        .update({ state: 'consumed', settledAt: sqlDateTime() })
       if (affectedRows(claimed) !== 1) this.unavailable()
       const changed = await row
         .related('variant')
@@ -66,7 +66,7 @@ export default class InventoryService {
       const claimed = await StockReservation.query({ client: trx })
         .where('id', row.id)
         .where('state', 'reserved')
-        .update({ state: 'released', settledAt: DateTime.utc().toSQL({ includeOffset: false }) })
+        .update({ state: 'released', settledAt: sqlDateTime() })
       if (affectedRows(claimed) !== 1) continue
       if (row.productVariantId === null) this.unavailable()
       const changed = await row
@@ -86,7 +86,7 @@ export default class InventoryService {
       const claimed = await StockReservation.query({ client: trx })
         .where('id', row.id)
         .whereNull('restockedAt')
-        .update({ restockedAt: DateTime.utc().toSQL({ includeOffset: false }) })
+        .update({ restockedAt: sqlDateTime() })
       if (affectedRows(claimed) === 1 && row.productVariantId !== null)
         await row.related('variant').query().increment('inventoryQuantity', row.quantity)
     }

@@ -1,5 +1,5 @@
 import { PaymentAttemptSchema } from '#database/schema'
-import { column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Order from '#models/checkout/order'
 import { jsonColumn } from '#models/shared/json_column'
@@ -8,15 +8,26 @@ import type { AttemptState } from '#services/checkout/state_service'
 
 export default class Attempt extends PaymentAttemptSchema {
   static table = 'payment_attempts'
-  @column({ consume: Boolean }) declare liveMode: boolean
-  @column({ consume: Boolean }) declare needsReview: boolean
+
+  /** Checkouts that may still take or settle a payment. */
+  static openStates = [
+    'creating',
+    'pending',
+    'unknown',
+    'closing',
+  ] as const satisfies AttemptState[]
+  /** Open attempts plus failed ones, which recovery retries or closes. */
+  static recoverableStates = [...Attempt.openStates, 'failed'] as const satisfies AttemptState[]
+
+  static open = scope((query) => {
+    query.whereIn('state', [...Attempt.openStates])
+  })
+
+  static recoverable = scope((query) => {
+    query.whereIn('state', [...Attempt.recoverableStates])
+  })
+
   @column(jsonColumn) declare requestSnapshot: CheckoutInput
   @column() declare state: AttemptState
-  @column({ consume: Number }) declare amountMinor: number
-  @column({ consume: Number }) declare expiresAtMs: number
-  @column({ consume: (value) => (value === null ? null : Number(value)) })
-  declare replayUntilMs: number | null
-  @column({ consume: (value) => (value === null ? null : Number(value)) })
-  declare claimExpiresAtMs: number | null
   @belongsTo(() => Order) declare order: BelongsTo<typeof Order>
 }

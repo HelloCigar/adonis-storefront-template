@@ -7,15 +7,14 @@ import { Exception } from '@adonisjs/core/exceptions'
 import { beforeCreate, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { toMajor, toMinor } from '#models/shared/money'
+import { jsonColumn } from '#models/shared/json_column'
 
 export default class OrderLineItem extends OrderLineItemSchema {
   @beforeCreate()
   static async snapshotCreator(item: OrderLineItem) {
     let productId = item.productId
     if (item.productVariantId) {
-      const variant = await ProductVariant.query({ client: item.$trx })
-        .where('id', item.productVariantId)
-        .firstOrFail()
+      const variant = await ProductVariant.findOrFail(item.productVariantId, { client: item.$trx })
       if (productId && productId !== variant.productId) {
         throw new Exception('The order variant must belong to its product', { status: 422 })
       }
@@ -23,9 +22,7 @@ export default class OrderLineItem extends OrderLineItemSchema {
       item.productId = productId
     }
     if (productId) {
-      const product = await Product.query({ client: item.$trx })
-        .where('id', productId)
-        .firstOrFail()
+      const product = await Product.findOrFail(productId, { client: item.$trx })
       // Legacy creator attribution is retained for history, never for access checks.
       item.sellerId = product.sellerId
     }
@@ -48,11 +45,7 @@ export default class OrderLineItem extends OrderLineItemSchema {
   @belongsTo(() => User, { foreignKey: 'sellerId' })
   declare seller: BelongsTo<typeof User>
 
-  @column({
-    prepare: (value) => (value === null ? null : JSON.stringify(value)),
-    consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),
-  })
-  declare options: Record<string, string> | null
+  @column(jsonColumn) declare options: Record<string, string> | null
 
   @belongsTo(() => Order, { foreignKey: 'orderId' })
   declare order: BelongsTo<typeof Order>
