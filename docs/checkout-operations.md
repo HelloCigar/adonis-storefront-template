@@ -15,7 +15,7 @@ The rollout supports one shared store, optional customer accounts, PHP checkout,
    node ace queue:work --queue=maintenance,payments,notifications --concurrency=1
    ```
 
-   In the compiled deployment, run the same Ace command from the `build` directory. Start all three queues. Initial concurrency is one for SQLite. Configure graceful termination/restart with enough time for the 90-second payment jobs to settle or become recoverable.
+   In the compiled deployment, run the same Ace command from the `build` directory. `npm start` runs migrations, the web server and this worker together; see [Deploying on Railway](deploy-railway.md). Start all three queues. Initial concurrency is one for SQLite. Configure graceful termination/restart with enough time for the 90-second payment jobs to settle or become recoverable.
 
 5. Configure the public PayMongo webhook at `/payments/webhooks/paymongo` and verify checkout-paid/refund events with the endpoint's signing secret. Route request bodies without rewriting them. Avoid access logs that retain receipt-link query tokens.
 6. Run `node ace checkout:audit`, exercise a test-mode payment and pre-shipment refund, inspect the receipt and shipping notification, then restart web/worker processes and verify schedule `run_count` and queue progression. Production account activation, real credentials, SMTP delivery and provider-dashboard tests remain deployment tasks.

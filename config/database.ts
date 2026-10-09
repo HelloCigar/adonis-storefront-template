@@ -1,5 +1,9 @@
+import { join } from 'node:path'
+import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/lucid'
+
+const dataDir = env.get('DATA_DIR')
 
 const dbConfig = defineConfig({
   /**
@@ -22,7 +26,11 @@ const dbConfig = defineConfig({
         /**
          * Database file location.
          */
-        filename: app.tmpPath(app.inTest ? 'test.sqlite3' : 'db.sqlite3'),
+        filename: app.inTest
+          ? app.tmpPath('test.sqlite3')
+          : dataDir
+            ? join(dataDir, 'db.sqlite3')
+            : app.tmpPath('db.sqlite3'),
       },
 
       /**

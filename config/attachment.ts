@@ -1,4 +1,8 @@
+import { join } from 'node:path'
+import env from '#start/env'
 import { defineConfig, LocalFileStorage, type InferConverters } from '@jrmc/adonis-attachment'
+
+const dataDir = env.get('DATA_DIR')
 
 const binaries = {
   // ffmpeg: { command: '/opt/media/bin/ffmpeg', timeout: 15_000 },
@@ -17,7 +21,9 @@ const attachmentConfig = defineConfig({
   storage: (app) =>
     app.inTest
       ? new LocalFileStorage({ location: app.tmpPath('test-attachments') })
-      : LocalFileStorage.fromApp(app),
+      : dataDir
+        ? new LocalFileStorage({ location: join(dataDir, 'attachments') })
+        : LocalFileStorage.fromApp(app),
   route: false,
   integrations: {
     lucid: {},

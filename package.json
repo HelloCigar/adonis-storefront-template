@@ -8,7 +8,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "start": "node bin/server.js",
+    "start": "node scripts/start.mjs",
     "build": "node ace build",
     "dev": "concurrently --kill-others --names web,worker \"npm run dev:web\" \"npm run dev:worker\"",
     "dev:web": "node ace serve --hmr",
