@@ -35,9 +35,7 @@ const money = (amount: number) =>
       icon="i-lucide-shopping-bag"
       :title="checkoutError || 'Your cart is empty'"
       :description="
-        checkoutError
-          ? 'Review your cart, then come back to check out.'
-          : 'Add something you like, then come back to check out.'
+        checkoutError ? undefined : 'Add something you like, then come back to check out.'
       "
       :actions="[{ label: 'Continue shopping', to: urlFor('home') }]"
       class="py-16"
