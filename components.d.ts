@@ -31,6 +31,9 @@ declare module 'vue' {
     ChatOrderChat: typeof import('./inertia/components/chat/OrderChat.vue')['default']
     CheckoutAddressFields: typeof import('./inertia/components/checkout/AddressFields.vue')['default']
     CheckoutDiscountCode: typeof import('./inertia/components/checkout/DiscountCode.vue')['default']
+    CheckoutOrderSummary: typeof import('./inertia/components/checkout/OrderSummary.vue')['default']
+    CheckoutSteps: typeof import('./inertia/components/checkout/Steps.vue')['default']
+    CheckoutSummaryLines: typeof import('./inertia/components/checkout/SummaryLines.vue')['default']
     CollectionGrid: typeof import('./inertia/components/collection/Grid.vue')['default']
     CollectionProducts: typeof import('./inertia/components/collection/Products.vue')['default']
     FilterGroup: typeof import('./inertia/components/filter/Group.vue')['default']
@@ -112,6 +115,7 @@ declare module 'vue' {
     UCheckbox: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Checkbox.vue')['default']
     UCheckboxGroup: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/CheckboxGroup.vue')['default']
     UChip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Chip.vue')['default']
+    UCollapsible: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Collapsible.vue')['default']
     UColorModeButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
     UCommandPalette: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/CommandPalette.vue')['default']
     UContainer: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Container.vue')['default']
@@ -157,6 +161,7 @@ declare module 'vue' {
     UTable: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Table.vue')['default']
     UTabs: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tabs.vue')['default']
     UTextarea: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
+    UTimeline: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Timeline.vue')['default']
     UTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }
 }
