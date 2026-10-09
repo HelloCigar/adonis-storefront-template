@@ -16,9 +16,9 @@ const text = (value: string, marks?: string[]): RichTextNode =>
  * Merging `content` alone leaves the generated `contentHtml`; merge both to keep them in step.
  */
 export const BlogPostFactory = factory
-  .define(BlogPost, ({ faker }) => {
+  .define(BlogPost, async ({ faker }) => {
     const title = faker.lorem.sentence({ min: 3, max: 6 }).replace(/\.$/, '')
-    const content = richText.normalize({
+    const content = await richText.normalize({
       type: 'doc',
       content: [
         { type: 'paragraph', content: [text(faker.lorem.paragraph())] },

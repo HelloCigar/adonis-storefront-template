@@ -1,3 +1,7 @@
+import type { VineValidator } from '@vinejs/vine'
+import type { SchemaTypes } from '@vinejs/vine/types'
+import { richTextAttributes as rules } from '#validators/content/rich_text'
+
 export type RichTextMark = { type: string; attrs?: Record<string, unknown> }
 export type RichTextNode = {
   type: string
@@ -39,43 +43,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function stringAttr(attrs: unknown, key: string, maxLength = 2048) {
-  if (!isRecord(attrs) || typeof attrs[key] !== 'string') return null
-  const value = attrs[key].trim()
-  return value && value.length <= maxLength ? value : null
+function attr(attrs: unknown, key: string) {
+  return isRecord(attrs) ? attrs[key] : undefined
 }
 
-/**
- * Only web, mail, and phone links, plus same-site paths and fragments. Anything else, such as
- * `javascript:` or `data:`, is dropped. Control characters and whitespace are stripped before
- * the scheme check because browsers ignore them inside a scheme.
- */
-function safeUrl(value: string | null, schemes: string[]) {
-  if (!value) return null
-  const compact = [...value]
-    .filter((char) => {
-      const code = char.codePointAt(0)!
-      return code > 0x20 && (code < 0x7f || code > 0x9f)
-    })
-    .join('')
-  if (compact.startsWith('/') || compact.startsWith('#')) return value
-  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(compact)?.[1]?.toLowerCase()
-  return scheme && schemes.includes(scheme) ? value : null
+/** The validated value, or null when the attribute is missing or fails its rules. */
+async function check<Schema extends SchemaTypes>(
+  validator: VineValidator<Schema, any>,
+  value: unknown
+) {
+  const [error, result] = await validator.tryValidate(value)
+  return error ? null : result
 }
 
 /**
  * Normalizes and renders the Tiptap JSON that the Nuxt UI editor produces. The server never
  * trusts editor HTML: it keeps only the nodes, marks, and attributes below from the submitted
- * JSON and renders HTML from that, so public pages can show `content_html` as-is.
+ * JSON and renders HTML from that, so public pages can show `content_html` as-is. Attribute
+ * values are checked with the Vine rules in `#validators/content/rich_text`.
  */
 export default class RichTextService {
   static emptyDocument(): RichTextDocument {
     return { type: 'doc', content: [] }
   }
 
-  normalize(input: unknown): RichTextDocument {
+  async normalize(input: unknown): Promise<RichTextDocument> {
     if (!isRecord(input) || input.type !== 'doc') return RichTextService.emptyDocument()
-    return { type: 'doc', content: this.#children(input.content, 0) }
+    return { type: 'doc', content: await this.#children(input.content, 0) }
   }
 
   toHtml(document: RichTextDocument) {
@@ -99,62 +93,63 @@ export default class RichTextService {
     return visible(document)
   }
 
-  #children(content: unknown, depth: number): RichTextNode[] {
+  async #children(content: unknown, depth: number): Promise<RichTextNode[]> {
     if (!Array.isArray(content) || depth > MAX_DEPTH) return []
-    return content.flatMap((child) => {
-      const node = this.#node(child, depth + 1)
-      return node ? [node] : []
-    })
+    const nodes = await Promise.all(content.map((child) => this.#node(child, depth + 1)))
+    return nodes.filter((node) => node !== null)
   }
 
-  #node(input: unknown, depth: number): RichTextNode | null {
+  async #node(input: unknown, depth: number): Promise<RichTextNode | null> {
     if (!isRecord(input) || typeof input.type !== 'string') return null
     const { type, attrs } = input
     switch (type) {
       case 'text': {
         if (typeof input.text !== 'string' || input.text === '') return null
-        const marks = this.#marks(input.marks)
+        const marks = await this.#marks(input.marks)
         return marks.length ? { type, text: input.text, marks } : { type, text: input.text }
       }
       case 'paragraph':
       case 'blockquote':
       case 'bulletList':
       case 'listItem':
-        return { type, content: this.#children(input.content, depth) }
+        return { type, content: await this.#children(input.content, depth) }
       case 'orderedList': {
-        const start = isRecord(attrs) ? Number(attrs.start) : 1
-        const node: RichTextNode = { type, content: this.#children(input.content, depth) }
-        if (Number.isInteger(start) && start > 1 && start < 1_000_000) node.attrs = { start }
+        const start = await check(rules.listStart, attr(attrs, 'start'))
+        const node: RichTextNode = { type, content: await this.#children(input.content, depth) }
+        if (start) node.attrs = { start }
         return node
       }
       case 'heading': {
-        const level = isRecord(attrs) ? Number(attrs.level) : Number.NaN
+        const level = await check(rules.headingLevel, attr(attrs, 'level'))
         return {
           type,
-          attrs: { level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2 },
-          content: this.#children(input.content, depth),
+          attrs: { level: level ?? 2 },
+          content: await this.#children(input.content, depth),
         }
       }
       case 'codeBlock': {
-        const language = stringAttr(attrs, 'language', 40)
+        const language = await check(rules.codeLanguage, attr(attrs, 'language'))
+        const children = await this.#children(input.content, depth)
         const node: RichTextNode = {
           type,
-          content: this.#children(input.content, depth)
+          content: children
             .filter((child) => child.type === 'text')
             .map((child) => ({ type: 'text', text: child.text })),
         }
-        if (language && /^[\w+#.-]+$/.test(language)) node.attrs = { language }
+        if (language) node.attrs = { language }
         return node
       }
       case 'hardBreak':
       case 'horizontalRule':
         return { type }
       case 'image': {
-        const src = safeUrl(stringAttr(attrs, 'src'), ['http', 'https'])
+        const [src, alt, title] = await Promise.all([
+          check(rules.imageSrc, attr(attrs, 'src')),
+          check(rules.imageAlt, attr(attrs, 'alt')),
+          check(rules.imageTitle, attr(attrs, 'title')),
+        ])
         if (!src) return null
         const node: RichTextNode = { type, attrs: { src } }
-        const alt = stringAttr(attrs, 'alt', 500)
-        const title = stringAttr(attrs, 'title', 500)
         if (alt) node.attrs!.alt = alt
         if (title) node.attrs!.title = title
         return node
@@ -164,7 +159,7 @@ export default class RichTextService {
     }
   }
 
-  #marks(input: unknown): RichTextMark[] {
+  async #marks(input: unknown): Promise<RichTextMark[]> {
     if (!Array.isArray(input)) return []
     const marks: RichTextMark[] = []
     for (const mark of input) {
@@ -173,7 +168,7 @@ export default class RichTextService {
       if (mark.type in MARK_TAGS) {
         marks.push({ type: mark.type })
       } else if (mark.type === 'link') {
-        const href = safeUrl(stringAttr(mark.attrs, 'href'), ['http', 'https', 'mailto', 'tel'])
+        const href = await check(rules.linkHref, attr(mark.attrs, 'href'))
         if (href) marks.push({ type: 'link', attrs: { href } })
       }
     }

@@ -20,7 +20,7 @@ test.group('Blog factory and seeder', (group) => {
     for (const post of [draft, published, scheduled]) {
       await post.refresh()
       assert.isTrue(richText.hasContent(post.content))
-      assert.equal(post.contentHtml, richText.toHtml(richText.normalize(post.content)))
+      assert.equal(post.contentHtml, richText.toHtml(await richText.normalize(post.content)))
       assert.match(post.handle, /^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     }
     assert.equal(draft.status, 'draft')
