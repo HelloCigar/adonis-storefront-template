@@ -69,9 +69,14 @@ test.group('Order chat photos', (group) => {
     const [link] = await message.images.all()
     const photo = page.locator(`img[src="/chat/orders/${order.id}/images/${link.attachmentId}"]`)
     await photo.waitFor()
-    // The browser decoded the bytes served by the authorized chat route.
+    // The browser decoded the bytes served by the authorized chat route. decode() waits for the
+    // image to load, which can finish after the element is attached.
     assert.isTrue(
-      await photo.evaluate((image) => (image as { naturalWidth: number }).naturalWidth > 0)
+      await photo.evaluate(async (element) => {
+        const image = element as unknown as { decode(): Promise<void>; naturalWidth: number }
+        await image.decode()
+        return image.naturalWidth > 0
+      })
     )
     assert.equal(await page.getByRole('button', { name: 'Remove label.png' }).count(), 0)
 

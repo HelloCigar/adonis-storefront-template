@@ -107,12 +107,7 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
       label: 'Manage variants',
       icon: 'i-lucide-boxes',
       onSelect: () =>
-        router.visit(
-          { route: 'seller.variants.index', routeParams: { productId: row.id } },
-          {
-            viewTransition: true,
-          }
-        ),
+        router.visit({ route: 'seller.variants.index', routeParams: { productId: row.id } }),
     },
     ...(row.status === 'active'
       ? [

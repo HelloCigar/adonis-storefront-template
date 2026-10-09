@@ -26,7 +26,6 @@ defineProps<{ policies: Data.Content.Content[] }>()
         v-for="policy in policies"
         :key="policy.id"
         route="policies.show"
-        view-transition
         :params="{ handle: policy.handle }"
         component="policies/[handle]"
         :page-props="{ policy }"

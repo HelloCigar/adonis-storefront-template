@@ -10,13 +10,12 @@ const _useDashboard = () => {
   const isNotificationsSlideoverOpen = ref(false)
 
   defineShortcuts({
-    'g-h': () => router.visit({ route: 'dashboard' }, { viewTransition: true }),
-    'g-i': () => router.visit({ route: 'inbox' }, { viewTransition: true }),
+    'g-h': () => router.visit({ route: 'dashboard' }),
+    'g-i': () => router.visit({ route: 'inbox' }),
     'g-u': () => {
-      if (page.props.permissions.manageUsers)
-        router.visit({ route: 'seller.users.index' }, { viewTransition: true })
+      if (page.props.permissions.manageUsers) router.visit({ route: 'seller.users.index' })
     },
-    'g-s': () => router.visit({ route: 'settings' }, { viewTransition: true }),
+    'g-s': () => router.visit({ route: 'settings' }),
     'n': () => (isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value),
   })
 
