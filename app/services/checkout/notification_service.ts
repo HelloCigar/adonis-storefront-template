@@ -10,6 +10,7 @@ import Notification from '#models/checkout/notification'
 import Order from '#models/checkout/order'
 import OrderAccessService from '#services/checkout/order_access_service'
 import OutboxService from '#services/checkout/outbox_service'
+import InvoiceService from '#services/checkout/invoice_service'
 import OrderNotification from '#mails/checkout/order_notification'
 import checkout from '#config/checkout'
 import { affectedRows } from '#models/shared/affected_rows'
@@ -19,7 +20,8 @@ import { leaseFor, leaseMs, leaseReleased, unleased } from '#models/shared/lease
 export default class NotificationService {
   constructor(
     private access: OrderAccessService,
-    private outbox: OutboxService
+    private outbox: OutboxService,
+    private invoices: InvoiceService
   ) {}
   async run(id: number) {
     const token = randomUUID()
@@ -43,8 +45,9 @@ export default class NotificationService {
         { publicId: order.publicId! },
         { prefixUrl: new URL(checkout.publicUrl ?? '').origin, qs: { token: grant } }
       )
+      const invoice = row.kind === 'receipt' ? await this.invoice(order) : null
       // This service runs inside the durable notification job. Await delivery before acknowledging it.
-      await mail.send(new OrderNotification(order, row.kind, url, shipment, row.id))
+      await mail.send(new OrderNotification(order, row.kind, url, shipment, row.id, invoice))
       await Notification.query()
         .where('id', id)
         .where('claim_token', token)
@@ -64,6 +67,16 @@ export default class NotificationService {
           lastError: 'E_NOTIFICATION_DELIVERY',
         })
       throw new Error('Order notification delivery failed')
+    }
+  }
+  /** The receipt still goes out without its PDF; the order page offers the invoice too. */
+  private async invoice(order: Order) {
+    if (!this.invoices.isAvailable(order)) return null
+    try {
+      return { filename: this.invoices.filename(order), content: await this.invoices.render(order) }
+    } catch (error) {
+      logger.error({ err: error, orderId: order.id }, 'Invoice PDF could not be rendered')
+      return null
     }
   }
   async failed(id: number) {

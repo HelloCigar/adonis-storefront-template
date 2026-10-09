@@ -1,0 +1,76 @@
+<main class="invoice">
+  <header class="masthead">
+    <div>
+      <p class="store">{{ storeName }}</p>
+      <p class="muted">{{ storeEmail }}</p>
+    </div>
+    <h1>Invoice</h1>
+  </header>
+
+  <table class="facts">
+    <tbody>
+      @each(fact in facts)
+        <tr>
+          <th>{{ fact.label }}</th>
+          <td>{{ fact.value }}</td>
+        </tr>
+      @end
+    </tbody>
+  </table>
+
+  <section class="parties">
+    @each(party in parties)
+      <div class="party">
+        <h2>{{ party.title }}</h2>
+        @each(line in party.lines)
+          <p>{{ line }}</p>
+        @end
+      </div>
+    @end
+  </section>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th class="item">Item</th>
+        <th class="num qty">Qty</th>
+        <th class="num">Unit price</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      @each(item in items)
+        <tr>
+          <td class="item">
+            <p>{{ item.title }}</p>
+            @if(item.detail)
+              <p class="detail">{{ item.detail }}</p>
+            @end
+          </td>
+          <td class="num qty">{{ item.quantity }}</td>
+          <td class="num">{{ item.unitPrice }}</td>
+          <td class="num">{{ item.total }}</td>
+        </tr>
+      @end
+    </tbody>
+  </table>
+
+  <section class="closing">
+    <table class="totals">
+      <tbody>
+        @each(row in totals)
+          <tr>
+            <th>{{ row.label }}</th>
+            <td>{{ row.amount }}</td>
+          </tr>
+        @end
+        <tr class="grand">
+          <th>Total paid</th>
+          <td>{{ total }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="thanks">Thank you for shopping with us.</p>
+  </section>
+</main>

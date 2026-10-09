@@ -104,6 +104,7 @@
     "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.4",
     "tailwindcss": "^4.3.2",
+    "takumi-pdf": "^0.15.0",
     "vue": "^3.5.43"
   },
   "hotHook": {

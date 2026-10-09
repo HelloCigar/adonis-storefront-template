@@ -247,6 +247,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/orders_controller').default['show']>>>
     }
   }
+  'checkout.invoices.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/checkout/orders/:publicId/invoice'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { publicId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/checkout/invoices_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout/invoices_controller').default['show']>>>
+    }
+  }
   'checkout.cancellations.store': {
     methods: ["POST"]
     pattern: '/checkout/orders/:publicId/cancel'

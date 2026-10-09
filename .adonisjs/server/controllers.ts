@@ -24,6 +24,7 @@ export const controllers = {
     Cancellations: () => import('#controllers/checkout/cancellations_controller'),
     Checkout: () => import('#controllers/checkout/checkout_controller'),
     Discounts: () => import('#controllers/checkout/discounts_controller'),
+    Invoices: () => import('#controllers/checkout/invoices_controller'),
     OrderAccess: () => import('#controllers/checkout/order_access_controller'),
     Orders: () => import('#controllers/checkout/orders_controller'),
     Reconciliations: () => import('#controllers/checkout/reconciliations_controller'),

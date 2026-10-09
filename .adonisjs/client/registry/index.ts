@@ -126,6 +126,12 @@ const routes = {
     tokens: [{"old":"/checkout/orders/:publicId","type":0,"val":"checkout","end":""},{"old":"/checkout/orders/:publicId","type":0,"val":"orders","end":""},{"old":"/checkout/orders/:publicId","type":1,"val":"publicId","end":""}],
     types: placeholder as Registry['checkout.orders.show']['types'],
   },
+  'checkout.invoices.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/checkout/orders/:publicId/invoice',
+    tokens: [{"old":"/checkout/orders/:publicId/invoice","type":0,"val":"checkout","end":""},{"old":"/checkout/orders/:publicId/invoice","type":0,"val":"orders","end":""},{"old":"/checkout/orders/:publicId/invoice","type":1,"val":"publicId","end":""},{"old":"/checkout/orders/:publicId/invoice","type":0,"val":"invoice","end":""}],
+    types: placeholder as Registry['checkout.invoices.show']['types'],
+  },
   'checkout.cancellations.store': {
     methods: ["POST"],
     pattern: '/checkout/orders/:publicId/cancel',

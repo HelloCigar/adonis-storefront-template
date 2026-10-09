@@ -43,6 +43,9 @@ export interface ApiDefinition {
     orders: {
       show: typeof routes['checkout.orders.show']
     }
+    invoices: {
+      show: typeof routes['checkout.invoices.show']
+    }
     cancellations: {
       store: typeof routes['checkout.cancellations.store']
     }
