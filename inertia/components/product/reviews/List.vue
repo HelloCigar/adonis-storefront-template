@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3'
+import { usePage } from '@inertiajs/vue3'
+import { useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-import { urlFor } from '~/client'
 import { useLocalization } from '~/composables/localization'
 import ReviewStars from './Stars.vue'
 import type { ReviewPagination } from './types'
@@ -10,6 +10,7 @@ const props = defineProps<{
   reviews: { data: Data.Catalog.Review[]; metadata: ReviewPagination }
 }>()
 const page = usePage()
+const router = useRouter()
 const { locale } = useLocalization()
 const formatDate = (value: string | null) =>
   value
@@ -18,11 +19,13 @@ const formatDate = (value: string | null) =>
 
 // Keep the rest of the query (such as the selected variant) and only swap the reviews page.
 function visit(reviewsPage: number) {
-  const query = new URLSearchParams(page.url.split('?')[1])
-  query.set('reviewsPage', String(reviewsPage))
-  router.get(
-    urlFor('products.show', { handle: props.handle }) + '?' + query,
-    {},
+  const query = Object.fromEntries(new URLSearchParams(page.url.split('?')[1]))
+  router.visit(
+    {
+      route: 'products.show',
+      routeParams: { handle: props.handle },
+      qs: { ...query, reviewsPage },
+    },
     { only: ['reviews'], preserveScroll: true, preserveState: true }
   )
 }

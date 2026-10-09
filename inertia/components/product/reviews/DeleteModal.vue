@@ -1,43 +1,52 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { Form, type FormRef } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-import { urlFor } from '~/client'
-const props = defineProps<{ review: Data.Catalog.Review }>()
+import { ref, watch } from 'vue'
+defineProps<{ review: Data.Catalog.Review }>()
 const open = defineModel<boolean>('open', { required: true })
-const form = useForm({})
-function destroy() {
-  form.delete(urlFor('reviews.destroy', { id: props.review.id }), {
-    preserveScroll: true,
-    onSuccess: () => {
-      open.value = false
-    },
-  })
-}
+const form = ref<FormRef>()
+watch(open, () => form.value?.clearErrors())
 </script>
 <template>
   <UModal
     v-model:open="open"
     title="Delete your review?"
     description="Your review will be removed from this product. You can write a new one afterwards."
-    :dismissible="!form.processing"
+    :dismissible="!form?.processing"
   >
-    <template #footer>
-      <div class="flex w-full justify-end gap-2">
-        <UButton
-          label="Cancel"
-          color="neutral"
-          variant="outline"
-          :disabled="form.processing"
-          @click="open = false"
-        />
-        <UButton
-          label="Delete review"
+    <template #body>
+      <Form
+        ref="form"
+        v-slot="{ errors, processing }"
+        route="reviews.destroy"
+        :params="{ id: review.id }"
+        :options="{ preserveScroll: true }"
+        @success="open = false"
+      >
+        <UAlert
+          v-if="Object.values(errors).length"
           color="error"
-          :loading="form.processing"
-          :disabled="form.processing"
-          @click="destroy"
+          :title="Object.values(errors).join(' ')"
+          class="mb-4"
         />
-      </div>
+        <div class="flex justify-end gap-2">
+          <UButton
+            type="button"
+            label="Cancel"
+            color="neutral"
+            variant="outline"
+            :disabled="processing"
+            @click="open = false"
+          />
+          <UButton
+            type="submit"
+            label="Delete review"
+            color="error"
+            :loading="processing"
+            :disabled="processing"
+          />
+        </div>
+      </Form>
     </template>
   </UModal>
 </template>
