@@ -212,7 +212,7 @@ export default class BlogSeeder extends BaseSeeder {
 
       for (const post of posts) {
         if (seeded.has(post.handle)) continue
-        const content = await richText.normalize({ type: 'doc', content: post.content })
+        const content = richText.normalize({ type: 'doc', content: post.content })
         await BlogPostFactory.client(trx)
           .merge({
             handle: post.handle,

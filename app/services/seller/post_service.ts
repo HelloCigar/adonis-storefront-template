@@ -18,7 +18,7 @@ export default class SellerPostService {
    * date on later edits; a future date schedules the post.
    */
   async save(post: BlogPost, payload: PostPayload, actorId: number) {
-    const content = await this.richText.normalize(payload.content)
+    const content = this.richText.normalize(payload.content)
     const published = payload.status === 'published'
     if (published && !this.richText.hasContent(content))
       throw new errors.E_VALIDATION_ERROR([
