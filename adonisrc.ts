@@ -70,6 +70,7 @@ export default defineConfig({
     () => import('@adonisjs/mail/mail_provider'),
     () => import('#providers/chat_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
+    () => import('@adonisjs/drive/drive_provider'),
     // () => import('@adonis-agora/agent/agent_provider'),
     // () => import('@adonis-agora/agent/dashboard_provider')
   ],
