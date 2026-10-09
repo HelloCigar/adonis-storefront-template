@@ -84,6 +84,11 @@ export interface ApiDefinition {
       delete: typeof routes['account.addresses.delete']
     }
   }
+  reviews: {
+    store: typeof routes['reviews.store']
+    update: typeof routes['reviews.update']
+    destroy: typeof routes['reviews.destroy']
+  }
   orders: {
     index: typeof routes['orders.index']
     show: typeof routes['orders.show']
@@ -149,6 +154,10 @@ export interface ApiDefinition {
       store: typeof routes['seller.discounts.store']
       update: typeof routes['seller.discounts.update']
       destroy: typeof routes['seller.discounts.destroy']
+    }
+    reviews: {
+      index: typeof routes['seller.reviews.index']
+      update: typeof routes['seller.reviews.update']
     }
     posts: {
       index: typeof routes['seller.posts.index']

@@ -59,6 +59,7 @@ export const controllers = {
     Posts: () => import('#controllers/seller/posts_controller'),
     Products: () => import('#controllers/seller/products_controller'),
     Refunds: () => import('#controllers/seller/refunds_controller'),
+    Reviews: () => import('#controllers/seller/reviews_controller'),
     Shipments: () => import('#controllers/seller/shipments_controller'),
     StockAdjustments: () => import('#controllers/seller/stock_adjustments_controller'),
     Users: () => import('#controllers/seller/users_controller'),
@@ -76,6 +77,7 @@ export const controllers = {
     Cart: () => import('#controllers/storefront/cart_controller'),
     Collections: () => import('#controllers/storefront/collections_controller'),
     Products: () => import('#controllers/storefront/products_controller'),
+    Reviews: () => import('#controllers/storefront/reviews_controller'),
     Storefront: () => import('#controllers/storefront/storefront_controller'),
   },
 }

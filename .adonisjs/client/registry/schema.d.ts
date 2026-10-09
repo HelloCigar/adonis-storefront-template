@@ -451,6 +451,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/addresses_controller').default['destroy']>>>
     }
   }
+  'reviews.store': {
+    methods: ["POST"]
+    pattern: '/products/:productId/reviews'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog/review').reviewValidator)>>
+      paramsTuple: [ParamValue]
+      params: { productId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog/review').reviewValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'reviews.update': {
+    methods: ["PATCH"]
+    pattern: '/reviews/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog/review').reviewValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog/review').reviewValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'reviews.destroy': {
+    methods: ["DELETE"]
+    pattern: '/reviews/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/reviews_controller').default['destroy']>>>
+    }
+  }
   'orders.index': {
     methods: ["GET","HEAD"]
     pattern: '/account/orders'
@@ -893,6 +929,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/discounts_controller').default['destroy']>>>
+    }
+  }
+  'seller.reviews.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/reviews'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/seller/review').reviewIndexQueryValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/reviews_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/reviews_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.reviews.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/seller/reviews/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/seller/review').reviewModerationValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/seller/review').reviewModerationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/reviews_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/reviews_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'seller.posts.index': {

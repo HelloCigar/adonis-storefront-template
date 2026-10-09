@@ -115,6 +115,12 @@ router
     router
       .delete('/account/addresses/:id', [controllers.account.Addresses, 'destroy'])
       .as('account.addresses.delete')
+    router
+      .post('/products/:productId/reviews', [controllers.storefront.Reviews, 'store'])
+      .where('productId', router.matchers.number())
+      .as('reviews.store')
+    router.patch('/reviews/:id', [controllers.storefront.Reviews, 'update']).as('reviews.update')
+    router.delete('/reviews/:id', [controllers.storefront.Reviews, 'destroy']).as('reviews.destroy')
     router.get('/account/orders', [controllers.account.Orders, 'index']).as('orders.index')
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
     router
@@ -200,6 +206,7 @@ router
     router
       .resource('discounts', controllers.seller.Discounts)
       .only(['index', 'store', 'update', 'destroy'])
+    router.resource('reviews', controllers.seller.Reviews).only(['index', 'update'])
     router
       .resource('posts', controllers.seller.Posts)
       .only(['index', 'create', 'store', 'edit', 'update', 'destroy'])

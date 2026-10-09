@@ -12,6 +12,7 @@ import type CatalogCollectionCatalogueTransformer from '#transformers/catalog/co
 import type CatalogCollectionTransformer from '#transformers/catalog/collection_transformer'
 import type CatalogProductTransformer from '#transformers/catalog/product_transformer'
 import type CatalogProductVariantTransformer from '#transformers/catalog/product_variant_transformer'
+import type CatalogReviewTransformer from '#transformers/catalog/review_transformer'
 import type CatalogSearchResultTransformer from '#transformers/catalog/search_result_transformer'
 import type ChatConversationTransformer from '#transformers/chat/conversation_transformer'
 import type ChatMessageTransformer from '#transformers/chat/message_transformer'
@@ -34,6 +35,7 @@ import type SellerOrderOperationsTransformer from '#transformers/seller/order_op
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
 import type SellerPostTransformer from '#transformers/seller/post_transformer'
 import type SellerProductTransformer from '#transformers/seller/product_transformer'
+import type SellerReviewTransformer from '#transformers/seller/review_transformer'
 import type SellerStockAdjustmentTransformer from '#transformers/seller/stock_adjustment_transformer'
 import type SellerUserTransformer from '#transformers/seller/user_transformer'
 import type SellerVariantTransformer from '#transformers/seller/variant_transformer'
@@ -67,6 +69,10 @@ export namespace Data {
     export type ProductVariant = InferData<CatalogProductVariantTransformer>
     export namespace ProductVariant {
       export type Variants = InferVariants<CatalogProductVariantTransformer>
+    }
+    export type Review = InferData<CatalogReviewTransformer>
+    export namespace Review {
+      export type Variants = InferVariants<CatalogReviewTransformer>
     }
     export type SearchResult = InferData<CatalogSearchResultTransformer>
     export namespace SearchResult {
@@ -167,6 +173,10 @@ export namespace Data {
     export type Product = InferData<SellerProductTransformer>
     export namespace Product {
       export type Variants = InferVariants<SellerProductTransformer>
+    }
+    export type Review = InferData<SellerReviewTransformer>
+    export namespace Review {
+      export type Variants = InferVariants<SellerReviewTransformer>
     }
     export type StockAdjustment = InferData<SellerStockAdjustmentTransformer>
     export namespace StockAdjustment {

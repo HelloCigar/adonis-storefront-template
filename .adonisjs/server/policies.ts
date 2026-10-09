@@ -2,6 +2,7 @@ export const policies = {
   AccountAddressPolicy: () => import('#policies/account/address_policy'),
   AccountOrderPolicy: () => import('#policies/account/order_policy'),
   AccountUserPolicy: () => import('#policies/account/user_policy'),
+  CatalogReviewPolicy: () => import('#policies/catalog/review_policy'),
   ChatOrderPolicy: () => import('#policies/chat/order_policy'),
   SellerAccessPolicy: () => import('#policies/seller/access_policy'),
   SellerCollectionPolicy: () => import('#policies/seller/collection_policy'),
@@ -10,6 +11,7 @@ export const policies = {
   SellerOrderPolicy: () => import('#policies/seller/order_policy'),
   SellerPostPolicy: () => import('#policies/seller/post_policy'),
   SellerProductPolicy: () => import('#policies/seller/product_policy'),
+  SellerReviewPolicy: () => import('#policies/seller/review_policy'),
   SellerUserPolicy: () => import('#policies/seller/user_policy'),
   SellerVariantPolicy: () => import('#policies/seller/variant_policy'),
 }

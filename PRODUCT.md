@@ -24,8 +24,8 @@ Repository evidence establishes the current baseline:
 
 - One shared store and catalogue. Customer, staff, and admin are the supported roles.
 - Shoppers browse collections and products, choose variants, manage a cart, and check out as guests or with an account.
-- Customers manage their profile, saved addresses, and their own order history.
-- Staff manage the shared catalogue and orders, including packing, shipment tracking, delivery confirmation, cancellation, refunds, and payment review. Administrators additionally manage users and roles.
+- Customers manage their profile, saved addresses, their own order history, and reviews of products they received.
+- Staff manage the shared catalogue and orders, including packing, shipment tracking, delivery confirmation, cancellation, refunds, payment review, and product review moderation. Administrators additionally manage users and roles.
 
 ## Capabilities and Constraints
 
@@ -36,6 +36,7 @@ The following are implemented defaults, not independently confirmed business req
 - PayMongo hosted checkout and a development-only local payment simulator.
 - Staff-managed discount codes (percentage or fixed amount off merchandise, never shipping) with optional minimum spend, schedule, usage limit and one use per customer email.
 - Staff-written blog posts in the Nuxt UI rich text editor, saved as drafts, published, or scheduled. The server renders each post's HTML from the editor's document and keeps only known formatting and safe links.
+- Customers review products from their own delivered orders: one review per product, rated 1 to 5 stars with an optional title and text. Reviews stay pending until staff approve or hide them. Only approved reviews appear on the product page and count toward its rating, and editing a review returns it to pending.
 - Payment confirmation requires verified provider evidence. A browser return alone cannot mark an order paid.
 - Private guest order access and ownership checks protect personal account data.
 - One staff-managed shipment per order. Partial shipments, returns, and post-shipment refunds are outside the documented rollout.
@@ -59,6 +60,7 @@ No store-specific voice, approved marketing claims, or binding visual constraint
 
 - `AUTHORIZATION.md`: single-store roles, permissions, and compatibility constraints.
 - `PAYMENTS.md`, `docs/checkout-process.md`, and `docs/checkout-operations.md`: implemented checkout, payment, fulfillment, and recovery behavior.
+- `docs/product-reviews.md`: product review eligibility, moderation, and display rules.
 - `database/seeders/main_seeder.ts`: development/test catalogue examples for everyday essentials, home goods, and workspace items. These are demo content.
 - `config/storefront.ts`: authored content slots for pages and policies; currently empty in the checked-in configuration. Blog posts live in the `blog_posts` table and appear at `/blog`.
 - `inertia/`: existing storefront, account, and store-management interface.
