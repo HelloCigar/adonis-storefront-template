@@ -14,7 +14,9 @@ export default class CollectionsController {
     return inertia.render('collections/index', {
       collections: async () =>
         CollectionTransformer.transform(
-          await Collection.query().whereNotNull('published_at').orderBy('title', 'asc')
+          await Collection.query()
+            .withScopes((scopes) => scopes.published())
+            .orderBy('title', 'asc')
         ),
     })
   }
@@ -23,7 +25,7 @@ export default class CollectionsController {
     const query = await request.validateUsing(collectionQueryValidator)
     const collection = await Collection.query()
       .where('handle', params.handle)
-      .whereNotNull('published_at')
+      .withScopes((scopes) => scopes.published())
       .firstOrFail()
 
     return inertia.render('collection/[handle]', {
