@@ -100,4 +100,67 @@ test.group('Product reviews', (group) => {
 
     assert.deepEqual(errors, [])
   })
+
+  test('a customer pages through reviews and deletes their own review', async ({
+    visit,
+    browserContext,
+    assert,
+  }) => {
+    const variant = await ProductVariantFactory.create()
+    await variant.load('product')
+    const product = variant.product
+    const customer = await UserFactory.merge({ firstName: 'Ana', lastName: 'Reyes' }).create()
+    const order = await OrderFactory.merge({ userId: customer.id }).create()
+    await OrderLineItemFactory.merge({
+      orderId: order.id,
+      productVariantId: variant.id,
+    }).create()
+    await Shipment.create({ orderId: order.id, state: 'delivered' })
+    const others = await UserFactory.createMany(11)
+    for (const [index, other] of others.entries()) {
+      await ProductReview.create({
+        productId: product.id,
+        userId: other.id,
+        rating: 4,
+        title: `Review ${index + 1}`,
+        body: null,
+        status: 'approved',
+      })
+    }
+    const own = await ProductReview.create({
+      productId: product.id,
+      userId: customer.id,
+      orderId: order.id,
+      rating: 3,
+      title: 'Changed my mind',
+      body: null,
+      status: 'pending',
+    })
+    const errors: string[] = []
+
+    await browserContext.loginAs(customer)
+    const page = await visit(`/product/${product.handle}?variantId=${variant.id}`)
+    page.on('pageerror', (error) => errors.push(error.message))
+    const section = page.locator('#reviews')
+
+    // The second reviews page keeps the selected variant in the URL.
+    await section.getByRole('button', { name: 'Page 2', exact: true }).click()
+    await page.waitForURL((url) => url.searchParams.get('reviewsPage') === '2')
+    assert.equal(new URL(page.url()).searchParams.get('variantId'), String(variant.id))
+    const listed = section.locator('ul.divide-y > li')
+    await listed.nth(1).waitFor({ state: 'detached' })
+    assert.equal(await listed.count(), 1)
+
+    // Deleting goes through the confirmation dialog.
+    await section.getByRole('button', { name: 'Delete review', exact: true }).click()
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Delete review', exact: true })
+      .click()
+    await section.getByText('Your review', { exact: true }).waitFor({ state: 'detached' })
+    await section.getByRole('button', { name: 'Write a review', exact: true }).waitFor()
+    assert.isNull(await ProductReview.find(own.id))
+
+    assert.deepEqual(errors, [])
+  })
 })

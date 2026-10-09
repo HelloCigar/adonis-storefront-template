@@ -10,6 +10,8 @@ import ProductCard from '~/components/product/Card.vue'
 import ProductConfigurator from '~/components/product/Configurator.vue'
 import ProductGallery from '~/components/product/Gallery.vue'
 import ReviewsSection from '~/components/product/reviews/Section.vue'
+import ReviewEditModal from '~/components/product/reviews/EditModal.vue'
+import ReviewDeleteModal from '~/components/product/reviews/DeleteModal.vue'
 import type { ReviewPagination, ReviewSummary } from '~/components/product/reviews/types'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{
@@ -25,6 +27,8 @@ const props = defineProps<{
 const page = usePage()
 const handle = computed(() => props.product.handle)
 const selectedVariant = ref<Variant>()
+const reviewOpen = ref(false)
+const reviewDeleting = ref(false)
 watch(
   () => props.product,
   (product) => {
@@ -85,13 +89,22 @@ watch(selectedVariant, (variant) => {
 
     <ReviewsSection
       v-if="reviewSummary && reviews"
-      :product-id="product.id"
       :handle="product.handle"
       :summary="reviewSummary"
       :reviews="reviews"
       :viewer-review="viewerReview ?? null"
       :can-review="canReview ?? false"
+      @write="reviewOpen = true"
+      @edit="reviewOpen = true"
+      @delete="reviewDeleting = true"
     />
+    <ReviewEditModal
+      v-if="canReview || viewerReview"
+      v-model:open="reviewOpen"
+      :product-id="product.id"
+      :review="viewerReview"
+    />
+    <ReviewDeleteModal v-if="viewerReview" v-model:open="reviewDeleting" :review="viewerReview" />
 
     <div v-if="recommendations">
       <h2 class="text-3xl text-highlighted font-bold mb-6 lg:mb-8 lg:text-4xl">

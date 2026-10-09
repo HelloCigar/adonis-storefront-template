@@ -1,27 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-import { urlFor } from '~/client'
 import { useLocalization } from '~/composables/localization'
-import ReviewDeleteModal from './DeleteModal.vue'
-import ReviewForm from './Form.vue'
 import ReviewList from './List.vue'
 import ReviewStars from './Stars.vue'
 import ReviewSummaryBlock from './Summary.vue'
 import type { ReviewPagination, ReviewSummary } from './types'
 const props = defineProps<{
-  productId: number
   handle: string
   summary: ReviewSummary
   reviews: { data: Data.Catalog.Review[]; metadata: ReviewPagination }
   viewerReview: Data.Catalog.Review | null
   canReview: boolean
 }>()
+const emit = defineEmits<{ write: []; edit: []; delete: [] }>()
 const page = usePage()
 const { locale } = useLocalization()
-const formOpen = ref(false)
-const deleteOpen = ref(false)
 const isGuest = computed(() => !page.props.user)
 const statusNote = computed(() => {
   if (props.viewerReview?.status === 'pending') return 'Waiting for approval'
@@ -43,7 +39,7 @@ const formatDate = (value: string | null) =>
         icon="i-lucide-pen-line"
         color="neutral"
         variant="outline"
-        @click="formOpen = true"
+        @click="emit('write')"
       />
     </div>
 
@@ -84,7 +80,7 @@ const formatDate = (value: string | null) =>
               color="neutral"
               variant="outline"
               size="sm"
-              @click="formOpen = true"
+              @click="emit('edit')"
             />
             <UButton
               label="Delete review"
@@ -92,14 +88,14 @@ const formatDate = (value: string | null) =>
               color="error"
               variant="ghost"
               size="sm"
-              @click="deleteOpen = true"
+              @click="emit('delete')"
             />
           </div>
         </div>
 
         <p v-else-if="isGuest" class="text-sm text-muted">
-          <ULink :to="urlFor('session.create')" class="text-primary">Sign in</ULink> to review
-          products you've received.
+          <Link route="session.create" class="text-primary">Sign in</Link> to review products you've
+          received.
         </p>
       </div>
 
@@ -107,13 +103,5 @@ const formatDate = (value: string | null) =>
         <ReviewList :handle="handle" :reviews="reviews" />
       </div>
     </div>
-
-    <ReviewForm
-      v-if="canReview || viewerReview"
-      v-model:open="formOpen"
-      :product-id="productId"
-      :review="viewerReview"
-    />
-    <ReviewDeleteModal v-if="viewerReview" v-model:open="deleteOpen" :review="viewerReview" />
   </section>
 </template>

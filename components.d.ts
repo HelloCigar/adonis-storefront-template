@@ -61,7 +61,7 @@ declare module 'vue' {
     ProductOptionSwatchText: typeof import('./inertia/components/product/option/swatch/Text.vue')['default']
     ProductPrice: typeof import('./inertia/components/product/Price.vue')['default']
     ProductReviewsDeleteModal: typeof import('./inertia/components/product/reviews/DeleteModal.vue')['default']
-    ProductReviewsForm: typeof import('./inertia/components/product/reviews/Form.vue')['default']
+    ProductReviewsEditModal: typeof import('./inertia/components/product/reviews/EditModal.vue')['default']
     ProductReviewsList: typeof import('./inertia/components/product/reviews/List.vue')['default']
     ProductReviewsSection: typeof import('./inertia/components/product/reviews/Section.vue')['default']
     ProductReviewsStars: typeof import('./inertia/components/product/reviews/Stars.vue')['default']
