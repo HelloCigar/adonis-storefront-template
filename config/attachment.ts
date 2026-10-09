@@ -1,4 +1,4 @@
-import { defineConfig, LocalFileStorage, type InferConverters } from '@jrmc/adonis-attachment'
+import { AdonisDriveStorage, defineConfig, type InferConverters } from '@jrmc/adonis-attachment'
 
 const binaries = {
   // ffmpeg: { command: '/opt/media/bin/ffmpeg', timeout: 15_000 },
@@ -9,15 +9,13 @@ const binaries = {
 }
 
 /**
- * Store attachments locally with Lucid-backed relations. The package route is off:
- * `attachments.show` serves public files at the same /attachments URL, and chat
- * photos are served only through the authorized `chat.images.show` route.
+ * Store attachments on the default Drive disk (config/drive.ts) with Lucid-backed
+ * relations. The package route is off: `attachments.show` serves public files at the
+ * same /attachments URL, and chat photos are served only through the authorized
+ * `chat.images.show` route.
  */
 const attachmentConfig = defineConfig({
-  storage: (app) =>
-    app.inTest
-      ? new LocalFileStorage({ location: app.tmpPath('test-attachments') })
-      : LocalFileStorage.fromApp(app),
+  storage: AdonisDriveStorage.fromApp,
   route: false,
   integrations: {
     lucid: {},

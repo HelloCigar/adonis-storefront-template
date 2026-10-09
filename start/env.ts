@@ -60,4 +60,18 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   LIMITER_STORE: Env.schema.enum(['database', 'memory'] as const),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the drive package
+  |----------------------------------------------------------
+  */
+  DRIVE_DISK: Env.schema.enum(['fs', 's3'] as const),
+
+  // S3 (required only when DRIVE_DISK=s3; S3_ENDPOINT is for S3-compatible storage)
+  AWS_ACCESS_KEY_ID: Env.schema.string.optionalWhen(() => process.env.DRIVE_DISK !== 's3'),
+  AWS_SECRET_ACCESS_KEY: Env.schema.secret.optionalWhen(() => process.env.DRIVE_DISK !== 's3'),
+  AWS_REGION: Env.schema.string.optionalWhen(() => process.env.DRIVE_DISK !== 's3'),
+  S3_BUCKET: Env.schema.string.optionalWhen(() => process.env.DRIVE_DISK !== 's3'),
+  S3_ENDPOINT: Env.schema.string.optional(),
 })
