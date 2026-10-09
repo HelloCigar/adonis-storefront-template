@@ -188,6 +188,15 @@ test.group('RichTextService URL safety', () => {
     }
   })
 
+  test('drops malformed web, mail and phone links', ({ assert }) => {
+    for (const href of ['https://exa mple.com', 'https://', 'mailto:not-an-email', 'tel:call-me']) {
+      assert.equal(linkHtml(href), '<p>l</p>', href)
+    }
+    for (const href of ['MAILTO:hello@example.com?subject=Hi', 'tel:+1 (555) 123-4567']) {
+      assert.include(linkHtml(href), `<a href="${href}"`, href)
+    }
+  })
+
   test('drops images with unsafe or missing sources', ({ assert }) => {
     for (const src of [
       'javascript:alert(1)',
@@ -201,6 +210,7 @@ test.group('RichTextService URL safety', () => {
     }
     assert.equal(render({ type: 'image' }), '')
     assert.equal(imageHtml('https://example.com/a.png').startsWith('<img src="https://'), true)
+    assert.include(imageHtml('http://localhost:3333/uploads/a.png'), 'src="http://localhost:3333')
   })
 })
 

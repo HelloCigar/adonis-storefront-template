@@ -1,3 +1,5 @@
+import vine from '@vinejs/vine'
+
 export type RichTextMark = { type: string; attrs?: Record<string, unknown> }
 export type RichTextNode = {
   type: string
@@ -45,22 +47,22 @@ function stringAttr(attrs: unknown, key: string, maxLength = 2048) {
   return value && value.length <= maxLength ? value : null
 }
 
-/**
- * Only web, mail, and phone links, plus same-site paths and fragments. Anything else, such as
- * `javascript:` or `data:`, is dropped. Control characters and whitespace are stripped before
- * the scheme check because browsers ignore them inside a scheme.
- */
-function safeUrl(value: string | null, schemes: string[]) {
+const WEB_URL = { protocols: ['http', 'https'], require_protocol: true, require_tld: false }
+
+/** Absolute http(s) URLs only, so `javascript:`, `data:`, and other schemes are dropped. */
+function webUrl(value: string | null) {
+  return value && vine.helpers.isURL(value, WEB_URL) ? value : null
+}
+
+/** Web, mail, and phone links, plus same-site paths and fragments. */
+function linkUrl(value: string | null) {
   if (!value) return null
-  const compact = [...value]
-    .filter((char) => {
-      const code = char.codePointAt(0)!
-      return code > 0x20 && (code < 0x7f || code > 0x9f)
-    })
-    .join('')
-  if (compact.startsWith('/') || compact.startsWith('#')) return value
-  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(compact)?.[1]?.toLowerCase()
-  return scheme && schemes.includes(scheme) ? value : null
+  if (value.startsWith('/') || value.startsWith('#')) return value
+  const [, scheme, target] = /^(mailto|tel):(.*)$/is.exec(value) ?? []
+  if (scheme?.toLowerCase() === 'mailto')
+    return vine.helpers.isEmail(target.split('?')[0]) ? value : null
+  if (scheme?.toLowerCase() === 'tel') return /^\+?[\d\s().-]+$/.test(target) ? value : null
+  return webUrl(value)
 }
 
 /**
@@ -150,7 +152,7 @@ export default class RichTextService {
       case 'horizontalRule':
         return { type }
       case 'image': {
-        const src = safeUrl(stringAttr(attrs, 'src'), ['http', 'https'])
+        const src = webUrl(stringAttr(attrs, 'src'))
         if (!src) return null
         const node: RichTextNode = { type, attrs: { src } }
         const alt = stringAttr(attrs, 'alt', 500)
@@ -173,7 +175,7 @@ export default class RichTextService {
       if (mark.type in MARK_TAGS) {
         marks.push({ type: mark.type })
       } else if (mark.type === 'link') {
-        const href = safeUrl(stringAttr(mark.attrs, 'href'), ['http', 'https', 'mailto', 'tel'])
+        const href = linkUrl(stringAttr(mark.attrs, 'href'))
         if (href) marks.push({ type: 'link', attrs: { href } })
       }
     }
