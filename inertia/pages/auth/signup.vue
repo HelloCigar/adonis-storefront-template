@@ -86,7 +86,6 @@ const email = ref('')
       Already have an account?
       <Link
         route="session.create"
-        view-transition
         component="auth/login"
         :page-props="{}"
         class="font-semibold text-highlighted underline underline-offset-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"

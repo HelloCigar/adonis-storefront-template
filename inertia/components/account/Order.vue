@@ -82,7 +82,6 @@ const colors: Record<string, BadgeProps['color']> = {
 
       <Link
         route="orders.show"
-        view-transition
         :params="{ id: order.id }"
         component="account/orders/[id]"
         :page-props="{ order }"

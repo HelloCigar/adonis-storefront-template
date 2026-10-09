@@ -12,7 +12,6 @@ const createCollection = (handle: () => string, catalogue: () => CollectionCatal
     router.visit(
       { route: 'collections.show', routeParams: { handle: handle() }, qs: params },
       {
-        viewTransition: !filter,
         only: ['catalogue'],
         preserveState: true,
         preserveScroll: filter,

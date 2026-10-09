@@ -30,4 +30,8 @@ createInertiaApp({
   progress: {
     color: 'var(--ui-primary)',
   },
+  defaults: {
+    // Visits that replace the current history entry update the page in place, like filters.
+    visitOptions: (_href, options) => ({ viewTransition: !options.replace }),
+  },
 })

@@ -7,13 +7,7 @@ const collections = computed(() => props.collections.slice(0, props.first ?? 50)
 const router = useRouter()
 
 function showCollections(handle: string) {
-  router.visit(
-    {
-      route: 'collections.show',
-      routeParams: { handle },
-    },
-    { viewTransition: true }
-  )
+  router.visit({ route: 'collections.show', routeParams: { handle } })
 }
 </script>
 <template>

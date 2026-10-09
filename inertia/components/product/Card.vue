@@ -83,7 +83,6 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
         <Link
           route="products.show"
           :params="{ handle: product.handle }"
-          view-transition
           component="product/[handle]"
           :page-props="pageProps"
           v-bind="{ 'aria-label': `${t('product.view')}: '${props.product.title}'` }"
@@ -101,7 +100,6 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
         route="products.show"
         :params="{ handle: product.handle }"
         component="product/[handle]"
-        view-transition
         :page-props="pageProps"
         v-bind="{ 'aria-label': `${t('product.view')}: '${props.product.title}'` }"
       >
@@ -124,7 +122,6 @@ const discount = computed(() => discountPercentage(price.value, compareAtPrice.v
       <Link
         class="grow"
         route="products.show"
-        view-transition
         :params="{ handle: product.handle }"
         component="product/[handle]"
         :page-props="pageProps"
