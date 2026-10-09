@@ -67,9 +67,19 @@ test.group('Product reviews', (group) => {
     assert.equal(saved.status, 'pending')
     assert.equal(saved.orderId, order.id)
 
-    // Staff find the review from store navigation and approve it.
+    // Staff have no delivered order of their own, so they are told when they could review.
     await browserContext.clearCookies()
     await browserContext.loginAs(staff)
+    const ineligible = await visit(`/product/${product.handle}`)
+    ineligible.on('pageerror', (error) => errors.push(error.message))
+    await ineligible
+      .locator('#reviews')
+      .getByText('You can review this product once an order with it has been delivered to you.', {
+        exact: true,
+      })
+      .waitFor()
+
+    // Staff find the review from store navigation and approve it.
     const admin = await visit('/seller/discounts')
     admin.on('pageerror', (error) => errors.push(error.message))
     await admin.getByRole('button', { name: 'Opt out', exact: true }).click()

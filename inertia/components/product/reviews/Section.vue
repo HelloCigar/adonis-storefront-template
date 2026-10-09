@@ -97,6 +97,9 @@ const formatDate = (value: string | null) =>
           <Link route="session.create" class="text-primary">Sign in</Link> to review products you've
           received.
         </p>
+        <p v-else-if="!canReview" class="text-sm text-muted">
+          You can review this product once an order with it has been delivered to you.
+        </p>
       </div>
 
       <div class="lg:col-span-8">
