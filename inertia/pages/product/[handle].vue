@@ -9,10 +9,18 @@ import type { Variant } from '~/types/store'
 import ProductCard from '~/components/product/Card.vue'
 import ProductConfigurator from '~/components/product/Configurator.vue'
 import ProductGallery from '~/components/product/Gallery.vue'
+import ReviewsSection from '~/components/product/reviews/Section.vue'
+import type { ReviewPagination, ReviewSummary } from '~/components/product/reviews/types'
 import { Head } from '@inertiajs/vue3'
 const props = defineProps<{
   product: Data.Catalog.Product
   recommendations: Data.Catalog.Product[]
+  // Review props are optional because an instant visit from a product card renders this page
+  // before the server has sent them.
+  reviewSummary?: ReviewSummary
+  reviews?: { data: Data.Catalog.Review[]; metadata: ReviewPagination }
+  viewerReview?: Data.Catalog.Review | null
+  canReview?: boolean
 }>()
 const page = usePage()
 const handle = computed(() => props.product.handle)
@@ -74,6 +82,16 @@ watch(selectedVariant, (variant) => {
         </div>
       </div>
     </div>
+
+    <ReviewsSection
+      v-if="reviewSummary && reviews"
+      :product-id="product.id"
+      :handle="product.handle"
+      :summary="reviewSummary"
+      :reviews="reviews"
+      :viewer-review="viewerReview ?? null"
+      :can-review="canReview ?? false"
+    />
 
     <div v-if="recommendations">
       <h2 class="text-3xl text-highlighted font-bold mb-6 lg:mb-8 lg:text-4xl">

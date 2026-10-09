@@ -1,0 +1,54 @@
+<script setup lang="ts">
+import { router, usePage } from '@inertiajs/vue3'
+import type { Data } from '@generated/data'
+import { urlFor } from '~/client'
+import { useLocalization } from '~/composables/localization'
+import ReviewStars from './Stars.vue'
+import type { ReviewPagination } from './types'
+const props = defineProps<{
+  handle: string
+  reviews: { data: Data.Catalog.Review[]; metadata: ReviewPagination }
+}>()
+const page = usePage()
+const { locale } = useLocalization()
+const formatDate = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(value))
+    : ''
+
+// Keep the rest of the query (such as the selected variant) and only swap the reviews page.
+function visit(reviewsPage: number) {
+  const query = new URLSearchParams(page.url.split('?')[1])
+  query.set('reviewsPage', String(reviewsPage))
+  router.get(
+    urlFor('products.show', { handle: props.handle }) + '?' + query,
+    {},
+    { only: ['reviews'], preserveScroll: true, preserveState: true }
+  )
+}
+</script>
+<template>
+  <div v-if="reviews.data.length" class="space-y-6">
+    <ul class="divide-y divide-default">
+      <li v-for="review in reviews.data" :key="review.id" class="space-y-2 py-5 first:pt-0">
+        <ReviewStars :rating="review.rating" />
+        <h3 v-if="review.title" class="font-semibold text-highlighted">{{ review.title }}</h3>
+        <p v-if="review.body" class="whitespace-pre-line">{{ review.body }}</p>
+        <p class="text-sm text-muted">
+          <span>{{ review.authorName }}</span>
+          ·
+          <time :datetime="review.createdAt ?? undefined">{{ formatDate(review.createdAt) }}</time>
+        </p>
+      </li>
+    </ul>
+
+    <div v-if="reviews.metadata.total > reviews.metadata.perPage" class="flex justify-center">
+      <UPagination
+        :page="reviews.metadata.currentPage"
+        :items-per-page="reviews.metadata.perPage"
+        :total="reviews.metadata.total"
+        @update:page="visit"
+      />
+    </div>
+  </div>
+</template>

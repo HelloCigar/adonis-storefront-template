@@ -909,6 +909,35 @@ export class PaymentSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class ProductReviewSchema extends BaseModel {
+  static $columns = ['body', 'createdAt', 'id', 'moderatedAt', 'moderatedById', 'orderId', 'productId', 'rating', 'status', 'title', 'updatedAt', 'userId'] as const
+  $columns = ProductReviewSchema.$columns
+  @column()
+  declare body: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare moderatedAt: DateTime | null
+  @column()
+  declare moderatedById: number | null
+  @column()
+  declare orderId: number | null
+  @column()
+  declare productId: number
+  @column()
+  declare rating: number
+  @column()
+  declare status: string
+  @column()
+  declare title: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number
+}
+
 export class ProductVariantSchema extends BaseModel {
   static $columns = ['availableForSale', 'barcode', 'compareAtPriceAmount', 'createdAt', 'currencyCode', 'featuredMediaId', 'id', 'inventoryQuantity', 'inventoryReservedQuantity', 'optionCombinationKey', 'options', 'position', 'priceAmount', 'productId', 'sku', 'title', 'updatedAt'] as const
   $columns = ProductVariantSchema.$columns

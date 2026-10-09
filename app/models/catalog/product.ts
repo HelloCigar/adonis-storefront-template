@@ -1,6 +1,7 @@
 import { ProductSchema } from '#database/schema'
 import Collection from '#models/catalog/collection'
 import ProductVariant from '#models/catalog/product_variant'
+import ProductReview from '#models/catalog/product_review'
 import User from '#models/account/user'
 import type { OptionDefinition } from '#services/catalog/options_service'
 import { attachments, type AttachmentCollectionRelation } from '@jrmc/adonis-attachment/lucid'
@@ -30,6 +31,9 @@ export default class Product extends ProductSchema {
 
   @hasMany(() => ProductVariant, { foreignKey: 'productId' })
   declare variants: HasMany<typeof ProductVariant>
+
+  @hasMany(() => ProductReview, { foreignKey: 'productId' })
+  declare reviews: HasMany<typeof ProductReview>
 
   @manyToMany(() => Collection, {
     pivotTable: 'collection_products',

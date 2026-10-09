@@ -228,6 +228,24 @@ const routes = {
     tokens: [{"old":"/account/addresses/:id","type":0,"val":"account","end":""},{"old":"/account/addresses/:id","type":0,"val":"addresses","end":""},{"old":"/account/addresses/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['account.addresses.delete']['types'],
   },
+  'reviews.store': {
+    methods: ["POST"],
+    pattern: '/products/:productId/reviews',
+    tokens: [{"old":"/products/:productId/reviews","type":0,"val":"products","end":""},{"old":"/products/:productId/reviews","type":1,"val":"productId","end":""},{"old":"/products/:productId/reviews","type":0,"val":"reviews","end":""}],
+    types: placeholder as Registry['reviews.store']['types'],
+  },
+  'reviews.update': {
+    methods: ["PATCH"],
+    pattern: '/reviews/:id',
+    tokens: [{"old":"/reviews/:id","type":0,"val":"reviews","end":""},{"old":"/reviews/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['reviews.update']['types'],
+  },
+  'reviews.destroy': {
+    methods: ["DELETE"],
+    pattern: '/reviews/:id',
+    tokens: [{"old":"/reviews/:id","type":0,"val":"reviews","end":""},{"old":"/reviews/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['reviews.destroy']['types'],
+  },
   'orders.index': {
     methods: ["GET","HEAD"],
     pattern: '/account/orders',
@@ -449,6 +467,18 @@ const routes = {
     pattern: '/seller/discounts/:id',
     tokens: [{"old":"/seller/discounts/:id","type":0,"val":"seller","end":""},{"old":"/seller/discounts/:id","type":0,"val":"discounts","end":""},{"old":"/seller/discounts/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.discounts.destroy']['types'],
+  },
+  'seller.reviews.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/reviews',
+    tokens: [{"old":"/seller/reviews","type":0,"val":"seller","end":""},{"old":"/seller/reviews","type":0,"val":"reviews","end":""}],
+    types: placeholder as Registry['seller.reviews.index']['types'],
+  },
+  'seller.reviews.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/seller/reviews/:id',
+    tokens: [{"old":"/seller/reviews/:id","type":0,"val":"seller","end":""},{"old":"/seller/reviews/:id","type":0,"val":"reviews","end":""},{"old":"/seller/reviews/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.reviews.update']['types'],
   },
   'seller.posts.index': {
     methods: ["GET","HEAD"],
