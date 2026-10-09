@@ -106,6 +106,19 @@ test.group('Reference port', (group) => {
     assert.isTrue(fitsViewport)
   })
 
+  test('marks only the current page as active in the header menu', async ({ visit }) => {
+    const page = await visit('/')
+    const menu = page.locator('header nav').first()
+    const current = (name: string) => menu.locator('a[aria-current="page"]', { hasText: name })
+    await page.assertExists(current('Home'))
+    await page.assertNotExists(current('Collections'))
+
+    await menu.getByRole('link', { name: 'Collections', exact: true }).click()
+    await page.assertPath('/collections')
+    await page.assertExists(current('Collections'))
+    await page.assertNotExists(current('Home'))
+  })
+
   test('edits the signed-in profile and creates an address', async ({
     visit,
     browserContext,
