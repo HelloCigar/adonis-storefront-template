@@ -21,6 +21,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   // App
   APP_KEY: Env.schema.secret(),
   APP_URL: Env.schema.string.optional(),
+  // Persistent directory for the SQLite database and uploads; defaults to tmp/ and storage/
+  DATA_DIR: Env.schema.string.optional(),
+  // Trust one reverse proxy hop (Railway's edge) for client IP and protocol
+  TRUST_PROXY: Env.schema.boolean.optional(),
 
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),

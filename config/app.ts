@@ -1,3 +1,4 @@
+import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
 
@@ -23,6 +24,13 @@ export const http = defineConfig({
    * from anywhere inside your application.
    */
   useAsyncLocalStorage: false,
+
+  /**
+   * Behind one reverse proxy (Railway's edge), trust only that hop so the
+   * client IP is the rightmost X-Forwarded-For entry, which clients cannot
+   * spoof. Rate limits key on this IP. Unset keeps the loopback-only default.
+   */
+  trustProxy: env.get('TRUST_PROXY') ? (_address, distance) => distance === 0 : undefined,
 
   /**
    * Redirect configuration controls the behavior of
