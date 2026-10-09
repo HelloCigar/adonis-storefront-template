@@ -9,7 +9,7 @@ export const useMenu = (name: 'main-menu' | 'footer') => {
     data: computed<NavigationMenuItem[]>(() =>
       name === 'main-menu'
         ? [
-            { label: 'Home', to: urlFor('home') },
+            { label: 'Home', to: urlFor('home'), exact: true },
             { label: 'Collections', to: urlFor('collections.index') },
             { label: 'Blog', to: urlFor('blog.index') },
           ]
