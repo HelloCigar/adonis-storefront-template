@@ -12,6 +12,7 @@ interface Message {
   body: string
   senderName: string
   senderRole: 'customer' | 'staff'
+  automated: boolean
   read: boolean
 }
 
@@ -61,6 +62,7 @@ test.group('Order chat rooms', (group) => {
     assert.equal(sent.data.body, 'Where is my parcel?')
     assert.equal(sent.data.senderRole, 'customer')
     assert.equal(sent.data.senderName, customer.user.fullName)
+    assert.isFalse(sent.data.automated)
     assert.notProperty(sent.data, 'attachments')
     const received = await delivered
     assert.equal(received?.id, sent.data.id)

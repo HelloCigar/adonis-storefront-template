@@ -133,11 +133,13 @@ test.group('Order chat thank-you', (group) => {
     const messages = page.inertiaProps.conversation.messages as {
       senderName: string
       senderRole: string
+      automated: boolean
       body: string
     }[]
     assert.lengthOf(messages, 1)
     assert.equal(messages[0].senderName, storeName)
     assert.equal(messages[0].senderRole, 'staff')
+    assert.isTrue(messages[0].automated)
     assert.include(messages[0].body, 'Thanks for ordering, Casey!')
   })
 
