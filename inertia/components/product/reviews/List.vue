@@ -12,9 +12,13 @@ const props = defineProps<{
 const page = usePage()
 const router = useRouter()
 const { locale } = useLocalization()
+// A fixed store time zone keeps the server-rendered date equal to the hydrated one.
 const formatDate = (value: string | null) =>
   value
-    ? new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(value))
+    ? new Intl.DateTimeFormat(locale.value, {
+        dateStyle: 'medium',
+        timeZone: 'Asia/Manila',
+      }).format(new Date(value))
     : ''
 
 // Keep the rest of the query (such as the selected variant) and only swap the reviews page.

@@ -9,14 +9,21 @@ import { createSSRApp, h, type DefineComponent } from 'vue'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import { resolveLayout } from './layouts/resolve'
 
+const appName = import.meta.env.VITE_APP_NAME || 'Your store'
+
 export default function render(page: any) {
   return createInertiaApp({
-    page,
+    // Props reach this function before JSON serialization (Luxon dates, models with toJSON).
+    // Render from the same plain data the browser hydrates with so the markup matches.
+    page: JSON.parse(JSON.stringify(page)),
     render: renderToString,
+    title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) => {
       return resolvePageComponent(
         `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/**/*.vue', { eager: true }),
+        // Lazy, so a page module (and dependencies like the chat socket client) only loads on the
+        // server when config/inertia.ts actually server-renders that page.
+        import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         resolveLayout(name)
       )
     },

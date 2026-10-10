@@ -4,10 +4,12 @@ import type { Data } from '@generated/data'
 import { computed } from 'vue'
 import { t } from '~/utils/store'
 import { Head } from '@inertiajs/vue3'
+import { useLocalization } from '~/composables/localization'
 const props = defineProps<{ post: Data.Content.BlogPost.Variants['forDetailedView'] }>()
+const { locale } = useLocalization()
 const publishedOn = computed(() =>
   props.post.publishedAt
-    ? new Intl.DateTimeFormat(undefined, { dateStyle: 'long', timeZone: 'UTC' }).format(
+    ? new Intl.DateTimeFormat(locale.value, { dateStyle: 'long', timeZone: 'UTC' }).format(
         new Date(props.post.publishedAt)
       )
     : null
