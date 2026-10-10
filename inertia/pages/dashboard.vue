@@ -9,8 +9,12 @@ import { useDashboard } from '../composables/useDashboard'
 import type { Period, Range } from '../types'
 import { urlFor } from '~/client'
 import Default from '~/layouts/admin.vue'
+import HomeAttention from '~/components/home/HomeAttention.vue'
 
-const props = defineProps<{ summary: Data.Dashboard.Summary }>()
+const props = defineProps<{
+  summary: Data.Dashboard.Summary
+  attention: Data.Dashboard.Attention
+}>()
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 
@@ -18,14 +22,34 @@ const page = usePage()
 const router = useRouter()
 const loading = ref(false)
 
-const items = computed(
-  () =>
-    [
-      page.props.permissions.manageUsers
-        ? [{ label: 'Manage users', icon: 'i-lucide-user-plus', to: urlFor('seller.users.index') }]
-        : [],
-    ] satisfies DropdownMenuItem[][]
-)
+/** Shortcuts to start common store work; the target pages open their create dialog for `new=1`. */
+const items = computed(() => {
+  const { manageStore, manageUsers } = page.props.permissions
+  return [
+    manageStore
+      ? [
+          {
+            label: 'New product',
+            icon: 'i-lucide-package-plus',
+            to: urlFor('seller.products.index', {}, { qs: { new: 1 } }),
+          },
+          {
+            label: 'New discount',
+            icon: 'i-lucide-ticket-percent',
+            to: urlFor('seller.discounts.index', {}, { qs: { new: 1 } }),
+          },
+          {
+            label: 'New blog post',
+            icon: 'i-lucide-newspaper',
+            to: urlFor('seller.posts.create'),
+          },
+        ]
+      : [],
+    manageUsers
+      ? [{ label: 'Manage users', icon: 'i-lucide-user-plus', to: urlFor('seller.users.index') }]
+      : [],
+  ].filter((group) => group.length > 0) satisfies DropdownMenuItem[][]
+})
 
 const day = (date: Date) => format(date, 'yyyy-MM-dd')
 
@@ -83,35 +107,46 @@ const period = computed<Period>({
               />
             </UTooltip>
 
-            <UDropdownMenu v-if="items[0].length" :items="items">
-              <UButton icon="i-lucide-plus" size="md" class="rounded-full" aria-label="Create" />
+            <UDropdownMenu v-if="items.length" :items="items">
+              <UButton
+                icon="i-lucide-plus"
+                size="md"
+                class="rounded-full"
+                aria-label="Create new"
+              />
             </UDropdownMenu>
           </template>
         </UDashboardNavbar>
-
-        <UDashboardToolbar>
-          <template #left>
-            <!-- NOTE: The `-ms-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
-            <HomeDateRangePicker v-model="range" class="-ms-1" />
-
-            <HomePeriodSelect v-model="period" :periods="summary.query.periods" />
-          </template>
-        </UDashboardToolbar>
       </template>
 
       <template #body>
-        <div
-          class="flex flex-col gap-4 sm:gap-6"
-          :class="{ 'opacity-60': loading }"
-          :aria-busy="loading"
-        >
-          <HomeStats :stats="summary.stats" :currency="summary.currency" />
-          <HomeChart
-            :chart="summary.chart"
-            :period="summary.query.period"
-            :currency="summary.currency"
-          />
-          <HomeSales :orders="summary.recentOrders" />
+        <div class="flex flex-col gap-8">
+          <HomeAttention :attention="attention" />
+
+          <section aria-labelledby="home-sales-title" class="flex flex-col gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <h2 id="home-sales-title" class="text-base font-semibold text-highlighted">Sales</h2>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <HomeDateRangePicker v-model="range" />
+                <HomePeriodSelect v-model="period" :periods="summary.query.periods" />
+              </div>
+            </div>
+
+            <div
+              class="flex flex-col gap-4 sm:gap-6"
+              :class="{ 'opacity-60': loading }"
+              :aria-busy="loading"
+            >
+              <HomeStats :stats="summary.stats" :currency="summary.currency" />
+              <HomeChart
+                :chart="summary.chart"
+                :period="summary.query.period"
+                :currency="summary.currency"
+              />
+              <HomeSales :orders="summary.recentOrders" />
+            </div>
+          </section>
         </div>
       </template>
     </UDashboardPanel>

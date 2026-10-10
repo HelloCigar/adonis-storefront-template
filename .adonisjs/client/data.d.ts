@@ -26,6 +26,7 @@ import type CheckoutQuoteTransformer from '#transformers/checkout/quote_transfor
 import type CheckoutStatusTransformer from '#transformers/checkout/status_transformer'
 import type ContentBlogPostTransformer from '#transformers/content/blog_post_transformer'
 import type ContentContentTransformer from '#transformers/content/content_transformer'
+import type DashboardAttentionTransformer from '#transformers/dashboard/attention_transformer'
 import type DashboardSummaryTransformer from '#transformers/dashboard/summary_transformer'
 import type PaymentsSimulationTransformer from '#transformers/payments/simulation_transformer'
 import type SellerCollectionTransformer from '#transformers/seller/collection_transformer'
@@ -134,6 +135,10 @@ export namespace Data {
     }
   }
   export namespace Dashboard {
+    export type Attention = InferData<DashboardAttentionTransformer>
+    export namespace Attention {
+      export type Variants = InferVariants<DashboardAttentionTransformer>
+    }
     export type Summary = InferData<DashboardSummaryTransformer>
     export namespace Summary {
       export type Variants = InferVariants<DashboardSummaryTransformer>
