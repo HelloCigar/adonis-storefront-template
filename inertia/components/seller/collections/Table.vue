@@ -3,6 +3,7 @@ import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 const props = defineProps<{ collections: Data.Seller.Collection[] }>()
 const emit = defineEmits<{
   create: []
@@ -49,6 +50,10 @@ const rows = computed(() =>
 watch([search, statusFilter, () => props.collections], () => {
   pagination.value.pageIndex = 0
 })
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = 'all'
+}
 const UButton = resolveComponent('UButton')
 const columns = computed<TableColumn<Data.Seller.Collection>[]>(() =>
   resourceColumns
@@ -104,7 +109,16 @@ function rowActions(row: Data.Seller.Collection): DropdownMenuItem[] {
       <div>
         <p class="text-sm text-muted">{{ description }}</p>
       </div>
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <ListEmpty
+        v-if="!collections.length"
+        icon="i-lucide-folders"
+        title="Group products into collections"
+        description="Collections like New arrivals or Gifts help customers browse your store. Add products to a collection once it exists."
+        :actions="[
+          { label: `Add ${singular}`, icon: 'i-lucide-plus', onClick: () => emit('create') },
+        ]"
+      />
+      <div v-else class="flex flex-wrap items-center justify-between gap-3">
         <UInput
           v-model="search"
           icon="i-lucide-search"
@@ -146,6 +160,7 @@ function rowActions(row: Data.Seller.Collection): DropdownMenuItem[] {
         </div>
       </div>
       <UTable
+        v-if="collections.length"
         ref="table"
         v-model:pagination="pagination"
         v-model:column-visibility="columnVisibility"
@@ -177,20 +192,11 @@ function rowActions(row: Data.Seller.Collection): DropdownMenuItem[] {
           </UDropdownMenu>
         </template>
         <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
-            <p class="text-sm text-muted mt-1">
-              {{
-                search || statusFilter !== 'all'
-                  ? 'Try changing your search or filters.'
-                  : `Add your first ${singular} to get started.`
-              }}
-            </p>
-          </div>
+          <ListEmpty filtered :noun="title.toLowerCase()" @clear="clearFilters" />
         </template>
       </UTable>
       <div
+        v-if="collections.length"
         class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
       >
         <p class="text-sm text-muted">{{ rows.length }} {{ title.toLowerCase() }}</p>

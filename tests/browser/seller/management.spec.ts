@@ -152,7 +152,7 @@ test.group('Store management pages', (group) => {
     await page.getByRole('dialog').waitFor({ state: 'detached' })
     assert.isNotNull(await User.findBy('email', 'new-buyer@example.com'))
     await page.getByRole('link', { name: 'Collections', exact: true }).click()
-    await page.getByRole('button', { name: 'Add collection', exact: true }).click()
+    await page.getByRole('button', { name: 'Add collection', exact: true }).first().click()
     await page.getByLabel('Title', { exact: true }).fill('Desk Friends')
     await page.getByLabel('Handle', { exact: true }).fill('desk-friends')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
