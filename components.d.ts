@@ -42,6 +42,7 @@ declare module 'vue' {
     FilterTypeList: typeof import('./inertia/components/filter/type/List.vue')['default']
     FilterTypePriceRange: typeof import('./inertia/components/filter/type/PriceRange.vue')['default']
     Flash_toasts: typeof import('./inertia/components/flash_toasts.vue')['default']
+    HomeAttention: typeof import('./inertia/components/home/HomeAttention.vue')['default']
     HomeChart: typeof import('./inertia/components/home/HomeChart.vue')['default']
     HomeDateRangePicker: typeof import('./inertia/components/home/HomeDateRangePicker.vue')['default']
     HomePeriodSelect: typeof import('./inertia/components/home/HomePeriodSelect.vue')['default']

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import DiscountsTable from '~/components/seller/discounts/Table.vue'
@@ -17,6 +17,14 @@ function requestDelete(discount: Data.Seller.Discount) {
   selected.value = discount
   deleting.value = true
 }
+onMounted(() => {
+  const url = new URL(window.location.href)
+  if (url.searchParams.has('new')) {
+    edit()
+    url.searchParams.delete('new')
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+  }
+})
 </script>
 <template>
   <Head title="Discounts" />
