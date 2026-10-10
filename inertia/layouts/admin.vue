@@ -15,16 +15,13 @@ const page = usePage()
 
 type SidebarItem = {
   label: string
-  icon?: string
+  icon: string
   to: string
   exact?: boolean
-  defaultOpen?: boolean
-  type?: 'trigger'
-  children?: SidebarItem[]
   onSelect?: () => void
 }
 
-type SidebarSection = { id: string; label?: string; items: SidebarItem[] }
+type SidebarSection = { id: string; label?: string; icon?: string; items: SidebarItem[] }
 
 function closeSidebar() {
   open.value = false
@@ -32,7 +29,8 @@ function closeSidebar() {
 
 /**
  * Sidebar sections, ordered by how often staff reach for them: daily order work first, then the
- * catalog, marketing, store administration, and personal account settings.
+ * catalog, marketing, store administration, and personal settings. Every section except the daily
+ * links renders as a collapsible group that starts open.
  */
 const sections = computed(() => {
   const { manageStore, manageUsers } = page.props.permissions
@@ -51,6 +49,7 @@ const sections = computed(() => {
     {
       id: 'catalog',
       label: 'Catalog',
+      icon: 'i-lucide-boxes',
       items: manageStore
         ? [
             { label: 'Products', icon: 'i-lucide-package', to: urlFor('seller.products.index') },
@@ -66,6 +65,7 @@ const sections = computed(() => {
     {
       id: 'marketing',
       label: 'Marketing',
+      icon: 'i-lucide-megaphone',
       items: manageStore
         ? [
             {
@@ -80,6 +80,7 @@ const sections = computed(() => {
     {
       id: 'store',
       label: 'Store',
+      icon: 'i-lucide-sliders-horizontal',
       items: [
         ...(manageStore
           ? [{ label: 'Emails', icon: 'i-lucide-mail', to: urlFor('seller.emails.index') }]
@@ -90,46 +91,46 @@ const sections = computed(() => {
       ],
     },
     {
-      id: 'account',
-      label: 'Account',
+      id: 'settings',
+      label: 'Settings',
+      icon: 'i-lucide-settings',
       items: [
-        {
-          label: 'Settings',
-          to: urlFor('settings'),
-          icon: 'i-lucide-settings',
-          defaultOpen: true,
-          type: 'trigger',
-          children: [
-            { label: 'General', to: urlFor('settings'), exact: true },
-            { label: 'Notifications', to: urlFor('settings.notifications') },
-            { label: 'Security', to: urlFor('settings.security') },
-          ],
-        },
+        { label: 'General', icon: 'i-lucide-user', to: urlFor('settings'), exact: true },
+        { label: 'Notifications', icon: 'i-lucide-bell', to: urlFor('settings.notifications') },
+        { label: 'Security', icon: 'i-lucide-shield', to: urlFor('settings.security') },
       ],
     },
   ]
 
-  return all.filter((section) => section.items.length > 0)
+  return all
+    .filter((section) => section.items.length > 0)
+    .map((section) => ({
+      ...section,
+      items: section.items.map((item) => ({ ...item, onSelect: closeSidebar })),
+    }))
 })
 
-function withClose(item: SidebarItem): SidebarItem {
-  return item.children
-    ? { ...item, children: item.children.map(withClose) }
-    : { ...item, onSelect: closeSidebar }
-}
-
-const links = computed<NavigationMenuItem[][]>(() =>
-  sections.value.map((section) => [
-    ...(section.label ? [{ label: section.label, type: 'label' as const }] : []),
-    ...section.items.map(withClose),
-  ])
+const links = computed<NavigationMenuItem[]>(() =>
+  sections.value.flatMap<NavigationMenuItem>((section) =>
+    section.label
+      ? [
+          {
+            label: section.label,
+            icon: section.icon,
+            type: 'trigger',
+            defaultOpen: true,
+            children: section.items,
+          },
+        ]
+      : section.items
+  )
 )
 
 const groups = computed(() =>
   sections.value.map((section) => ({
     id: section.id,
     label: section.label ?? 'Go to',
-    items: section.items.map(withClose),
+    items: section.items,
   }))
 )
 
