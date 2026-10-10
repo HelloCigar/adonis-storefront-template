@@ -28,6 +28,7 @@ declare module 'vue' {
     CartChoose: typeof import('./inertia/components/cart/Choose.vue')['default']
     CartLineItem: typeof import('./inertia/components/cart/LineItem.vue')['default']
     CartModal: typeof import('./inertia/components/cart/Modal.vue')['default']
+    ChatMessageGroup: typeof import('./inertia/components/chat/MessageGroup.vue')['default']
     ChatOrderChat: typeof import('./inertia/components/chat/OrderChat.vue')['default']
     CheckoutAddressFields: typeof import('./inertia/components/checkout/AddressFields.vue')['default']
     CheckoutDiscountCode: typeof import('./inertia/components/checkout/DiscountCode.vue')['default']

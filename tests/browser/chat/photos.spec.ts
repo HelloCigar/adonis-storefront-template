@@ -47,10 +47,12 @@ test.group('Order chat photos', (group) => {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('button', { name: 'Accept', exact: true }).click()
-    // The customer's messages carry their initials.
-    const customerMessage = page.locator('[data-role="assistant"]')
+    // The customer's messages sit on the other side under their name and initials.
+    const customerMessage = page.locator('[data-from="theirs"]')
     await customerMessage.getByText('Can I get a shipping label?').waitFor()
     await customerMessage.getByText('CC', { exact: true }).waitFor()
+    await customerMessage.getByText('Casey Customer', { exact: true }).waitFor()
+    await page.getByText('Today', { exact: true }).waitFor()
 
     const chooser = page.waitForEvent('filechooser')
     await page.getByRole('button', { name: 'Add photos' }).click()
@@ -79,6 +81,12 @@ test.group('Order chat photos', (group) => {
       })
     )
     assert.equal(await page.getByRole('button', { name: 'Remove label.png' }).count(), 0)
+    // The photo opens in a viewer on the page.
+    await page.getByRole('button', { name: 'View label.png' }).click()
+    const viewer = page.getByRole('dialog', { name: 'label.png' })
+    await viewer.getByRole('img', { name: 'label.png' }).waitFor()
+    await viewer.getByRole('button', { name: 'Close' }).click()
+    await viewer.waitFor({ state: 'detached' })
 
     // A photo with an empty text box sends with Enter too.
     const nextChooser = page.waitForEvent('filechooser')
@@ -96,6 +104,15 @@ test.group('Order chat photos', (group) => {
     await page
       .locator(`img[src="/chat/orders/${order.id}/images/${receipt.attachmentId}"]`)
       .waitFor()
+    // A photo without text is no empty bubble; only the latest message carries the receipt.
+    assert.equal(
+      await page
+        .locator('[data-from="mine"]')
+        .getByText(/· (Sent|Seen)$/)
+        .count(),
+      1
+    )
+    assert.equal(await page.getByRole('button', { name: 'Copy message' }).count(), 1)
     assert.deepEqual(errors, [])
   })
 })
