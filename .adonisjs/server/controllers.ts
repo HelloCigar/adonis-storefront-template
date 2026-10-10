@@ -69,7 +69,6 @@ export const controllers = {
   settings: {
     Avatar: () => import('#controllers/settings/avatar_controller'),
     Members: () => import('#controllers/settings/members_controller'),
-    Notifications: () => import('#controllers/settings/notifications_controller'),
     Security: () => import('#controllers/settings/security_controller'),
     Settings: () => import('#controllers/settings/settings_controller'),
   },

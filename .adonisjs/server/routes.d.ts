@@ -55,7 +55,6 @@ export type ScannedRoutes = {
     'settings.update': { paramsTuple?: []; params?: {} }
     'settings.avatar.destroy': { paramsTuple?: []; params?: {} }
     'settings.members': { paramsTuple?: []; params?: {} }
-    'settings.notifications': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'settings.password.update': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }
@@ -133,7 +132,6 @@ export type ScannedRoutes = {
     'customers': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
     'settings.members': { paramsTuple?: []; params?: {} }
-    'settings.notifications': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
@@ -178,7 +176,6 @@ export type ScannedRoutes = {
     'customers': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
     'settings.members': { paramsTuple?: []; params?: {} }
-    'settings.notifications': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }

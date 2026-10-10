@@ -34,7 +34,6 @@ test.group('Adjusting variant stock', (group) => {
     })
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/products/${product.id}/variants`)
-    await page.getByRole('button', { name: 'Opt out', exact: true }).click()
     await page.getByRole('button', { name: 'Actions for Default MUG-1', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Adjust stock', exact: true }).click()
 

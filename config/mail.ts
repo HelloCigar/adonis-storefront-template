@@ -3,7 +3,7 @@ import { defineConfig, transports } from '@adonisjs/mail'
 
 const username = env.get('SMTP_USERNAME')
 const password = env.get('SMTP_PASSWORD')?.release()
-/** One setting names the store as the sender, in the email wordmark, and on invoices. */
+/** One setting names the store as the sender, in the email wordmark, on invoices, and in the storefront header and footer. */
 export const storeName = env.get('MAIL_FROM_NAME', 'MediaBunny')
 export const storeEmail = env.get('MAIL_FROM_ADDRESS', 'store@example.com')
 
