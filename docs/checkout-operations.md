@@ -50,6 +50,8 @@ Receipt, shipment and delivery intents are unique per order/event and are saved 
 
 SMTP can accept a message before a worker loses its acknowledgement. Delivery can therefore repeat despite a deterministic Message-ID; no exactly-once email guarantee is claimed. Failed notifications are visible to staff and can be retried after the transport is restored. A notification still `pending` two minutes after its last queue publication, for example because the queue dropped a stalled job, is re-queued by the `payment-operation-recovery` sweep; failed notifications are left for staff. Mail failure never reverses payment or shipment.
 
+When a settlement confirms an account order, the `OrderConfirmed` event fires after commit and the store posts a thank-you as the first message in that order's chat, signed with the store name (`MAIL_FROM_NAME`). It is best-effort and in-process: a failure is logged and never reverses the payment, and a thread that already has messages is left alone. Guest orders have no chat, so they only get the receipt email.
+
 Staff can review every customer email under **Emails** in store management (`/seller/emails`). Each email has its own link and renders the real templates with in-memory sample order data, as HTML at desktop or mobile width and as plain text. Previews never send mail, grant order access or write to the database.
 
 ## Local verification

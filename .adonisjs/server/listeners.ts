@@ -4,6 +4,9 @@
  */
 
 export const listeners = {
+  chat: {
+    ThankCustomer: () => import('#listeners/chat/thank_customer'),
+  },
   checkout: {
     PublishWorkflowOutbox: () => import('#listeners/checkout/publish_workflow_outbox'),
   },
