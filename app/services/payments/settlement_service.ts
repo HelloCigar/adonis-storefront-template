@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
+import logger from '@adonisjs/core/services/logger'
 import { sqlDateTime } from '#models/shared/sql_datetime'
 import Order from '#models/checkout/order'
 import Cart from '#models/checkout/cart'
@@ -15,6 +16,7 @@ import NotificationIntentService from '#services/checkout/notification_intent_se
 import BalanceService from '#services/payments/balance_service'
 import type { CheckoutSession } from '#services/payments/payment_service'
 import CheckoutException from '#exceptions/checkout_exception'
+import OrderConfirmed from '#events/checkout/order_confirmed'
 import { affectedRows } from '#models/shared/affected_rows'
 import { leaseReleased } from '#models/shared/lease'
 
@@ -174,6 +176,14 @@ export default class SettlementService {
           amountMinor: payment.amountMinor,
         })
         await this.notifications.record(trx, order!.id, 'receipt')
+        const confirmedId = order!.id
+        trx.after('commit', async () => {
+          try {
+            await OrderConfirmed.dispatch(confirmedId)
+          } catch {
+            logger.error({ orderId: confirmedId }, 'Order confirmed event dispatch failed')
+          }
+        })
       }
       if (order && review) {
         order.lifecycleState = this.states.transition(
