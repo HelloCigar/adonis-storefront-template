@@ -44,7 +44,7 @@ test.group('Managing product options and images', (group) => {
       position: 0,
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}/variants`)
+    const page = await visit(`/seller/products/${product.id}`)
     await page.getByRole('button', { name: 'Opt out', exact: true }).click()
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
@@ -177,7 +177,7 @@ test.group('Managing product options and images', (group) => {
     })
     const product = await Product.create({ title: 'New mug', handle: 'new-mug', status: 'draft' })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}/variants`)
+    const page = await visit(`/seller/products/${product.id}`)
     await page.getByRole('button', { name: 'Define options', exact: true }).click()
     await page.getByRole('button', { name: 'Add option', exact: true }).click()
     await page.getByLabel('Option 1 name', { exact: true }).fill('Finish')

@@ -293,7 +293,7 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
               Add your first product, then give it images and variants.
             </p>
             <UButton
-              label="Add product"
+              label="Add your first product"
               icon="i-lucide-plus"
               class="mt-4"
               @click="emit('create')"

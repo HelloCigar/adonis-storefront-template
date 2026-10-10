@@ -34,7 +34,7 @@ test.group('Shared store resource access', (group) => {
       .accept('json')
       .json({ ...productData, sellerId: second.id, seller_id: second.id })
     const product = await Product.findByOrFail('handle', 'lamp')
-    created.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    created.assertRedirectsTo(`/seller/products/${product.id}`)
     assert.equal(product.sellerId, first.id)
     const another = await Product.create({ ...productData, handle: 'another', sellerId: second.id })
     const unassigned = await Product.create({ ...productData, handle: 'unassigned' })
@@ -49,7 +49,7 @@ test.group('Shared store resource access', (group) => {
         [product.id, another.id, unassigned.id]
       )
       const variants = await client
-        .get(`/seller/products/${another.id}/variants`)
+        .get(`/seller/products/${another.id}`)
         .loginAs(actor)
         .withInertia()
       variants.assertStatus(200)
@@ -67,7 +67,7 @@ test.group('Shared store resource access', (group) => {
       .withCsrfToken()
       .accept('json')
       .json({ ...productData, title: 'Shared edit', sellerId: second.id })
-    updated.assertRedirectsTo('/seller/products')
+    updated.assertRedirectsTo(`/seller/products/${product.id}`)
     await product.refresh()
     assert.equal(product.title, 'Shared edit')
     assert.equal(product.sellerId, first.id)

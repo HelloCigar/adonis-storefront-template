@@ -9,6 +9,9 @@ import Collection from '#models/catalog/collection'
 import Order from '#models/checkout/order'
 import { AttachmentModel } from '@jrmc/adonis-attachment/lucid'
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
+import { ProductFactory } from '#database/factories/product_factory'
+import { createFixtureImage } from '#database/fixtures/image'
 
 const seller = () =>
   User.create({
@@ -37,7 +40,23 @@ const variantPayload = {
 }
 
 test.group('Seller management', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
+  group.each.setup(async () => {
+    const cleanup = await testUtils.db().truncate()
+    return async () => {
+      // Stock summary tests assign held counters without real reservations. Clear those
+      // counters so truncation is not blocked by the reserved-variant delete guard.
+      await db
+        .from('product_variants')
+        .whereNotExists((query) => {
+          query
+            .from('stock_reservations')
+            .whereColumn('stock_reservations.product_variant_id', 'product_variants.id')
+            .where('state', 'reserved')
+        })
+        .update({ inventory_reserved_quantity: 0 })
+      await cleanup()
+    }
+  })
 
   test('protects every seller page and write from guests and customers', async ({
     client,
@@ -54,6 +73,7 @@ test.group('Seller management', (group) => {
       '/seller/collections',
       '/seller/orders',
       '/seller/users',
+      '/seller/products/1',
       '/seller/products/1/variants',
       '/customers',
     ]) {
@@ -102,7 +122,7 @@ test.group('Seller management', (group) => {
       .accept('json')
       .json(productPayload)
     const product = await Product.firstOrFail()
-    created.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    created.assertRedirectsTo(`/seller/products/${product.id}`)
     assert.isNull(product.publishedAt)
     const configured = await client
       .patch(`/seller/products/${product.id}/options`)
@@ -110,14 +130,14 @@ test.group('Seller management', (group) => {
       .withCsrfToken()
       .accept('json')
       .json({ optionDefinitions: [{ name: 'Color', values: ['Blue'] }] })
-    configured.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    configured.assertRedirectsTo(`/seller/products/${product.id}`)
     const added = await client
       .post(`/seller/products/${product.id}/variants`)
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(variantPayload)
-    added.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    added.assertRedirectsTo(`/seller/products/${product.id}`)
     await product.refresh()
     assert.isNotNull(product.publishedAt)
     const variant = await ProductVariant.firstOrFail()
@@ -128,7 +148,7 @@ test.group('Seller management', (group) => {
       .withCsrfToken()
       .accept('json')
       .json({ ...variantPayload, priceAmount: 300, inventoryQuantity: 0 })
-    updated.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    updated.assertRedirectsTo(`/seller/products/${product.id}`)
     await variant.refresh()
     assert.equal(variant.priceAmount, 300)
     assert.equal(variant.inventoryQuantity, 0)
@@ -142,7 +162,7 @@ test.group('Seller management', (group) => {
       .withCsrfToken()
       .accept('json')
       .json({ ...productPayload, title: 'Updated lamp', description: null, status: 'draft' })
-    changed.assertRedirectsTo('/seller/products')
+    changed.assertRedirectsTo(`/seller/products/${product.id}`)
     await product.refresh()
     assert.isNull(product.description)
     assert.isNull(product.publishedAt)
@@ -150,7 +170,7 @@ test.group('Seller management', (group) => {
       .delete(`/seller/products/${product.id}/variants/${variant.id}`)
       .loginAs(owner)
       .withCsrfToken()
-    removed.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    removed.assertRedirectsTo(`/seller/products/${product.id}`)
     assert.isNull(await ProductVariant.find(variant.id))
     const deleted = await client
       .delete(`/seller/products/${product.id}`)
@@ -158,6 +178,275 @@ test.group('Seller management', (group) => {
       .withCsrfToken()
     deleted.assertRedirectsTo('/seller/products')
     assert.isNull(await Product.find(product.id))
+  })
+
+  test('opens the product page with variants in position order and its images', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const item = await ProductFactory.apply('published', 'withMedia').create()
+    item.media.add(await createFixtureImage('second-photo'))
+    await item.save()
+    await item.related('variants').createMany([
+      { ...variantPayload, title: 'Third', options: { Size: 'L' }, position: 2, sku: 'P-3' },
+      { ...variantPayload, title: 'First', options: { Size: 'S' }, position: 0, sku: 'P-1' },
+      { ...variantPayload, title: 'Second', options: { Size: 'M' }, position: 1, sku: 'P-2' },
+    ])
+    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    page.assertStatus(200)
+    page.assertInertiaComponent('seller/product')
+    assert.equal(page.inertiaProps.product.id, item.id)
+    assert.equal(page.inertiaProps.product.title, item.title)
+    assert.deepEqual(
+      page.inertiaProps.product.variants.map((variant: { title: string }) => variant.title),
+      ['First', 'Second', 'Third']
+    )
+    assert.lengthOf(page.inertiaProps.images, 2)
+    const links = await item.media.all()
+    assert.sameMembers(
+      page.inertiaProps.images.map((image: { id: string }) => image.id),
+      links.map((link) => link.id)
+    )
+  })
+
+  test('hides the product page from customers and returns 404 for a missing product', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const customer = await User.create({
+      email: 'customer@example.com',
+      password: 'secret-password',
+    })
+    const item = await Product.create({ ...productPayload, sellerId: owner.id })
+    const guest = await client.get(`/seller/products/${item.id}`).redirects(0)
+    guest.assertStatus(302)
+    guest.assertHeader('location', '/login')
+    const denied = await client.get(`/seller/products/${item.id}`).loginAs(customer).accept('json')
+    denied.assertStatus(403)
+    const missing = await client.get('/seller/products/999999').loginAs(owner).accept('json')
+    missing.assertStatus(404)
+    assert.isNotNull(await Product.find(item.id))
+  })
+
+  test('redirects the legacy variants page to the product page', async ({ client }) => {
+    const owner = await seller()
+    const item = await Product.create({ ...productPayload, sellerId: owner.id })
+    const response = await client
+      .get(`/seller/products/${item.id}/variants`)
+      .loginAs(owner)
+      .redirects(0)
+    response.assertStatus(302)
+    response.assertHeader('location', `/seller/products/${item.id}`)
+  })
+
+  test('product create and update land on the product page while delete returns to the list', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const created = await client
+      .post('/seller/products')
+      .loginAs(owner)
+      .withCsrfToken()
+      .redirects(0)
+      .json(productPayload)
+    const product = await Product.firstOrFail()
+    created.assertStatus(302)
+    created.assertHeader('location', `/seller/products/${product.id}`)
+    const updated = await client
+      .patch(`/seller/products/${product.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .redirects(0)
+      .json({ ...productPayload, title: 'Renamed lamp' })
+    updated.assertStatus(302)
+    updated.assertHeader('location', `/seller/products/${product.id}`)
+    await product.refresh()
+    assert.equal(product.title, 'Renamed lamp')
+    const deleted = await client
+      .delete(`/seller/products/${product.id}`)
+      .loginAs(owner)
+      .withCsrfToken()
+      .redirects(0)
+    deleted.assertStatus(302)
+    deleted.assertHeader('location', '/seller/products')
+  })
+
+  test('products index exposes the first image as thumbnailUrl and null without media', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const withMedia = await ProductFactory.apply('published', 'withMedia').create()
+    withMedia.media.add(await createFixtureImage('later-photo'))
+    await withMedia.save()
+    const withoutMedia = await ProductFactory.apply('published').create()
+    const links = await withMedia.media.all()
+    const page = await client.get('/seller/products').loginAs(owner).withInertia()
+    page.assertInertiaComponent('seller/products')
+    const byId = new Map<number, { thumbnailUrl: string | null }>(
+      page.inertiaProps.products.map((item: { id: number; thumbnailUrl: string | null }) => [
+        item.id,
+        item,
+      ])
+    )
+    const first = links[0].attachment
+    assert.equal(
+      byId.get(withMedia.id)!.thumbnailUrl,
+      first.url ?? `/attachments/${encodeURIComponent(first.id)}/${encodeURIComponent(first.name)}`
+    )
+    assert.include(byId.get(withMedia.id)!.thumbnailUrl!, first.id)
+    assert.isNull(byId.get(withoutMedia.id)!.thumbnailUrl)
+    const detail = await client.get(`/seller/products/${withMedia.id}`).loginAs(owner).withInertia()
+    assert.isNull(detail.inertiaProps.product.thumbnailUrl)
+  })
+
+  test('products index summarises stock per product, counting reserved units as unavailable', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const stock = async (
+      title: string,
+      variants: { quantity: number | null; reserved?: number }[]
+    ) => {
+      const item = await ProductFactory.apply('published').merge({ title }).create()
+      await item.related('variants').createMany(
+        variants.map((variant, position) => ({
+          title: `V${position}`,
+          sku: `${title}-${position}`,
+          options: { Option: `V${position}` },
+          priceAmount: 100,
+          currencyCode: 'PHP',
+          availableForSale: true,
+          inventoryQuantity: variant.quantity,
+          inventoryReservedQuantity: variant.reserved ?? 0,
+          position,
+        }))
+      )
+      return item
+    }
+    const out = await stock('out', [{ quantity: 0 }, { quantity: 3, reserved: 3 }])
+    const someOut = await stock('some-out', [{ quantity: 0 }, { quantity: 20 }])
+    const low = await stock('low', [{ quantity: 4 }, { quantity: 30 }])
+    const lowViaReservation = await stock('low-reserved', [{ quantity: 10, reserved: 6 }])
+    const inStock = await stock('in-stock', [{ quantity: 6 }, { quantity: 10 }])
+    const untracked = await stock('untracked', [{ quantity: null }])
+    const mixed = await stock('mixed', [{ quantity: null }, { quantity: 12 }])
+    const none = await ProductFactory.apply('published').merge({ title: 'none' }).create()
+    const page = await client.get('/seller/products').loginAs(owner).withInertia()
+    const stockOf = (item: Product) =>
+      page.inertiaProps.products.find((row: { id: number }) => row.id === item.id).stock
+    assert.deepEqual(stockOf(out), {
+      level: 'out',
+      available: 0,
+      untracked: 0,
+      outOfStock: 2,
+      lowStock: 0,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(someOut), {
+      level: 'some_out',
+      available: 20,
+      untracked: 0,
+      outOfStock: 1,
+      lowStock: 0,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(low), {
+      level: 'low',
+      available: 34,
+      untracked: 0,
+      outOfStock: 0,
+      lowStock: 1,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(lowViaReservation), {
+      level: 'low',
+      available: 4,
+      untracked: 0,
+      outOfStock: 0,
+      lowStock: 1,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(inStock), {
+      level: 'in_stock',
+      available: 16,
+      untracked: 0,
+      outOfStock: 0,
+      lowStock: 0,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(untracked), {
+      level: 'untracked',
+      available: null,
+      untracked: 1,
+      outOfStock: 0,
+      lowStock: 0,
+      lowStockThreshold: 5,
+    })
+    assert.deepEqual(stockOf(mixed), {
+      level: 'in_stock',
+      available: 12,
+      untracked: 1,
+      outOfStock: 0,
+      lowStock: 0,
+      lowStockThreshold: 5,
+    })
+    assert.equal(stockOf(none).level, 'no_variants')
+    assert.equal(stockOf(none).available, null)
+    assert.equal(stockOf(none).untracked, 0)
+  })
+
+  test('product page variants carry quantityAvailable and stockLevel', async ({
+    client,
+    assert,
+  }) => {
+    const owner = await seller()
+    const item = await ProductFactory.apply('published').create()
+    const rows: [string, number | null, number][] = [
+      ['Untracked', null, 0],
+      ['Out', 0, 0],
+      ['Held', 4, 4],
+      ['Low', 5, 0],
+      ['Plenty', 6, 0],
+    ]
+    await item.related('variants').createMany(
+      rows.map(([title, quantity, reserved], position) => ({
+        title,
+        sku: `LVL-${position}`,
+        options: { Option: title },
+        priceAmount: 100,
+        currencyCode: 'PHP',
+        availableForSale: true,
+        inventoryQuantity: quantity,
+        inventoryReservedQuantity: reserved,
+        position,
+      }))
+    )
+    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const variants = page.inertiaProps.product.variants as {
+      title: string
+      quantityAvailable: number | null
+      stockLevel: string
+    }[]
+    assert.deepEqual(
+      variants.map(({ title, quantityAvailable, stockLevel }) => [
+        title,
+        quantityAvailable,
+        stockLevel,
+      ]),
+      [
+        ['Untracked', null, 'untracked'],
+        ['Out', 0, 'out'],
+        ['Held', 0, 'out'],
+        ['Low', 5, 'low'],
+        ['Plenty', 6, 'in_stock'],
+      ]
+    )
+    assert.equal(page.inertiaProps.product.stock.level, 'some_out')
   })
 
   test('rejects invalid prices, duplicate handles, cross-product variants, and deleting the last active variant', async ({
@@ -398,7 +687,7 @@ test.group('Seller management', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .file('images[0]', png, { filename: 'lamp.png', contentType: 'image/png' })
-    uploaded.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    uploaded.assertRedirectsTo(`/seller/products/${product.id}`)
     const invalidUpload = await client
       .post(`/seller/products/${product.id}/images`)
       .loginAs(owner)
@@ -426,7 +715,7 @@ test.group('Seller management', (group) => {
       .delete(`/seller/products/${product.id}/images/${image.id}`)
       .loginAs(owner)
       .withCsrfToken()
-    removed.assertRedirectsTo(`/seller/products/${product.id}/variants`)
+    removed.assertRedirectsTo(`/seller/products/${product.id}`)
     assert.lengthOf(await product.media.all(), 0)
     assert.isNull(await AttachmentModel.find(image.attachmentId))
   })
@@ -456,7 +745,7 @@ test.group('Seller management', (group) => {
       '/seller/collections',
       '/seller/orders',
       '/seller/users',
-      `/seller/products/${product.id}/variants`,
+      `/seller/products/${product.id}`,
       `/seller/orders/${order.id}`,
     ]) {
       const page = await client.get(path).loginAs(admin).withInertia()
