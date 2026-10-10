@@ -279,6 +279,7 @@ export async function seedDemoOnlineOrders(
       .create()
 
     // Stock: a settled checkout consumed its hold; an unpaid or uncertain one still holds it.
+    // Consumed holds leave inventory as seeded, so the seeder never lowers existing stock.
     const expiresAtMs = holdExpiresAtMs()
     for (const { variant, quantity } of lines) {
       await StockReservation.create(
@@ -296,11 +297,6 @@ export async function seedDemoOnlineOrders(
         await ProductVariant.query({ client: trx })
           .where('id', variant.id)
           .increment('inventoryReservedQuantity', quantity)
-      else
-        await ProductVariant.query({ client: trx })
-          .where('id', variant.id)
-          .whereNotNull('inventory_quantity')
-          .decrement('inventoryQuantity', quantity)
     }
 
     // The checkout the customer was sent to, as the checkout service freezes it.
