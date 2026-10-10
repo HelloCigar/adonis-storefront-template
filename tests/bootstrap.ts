@@ -9,13 +9,34 @@ import { authApiClient } from '@adonisjs/auth/plugins/api_client'
 import { sessionApiClient } from '@adonisjs/session/plugins/api_client'
 import { shieldApiClient } from '@adonisjs/shield/plugins/api_client'
 import { inertiaApiClient } from '@adonisjs/inertia/plugins/api_client'
-import { browserClient } from '@japa/browser-client'
+import { browserClient, decoratorsCollection } from '@japa/browser-client'
 import { authBrowserClient } from '@adonisjs/auth/plugins/browser_client'
 import { sessionBrowserClient } from '@adonisjs/session/plugins/browser_client'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
  */
+
+/**
+ * Server-rendered pages show their markup before Vue hydrates it, so a click right after
+ * `visit()` can land on a button that has no listeners yet. Wait for the app to mount.
+ */
+decoratorsCollection.register({
+  context(context) {
+    const visit = context.visit
+    context.visit = (async (...args: Parameters<typeof visit>) => {
+      const result = await visit(...args)
+      // Only `visit(url)` hands back the page; page-class visits manage their own waits.
+      if (typeof args[0] === 'string') {
+        const page = result as unknown as Awaited<ReturnType<typeof context.newPage>>
+        await page.waitForFunction(
+          `!document.querySelector('[data-server-rendered]') || !!document.getElementById('app')?.__vue_app__`
+        )
+      }
+      return result
+    }) as typeof visit
+  },
+})
 
 /**
  * Configure Japa plugins in the plugins array.

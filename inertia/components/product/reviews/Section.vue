@@ -24,9 +24,13 @@ const statusNote = computed(() => {
   if (props.viewerReview?.status === 'hidden') return 'Hidden by the store'
   return null
 })
+// A fixed store time zone keeps the server-rendered date equal to the hydrated one.
 const formatDate = (value: string | null) =>
   value
-    ? new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(value))
+    ? new Intl.DateTimeFormat(locale.value, {
+        dateStyle: 'medium',
+        timeZone: 'Asia/Manila',
+      }).format(new Date(value))
     : ''
 </script>
 <template>

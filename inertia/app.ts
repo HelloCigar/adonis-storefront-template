@@ -4,7 +4,7 @@ import { client } from '~/client'
 import UApp from '@nuxt/ui/components/App.vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { TuyauProvider } from '@adonisjs/inertia/vue'
-import { createApp, type DefineComponent, h } from 'vue'
+import { createApp, createSSRApp, type DefineComponent, h } from 'vue'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import { resolveLayout } from './layouts/resolve'
 
@@ -20,7 +20,9 @@ createInertiaApp({
     )
   },
   setup({ el, App, props, plugin }) {
-    createApp({
+    // Public pages arrive server-rendered (config/inertia.ts) and hydrate; the rest mount fresh.
+    const create = el?.hasAttribute('data-server-rendered') ? createSSRApp : createApp
+    create({
       render: () => h(UApp, () => h(TuyauProvider, { client }, { default: () => h(App, props) })),
     })
       .use(plugin)

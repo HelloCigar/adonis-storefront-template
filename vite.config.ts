@@ -53,6 +53,7 @@ export default defineConfig({
     }),
     adonisjs({
       entryPoints: ['inertia/app.ts'],
+      serverEntryPoints: ['inertia/ssr.ts'],
       reload: ['resources/views/**/*.edge'],
     }),
   ],
@@ -62,6 +63,11 @@ export default defineConfig({
       '~/': `${import.meta.dirname}/inertia/`,
       '@generated': `${import.meta.dirname}/.adonisjs/client/`,
     },
+  },
+
+  ssr: {
+    // Nuxt UI resolves its virtual `#imports` through the Vite plugin, so the SSR bundle has to include it.
+    noExternal: ['@nuxt/ui'],
   },
 
   server: {
