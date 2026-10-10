@@ -8,6 +8,12 @@ export default defineConfig({
     vue(),
     ui({
       router: 'inertia',
+      // Bundle every icon the pages use instead of fetching them from the Iconify API at runtime.
+      icon: {
+        clientBundle: {
+          scan: { globInclude: ['inertia/**/*.vue'] },
+        },
+      },
       components: {
         dirs: ['inertia/components'],
         directoryAsNamespace: true,
