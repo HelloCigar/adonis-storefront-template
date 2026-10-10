@@ -39,11 +39,11 @@ declare module '@adonisjs/inertia/types' {
     'seller/orders': ExtractProps<(typeof import('../../inertia/pages/seller/orders.vue'))['default']>
     'seller/post': ExtractProps<(typeof import('../../inertia/pages/seller/post.vue'))['default']>
     'seller/posts': ExtractProps<(typeof import('../../inertia/pages/seller/posts.vue'))['default']>
+    'seller/product': ExtractProps<(typeof import('../../inertia/pages/seller/product.vue'))['default']>
     'seller/products': ExtractProps<(typeof import('../../inertia/pages/seller/products.vue'))['default']>
     'seller/reviews': ExtractProps<(typeof import('../../inertia/pages/seller/reviews.vue'))['default']>
     'seller/stock': ExtractProps<(typeof import('../../inertia/pages/seller/stock.vue'))['default']>
     'seller/users': ExtractProps<(typeof import('../../inertia/pages/seller/users.vue'))['default']>
-    'seller/variants': ExtractProps<(typeof import('../../inertia/pages/seller/variants.vue'))['default']>
     'settings/index': ExtractProps<(typeof import('../../inertia/pages/settings/index.vue'))['default']>
     'settings/notifications': ExtractProps<(typeof import('../../inertia/pages/settings/notifications.vue'))['default']>
     'settings/security': ExtractProps<(typeof import('../../inertia/pages/settings/security.vue'))['default']>

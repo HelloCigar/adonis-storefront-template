@@ -1,22 +1,17 @@
 <script setup lang="ts">
 import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
-import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn, TableRow } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
-import { Link } from '@adonisjs/inertia/vue'
-import OptionsEditor from './OptionsEditor.vue'
 const props = defineProps<{ product: Data.Seller.Product; images: Data.Shared.Media[] }>()
 const emit = defineEmits<{
   create: []
   edit: [row: Data.Seller.Variant]
   stock: [row: Data.Seller.Variant]
   delete: [row: Data.Seller.Variant]
-  images: []
   generate: []
 }>()
-const title = 'Variants'
-const singular = 'variant'
-const description = computed(() => `Set prices, options, and stock for ${props.product.title}.`)
+const pageSize = 10
 const filters = [
   { label: 'Available', value: 'available' },
   { label: 'Unavailable', value: 'unavailable' },
@@ -27,6 +22,35 @@ const status = (row: Data.Seller.Variant) => (row.availableForSale ? 'available'
 const badge = resolveComponent('UBadge')
 const money = (amount: number, currency: string) =>
   new Intl.NumberFormat('en', { style: 'currency', currency }).format(amount)
+function stockCell(variant: Data.Seller.Variant) {
+  const held = variant.inventoryReservedQuantity
+  const heldText = held ? ` · ${held} held` : ''
+  if (variant.stockLevel === 'untracked' || variant.inventoryQuantity === null)
+    return h('span', { class: 'text-muted' }, 'Not tracked')
+  if (variant.stockLevel === 'out')
+    return h(badge, { label: `Out of stock${heldText}`, color: 'error', variant: 'subtle' })
+  if (variant.stockLevel === 'low')
+    return h(badge, {
+      label: `${variant.quantityAvailable ?? variant.inventoryQuantity} left${heldText}`,
+      color: 'warning',
+      variant: 'subtle',
+    })
+  return h('span', [
+    String(variant.quantityAvailable ?? variant.inventoryQuantity),
+    held ? h('span', { class: 'ml-1.5 text-muted' }, `${held} held`) : null,
+  ])
+}
+const stockSummary = computed(() => {
+  const stock = props.product.stock
+  if (!stock || stock.level === 'no_variants') return ''
+  if (stock.level === 'untracked') return 'Stock not tracked'
+  const parts: string[] = []
+  if (stock.available !== null) parts.push(`${stock.available} in stock`)
+  if (stock.untracked) parts.push(`${stock.untracked} not tracked`)
+  if (stock.outOfStock) parts.push(`${stock.outOfStock} sold out`)
+  if (stock.lowStock) parts.push(`${stock.lowStock} running low`)
+  return parts.join(' · ')
+})
 const resourceColumns: TableColumn<Data.Seller.Variant>[] = [
   { id: 'image', header: 'Image', enableHiding: false },
   { accessorKey: 'title', header: 'Variant' },
@@ -39,12 +63,7 @@ const resourceColumns: TableColumn<Data.Seller.Variant>[] = [
   {
     accessorKey: 'inventoryQuantity',
     header: 'Stock',
-    cell: ({ row }) =>
-      row.original.inventoryQuantity === null
-        ? 'Untracked'
-        : row.original.inventoryReservedQuantity
-          ? `${row.original.inventoryQuantity} (${row.original.inventoryReservedQuantity} held)`
-          : row.original.inventoryQuantity,
+    cell: ({ row }) => stockCell(row.original),
   },
   {
     accessorKey: 'availableForSale',
@@ -72,8 +91,9 @@ const issuesFor = (variant: Data.Seller.Variant) =>
   props.product.optionIssues.filter((issue) => issue.variantId === variant.id)
 const search = ref('')
 const statusFilter = ref('all')
-const pagination = ref({ pageIndex: 0, pageSize: 10 })
+const pagination = ref({ pageIndex: 0, pageSize })
 const columnVisibility = ref({})
+const paged = computed(() => (props.product.variants?.length ?? 0) > pageSize)
 const rows = computed(() =>
   (props.product.variants || []).filter(
     (row) =>
@@ -131,22 +151,14 @@ function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
 </script>
 
 <template>
-  <UDashboardPanel :id="title.toLowerCase()">
+  <UCard :ui="{ body: 'p-0 sm:p-0' }">
     <template #header>
-      <UDashboardNavbar :title="title">
-        <template #leading><UDashboardSidebarCollapse /></template>
-      </UDashboardNavbar>
-    </template>
-    <template #body>
-      <div>
-        <Link
-          route="seller.products.index"
-          class="inline-flex items-center gap-1 text-sm text-primary mb-3"
-          ><UIcon name="i-lucide-arrow-left" class="size-4" />Products</Link
-        >
-        <h1 class="text-2xl font-semibold text-highlighted">{{ product.title }}</h1>
-        <p class="mt-2 text-sm text-muted">{{ description }}</p>
-        <div class="mt-5 flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="font-semibold text-highlighted">Variants</h2>
+          <p v-if="stockSummary" class="mt-1 text-sm text-muted">{{ stockSummary }}</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
           <UButton
             label="Generate variants"
             icon="i-lucide-list-plus"
@@ -154,167 +166,169 @@ function rowActions(row: Data.Seller.Variant): DropdownMenuItem[] {
             @click="emit('generate')"
           />
           <UButton
-            :label="`Add ${singular}`"
+            label="Add variant"
             icon="i-lucide-plus"
             color="neutral"
             variant="outline"
             :disabled="product.optionDefinitions.length > 3"
             @click="emit('create')"
           />
-          <UButton
-            label="Images"
-            icon="i-lucide-image"
-            color="neutral"
-            variant="outline"
-            @click="emit('images')"
-          />
         </div>
-      </div>
-      <OptionsEditor :product="product" />
-      <UAlert
-        v-if="product.optionIssues.length"
-        color="warning"
-        title="Some options need attention"
-        description="Edit the flagged variants to use the shared options and a unique combination. Generation is paused until these are resolved."
-      >
-        <template #description>
-          <p class="text-sm">
-            Edit the flagged variants to use the shared options and a unique combination. Generation
-            is paused until these are resolved.
-          </p>
-          <p
-            v-for="(issue, index) in product.optionIssues.filter((item) => item.variantId === null)"
-            :key="index"
-            class="mt-2 text-sm"
-          >
-            {{ issue.message }}
-          </p>
-        </template>
-      </UAlert>
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <UInput
-          v-model="search"
-          icon="i-lucide-search"
-          :placeholder="`Search ${title.toLowerCase()}...`"
-          :aria-label="`Search ${title.toLowerCase()}`"
-          class="w-full sm:max-w-sm"
-        />
-        <div class="flex items-center gap-2">
-          <USelect
-            v-model="statusFilter"
-            :items="[{ label: 'All', value: 'all' }, ...filters]"
-            aria-label="Filter status"
-            class="min-w-36"
-          />
-          <UDropdownMenu
-            :items="
-              table?.tableApi
-                ?.getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => ({
-                  label: column.id
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, (letter) => letter.toUpperCase()),
-                  type: 'checkbox' as const,
-                  checked: column.getIsVisible(),
-                  onUpdateChecked: (checked: boolean) => column.toggleVisibility(checked),
-                  onSelect: (event?: Event) => event?.preventDefault(),
-                }))
-            "
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              label="Display"
-              color="neutral"
-              variant="outline"
-              trailing-icon="i-lucide-settings-2"
-            />
-          </UDropdownMenu>
-        </div>
-      </div>
-      <UTable
-        ref="table"
-        v-model:pagination="pagination"
-        v-model:column-visibility="columnVisibility"
-        :data="rows"
-        :columns="columns"
-        :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
-        class="shrink-0"
-        :ui="{
-          base: 'border-separate border-spacing-0',
-          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody: '[&>tr]:last:[&>td]:border-b-0',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default',
-          separator: 'h-0',
-        }"
-      >
-        <template #image-cell="{ row }">
-          <button
-            type="button"
-            :aria-label="`Assign image for ${row.original.title}`"
-            class="flex size-12 items-center justify-center overflow-hidden rounded-md bg-elevated text-muted ring-1 ring-inset ring-default hover:ring-accented focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            @click="emit('edit', row.original)"
-          >
-            <img
-              v-if="imageFor(row.original)"
-              :src="imageFor(row.original)!.url"
-              alt=""
-              class="size-full object-cover"
-            />
-            <UIcon v-else name="i-lucide-image-plus" class="size-5" />
-          </button>
-        </template>
-        <template #title-cell="{ row }">
-          <span class="font-medium text-highlighted">{{ row.original.title }}</span>
-          <div
-            v-if="issuesFor(row.original).length"
-            class="mt-1 max-w-64 whitespace-normal text-xs text-warning"
-          >
-            <p v-for="(issue, index) in issuesFor(row.original)" :key="index">
-              {{ issue.message }}
-            </p>
-          </div>
-        </template>
-        <template #actions-cell="{ row }">
-          <UDropdownMenu
-            v-if="rowActions(row.original).length"
-            :items="rowActions(row.original)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-lucide-ellipsis-vertical"
-              color="neutral"
-              variant="ghost"
-              :aria-label="`Actions for ${searchText(row.original)}`"
-            />
-          </UDropdownMenu>
-        </template>
-        <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
-            <p class="text-sm text-muted mt-1">
-              {{
-                search || statusFilter !== 'all'
-                  ? 'Try changing your search or filters.'
-                  : `Add your first ${singular} to get started.`
-              }}
-            </p>
-          </div>
-        </template>
-      </UTable>
-      <div
-        class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
-      >
-        <p class="text-sm text-muted">{{ rows.length }} {{ title.toLowerCase() }}</p>
-        <UPagination
-          :page="pagination.pageIndex + 1"
-          :items-per-page="pagination.pageSize"
-          :total="rows.length"
-          @update:page="table?.tableApi.setPageIndex($event - 1)"
-        />
       </div>
     </template>
-  </UDashboardPanel>
+
+    <UAlert
+      v-if="product.optionIssues.length"
+      color="warning"
+      title="Some options need attention"
+      class="m-4 w-auto"
+    >
+      <template #description>
+        <p class="text-sm">
+          Edit the flagged variants to use the shared options and a unique combination. Generation
+          is paused until these are resolved.
+        </p>
+        <p
+          v-for="(issue, index) in product.optionIssues.filter((item) => item.variantId === null)"
+          :key="index"
+          class="mt-2 text-sm"
+        >
+          {{ issue.message }}
+        </p>
+      </template>
+    </UAlert>
+
+    <div v-if="paged" class="flex flex-wrap items-center justify-between gap-3 p-4">
+      <UInput
+        v-model="search"
+        icon="i-lucide-search"
+        placeholder="Search variants..."
+        aria-label="Search variants"
+        class="w-full sm:max-w-sm"
+      />
+      <div class="flex items-center gap-2">
+        <USelect
+          v-model="statusFilter"
+          :items="[{ label: 'All', value: 'all' }, ...filters]"
+          aria-label="Filter status"
+          class="min-w-36"
+        />
+        <UDropdownMenu
+          :items="
+            table?.tableApi
+              ?.getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => ({
+                label: column.id
+                  .replace(/([A-Z])/g, ' $1')
+                  .replace(/^./, (letter) => letter.toUpperCase()),
+                type: 'checkbox' as const,
+                checked: column.getIsVisible(),
+                onUpdateChecked: (checked: boolean) => column.toggleVisibility(checked),
+                onSelect: (event?: Event) => event?.preventDefault(),
+              }))
+          "
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            label="Display"
+            color="neutral"
+            variant="outline"
+            trailing-icon="i-lucide-settings-2"
+          />
+        </UDropdownMenu>
+      </div>
+    </div>
+
+    <UTable
+      ref="table"
+      v-model:pagination="pagination"
+      v-model:column-visibility="columnVisibility"
+      :data="rows"
+      :columns="columns"
+      :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+      :on-select="(_event: Event, row: TableRow<Data.Seller.Variant>) => emit('edit', row.original)"
+      class="shrink-0"
+      :ui="{
+        base: 'border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 border-y border-default',
+        td: 'border-b border-default',
+        tr: 'data-[selectable=true]:hover:bg-elevated/50 data-[selectable=true]:cursor-pointer',
+        separator: 'h-0',
+      }"
+    >
+      <template #image-cell="{ row }">
+        <button
+          type="button"
+          :aria-label="`Assign image for ${row.original.title}`"
+          class="flex size-12 items-center justify-center overflow-hidden rounded-md bg-elevated text-muted ring-1 ring-inset ring-default hover:ring-accented focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          @click="emit('edit', row.original)"
+        >
+          <img
+            v-if="imageFor(row.original)"
+            :src="imageFor(row.original)!.url"
+            alt=""
+            class="size-full object-cover"
+          />
+          <UIcon v-else name="i-lucide-image-plus" class="size-5" />
+        </button>
+      </template>
+      <template #title-cell="{ row }">
+        <span class="font-medium text-highlighted">{{ row.original.title }}</span>
+        <div
+          v-if="issuesFor(row.original).length"
+          class="mt-1 max-w-64 whitespace-normal text-xs text-warning"
+        >
+          <p v-for="(issue, index) in issuesFor(row.original)" :key="index">
+            {{ issue.message }}
+          </p>
+        </div>
+      </template>
+      <template #actions-cell="{ row }">
+        <UDropdownMenu
+          v-if="rowActions(row.original).length"
+          :items="rowActions(row.original)"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            :aria-label="`Actions for ${searchText(row.original)}`"
+          />
+        </UDropdownMenu>
+      </template>
+      <template #empty>
+        <div class="py-12 text-center">
+          <template v-if="!product.variants?.length">
+            <UIcon name="i-lucide-boxes" class="mx-auto mb-3 block size-8 text-dimmed" />
+            <p class="font-medium text-highlighted">No variants yet</p>
+            <p class="mx-auto mt-1 max-w-sm text-sm text-muted">
+              Generate them from your options, or add one to set a price and stock.
+            </p>
+          </template>
+          <template v-else>
+            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
+            <p class="font-medium text-highlighted">No variants found</p>
+            <p class="mt-1 text-sm text-muted">Try changing your search or filters.</p>
+          </template>
+        </div>
+      </template>
+    </UTable>
+
+    <div
+      v-if="paged"
+      class="flex flex-wrap items-center justify-between gap-3 border-t border-default p-4"
+    >
+      <p class="text-sm text-muted">{{ rows.length }} variants</p>
+      <UPagination
+        :page="pagination.pageIndex + 1"
+        :items-per-page="pagination.pageSize"
+        :total="rows.length"
+        @update:page="table?.tableApi.setPageIndex($event - 1)"
+      />
+    </div>
+  </UCard>
 </template>

@@ -13,13 +13,13 @@ export default class ImagesController {
     await bouncer.with('SellerImagePolicy').authorize('create', product)
     await this.media.store(product, await request.validateUsing(productImagesValidator))
     session.flash('success', 'Product images added')
-    return response.redirect().toRoute('seller.variants.index', { productId: product.id })
+    return response.redirect().toRoute('seller.products.show', { id: product.id })
   }
   async destroy({ params, response, session, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.productId)
     await bouncer.with('SellerImagePolicy').authorize('delete', product)
     await this.media.destroy(product, params.id)
     session.flash('success', 'Product image removed')
-    return response.redirect().toRoute('seller.variants.index', { productId: product.id })
+    return response.redirect().toRoute('seller.products.show', { id: product.id })
   }
 }

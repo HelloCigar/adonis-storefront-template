@@ -46,26 +46,26 @@ function save() {
 </script>
 
 <template>
-  <section aria-labelledby="product-options-title" class="border-y border-default py-5">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h2 id="product-options-title" class="text-lg font-semibold text-highlighted">
-          Product options
-        </h2>
-        <p class="mt-1 text-sm text-muted">Define the choices shared by every variant.</p>
+  <UCard as="section" aria-labelledby="product-options-title">
+    <template #header>
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="product-options-title" class="font-semibold text-highlighted">Product options</h2>
+          <p class="mt-1 text-sm text-muted">Define the choices shared by every variant.</p>
+        </div>
+        <UButton
+          v-if="!editing"
+          :label="product.optionDefinitions.length ? 'Edit options' : 'Define options'"
+          icon="i-lucide-sliders-horizontal"
+          color="neutral"
+          variant="outline"
+          class="min-h-10"
+          @click="edit"
+        />
       </div>
-      <UButton
-        v-if="!editing"
-        :label="product.optionDefinitions.length ? 'Edit options' : 'Define options'"
-        icon="i-lucide-sliders-horizontal"
-        color="neutral"
-        variant="outline"
-        class="min-h-10"
-        @click="edit"
-      />
-    </div>
+    </template>
 
-    <div v-if="!editing" class="mt-4 space-y-3">
+    <div v-if="!editing" class="space-y-3">
       <div
         v-for="definition in product.optionDefinitions"
         :key="definition.name"
@@ -89,7 +89,7 @@ function save() {
       </p>
     </div>
 
-    <form v-else class="mt-5 space-y-4" @submit.prevent="save">
+    <form v-else class="space-y-4" @submit.prevent="save">
       <UAlert
         v-if="form.errors.optionDefinitions"
         color="error"
@@ -198,5 +198,5 @@ function save() {
         />
       </div>
     </form>
-  </section>
+  </UCard>
 </template>

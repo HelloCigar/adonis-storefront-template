@@ -124,8 +124,8 @@ const groups = computed<Group[]>(() => {
       icon: 'i-lucide-package-x',
       tone: 'primary',
       count: outOfStock.count,
-      viewAll: urlFor('seller.products.index'),
-      viewAllLabel: 'View all products',
+      viewAll: urlFor('seller.products.index', {}, { qs: { stock: 'out' } }),
+      viewAllLabel: 'View out-of-stock products',
       rows: outOfStock.items.map((item) => ({
         key: `stock-${item.id}`,
         to: urlFor('seller.stock_adjustments.index', {

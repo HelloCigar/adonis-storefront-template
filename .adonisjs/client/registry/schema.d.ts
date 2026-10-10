@@ -691,6 +691,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/products_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'seller.products.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/products/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/products_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/products_controller').default['show']>>>
+    }
+  }
   'seller.products.update': {
     methods: ["PUT","PATCH"]
     pattern: '/seller/products/:id'

@@ -348,6 +348,12 @@ const routes = {
     tokens: [{"old":"/seller/products","type":0,"val":"seller","end":""},{"old":"/seller/products","type":0,"val":"products","end":""}],
     types: placeholder as Registry['seller.products.store']['types'],
   },
+  'seller.products.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/products/:id',
+    tokens: [{"old":"/seller/products/:id","type":0,"val":"seller","end":""},{"old":"/seller/products/:id","type":0,"val":"products","end":""},{"old":"/seller/products/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.products.show']['types'],
+  },
   'seller.products.update': {
     methods: ["PUT","PATCH"],
     pattern: '/seller/products/:id',

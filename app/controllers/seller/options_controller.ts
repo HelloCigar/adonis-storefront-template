@@ -13,6 +13,6 @@ export default class OptionsController {
     await bouncer.with('SellerProductPolicy').authorize('update', product)
     await this.variants.saveOptions(product, await request.validateUsing(optionsUpdateValidator))
     session.flash('success', 'Product options updated')
-    return response.redirect().toRoute('seller.variants.index', { productId: product.id })
+    return response.redirect().toRoute('seller.products.show', { id: product.id })
   }
 }

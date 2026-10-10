@@ -20,6 +20,6 @@ export default class VariantGenerationController {
       'success',
       count ? `${count} variants created` : 'All option combinations already exist'
     )
-    return response.redirect().toRoute('seller.variants.index', { productId: product.id })
+    return response.redirect().toRoute('seller.products.show', { id: product.id })
   }
 }

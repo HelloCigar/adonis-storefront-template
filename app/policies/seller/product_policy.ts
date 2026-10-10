@@ -7,6 +7,10 @@ export default class ProductPolicy extends BasePolicy {
     return user.isStoreStaff
   }
 
+  view(user: User, _product: Product) {
+    return user.isStoreStaff
+  }
+
   create(user: User) {
     return user.isStoreStaff
   }
