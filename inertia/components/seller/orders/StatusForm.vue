@@ -2,6 +2,7 @@
 import { Form } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
+import { statusOptions } from '~/utils/status'
 defineProps<{ order: Data.Seller.Order }>()
 const { locked, callbacks, requestOptions } = useOrderInteraction()
 </script>
@@ -24,7 +25,7 @@ const { locked, callbacks, requestOptions } = useOrderInteraction()
       ><USelect
         name="financialStatus"
         :default-value="order.financialStatus"
-        :items="['pending', 'authorized', 'paid', 'partially_refunded', 'refunded', 'voided']"
+        :items="statusOptions('payment')"
         class="w-full"
     /></UFormField>
     <UFormField
@@ -35,7 +36,7 @@ const { locked, callbacks, requestOptions } = useOrderInteraction()
       ><USelect
         name="fulfillmentStatus"
         :default-value="order.fulfillmentStatus"
-        :items="['unfulfilled', 'partial', 'fulfilled']"
+        :items="statusOptions('fulfillment')"
         class="w-full"
     /></UFormField>
     <UFormField name="note" label="Note" :error="errors.note"

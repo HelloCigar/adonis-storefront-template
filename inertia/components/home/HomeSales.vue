@@ -4,7 +4,8 @@ import { usePage } from '@inertiajs/vue3'
 import type { TableColumn } from '@nuxt/ui'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
-import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/presentation'
+import { orderDate, orderMoney } from '~/components/seller/orders/presentation'
+import { statusColor, statusLabel } from '~/utils/status'
 
 type RecentOrder = Data.Dashboard.Summary['recentOrders'][number]
 
@@ -15,14 +16,6 @@ defineProps<{
 const page = usePage()
 const UBadge = resolveComponent('UBadge')
 const ULink = resolveComponent('ULink')
-
-const statusColors: Record<string, 'success' | 'warning' | 'error' | 'neutral'> = {
-  paid: 'success',
-  pending: 'warning',
-  partially_refunded: 'neutral',
-  refunded: 'neutral',
-  voided: 'error',
-}
 
 const columns: TableColumn<RecentOrder>[] = [
   {
@@ -53,9 +46,9 @@ const columns: TableColumn<RecentOrder>[] = [
         UBadge,
         {
           variant: 'subtle',
-          color: statusColors[row.original.financialStatus] ?? 'neutral',
+          color: statusColor('payment', row.original.financialStatus),
         },
-        () => orderLabel(row.original.financialStatus)
+        () => statusLabel('payment', row.original.financialStatus)
       ),
   },
   {

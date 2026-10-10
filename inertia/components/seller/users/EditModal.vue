@@ -3,6 +3,7 @@ import { watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
+import { statusOptions } from '~/utils/status'
 const props = defineProps<{
   user?: Data.Seller.User
   currentUserId: number
@@ -62,7 +63,7 @@ function save() {
           :description="user?.id === currentUserId ? 'Your own role cannot be changed.' : undefined"
           ><USelect
             v-model="form.role"
-            :items="canAssignAdmin ? ['customer', 'staff', 'admin'] : ['customer', 'staff']"
+            :items="statusOptions('role', canAssignAdmin ? undefined : ['customer', 'staff'])"
             :disabled="user?.id === currentUserId"
             class="w-full"
         /></UFormField>

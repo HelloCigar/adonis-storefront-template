@@ -5,7 +5,7 @@ import { computed } from 'vue'
 import { t } from '~/utils/store'
 import type { Money } from '~/types/store'
 import { useLocalization } from '~/composables/localization'
-import type { BadgeProps } from '@nuxt/ui'
+import { statusColor, statusLabel } from '~/utils/status'
 import { Head } from '@inertiajs/vue3'
 import OrderChat from '~/components/chat/OrderChat.vue'
 const props = defineProps<{
@@ -56,18 +56,6 @@ const addresses = computed(() =>
     },
   ].filter((entry) => entry.value?.length)
 )
-const financialColors: Record<string, BadgeProps['color']> = {
-  PAID: 'success',
-  PENDING: 'warning',
-  AUTHORIZED: 'warning',
-  REFUNDED: 'neutral',
-  VOIDED: 'error',
-}
-const fulfillmentColors: Record<string, BadgeProps['color']> = {
-  FULFILLED: 'success',
-  IN_PROGRESS: 'warning',
-  UNFULFILLED: 'neutral',
-}
 </script>
 <template>
   <Head :title="order.name" />
@@ -94,16 +82,16 @@ const fulfillmentColors: Record<string, BadgeProps['color']> = {
         <div class="flex items-center gap-2">
           <UBadge
             v-if="order?.financialStatus"
-            :color="financialColors[order.financialStatus] ?? 'neutral'"
+            :color="statusColor('payment', order.financialStatus)"
             variant="subtle"
-            :label="t(`account.orders.status.${order.financialStatus}`)"
+            :label="statusLabel('payment', order.financialStatus)"
           />
 
           <UBadge
             v-if="order?.fulfillmentStatus"
-            :color="fulfillmentColors[order.fulfillmentStatus] ?? 'neutral'"
+            :color="statusColor('fulfillment', order.fulfillmentStatus)"
             variant="subtle"
-            :label="t(`account.orders.fulfillment.${order.fulfillmentStatus}`)"
+            :label="statusLabel('fulfillment', order.fulfillmentStatus)"
           />
         </div>
       </div>

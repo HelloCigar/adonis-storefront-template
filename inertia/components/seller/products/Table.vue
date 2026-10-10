@@ -4,6 +4,7 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { useRouter } from '@adonisjs/inertia/vue'
+import { statusColor, statusLabel, statusOptions } from '~/utils/status'
 const router = useRouter()
 const props = defineProps<{ products: Data.Seller.Product[] }>()
 const emit = defineEmits<{
@@ -14,10 +15,7 @@ const emit = defineEmits<{
 const title = 'Products'
 const singular = 'product'
 const description = 'Manage your catalogue, publishing status, and inventory.'
-const filters = ['draft', 'active', 'archived'].map((value) => ({
-  label: value[0].toUpperCase() + value.slice(1),
-  value,
-}))
+const filters = statusOptions('product')
 const searchText = (row: Data.Seller.Product) =>
   `${row.title} ${row.handle} ${row.vendor || ''} ${row.productType || ''}`
 const status = (row: Data.Seller.Product) => row.status
@@ -37,10 +35,9 @@ const resourceColumns: TableColumn<Data.Seller.Product>[] = [
     header: 'Status',
     cell: ({ row }) =>
       h(badge, {
-        label: row.original.status,
+        label: statusLabel('product', row.original.status),
         variant: 'subtle',
-        color: row.original.status === 'active' ? 'success' : 'neutral',
-        class: 'capitalize',
+        color: statusColor('product', row.original.status),
       }),
   },
   { accessorKey: 'vendor', header: 'Vendor' },

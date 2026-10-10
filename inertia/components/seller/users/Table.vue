@@ -3,6 +3,7 @@ import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
+import { statusColor, statusLabel } from '~/utils/status'
 const props = defineProps<{ users: Data.Seller.User[] }>()
 const emit = defineEmits<{
   create: []
@@ -29,10 +30,9 @@ const resourceColumns: TableColumn<Data.Seller.User>[] = [
     header: 'Role',
     cell: ({ row }) =>
       h(badge, {
-        label: row.original.role,
-        color: row.original.role === 'customer' ? 'neutral' : 'primary',
+        label: statusLabel('role', row.original.role),
+        color: statusColor('role', row.original.role),
         variant: 'subtle',
-        class: 'capitalize',
       }),
   },
   {

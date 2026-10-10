@@ -4,14 +4,12 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { useRouter } from '@adonisjs/inertia/vue'
+import { statusColor, statusLabel, statusOptions } from '~/utils/status'
 const router = useRouter()
 const props = defineProps<{ orders: Data.Seller.Order[] }>()
 const title = 'Orders'
 const description = 'Review purchases and manage payment and fulfillment statuses.'
-const filters = ['unfulfilled', 'partial', 'fulfilled'].map((value) => ({
-  label: value[0].toUpperCase() + value.slice(1),
-  value,
-}))
+const filters = statusOptions('fulfillment')
 const searchText = (row: Data.Seller.Order) => `${row.number} ${row.email}`
 const status = (row: Data.Seller.Order) => row.fulfillmentStatus
 const badge = resolveComponent('UBadge')
@@ -23,10 +21,9 @@ const resourceColumns: TableColumn<Data.Seller.Order>[] = [
     header: 'Payment',
     cell: ({ row }) =>
       h(badge, {
-        label: row.original.financialStatus.replaceAll('_', ' '),
-        color: row.original.financialStatus === 'paid' ? 'success' : 'warning',
+        label: statusLabel('payment', row.original.financialStatus),
+        color: statusColor('payment', row.original.financialStatus),
         variant: 'subtle',
-        class: 'capitalize',
       }),
   },
   {
@@ -34,10 +31,9 @@ const resourceColumns: TableColumn<Data.Seller.Order>[] = [
     header: 'Fulfillment',
     cell: ({ row }) =>
       h(badge, {
-        label: row.original.fulfillmentStatus,
-        color: row.original.fulfillmentStatus === 'fulfilled' ? 'success' : 'neutral',
+        label: statusLabel('fulfillment', row.original.fulfillmentStatus),
+        color: statusColor('fulfillment', row.original.fulfillmentStatus),
         variant: 'subtle',
-        class: 'capitalize',
       }),
   },
   {
