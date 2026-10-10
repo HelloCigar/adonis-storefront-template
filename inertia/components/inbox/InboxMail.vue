@@ -1,37 +1,20 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Data } from '@generated/data'
+import { urlFor } from '~/client'
 import OrderChat from '~/components/chat/OrderChat.vue'
+import { stagePresentation } from '~/components/inbox/stage'
+import { orderMoney } from '~/components/seller/orders/presentation'
 
-defineProps<{
+const props = defineProps<{
   thread: Data.Chat.Thread
   conversation: Data.Chat.Conversation | null
 }>()
 
 const emits = defineEmits<{ close: [] }>()
 
-// Placeholder actions, kept for thread tools that are not built yet.
-const dropdownItems = [
-  [
-    {
-      label: 'Mark as unread',
-      icon: 'i-lucide-check-circle',
-    },
-    {
-      label: 'Mark as important',
-      icon: 'i-lucide-triangle-alert',
-    },
-  ],
-  [
-    {
-      label: 'Star thread',
-      icon: 'i-lucide-star',
-    },
-    {
-      label: 'Mute thread',
-      icon: 'i-lucide-circle-pause',
-    },
-  ],
-]
+const stage = computed(() => stagePresentation[props.thread.stage])
+const total = computed(() => orderMoney(props.thread.totalAmount, props.thread.currencyCode))
 </script>
 
 <template>
@@ -48,23 +31,22 @@ const dropdownItems = [
         />
       </template>
 
+      <template #trailing>
+        <UBadge :label="stage.label" :color="stage.color" variant="subtle" class="shrink-0" />
+      </template>
+
       <template #right>
-        <UTooltip text="Archive">
-          <UButton icon="i-lucide-inbox" color="neutral" variant="ghost" aria-label="Archive" />
-        </UTooltip>
-
-        <UTooltip text="Reply">
-          <UButton icon="i-lucide-reply" color="neutral" variant="ghost" aria-label="Reply" />
-        </UTooltip>
-
-        <UDropdownMenu :items="dropdownItems">
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="ghost"
-            aria-label="More actions"
-          />
-        </UDropdownMenu>
+        <span class="hidden xl:inline text-sm text-muted tabular-nums">{{ total }}</span>
+        <UButton
+          :to="urlFor('seller.orders.show', { id: thread.orderId })"
+          icon="i-lucide-arrow-up-right"
+          trailing
+          color="neutral"
+          variant="outline"
+          :aria-label="`View order ${thread.orderNumber}`"
+        >
+          <span class="hidden sm:inline">View order</span>
+        </UButton>
       </template>
     </UDashboardNavbar>
 
