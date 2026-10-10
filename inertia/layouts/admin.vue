@@ -12,98 +12,87 @@ const toast = useToast()
 const open = ref(false)
 
 const page = usePage()
-const links = computed(
-  () =>
-    [
-      [
-        {
-          label: 'Home',
-          icon: 'i-lucide-house',
-          to: urlFor('dashboard'),
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Inbox',
-          icon: 'i-lucide-inbox',
-          to: urlFor('inbox'),
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        ...(page.props.permissions.manageStore
-          ? [
-              {
-                label: 'Products',
-                icon: 'i-lucide-package',
-                to: urlFor('seller.products.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Collections',
-                icon: 'i-lucide-folders',
-                to: urlFor('seller.collections.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Discounts',
-                icon: 'i-lucide-ticket-percent',
-                to: urlFor('seller.discounts.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Reviews',
-                icon: 'i-lucide-star',
-                to: urlFor('seller.reviews.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Blog',
-                icon: 'i-lucide-newspaper',
-                to: urlFor('seller.posts.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Orders',
-                icon: 'i-lucide-shopping-bag',
-                to: urlFor('seller.orders.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-              {
-                label: 'Emails',
-                icon: 'i-lucide-mail',
-                to: urlFor('seller.emails.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-            ]
+
+type SidebarItem = {
+  label: string
+  icon?: string
+  to: string
+  exact?: boolean
+  defaultOpen?: boolean
+  type?: 'trigger'
+  children?: SidebarItem[]
+  onSelect?: () => void
+}
+
+type SidebarSection = { id: string; label?: string; items: SidebarItem[] }
+
+function closeSidebar() {
+  open.value = false
+}
+
+/**
+ * Sidebar sections, ordered by how often staff reach for them: daily order work first, then the
+ * catalog, marketing, store administration, and personal account settings.
+ */
+const sections = computed(() => {
+  const { manageStore, manageUsers } = page.props.permissions
+
+  const all: SidebarSection[] = [
+    {
+      id: 'daily',
+      items: [
+        { label: 'Home', icon: 'i-lucide-house', to: urlFor('dashboard') },
+        ...(manageStore
+          ? [{ label: 'Orders', icon: 'i-lucide-shopping-bag', to: urlFor('seller.orders.index') }]
           : []),
-        ...(page.props.permissions.manageUsers
-          ? [
-              {
-                label: 'Users',
-                icon: 'i-lucide-users',
-                to: urlFor('seller.users.index'),
-                onSelect: () => {
-                  open.value = false
-                },
-              },
-            ]
+        { label: 'Inbox', icon: 'i-lucide-inbox', to: urlFor('inbox') },
+      ],
+    },
+    {
+      id: 'catalog',
+      label: 'Catalog',
+      items: manageStore
+        ? [
+            { label: 'Products', icon: 'i-lucide-package', to: urlFor('seller.products.index') },
+            {
+              label: 'Collections',
+              icon: 'i-lucide-folders',
+              to: urlFor('seller.collections.index'),
+            },
+            { label: 'Reviews', icon: 'i-lucide-star', to: urlFor('seller.reviews.index') },
+          ]
+        : [],
+    },
+    {
+      id: 'marketing',
+      label: 'Marketing',
+      items: manageStore
+        ? [
+            {
+              label: 'Discounts',
+              icon: 'i-lucide-ticket-percent',
+              to: urlFor('seller.discounts.index'),
+            },
+            { label: 'Blog', icon: 'i-lucide-newspaper', to: urlFor('seller.posts.index') },
+          ]
+        : [],
+    },
+    {
+      id: 'store',
+      label: 'Store',
+      items: [
+        ...(manageStore
+          ? [{ label: 'Emails', icon: 'i-lucide-mail', to: urlFor('seller.emails.index') }]
           : []),
+        ...(manageUsers
+          ? [{ label: 'Users', icon: 'i-lucide-users', to: urlFor('seller.users.index') }]
+          : []),
+      ],
+    },
+    {
+      id: 'account',
+      label: 'Account',
+      items: [
         {
           label: 'Settings',
           to: urlFor('settings'),
@@ -111,41 +100,38 @@ const links = computed(
           defaultOpen: true,
           type: 'trigger',
           children: [
-            {
-              label: 'General',
-              to: urlFor('settings'),
-              exact: true,
-              onSelect: () => {
-                open.value = false
-              },
-            },
-            {
-              label: 'Notifications',
-              to: urlFor('settings.notifications'),
-              onSelect: () => {
-                open.value = false
-              },
-            },
-            {
-              label: 'Security',
-              to: urlFor('settings.security'),
-              onSelect: () => {
-                open.value = false
-              },
-            },
+            { label: 'General', to: urlFor('settings'), exact: true },
+            { label: 'Notifications', to: urlFor('settings.notifications') },
+            { label: 'Security', to: urlFor('settings.security') },
           ],
         },
       ],
-    ] satisfies NavigationMenuItem[][]
+    },
+  ]
+
+  return all.filter((section) => section.items.length > 0)
+})
+
+function withClose(item: SidebarItem): SidebarItem {
+  return item.children
+    ? { ...item, children: item.children.map(withClose) }
+    : { ...item, onSelect: closeSidebar }
+}
+
+const links = computed<NavigationMenuItem[][]>(() =>
+  sections.value.map((section) => [
+    ...(section.label ? [{ label: section.label, type: 'label' as const }] : []),
+    ...section.items.map(withClose),
+  ])
 )
 
-const groups = computed(() => [
-  {
-    id: 'links',
-    label: 'Go to',
-    items: links.value.flat(),
-  },
-])
+const groups = computed(() =>
+  sections.value.map((section) => ({
+    id: section.id,
+    label: section.label ?? 'Go to',
+    items: section.items.map(withClose),
+  }))
+)
 
 const cookie = useStorage('cookie-consent', 'pending')
 if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
@@ -204,7 +190,7 @@ if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
 
         <UNavigationMenu
           :collapsed="collapsed"
-          :items="links[0]"
+          :items="links"
           orientation="vertical"
           tooltip
           popover
