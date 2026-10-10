@@ -190,8 +190,11 @@ test.group('Store management pages', (group) => {
     })
     await browserContext.loginAs(seller)
     const page = await visit('/seller/orders')
-    await page.getByRole('button', { name: /Actions for MB-1001/ }).click()
-    await page.getByRole('menuitem', { name: 'View order', exact: true }).click()
+    // A paid, unfulfilled order waits in the default To pack tab, and its row opens the order.
+    await page.getByRole('tab', { name: /To pack/, selected: true }).waitFor()
+    const row = page.getByRole('row', { name: /MB-1001/ })
+    await row.getByText('Pack items', { exact: true }).waitFor()
+    await row.getByText('buyer@example.com', { exact: true }).click()
     await page.getByRole('cell', { name: /Bunny Lamp/ }).waitFor()
     await page.getByLabel('Fulfillment status', { exact: true }).click()
     await page.getByRole('option', { name: 'Fulfilled', exact: true }).click()
