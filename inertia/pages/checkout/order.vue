@@ -3,6 +3,7 @@ import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { Head, usePoll, usePage, router as inertiaRouter } from '@inertiajs/vue3'
 import { Form, Link, useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
+import { statusLabel } from '~/utils/status'
 import OrderChat from '~/components/chat/OrderChat.vue'
 import SummaryLines from '~/components/checkout/SummaryLines.vue'
 import { urlFor } from '~/client'
@@ -305,7 +306,7 @@ onUnmounted(() => {
               <dd>{{ money(status.amountMinor) }}</dd>
             </div>
             <div v-for="refund in status.refunds" :key="refund.id" class="flex justify-between">
-              <dt class="text-muted">Refund · {{ refund.state }}</dt>
+              <dt class="text-muted">Refund · {{ statusLabel('refund', refund.state) }}</dt>
               <dd>−{{ money(refund.amountMinor) }}</dd>
             </div>
           </dl>

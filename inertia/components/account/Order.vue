@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { t } from '~/utils/store'
 import { Link } from '@adonisjs/inertia/vue'
 import { useLocalization } from '~/composables/localization'
-import type { BadgeProps } from '@nuxt/ui'
+import { statusColor, statusLabel } from '~/utils/status'
 
 const props = defineProps<{
   order: Data.Checkout.Order
@@ -30,17 +30,6 @@ const total = computed(() =>
 )
 
 const status = computed(() => props.order.financialStatus)
-
-const colors: Record<string, BadgeProps['color']> = {
-  PAID: 'success',
-  PENDING: 'warning',
-  AUTHORIZED: 'warning',
-  PARTIALLY_PAID: 'warning',
-  PARTIALLY_REFUNDED: 'neutral',
-  REFUNDED: 'neutral',
-  VOIDED: 'error',
-  EXPIRED: 'error',
-}
 </script>
 <template>
   <UCard :ui="{ body: 'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between' }">
@@ -71,9 +60,9 @@ const colors: Record<string, BadgeProps['color']> = {
     <div class="flex items-center justify-between gap-4 sm:justify-end">
       <UBadge
         v-if="status"
-        :color="colors[status] ?? 'neutral'"
+        :color="statusColor('payment', status)"
         variant="subtle"
-        :label="t(`account.orders.status.${status}`)"
+        :label="statusLabel('payment', status)"
       />
 
       <span class="font-bold">
