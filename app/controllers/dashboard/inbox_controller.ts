@@ -15,12 +15,23 @@ export default class InboxController {
     const query = await request.validateUsing(inboxQueryValidator)
     const filter = query.filter ?? 'all'
 
+    const viewable = async () => {
+      const order = query.order ? await Order.find(query.order) : null
+      return order && (await bouncer.with('ChatOrderPolicy').allows('view', order)) ? order : null
+    }
+
     return inertia.render('inbox', {
       filter,
       threads: async () => ThreadTransformer.transform(await this.chat.threads(filter)),
+      // The linked thread's header, for an order the list leaves out or filters away.
+      openThread: async () => {
+        const order = await viewable()
+        const thread = order ? await this.chat.thread(order) : null
+        return thread ? ThreadTransformer.transform(thread) : null
+      },
       conversation: async () => {
-        const order = query.order ? await Order.find(query.order) : null
-        if (!order || !(await bouncer.with('ChatOrderPolicy').allows('view', order))) return null
+        const order = await viewable()
+        if (!order) return null
         const canSend = await bouncer.with('ChatOrderPolicy').allows('send', order)
         return ConversationTransformer.transform(
           await this.chat.open(order, auth.getUserOrFail(), canSend)

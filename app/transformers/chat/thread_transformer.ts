@@ -4,11 +4,14 @@ import MessageTransformer from '#transformers/chat/message_transformer'
 
 export default class ThreadTransformer extends BaseTransformer<ChatThread> {
   toObject() {
-    const { order, lastMessage, unreadCount } = this.resource
+    const { order, stage, lastMessage, unreadCount } = this.resource
     return {
       orderId: order.id,
       orderNumber: order.number,
       lifecycleState: order.lifecycleState,
+      stage,
+      totalAmount: order.totalAmount,
+      currencyCode: order.currencyCode,
       customerName: order.user?.fullName?.trim() || order.email,
       customerEmail: order.user?.email ?? order.email,
       placedAt: order.processedAt.toISO()!,

@@ -7,6 +7,7 @@ import db from '@adonisjs/lucid/services/db'
 import OrderOperationsService from '#services/checkout/order_operations_service'
 import SellerOrderService from '#services/seller/order_service'
 import OrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
+import OrderChatService from '#services/chat/order_chat_service'
 import OrderQueueService, {
   orderStages,
   type OrderStage,
@@ -18,6 +19,7 @@ export default class OrdersController {
   constructor(
     private operations: OrderOperationsService,
     private orders: SellerOrderService,
+    private chat: OrderChatService,
     private queue: OrderQueueService
   ) {}
 
@@ -54,6 +56,11 @@ export default class OrdersController {
     return inertia.render('seller/order', {
       order: SellerOrderTransformer.transform(order).depth(3),
       operations: operations ? OrderOperationsTransformer.transform(operations) : null,
+      // Guest orders have nobody to message, so they get no chat link.
+      chat: async () =>
+        (await bouncer.with('ChatOrderPolicy').allows('view', order))
+          ? { unreadCount: await this.chat.unreadCount(order) }
+          : null,
     })
   }
   async update({ params, request, response, session, bouncer }: HttpContext) {

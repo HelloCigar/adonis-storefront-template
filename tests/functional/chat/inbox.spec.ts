@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import User from '#models/account/user'
 import type Order from '#models/checkout/order'
 import OrderMessage from '#models/chat/order_message'
+import Shipment from '#models/checkout/shipment'
 import { OrderFactory } from '#database/factories/order_factory'
 
 function message(order: Order, sender: User, body: string, minutesAgo = 0) {
@@ -153,5 +154,81 @@ test.group('Order chat inbox', (group) => {
     const unpaid = await client.get('/checkout/orders/unpaid-order').loginAs(customer).withInertia()
     assert.isNull(unpaid.inertiaProps.conversation)
     assert.equal(pending.userId, customer.id)
+  })
+
+  test('threads report the fulfillment stage and order total', async ({ client, assert }) => {
+    const { staff, customer } = await people()
+    const states = ['pending', 'packing', 'shipped', 'delivered'] as const
+    const expected = ['to_pack', 'to_ship', 'in_transit', 'delivered']
+    const orders: Order[] = []
+    for (const state of states) {
+      const order = await OrderFactory.merge({
+        userId: customer.id,
+        lifecycleState: 'confirmed',
+        source: 'online',
+        totalMinor: 59900,
+      }).create()
+      await Shipment.create({ orderId: order.id, state })
+      orders.push(order)
+    }
+    const cancelled = await OrderFactory.merge({
+      userId: customer.id,
+      lifecycleState: 'cancelled',
+      source: 'online',
+    }).create()
+    await message(cancelled, customer, 'Please cancel it', 0)
+
+    const page = await client.get('/inbox').loginAs(staff).withInertia()
+    page.assertStatus(200)
+    const threads = page.inertiaProps.threads as {
+      orderId: number
+      stage: string
+      totalAmount: number
+      currencyCode: string
+    }[]
+    const stageOf = (id: number) => threads.find((thread) => thread.orderId === id)?.stage
+    assert.deepEqual(
+      orders.map((order) => stageOf(order.id)),
+      expected
+    )
+    assert.equal(stageOf(cancelled.id), 'cancelled')
+    const sample = threads.find((thread) => thread.orderId === orders[0].id)!
+    assert.equal(sample.currencyCode, 'PHP')
+    assert.equal(Number(sample.totalAmount), 599)
+  })
+
+  test('openThread carries the linked order even when the list leaves it out', async ({
+    client,
+    assert,
+  }) => {
+    const { staff, customer } = await people()
+    const cancelled = await OrderFactory.merge({
+      userId: customer.id,
+      lifecycleState: 'cancelled',
+      source: 'online',
+    }).create()
+    const guest = await OrderFactory.merge({ lifecycleState: 'confirmed' }).create()
+
+    const linked = await client
+      .get('/inbox')
+      .qs({ order: cancelled.id })
+      .loginAs(staff)
+      .withInertia()
+    linked.assertStatus(200)
+    assert.notInclude(
+      linked.inertiaProps.threads.map((thread: { orderId: number }) => thread.orderId),
+      cancelled.id
+    )
+    assert.equal(linked.inertiaProps.openThread.orderId, cancelled.id)
+    assert.equal(linked.inertiaProps.openThread.stage, 'cancelled')
+    assert.equal(linked.inertiaProps.conversation.roomKey, `order:${cancelled.id}`)
+
+    const forGuest = await client.get('/inbox').qs({ order: guest.id }).loginAs(staff).withInertia()
+    forGuest.assertStatus(200)
+    assert.isNull(forGuest.inertiaProps.openThread)
+    assert.isNull(forGuest.inertiaProps.conversation)
+
+    const plain = await client.get('/inbox').loginAs(staff).withInertia()
+    assert.isNull(plain.inertiaProps.openThread)
   })
 })

@@ -9,9 +9,12 @@ import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/pr
 import { statusColor, statusLabel } from '~/utils/status'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
+import { urlFor } from '~/client'
 const props = defineProps<{
   order: Data.Seller.Order
   operations: Data.Seller.OrderOperations | null
+  /** Present only for account orders, which have a chat with their customer. */
+  chat: { unreadCount: number } | null
 }>()
 const { busy, error, uncertain, announcement, requestOptions } = provideOrderInteraction()
 const refreshing = ref(false)
@@ -148,6 +151,23 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
             <p class="text-sm text-muted mt-1">
               {{ order.source === 'online' ? 'Online checkout' : 'Manual order' }}
             </p>
+            <UButton
+              v-if="chat"
+              :to="urlFor('inbox', {}, { qs: { order: order.id } })"
+              icon="i-lucide-message-circle"
+              label="Message customer"
+              color="neutral"
+              variant="outline"
+              class="mt-3"
+            >
+              <template v-if="chat.unreadCount" #trailing>
+                <UBadge
+                  :label="chat.unreadCount"
+                  size="sm"
+                  :aria-label="`${chat.unreadCount} unread`"
+                />
+              </template>
+            </UButton>
           </div>
         </div>
       </header>
