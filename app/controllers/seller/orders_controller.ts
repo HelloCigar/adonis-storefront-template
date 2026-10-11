@@ -56,6 +56,8 @@ export default class OrdersController {
     return inertia.render('seller/order', {
       order: SellerOrderTransformer.transform(order).depth(3),
       operations: operations ? OrderOperationsTransformer.transform(operations) : null,
+      // The same stage and next step the order list shows, so both pages agree.
+      queue: OrderQueueItemTransformer.transform(await this.queue.forOrder(order)),
       // Guest orders have nobody to message, so they get no chat link.
       chat: async () =>
         (await bouncer.with('ChatOrderPolicy').allows('view', order))

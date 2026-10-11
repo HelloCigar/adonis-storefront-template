@@ -4,23 +4,27 @@ import { Head, router } from '@inertiajs/vue3'
 import BackButton from '~/components/seller/BackButton.vue'
 import StatusForm from '~/components/seller/orders/StatusForm.vue'
 import WorkflowPanel from '~/components/seller/orders/WorkflowPanel.vue'
+import OrderContents from '~/components/seller/orders/OrderContents.vue'
+import CustomerDetails from '~/components/seller/orders/CustomerDetails.vue'
+import OrderNote from '~/components/seller/orders/OrderNote.vue'
+import NextStep from '~/components/seller/orders/NextStep.vue'
 import { provideOrderInteraction } from '~/components/seller/orders/interaction'
-import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/presentation'
+import { orderDate, orderMoney } from '~/components/seller/orders/presentation'
 import { statusColor, statusLabel } from '~/utils/status'
 import type { Data } from '@generated/data'
-import type { TableColumn } from '@nuxt/ui'
 import { urlFor } from '~/client'
 const props = defineProps<{
   order: Data.Seller.Order
   operations: Data.Seller.OrderOperations | null
   /** Present only for account orders, which have a chat with their customer. */
   chat: { unreadCount: number } | null
+  queue: Data.Seller.OrderQueueItem
 }>()
 const { busy, error, uncertain, announcement, requestOptions } = provideOrderInteraction()
 const refreshing = ref(false)
 const refresh = () =>
   router.reload({
-    only: ['order', 'operations'],
+    only: ['order', 'operations', 'queue'],
     onBefore: () => {
       if (busy.value) return false
     },
@@ -39,38 +43,42 @@ const refresh = () =>
     onHttpException: requestOptions.onHttpException,
     onNetworkError: requestOptions.onNetworkError,
   })
-const label = orderLabel
-// Online orders show only lifecycle states the fulfillment strip cannot express.
-const showBadges = computed(
-  () =>
-    props.order.source !== 'online' ||
-    ['review_required', 'cancelled', 'expired'].includes(props.order.lifecycleState)
-)
 const money = (amount: number) => orderMoney(amount, props.order.currencyCode)
 const quantity = computed(
   () => props.order.lineItems?.reduce((total, item) => total + item.quantity, 0) || 0
 )
-const totals = computed(() =>
-  [
-    { label: 'Subtotal', amount: props.order.subtotalAmount, always: true },
-    {
-      label: props.order.discountCode ? `Discount (${props.order.discountCode})` : 'Discount',
-      amount: -props.order.discountAmount,
-      always: false,
-    },
-    { label: 'Shipping', amount: props.order.shippingAmount, always: true },
-    { label: 'Tax', amount: props.order.taxAmount, always: false },
-  ].filter((row) => row.always || row.amount !== 0)
-)
-const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
-  { accessorKey: 'title', header: 'Product' },
-  { accessorKey: 'quantity', header: 'Quantity' },
-  {
-    accessorKey: 'totalAmount',
-    header: 'Total',
-    cell: ({ row }) => money(row.original.totalAmount),
-  },
-]
+/** Lead with the state staff act on: the queue stage, or a closed or review state it lacks. */
+const badges = computed(() => {
+  const { order, queue } = props
+  if (order.source !== 'online')
+    return [
+      {
+        label: statusLabel('payment', order.financialStatus),
+        color: statusColor('payment', order.financialStatus),
+      },
+      {
+        label: statusLabel('fulfillment', order.fulfillmentStatus),
+        color: statusColor('fulfillment', order.fulfillmentStatus),
+      },
+      ...(order.cancelledAt ? [{ label: 'Cancelled', color: 'error' as const }] : []),
+    ]
+  if (['review_required', 'cancelled', 'expired'].includes(order.lifecycleState))
+    return [
+      {
+        label: statusLabel('order', order.lifecycleState),
+        color: statusColor('order', order.lifecycleState),
+      },
+    ]
+  const stages: string[] = queue.stages.length
+    ? queue.stages
+    : queue.nextStep === 'await_payment'
+      ? ['awaiting_payment']
+      : []
+  return stages.map((stage) => ({
+    label: statusLabel('stage', stage),
+    color: statusColor('stage', stage),
+  }))
+})
 </script>
 
 <template>
@@ -99,75 +107,54 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
       </UDashboardNavbar>
     </template>
     <template #body>
-      <header>
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div class="min-w-0">
+      <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 class="text-2xl font-semibold text-highlighted [overflow-wrap:anywhere]">
               Order {{ order.number }}
             </h1>
-            <p class="text-sm text-muted mt-2">
-              {{ quantity }} {{ quantity === 1 ? 'item' : 'items'
-              }}<span v-if="order.processedAt">
-                · Placed {{ orderDate(order.processedAt) }} (Philippine time)</span
-              >
-            </p>
-            <div v-if="showBadges" class="flex flex-wrap gap-2 mt-3">
-              <UBadge
-                v-if="order.source === 'online'"
-                class="text-default"
-                :label="statusLabel('order', order.lifecycleState)"
-                :color="statusColor('order', order.lifecycleState)"
-                variant="subtle"
-              />
-              <template v-else>
-                <UBadge
-                  class="text-default"
-                  :label="statusLabel('payment', order.financialStatus)"
-                  :color="statusColor('payment', order.financialStatus)"
-                  variant="subtle"
-                />
-                <UBadge
-                  class="text-default"
-                  :label="statusLabel('fulfillment', order.fulfillmentStatus)"
-                  :color="statusColor('fulfillment', order.fulfillmentStatus)"
-                  variant="subtle"
-                />
-                <UBadge
-                  v-if="order.cancelledAt"
-                  class="text-default"
-                  label="Cancelled"
-                  color="error"
-                  variant="subtle"
-                />
-              </template>
-            </div>
+            <UBadge
+              v-for="badge in badges"
+              :key="badge.label"
+              class="text-default"
+              :label="badge.label"
+              :color="badge.color"
+              variant="subtle"
+              size="lg"
+            />
           </div>
-          <div class="sm:text-right">
-            <p class="text-lg font-semibold text-highlighted tabular-nums">
-              {{ money(order.totalAmount) }}
-            </p>
-            <p class="text-sm text-muted mt-1">
-              {{ order.source === 'online' ? 'Online checkout' : 'Manual order' }}
-            </p>
-            <UButton
-              v-if="chat"
-              :to="urlFor('inbox', {}, { qs: { order: order.id } })"
-              icon="i-lucide-message-circle"
-              label="Message customer"
-              color="neutral"
-              variant="outline"
-              class="mt-3"
+          <p class="text-sm text-muted mt-2">
+            <span class="font-medium text-highlighted tabular-nums">{{
+              money(order.totalAmount)
+            }}</span>
+            · {{ quantity }} {{ quantity === 1 ? 'item' : 'items' }} ·
+            {{ order.source === 'online' ? 'Online checkout' : 'Manual order'
+            }}<span v-if="order.processedAt">
+              · Placed {{ orderDate(order.processedAt) }} (Philippine time)</span
             >
-              <template v-if="chat.unreadCount" #trailing>
-                <UBadge
-                  :label="chat.unreadCount"
-                  size="sm"
-                  :aria-label="`${chat.unreadCount} unread`"
-                />
-              </template>
-            </UButton>
-          </div>
+          </p>
+          <p v-if="order.source !== 'online'" class="mt-3 flex items-center gap-2 text-sm">
+            <span class="text-muted">Next step</span>
+            <NextStep :step="queue.nextStep" :waiting-since="queue.waitingSince" />
+          </p>
         </div>
+        <UButton
+          v-if="chat"
+          :to="urlFor('inbox', {}, { qs: { order: order.id } })"
+          icon="i-lucide-message-circle"
+          label="Message customer"
+          color="neutral"
+          variant="outline"
+          class="shrink-0 self-start"
+        >
+          <template v-if="chat.unreadCount" #trailing>
+            <UBadge
+              :label="chat.unreadCount"
+              size="sm"
+              :aria-label="`${chat.unreadCount} unread`"
+            />
+          </template>
+        </UButton>
       </header>
 
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
@@ -195,146 +182,46 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
         v-if="order.source === 'online' && operations"
         :order="order"
         :operations="operations"
-      />
-      <p v-else-if="order.source === 'online'" role="status" class="text-default">
-        Order actions are unavailable. Refresh status before continuing.
-      </p>
-      <section
-        v-else
-        aria-labelledby="manual-order-title"
-        class="rounded-lg bg-elevated/50 p-5 sm:p-6"
+        :waiting-since="queue.waitingSince"
       >
-        <h2 id="manual-order-title" class="text-xl font-semibold text-highlighted">
-          Record payment and fulfillment
-        </h2>
-        <p class="text-sm text-muted mt-2 mb-5 max-w-prose">
-          This manual order has no hosted payment or shipment workflow. Record the payment and
-          fulfillment outcome here as work is completed.
-        </p>
-        <div class="max-w-xl"><StatusForm :order="order" /></div>
-      </section>
-
-      <div
-        class="grid gap-8 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] border-t border-default pt-8"
-      >
+        <template #contents
+          ><OrderContents :order="order" class="border-t border-default pt-6"
+        /></template>
+        <template #aside>
+          <CustomerDetails :order="order" />
+          <OrderNote :order="order" editable class="border-t border-default pt-6" />
+        </template>
+      </WorkflowPanel>
+      <div v-else class="grid gap-8 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <div class="min-w-0 space-y-8">
-          <section aria-labelledby="order-items-title">
-            <div class="flex items-center justify-between mb-3 gap-3">
-              <h2 id="order-items-title" class="text-lg font-semibold text-highlighted">
-                Order contents
-              </h2>
-              <span class="text-sm text-muted"
-                >{{ quantity }} {{ quantity === 1 ? 'item' : 'items' }}</span
-              >
-            </div>
-            <UTable
-              v-if="order.lineItems?.length"
-              :data="order.lineItems || []"
-              :columns="columns"
-              class="hidden sm:block"
-              :ui="{ td: 'tabular-nums align-top', th: 'text-sm' }"
-            >
-              <template #title-cell="{ row }"
-                ><div class="min-w-48 whitespace-normal [overflow-wrap:anywhere]">
-                  <p class="font-medium text-highlighted">{{ row.original.title }}</p>
-                  <p v-if="row.original.variantTitle" class="mt-1 text-sm text-muted">
-                    {{ row.original.variantTitle }}
-                  </p>
-                  <p v-if="row.original.sku" class="mt-1 text-sm text-muted">
-                    SKU: <bdi>{{ row.original.sku }}</bdi>
-                  </p>
-                  <p class="mt-3 text-sm">Unit price: {{ money(row.original.unitPriceAmount) }}</p>
-                </div></template
-              >
-            </UTable>
-            <ul v-if="order.lineItems?.length" class="divide-y divide-default sm:hidden">
-              <li v-for="item in order.lineItems" :key="item.id" class="py-4 first:pt-0">
-                <p class="font-medium text-highlighted [overflow-wrap:anywhere]">
-                  {{ item.title }}
-                </p>
-                <p
-                  v-if="item.variantTitle"
-                  class="text-sm text-muted mt-1 [overflow-wrap:anywhere]"
-                >
-                  {{ item.variantTitle }}
-                </p>
-                <p v-if="item.sku" class="text-sm text-muted mt-1 [overflow-wrap:anywhere]">
-                  SKU: <bdi>{{ item.sku }}</bdi>
-                </p>
-                <dl class="flex flex-wrap justify-between gap-3 mt-3 text-sm tabular-nums">
-                  <div>
-                    <dt class="sr-only">Quantity and unit price</dt>
-                    <dd>{{ item.quantity }} × {{ money(item.unitPriceAmount) }}</dd>
-                  </div>
-                  <div>
-                    <dt class="sr-only">Line total</dt>
-                    <dd class="font-semibold text-highlighted">{{ money(item.totalAmount) }}</dd>
-                  </div>
-                </dl>
-              </li>
-            </ul>
-            <p v-else class="text-sm text-muted py-4">No items are recorded for this order.</p>
-            <dl class="ml-auto w-full sm:max-w-xs mt-5 space-y-2 text-sm tabular-nums">
-              <div v-for="item in totals" :key="item.label" class="flex justify-between gap-4">
-                <dt class="text-muted">{{ item.label }}</dt>
-                <dd>{{ money(item.amount) }}</dd>
-              </div>
-              <div
-                class="flex justify-between gap-4 border-t border-default pt-3 font-semibold text-highlighted"
-              >
-                <dt>Total</dt>
-                <dd>{{ money(order.totalAmount) }}</dd>
-              </div>
-            </dl>
-          </section>
+          <p v-if="order.source === 'online'" role="status" class="text-default">
+            Order actions are unavailable. Refresh status before continuing.
+          </p>
           <section
-            v-if="order.source === 'online'"
-            aria-labelledby="order-notes-title"
-            class="border-t border-default pt-6"
+            v-else
+            aria-labelledby="manual-order-title"
+            class="rounded-lg bg-elevated/50 p-5 sm:p-6"
           >
-            <h2 id="order-notes-title" class="text-lg font-semibold text-highlighted mb-3">
-              Order note
+            <h2 id="manual-order-title" class="text-xl font-semibold text-highlighted">
+              Record payment and fulfillment
             </h2>
+            <p class="text-sm text-muted mt-2 mb-5 max-w-prose">
+              This manual order has no hosted payment or shipment workflow. Record the payment and
+              fulfillment outcome here as work is completed.
+            </p>
             <div class="max-w-xl"><StatusForm :order="order" /></div>
           </section>
+          <OrderContents :order="order" class="border-t border-default pt-6" />
         </div>
-        <aside
-          aria-labelledby="order-customer-title"
-          class="min-w-0 space-y-6 xl:border-l xl:border-default xl:pl-8"
-        >
-          <section>
-            <h2 id="order-customer-title" class="text-lg font-semibold text-highlighted">
-              Customer &amp; delivery
-            </h2>
-            <p class="text-sm mt-3 [overflow-wrap:anywhere]">
-              <bdi>{{ order.email || 'No email recorded' }}</bdi>
-            </p>
-            <p v-if="order.phoneNumber" class="text-sm mt-1 [overflow-wrap:anywhere]">
-              <bdi>{{ order.phoneNumber }}</bdi>
-            </p>
-          </section>
-          <section
-            v-for="address in order.addresses"
-            :key="address.id"
-            class="border-t border-default pt-5"
-          >
-            <h3 class="text-sm font-semibold text-highlighted mb-2">
-              {{ label(address.type) }} address
-            </h3>
-            <p
-              v-for="(line, index) in address.formatted"
-              :key="index"
-              class="text-sm [overflow-wrap:anywhere]"
-            >
-              {{ line }}
-            </p>
-            <p v-if="address.phoneNumber" class="text-sm mt-2 [overflow-wrap:anywhere]">
-              <bdi>{{ address.phoneNumber }}</bdi>
-            </p>
-          </section>
-          <p v-if="!order.addresses?.length" class="text-sm text-muted">
-            No address is recorded for this order.
-          </p>
+        <aside class="min-w-0 space-y-8 xl:border-l xl:border-default xl:pl-8">
+          <CustomerDetails :order="order" />
+          <!-- Manual orders edit the note in the form above; only an unavailable online workflow needs it here. -->
+          <OrderNote
+            v-if="order.source === 'online'"
+            :order="order"
+            editable
+            class="border-t border-default pt-6"
+          />
         </aside>
       </div>
     </template>

@@ -4,6 +4,7 @@ import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
 import { statusOptions } from '~/utils/status'
 defineProps<{ order: Data.Seller.Order }>()
+const emit = defineEmits<{ saved: [] }>()
 const { locked, callbacks, requestOptions } = useOrderInteraction()
 </script>
 <template>
@@ -16,6 +17,7 @@ const { locked, callbacks, requestOptions } = useOrderInteraction()
     :params="{ id: order.id }"
     :transform="(data) => ({ ...data, note: data.note || null })"
     class="space-y-4"
+    @success="emit('saved')"
   >
     <div v-if="order.source === 'online'">
       <input type="hidden" name="financialStatus" :value="order.financialStatus" />
@@ -45,7 +47,7 @@ const { locked, callbacks, requestOptions } = useOrderInteraction()
     <p class="text-xs text-muted">
       {{
         order.source === 'online'
-          ? 'Payment and shipping actions control the order status.'
+          ? 'Only staff see changes to this note. Payment and shipping actions set the order status.'
           : 'Status changes record your manual payment and fulfillment updates.'
       }}
     </p>

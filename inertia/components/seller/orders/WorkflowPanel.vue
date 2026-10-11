@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { formatDistanceToNowStrict, parseISO } from 'date-fns'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
@@ -12,7 +13,12 @@ import ReconcileCheckoutForm from './ReconcileCheckoutForm.vue'
 
 type Issue = Data.Seller.OrderOperations['issues'][number]
 
-const props = defineProps<{ order: Data.Seller.Order; operations: Data.Seller.OrderOperations }>()
+const props = defineProps<{
+  order: Data.Seller.Order
+  operations: Data.Seller.OrderOperations
+  /** From the order queue: when the order started waiting on staff, or null. */
+  waitingSince?: string | null
+}>()
 const { locked, callbacks, requestOptions, announce } = useOrderInteraction()
 const label = orderLabel
 const money = (amount: number, currency = props.order.currencyCode) =>
@@ -99,7 +105,7 @@ const nextAction = computed(() => {
   if (shipped.value)
     return {
       key: 'shipped',
-      title: 'Shipment recorded',
+      title: canDeliver.value ? 'Confirm delivery' : 'Shipment recorded',
       description: `${
         shipmentEmail.value
           ? 'Tracking is saved. Check customer updates for the shipment email.'
@@ -118,7 +124,7 @@ const nextAction = computed(() => {
   if (waitingForPayment.value)
     return {
       key: 'waiting',
-      title: 'Waiting for payment confirmation',
+      title: statusLabel('stage', 'awaiting_payment'),
       description:
         'A checkout request is not payment confirmation. Refresh status to check for a verified payment.',
       icon: 'i-lucide-clock',
@@ -133,14 +139,15 @@ const nextAction = computed(() => {
   if (canShip.value)
     return {
       key: 'ship',
-      title: 'Ready to dispatch',
-      description: 'Label the parcel for the address below, then record its tracking.',
+      title: 'Add tracking',
+      description:
+        'Label the parcel for this address, then record the carrier and tracking number.',
       icon: 'i-lucide-truck',
     }
   if (canPack.value)
     return {
       key: 'pack',
-      title: 'Ready to pack',
+      title: 'Pack items',
       description: 'Payment is verified. Pick these items, then start packing.',
       icon: 'i-lucide-package',
     }
@@ -151,6 +158,19 @@ const nextAction = computed(() => {
     icon: 'i-lucide-circle-pause',
   }
 })
+
+/** Whether the card asks staff to do something now, as opposed to reporting a settled state. */
+const actionable = computed(
+  () =>
+    blocked.value ||
+    ['pack', 'ship'].includes(nextAction.value.key) ||
+    (nextAction.value.key === 'shipped' && canDeliver.value)
+)
+const waiting = computed(() =>
+  actionable.value && props.waitingSince
+    ? `Waiting ${formatDistanceToNowStrict(parseISO(props.waitingSince))}`
+    : ''
+)
 
 /** Stage state: done, current (the next step), attention (blocked), upcoming, or closed. */
 const stages = computed(() => {
@@ -329,6 +349,12 @@ const detailValue = (value: unknown) =>
               :class="blocked ? 'text-warning' : 'text-primary'"
             />
             <div class="min-w-0">
+              <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+                {{ actionable ? 'Next step' : 'Current state'
+                }}<span v-if="waiting" class="font-normal normal-case tracking-normal">
+                  · {{ waiting }}</span
+                >
+              </p>
               <h2
                 id="order-next-action"
                 ref="heading"
@@ -590,7 +616,12 @@ const detailValue = (value: unknown) =>
           </template>
         </section>
 
-        <section id="order-payments" aria-labelledby="order-payments-title" class="scroll-mt-6">
+        <slot name="contents" />
+        <section
+          id="order-payments"
+          aria-labelledby="order-payments-title"
+          class="scroll-mt-6 border-t border-default pt-6"
+        >
           <h2 id="order-payments-title" class="text-lg font-semibold text-highlighted mb-4">
             Payments &amp; refunds
           </h2>
@@ -778,7 +809,8 @@ const detailValue = (value: unknown) =>
         />
       </div>
       <div class="min-w-0 space-y-8 xl:border-l xl:border-default xl:pl-8">
-        <section aria-labelledby="order-updates-title">
+        <slot name="aside" />
+        <section aria-labelledby="order-updates-title" class="border-t border-default pt-6">
           <div class="flex items-center justify-between gap-3">
             <h2 id="order-updates-title" class="text-lg font-semibold text-highlighted">
               Customer updates
@@ -846,7 +878,7 @@ const detailValue = (value: unknown) =>
             </li>
           </ul>
         </section>
-        <section aria-labelledby="order-activity-title">
+        <section aria-labelledby="order-activity-title" class="border-t border-default pt-6">
           <h2 id="order-activity-title" class="text-lg font-semibold text-highlighted">
             Order activity
           </h2>

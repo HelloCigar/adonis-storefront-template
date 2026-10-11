@@ -326,4 +326,23 @@ test.group('Staff order queue', (group) => {
     const denied = await client.get('/seller/orders').loginAs(customer).accept('json')
     denied.assertStatus(403)
   })
+  test('gives the order page the same stage and next step as its queue row', async ({
+    client,
+    assert,
+  }) => {
+    const packingAt = ago({ hours: 4 })
+    const order = await onlineOrder({}, { state: 'packing', packingAt })
+    const staff = await staffUser()
+
+    const page = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    page.assertStatus(200)
+    const detail = (page.inertiaProps as { queue: QueueRow }).queue
+    const row = await rowFor(client, order)
+    assert.deepEqual(detail.stages, ['to_ship'])
+    assert.equal(detail.nextStep, 'add_tracking')
+    assert.deepEqual(
+      { stages: detail.stages, nextStep: detail.nextStep, waitingSince: detail.waitingSince },
+      { stages: row.stages, nextStep: row.nextStep, waitingSince: row.waitingSince }
+    )
+  })
 })
