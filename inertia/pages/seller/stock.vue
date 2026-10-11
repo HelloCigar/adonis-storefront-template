@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
-import { Link } from '@adonisjs/inertia/vue'
+import { urlFor } from '~/client'
+import BackButton from '~/components/seller/BackButton.vue'
 import type { Data } from '@generated/data'
 import AdjustForm from '~/components/seller/stock/AdjustForm.vue'
 import History from '~/components/seller/stock/History.vue'
@@ -31,17 +32,17 @@ const stats = computed(() => {
   <UDashboardPanel id="stock">
     <template #header>
       <UDashboardNavbar title="Stock">
-        <template #leading><UDashboardSidebarCollapse /></template>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+          <BackButton
+            :to="urlFor('seller.products.show', { id: product.id })"
+            :label="product.title"
+          />
+        </template>
       </UDashboardNavbar>
     </template>
     <template #body>
       <div>
-        <Link
-          route="seller.products.show"
-          :params="{ id: product.id }"
-          class="inline-flex items-center gap-1 text-sm text-primary mb-3"
-          ><UIcon name="i-lucide-arrow-left" class="size-4" />{{ product.title }}</Link
-        >
         <h1 class="text-2xl font-semibold text-highlighted [overflow-wrap:anywhere]">
           {{ variant.title }}
         </h1>
