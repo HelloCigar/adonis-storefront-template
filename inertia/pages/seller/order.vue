@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
-import { Link } from '@adonisjs/inertia/vue'
+import BackButton from '~/components/seller/BackButton.vue'
 import StatusForm from '~/components/seller/orders/StatusForm.vue'
 import WorkflowPanel from '~/components/seller/orders/WorkflowPanel.vue'
 import OrderContents from '~/components/seller/orders/OrderContents.vue'
@@ -90,7 +90,10 @@ const badges = computed(() => {
   >
     <template #header>
       <UDashboardNavbar title="Order details">
-        <template #leading><UDashboardSidebarCollapse /></template>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+          <BackButton :to="urlFor('seller.orders.index')" label="orders" />
+        </template>
         <template #right
           ><UButton
             label="Refresh status"
@@ -106,11 +109,6 @@ const badges = computed(() => {
     <template #body>
       <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="min-w-0">
-          <Link
-            route="seller.orders.index"
-            class="inline-flex items-center gap-1 text-sm text-primary w-fit mb-4"
-            ><UIcon name="i-lucide-arrow-left" class="size-4" />Orders</Link
-          >
           <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1 class="text-2xl font-semibold text-highlighted [overflow-wrap:anywhere]">
               Order {{ order.number }}
@@ -147,7 +145,7 @@ const badges = computed(() => {
           label="Message customer"
           color="neutral"
           variant="outline"
-          class="shrink-0 self-start sm:mt-9"
+          class="shrink-0 self-start"
         >
           <template v-if="chat.unreadCount" #trailing>
             <UBadge

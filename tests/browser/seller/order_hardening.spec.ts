@@ -82,14 +82,19 @@ test.group('Staff order hardening', (group) => {
         return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3)
       }
       const button = Array.from(document.querySelectorAll('button')).find(element => element.textContent.trim() === 'Start packing')
-      const link = Array.from(document.querySelectorAll('a')).filter(element => element.textContent.trim() === 'Orders').at(-1)
+      // Primary text links on this page, sampled in the same scope as the action button.
+      const link = document.createElement('a')
+      link.className = 'text-primary'
+      button.parentElement.append(link)
       const style = getComputedStyle(button)
-      return {
+      const colors = {
         fill: rgb(style.backgroundColor),
         label: rgb(style.color),
         link: rgb(getComputedStyle(link).color),
         ground: rgb(style.getPropertyValue('--ui-bg')),
       }
+      link.remove()
+      return colors
     })()`)
     const luminance = (rgb: number[]) =>
       rgb
