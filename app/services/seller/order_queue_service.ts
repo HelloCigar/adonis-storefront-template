@@ -131,11 +131,30 @@ export default class OrderQueueService {
     const ids = new Map(
       orderStages.map((stage, index) => [stage, new Set(members[index].map((order) => order.id))])
     )
-    return orders.map((order) => {
-      const stages = orderStages.filter((stage) => ids.get(stage)!.has(order.id))
-      const nextStep = this.nextStep(order, stages)
-      return { order, stages, nextStep, waitingSince: this.waitingSince(order, nextStep) }
-    })
+    return orders.map((order) =>
+      this.describe(
+        order,
+        orderStages.filter((stage) => ids.get(stage)!.has(order.id))
+      )
+    )
+  }
+
+  /** One order's stages and next step, matching its row in the list. Expects shipments loaded. */
+  async forOrder(order: Order): Promise<OrderQueueItem> {
+    const matches = await Promise.all(
+      orderStages.map((stage) =>
+        this.scope(stage, Order.query().select('id')).where('id', order.id).first()
+      )
+    )
+    return this.describe(
+      order,
+      orderStages.filter((_, index) => matches[index])
+    )
+  }
+
+  private describe(order: Order, stages: OrderStage[]): OrderQueueItem {
+    const nextStep = this.nextStep(order, stages)
+    return { order, stages, nextStep, waitingSince: this.waitingSince(order, nextStep) }
   }
 
   private nextStep(order: Order, stages: OrderStage[]): OrderNextStep {

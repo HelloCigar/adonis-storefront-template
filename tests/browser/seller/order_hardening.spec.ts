@@ -66,7 +66,7 @@ test.group('Staff order hardening', (group) => {
     const page = await visit(`/seller/orders/${order.id}`)
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
-    await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
     const actionColors = await page.evaluate<{
       fill: number[]
       label: number[]
@@ -132,9 +132,7 @@ test.group('Staff order hardening', (group) => {
         await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
       )
       await page.screenshot({ path: `.impeccable/review/details-${viewport.file}`, fullPage: true })
-      await page
-        .getByRole('heading', { name: 'Ready to pack', exact: true })
-        .scrollIntoViewIfNeeded()
+      await page.getByRole('heading', { name: 'Pack items', exact: true }).scrollIntoViewIfNeeded()
     }
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.setViewportSize({ width: 1280, height: 900 })
@@ -182,7 +180,7 @@ test.group('Staff order hardening', (group) => {
     const { order, staff } = await confirmedOrder()
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/orders/${order.id}`)
-    await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
     await page.route(`**/seller/orders/${order.id}/packing`, (request) => request.abort('failed'))
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
     await page
@@ -198,7 +196,7 @@ test.group('Staff order hardening', (group) => {
       .getByRole('button', { name: 'Refresh status', exact: true })
       .click()
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
-    await page.getByRole('heading', { name: 'Ready to dispatch', exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Add tracking', exact: true }).waitFor()
     // The packing button disappears; focus continues in the dispatch form.
     assert.equal(await page.evaluate('document.activeElement?.getAttribute("name")'), 'carrier')
     await page
@@ -274,7 +272,7 @@ test.group('Staff order hardening', (group) => {
     shipment.trackingUrl = 'javascript:alert(1)'
     await shipment.save()
     await page.goto(`/seller/orders/${confirmed.order.id}`)
-    await page.getByRole('heading', { name: 'Shipment recorded', exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Confirm delivery', exact: true }).waitFor()
     assert.equal(await page.getByRole('link', { name: 'Track shipment', exact: true }).count(), 0)
   })
 
@@ -292,8 +290,8 @@ test.group('Staff order hardening', (group) => {
     })
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/orders/${order.id}`)
-    await page.getByRole('heading', { name: 'Shipment recorded', exact: true }).waitFor()
-    await page.getByText('In transit', { exact: true }).waitFor()
+    await page.getByRole('heading', { name: 'Confirm delivery', exact: true }).waitFor()
+    await page.getByText('In transit', { exact: true }).first().waitFor()
     await page.getByRole('button', { name: 'Mark as delivered', exact: true }).click()
     await page.getByRole('heading', { name: 'Order delivered', exact: true }).waitFor()
     await page.getByText('Delivery recorded', { exact: true }).first().waitFor()
