@@ -11,6 +11,7 @@ import CartTransformer from '#transformers/checkout/cart_transformer'
 import SearchResultTransformer from '#transformers/catalog/search_result_transformer'
 import { searchValidator } from '#validators/catalog/search'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
+import { storeName } from '#config/mail'
 
 @inject()
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
@@ -30,6 +31,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
      * transformers for rich data-types like Models.
      */
     return {
+      storeName,
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
       permissions: async () => ({

@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
 import { usePage } from '@inertiajs/vue3'
 import FlashToasts from '~/components/flash_toasts.vue'
 import StorefrontLayout from '~/layouts/default.vue'
-
-const toast = useToast()
+import { useDashboard } from '~/composables/useDashboard'
 
 const open = ref(false)
 
@@ -96,7 +94,6 @@ const sections = computed(() => {
       icon: 'i-lucide-settings',
       items: [
         { label: 'General', icon: 'i-lucide-user', to: urlFor('settings'), exact: true },
-        { label: 'Notifications', icon: 'i-lucide-bell', to: urlFor('settings.notifications') },
         { label: 'Security', icon: 'i-lucide-shield', to: urlFor('settings.security') },
       ],
     },
@@ -134,29 +131,8 @@ const groups = computed(() =>
   }))
 )
 
-const cookie = useStorage('cookie-consent', 'pending')
-if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
-  toast.add({
-    title: 'We use first-party cookies to enhance your experience on our website.',
-    duration: 0,
-    close: false,
-    actions: [
-      {
-        label: 'Accept',
-        color: 'neutral',
-        variant: 'outline',
-        onClick: () => {
-          cookie.value = 'accepted'
-        },
-      },
-      {
-        label: 'Opt out',
-        color: 'neutral',
-        variant: 'ghost',
-      },
-    ],
-  })
-}
+// Staff keyboard shortcuts (g-h, g-i, g-u, g-s) for the store dashboard.
+if (page.props.permissions.manageStore) useDashboard()
 </script>
 
 <template>
@@ -207,7 +183,6 @@ if (page.props.permissions.manageStore && cookie.value !== 'accepted') {
 
     <slot />
 
-    <NotificationsSlideover />
     <FlashToasts />
   </UDashboardGroup>
 </template>

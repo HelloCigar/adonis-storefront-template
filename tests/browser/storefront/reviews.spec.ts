@@ -82,7 +82,6 @@ test.group('Product reviews', (group) => {
     // Staff find the review from store navigation and approve it.
     const admin = await visit('/seller/discounts')
     admin.on('pageerror', (error) => errors.push(error.message))
-    await admin.getByRole('button', { name: 'Opt out', exact: true }).click()
     await admin.getByRole('link', { name: 'Reviews', exact: true }).first().click()
     await admin.assertPath('/seller/reviews')
     const row = admin.getByRole('row').filter({ hasText: 'Brightest lamp I own' })
