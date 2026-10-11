@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
 import OrderChat from '~/components/chat/OrderChat.vue'
-import { stagePresentation } from '~/components/inbox/stage'
+import { statusColor, statusLabel } from '~/utils/status'
 import { orderMoney } from '~/components/seller/orders/presentation'
 
 const props = defineProps<{
@@ -13,7 +13,10 @@ const props = defineProps<{
 
 const emits = defineEmits<{ close: [] }>()
 
-const stage = computed(() => stagePresentation[props.thread.stage])
+const stage = computed(() => ({
+  label: statusLabel('stage', props.thread.stage),
+  color: statusColor('stage', props.thread.stage),
+}))
 const total = computed(() => orderMoney(props.thread.totalAmount, props.thread.currencyCode))
 </script>
 
