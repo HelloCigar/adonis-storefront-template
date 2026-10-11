@@ -7,18 +7,29 @@ import db from '@adonisjs/lucid/services/db'
 import OrderOperationsService from '#services/checkout/order_operations_service'
 import SellerOrderService from '#services/seller/order_service'
 import OrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
+import OrderQueueService, {
+  orderStages,
+  type OrderStage,
+} from '#services/seller/order_queue_service'
+import OrderQueueItemTransformer from '#transformers/seller/order_queue_item_transformer'
 
 @inject()
 export default class OrdersController {
   constructor(
     private operations: OrderOperationsService,
-    private orders: SellerOrderService
+    private orders: SellerOrderService,
+    private queue: OrderQueueService
   ) {}
 
-  async index({ inertia, bouncer }: HttpContext) {
+  async index({ inertia, bouncer, request }: HttpContext) {
     await bouncer.with('SellerOrderPolicy').authorize('viewAny')
+    // An unknown tab in a shared or stale link falls back to the start of the queue.
+    const requested = request.qs().stage
+    const stage: OrderStage | 'all' =
+      requested === 'all' || orderStages.includes(requested) ? requested : 'to_pack'
     return inertia.render('seller/orders', {
-      orders: SellerOrderTransformer.transform(await Order.query().orderBy('processedAt', 'desc')),
+      orders: OrderQueueItemTransformer.transform(await this.queue.list()),
+      stage,
     })
   }
   async show({ params, inertia, bouncer }: HttpContext) {

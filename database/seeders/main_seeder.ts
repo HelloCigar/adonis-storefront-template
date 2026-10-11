@@ -15,6 +15,7 @@ import { CustomerAddressFactory } from '../factories/customer_address_factory.js
 import { CartFactory } from '../factories/cart_factory.js'
 import { CartLineFactory } from '../factories/cart_line_factory.js'
 import { OrderFactory } from '../factories/order_factory.js'
+import { seedDemoOnlineOrders } from './demo_online_orders.js'
 
 const groups = [
   {
@@ -227,6 +228,21 @@ export default class MainSeeder extends BaseSeeder {
           )
           .create()
       }
+
+      // Online orders at every stage of the staff fulfillment queue.
+      const stocked = await ProductVariant.query({ client: trx })
+        .whereIn(
+          'product_id',
+          products.map((product) => product.id)
+        )
+        .where('available_for_sale', true)
+        .whereRaw('inventory_quantity - inventory_reserved_quantity >= 10')
+        .orderBy('id')
+      // Every third variant keeps each order on a different product.
+      await seedDemoOnlineOrders(trx, {
+        customer,
+        variants: stocked.filter((_, index) => index % 3 === 0),
+      })
     })
   }
 }

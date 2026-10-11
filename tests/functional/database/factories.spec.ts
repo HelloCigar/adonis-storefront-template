@@ -19,7 +19,17 @@ import { OrderLineItemFactory } from '#database/factories/order_line_item_factor
 import MainSeeder from '#database/seeders/main_seeder'
 
 test.group('Initial factories and seeder', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate()
+    return async () => {
+      // Seeded checkouts awaiting payment hold stock, and held variants cannot be deleted.
+      await db
+        .from('product_variants')
+        .where('inventory_reserved_quantity', '>', 0)
+        .update({ inventory_reserved_quantity: 0 })
+      await truncate()
+    }
+  })
   group.each.teardown(async () => {
     // Model hooks remove only the attachment files owned by these test fixtures.
     for (const product of await Product.all()) await product.delete()
@@ -143,6 +153,10 @@ test.group('Initial factories and seeder', (group) => {
         'orders',
         'order_addresses',
         'order_line_items',
+        'shipments',
+        'payment_attempts',
+        'payments',
+        'stock_reservations',
         'adonis_attachments',
         'adonis_attachment_links',
       ]) {
@@ -156,9 +170,11 @@ test.group('Initial factories and seeder', (group) => {
     assert.equal(initial.product_variants, 54)
     assert.equal(initial.collections, 3)
     assert.equal(initial.collection_products, 18)
-    assert.equal(initial.orders, 2)
-    assert.equal(initial.order_addresses, 4)
-    assert.equal(initial.order_line_items, 4)
+    // Two manual orders plus one online order at each stage of the staff order queue.
+    assert.equal(initial.orders, 9)
+    assert.equal(initial.order_addresses, 18)
+    assert.equal(initial.order_line_items, 14)
+    assert.equal(initial.shipments, 5)
     assert.equal(initial.adonis_attachments, 21)
     const customer = await User.findByOrFail('email', 'demo@example.com')
     assert.isTrue(await hash.verify(customer.password, 'demo-password'))

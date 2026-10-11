@@ -79,6 +79,7 @@ declare module 'vue' {
     SellerEmailsList: typeof import('./inertia/components/seller/emails/List.vue')['default']
     SellerEmailsPreview: typeof import('./inertia/components/seller/emails/Preview.vue')['default']
     SellerOrdersCancellationSection: typeof import('./inertia/components/seller/orders/CancellationSection.vue')['default']
+    SellerOrdersNextStep: typeof import('./inertia/components/seller/orders/NextStep.vue')['default']
     SellerOrdersPickList: typeof import('./inertia/components/seller/orders/PickList.vue')['default']
     SellerOrdersReconcileCheckoutForm: typeof import('./inertia/components/seller/orders/ReconcileCheckoutForm.vue')['default']
     SellerOrdersShippingAddress: typeof import('./inertia/components/seller/orders/ShippingAddress.vue')['default']
