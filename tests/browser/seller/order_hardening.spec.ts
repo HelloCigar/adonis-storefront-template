@@ -67,8 +67,6 @@ test.group('Staff order hardening', (group) => {
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).click()
     const actionColors = await page.evaluate<{
       fill: number[]
       label: number[]
@@ -185,8 +183,6 @@ test.group('Staff order hardening', (group) => {
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/orders/${order.id}`)
     await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).click()
     await page.route(`**/seller/orders/${order.id}/packing`, (request) => request.abort('failed'))
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
     await page

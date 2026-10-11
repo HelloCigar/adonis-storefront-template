@@ -5,7 +5,6 @@ import { format, parseISO } from 'date-fns'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-import { useDashboard } from '../composables/useDashboard'
 import type { Period, Range } from '../types'
 import { urlFor } from '~/client'
 import Default from '~/layouts/admin.vue'
@@ -15,8 +14,6 @@ const props = defineProps<{
   summary: Data.Dashboard.Summary
   attention: Data.Dashboard.Attention
 }>()
-
-const { isNotificationsSlideoverOpen } = useDashboard()
 
 const page = usePage()
 const router = useRouter()
@@ -96,17 +93,6 @@ const period = computed<Period>({
           </template>
 
           <template #right>
-            <UTooltip text="Notifications" :shortcuts="['N']">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                square
-                icon="i-lucide-bell"
-                aria-label="Notifications"
-                @click="isNotificationsSlideoverOpen = true"
-              />
-            </UTooltip>
-
             <UDropdownMenu v-if="items.length" :items="items">
               <UButton
                 icon="i-lucide-plus"

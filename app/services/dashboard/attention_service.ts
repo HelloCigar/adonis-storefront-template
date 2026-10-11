@@ -3,6 +3,8 @@ import ProductReview from '#models/catalog/product_review'
 import ProductVariant from '#models/catalog/product_variant'
 import type { DateTime } from 'luxon'
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
+import { inject } from '@adonisjs/core'
+import OrderQueueService from '#services/seller/order_queue_service'
 
 /** How many examples each group lists; its count still covers every match. */
 const previewLimit = 3
@@ -24,25 +26,29 @@ type OrderQuery = ModelQueryBuilderContract<typeof Order>
 
 /**
  * Work waiting on staff, for the dashboard home. Counts are a summary only: the order, inbox,
- * review, and stock screens still enforce their own guards before anything changes.
+ * review, and stock screens still enforce their own guards before anything changes. Order groups
+ * use the same stages as the order list's queue tabs, so their counts match.
  */
+@inject()
 export default class AttentionService {
+  constructor(private queue: OrderQueueService) {}
+
   async summarize() {
     const [toPack, toShip, paymentReview, unreadChats, pendingReviews, outOfStock] =
       await Promise.all([
         this.orders(
-          (query) => this.toPack(query),
+          (query) => this.queue.toPack(query),
           'processed_at',
           (order) => order.paidAt ?? order.processedAt
         ),
         this.orders(
-          (query) => this.toShip(query),
+          (query) => this.queue.toShip(query),
           'processed_at',
           (order) => order.shipments[0]?.packingAt ?? null,
           (query) => query.preload('shipments')
         ),
         this.orders(
-          (query) => this.paymentReview(query),
+          (query) => this.queue.needsAttention(query),
           'updated_at',
           (order) => order.updatedAt
         ),
@@ -51,48 +57,6 @@ export default class AttentionService {
         this.outOfStock(),
       ])
     return { toPack, toShip, paymentReview, unreadChats, pendingReviews, outOfStock }
-  }
-
-  /** Paid orders whose parcel has not been packed yet, including manually recorded orders. */
-  private toPack(query: OrderQuery) {
-    query.where((scope) =>
-      scope
-        .where((online) =>
-          online
-            .where('source', 'online')
-            .where('lifecycle_state', 'confirmed')
-            .where('financial_status', 'paid')
-            .whereHas('shipments', (shipments) => shipments.where('state', 'pending'))
-        )
-        .orWhere((manual) =>
-          manual
-            .where('source', 'legacy')
-            .where('financial_status', 'paid')
-            .whereIn('fulfillment_status', ['unfulfilled', 'partial'])
-            .whereNull('cancelled_at')
-        )
-    )
-  }
-
-  /** Packed parcels waiting for a carrier and tracking details. */
-  private toShip(query: OrderQuery) {
-    query
-      .where('source', 'online')
-      .whereHas('shipments', (shipments) => shipments.where('state', 'packing'))
-  }
-
-  /** Orders whose payment or refund outcome needs a person to reconcile it. */
-  private paymentReview(query: OrderQuery) {
-    query.where((scope) =>
-      scope
-        .where('lifecycle_state', 'review_required')
-        .orWhereHas('attempts', (attempts) =>
-          attempts.where('needs_review', true).whereNot('state', 'paid')
-        )
-        .orWhereHas('refunds', (refunds) =>
-          refunds.where((refund) => refund.where('needs_review', true).orWhere('state', 'unknown'))
-        )
-    )
   }
 
   private async orders(

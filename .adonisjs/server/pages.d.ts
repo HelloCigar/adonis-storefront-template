@@ -24,7 +24,6 @@ declare module '@adonisjs/inertia/types' {
     'dashboard': ExtractProps<(typeof import('../../inertia/pages/dashboard.vue'))['default']>
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.vue'))['default']>
     'errors/server_error': ExtractProps<(typeof import('../../inertia/pages/errors/server_error.vue'))['default']>
-    'home': ExtractProps<(typeof import('../../inertia/pages/home.vue'))['default']>
     'inbox': ExtractProps<(typeof import('../../inertia/pages/inbox.vue'))['default']>
     'index': ExtractProps<(typeof import('../../inertia/pages/index.vue'))['default']>
     'pages/[handle]': ExtractProps<(typeof import('../../inertia/pages/pages/[handle].vue'))['default']>
@@ -45,7 +44,6 @@ declare module '@adonisjs/inertia/types' {
     'seller/users': ExtractProps<(typeof import('../../inertia/pages/seller/users.vue'))['default']>
     'seller/variants': ExtractProps<(typeof import('../../inertia/pages/seller/variants.vue'))['default']>
     'settings/index': ExtractProps<(typeof import('../../inertia/pages/settings/index.vue'))['default']>
-    'settings/notifications': ExtractProps<(typeof import('../../inertia/pages/settings/notifications.vue'))['default']>
     'settings/security': ExtractProps<(typeof import('../../inertia/pages/settings/security.vue'))['default']>
   }
 }

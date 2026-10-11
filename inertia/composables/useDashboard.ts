@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { ref, watch } from 'vue'
 import { createSharedComposable } from '@vueuse/core'
 import { useRouter } from '@adonisjs/inertia/vue'
 import { usePage } from '@inertiajs/vue3'
@@ -7,7 +6,6 @@ import { usePage } from '@inertiajs/vue3'
 const _useDashboard = () => {
   const router = useRouter()
   const page = usePage()
-  const isNotificationsSlideoverOpen = ref(false)
 
   defineShortcuts({
     'g-h': () => router.visit({ route: 'dashboard' }),
@@ -16,19 +14,7 @@ const _useDashboard = () => {
       if (page.props.permissions.manageUsers) router.visit({ route: 'seller.users.index' })
     },
     'g-s': () => router.visit({ route: 'settings' }),
-    'n': () => (isNotificationsSlideoverOpen.value = !isNotificationsSlideoverOpen.value),
   })
-
-  watch(
-    () => page.url,
-    () => {
-      isNotificationsSlideoverOpen.value = false
-    }
-  )
-
-  return {
-    isNotificationsSlideoverOpen,
-  }
 }
 
 export const useDashboard = createSharedComposable(_useDashboard)

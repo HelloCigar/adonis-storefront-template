@@ -6,40 +6,25 @@ import { usePage } from '@inertiajs/vue3'
 const page = usePage()
 
 const links = [
-  [
-    {
-      label: 'General',
-      icon: 'i-lucide-user',
-      to: urlFor('settings'),
-      exact: true,
-    },
-    {
-      label: 'Notifications',
-      icon: 'i-lucide-bell',
-      to: urlFor('settings.notifications'),
-    },
-    {
-      label: 'Security',
-      icon: 'i-lucide-shield',
-      to: urlFor('settings.security'),
-    },
-  ],
-  [
-    {
-      label: 'Documentation',
-      icon: 'i-lucide-book-open',
-      to: 'https://ui.nuxt.com/docs/getting-started/installation/vue',
-      target: '_blank',
-    },
-  ],
-] satisfies NavigationMenuItem[][]
+  {
+    label: 'General',
+    icon: 'i-lucide-user',
+    to: urlFor('settings'),
+    exact: true,
+  },
+  {
+    label: 'Security',
+    icon: 'i-lucide-shield',
+    to: urlFor('settings.security'),
+  },
+] satisfies NavigationMenuItem[]
 </script>
 
 <template>
   <UContainer v-if="!page.props.permissions.manageStore" class="py-8 sm:py-12">
     <div class="max-w-2xl mx-auto space-y-6">
       <h1 class="text-2xl font-semibold text-highlighted">Account settings</h1>
-      <UNavigationMenu :items="links[0]" highlight />
+      <UNavigationMenu :items="links" highlight />
       <slot />
     </div>
   </UContainer>

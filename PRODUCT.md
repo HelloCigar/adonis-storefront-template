@@ -50,7 +50,7 @@ Stock adjustments: staff open a tracked variant's stock page to add received or 
 
 ## Brand Commitments
 
-The final product and store name are undecided. MediaBunny appears in mail configuration, while Nuxt Shopify and Nuxt UI demo copy remain in the storefront. These are existing implementation references, not a confirmed brand commitment.
+The storefront header and footer, emails, and invoices all take the store name from `MAIL_FROM_NAME`, which defaults to MediaBunny. The final product and store name are still undecided, so this default is not a confirmed brand commitment.
 
 Authentication uses the user-approved neutral label "Your store" until a final store name is chosen. It replaces framework branding and is also the default document-title suffix when `VITE_APP_NAME` is unset.
 
