@@ -61,7 +61,6 @@ onUnmounted(() => {
     >
       <UButton
         label="Save changes"
-        color="neutral"
         type="submit"
         :loading="processing"
         :disabled="processing"
@@ -107,7 +106,13 @@ onUnmounted(() => {
       >
         <div class="flex flex-wrap items-center gap-3">
           <UAvatar :src="avatarUrl" :text="page.props.user?.initials" :alt="name" size="lg" />
-          <UButton type="button" label="Choose image" color="neutral" @click="fileRef?.click()" />
+          <UButton
+            type="button"
+            label="Choose image"
+            color="neutral"
+            variant="outline"
+            @click="fileRef?.click()"
+          />
           <UButton
             v-if="page.props.user?.avatarUrl"
             type="button"

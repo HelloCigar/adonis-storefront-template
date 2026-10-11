@@ -43,7 +43,6 @@ const orderRows = (group: Attention['toPack']): Row[] =>
 
 const groups = computed<Group[]>(() => {
   const { paymentReview, toPack, toShip, unreadChats, pendingReviews, outOfStock } = props.attention
-  const ordersUrl = urlFor('seller.orders.index')
 
   return [
     {
@@ -54,8 +53,8 @@ const groups = computed<Group[]>(() => {
       icon: 'i-lucide-circle-alert',
       tone: 'warning',
       count: paymentReview.count,
-      viewAll: ordersUrl,
-      viewAllLabel: 'View all orders',
+      viewAll: urlFor('seller.orders.index', {}, { qs: { stage: 'needs_attention' } }),
+      viewAllLabel: 'View all in Orders',
       rows: orderRows(paymentReview),
     },
     {
@@ -66,8 +65,8 @@ const groups = computed<Group[]>(() => {
       icon: 'i-lucide-package-open',
       tone: 'primary',
       count: toPack.count,
-      viewAll: ordersUrl,
-      viewAllLabel: 'View all orders',
+      viewAll: urlFor('seller.orders.index', {}, { qs: { stage: 'to_pack' } }),
+      viewAllLabel: 'View all in Orders',
       rows: orderRows(toPack),
     },
     {
@@ -78,8 +77,8 @@ const groups = computed<Group[]>(() => {
       icon: 'i-lucide-truck',
       tone: 'primary',
       count: toShip.count,
-      viewAll: ordersUrl,
-      viewAllLabel: 'View all orders',
+      viewAll: urlFor('seller.orders.index', {}, { qs: { stage: 'to_ship' } }),
+      viewAllLabel: 'View all in Orders',
       rows: orderRows(toShip),
     },
     {

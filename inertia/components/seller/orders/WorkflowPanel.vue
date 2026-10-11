@@ -4,6 +4,7 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
 import { orderLabel, orderMoney, orderDate, operationMessage } from './presentation'
+import { statusColor, statusLabel } from '~/utils/status'
 import PickList from './PickList.vue'
 import ShippingAddress from './ShippingAddress.vue'
 import CancellationSection from './CancellationSection.vue'
@@ -81,7 +82,7 @@ const nextAction = computed(() => {
   if (closed.value)
     return {
       key: 'closed',
-      title: `Order ${label(props.order.lifecycleState).toLowerCase()}`,
+      title: `Order ${statusLabel('order', props.order.lifecycleState).toLowerCase()}`,
       description:
         'Fulfillment is closed. Outstanding refunds and customer updates stay visible below.',
       icon: 'i-lucide-circle-slash',
@@ -162,8 +163,7 @@ const stages = computed(() => {
       title: 'Payment',
       icon: 'i-lucide-credit-card',
       done: captured,
-      doneText:
-        props.order.financialStatus === 'paid' ? 'Paid' : label(props.order.financialStatus),
+      doneText: statusLabel('payment', props.order.financialStatus),
       currentText: 'Awaiting payment',
       blockedText: paymentReview.value ? 'Needs review' : 'Not verified',
     },
@@ -598,7 +598,8 @@ const detailValue = (value: unknown) =>
             <div class="flex flex-wrap justify-between gap-2 text-sm">
               <h3 class="font-medium text-highlighted">Payment checkout</h3>
               <span class="text-muted"
-                >{{ label(order.attempt.state) }} · {{ label(order.attempt.provider) }}</span
+                >{{ statusLabel('checkout', order.attempt.state) }} ·
+                {{ label(order.attempt.provider) }}</span
               >
             </div>
             <p v-if="cardReconciles" class="text-sm text-default mt-3">
@@ -706,14 +707,8 @@ const detailValue = (value: unknown) =>
               </h3>
               <UBadge
                 class="text-default"
-                :label="label(refund.state)"
-                :color="
-                  refund.state === 'succeeded'
-                    ? 'success'
-                    : refund.needsReview || refund.state === 'failed'
-                      ? 'warning'
-                      : 'neutral'
-                "
+                :label="statusLabel('refund', refund.state)"
+                :color="refund.needsReview ? 'warning' : statusColor('refund', refund.state)"
                 variant="subtle"
               />
             </div>
