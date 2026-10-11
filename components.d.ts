@@ -70,6 +70,7 @@ declare module 'vue' {
     ProductReviewsSummary: typeof import('./inertia/components/product/reviews/Summary.vue')['default']
     ProductSlider: typeof import('./inertia/components/product/Slider.vue')['default']
     SearchModal: typeof import('./inertia/components/search/Modal.vue')['default']
+    SellerBackButton: typeof import('./inertia/components/seller/BackButton.vue')['default']
     SellerCollectionsDeleteModal: typeof import('./inertia/components/seller/collections/DeleteModal.vue')['default']
     SellerCollectionsEditModal: typeof import('./inertia/components/seller/collections/EditModal.vue')['default']
     SellerCollectionsTable: typeof import('./inertia/components/seller/collections/Table.vue')['default']
