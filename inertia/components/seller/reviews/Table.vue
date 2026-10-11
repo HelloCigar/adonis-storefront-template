@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { Form, Link, useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
-import type { TableColumn, TabsItem } from '@nuxt/ui'
+import type { ButtonProps, TableColumn, TabsItem } from '@nuxt/ui'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 
 type Status = 'pending' | 'approved' | 'hidden' | 'all'
 
@@ -26,12 +27,6 @@ const statusBadges = {
   approved: { label: 'Approved', color: 'success' },
   hidden: { label: 'Hidden', color: 'neutral' },
 } as const
-const emptyMessages: Record<Status, string> = {
-  pending: 'No pending reviews.',
-  approved: 'No approved reviews.',
-  hidden: 'No hidden reviews.',
-  all: 'No reviews yet.',
-}
 
 const tabItems = computed<TabsItem[]>(() => [
   { label: 'Pending', value: 'pending', badge: props.counts.pending },
@@ -49,6 +44,56 @@ const selectedTab = computed({
     if (status === props.filters.status) return
     router.visit({ route: 'seller.reviews.index', qs: { status: status as Status } })
   },
+})
+const total = computed(() => props.counts.pending + props.counts.approved + props.counts.hidden)
+const noReviews = {
+  icon: 'i-lucide-star',
+  title: 'No reviews yet',
+  description:
+    'Customers can review a product once their order is delivered. New reviews wait here for your approval before they show in the shop.',
+}
+const emptyProps = computed<{
+  icon: string
+  title: string
+  description: string
+  tone?: 'primary' | 'success'
+  actions?: ButtonProps[]
+}>(() => {
+  switch (props.filters.status) {
+    case 'pending':
+      return {
+        tone: 'success',
+        icon: 'i-lucide-check',
+        title: 'You’re all caught up',
+        description: 'New reviews will wait here for your approval.',
+      }
+    case 'approved':
+      return {
+        icon: 'i-lucide-star',
+        title: 'No approved reviews yet',
+        description: 'Approve a pending review to show it on the product page.',
+        actions:
+          props.counts.pending > 0
+            ? [
+                {
+                  label: 'Review pending',
+                  icon: 'i-lucide-arrow-right',
+                  color: 'neutral',
+                  variant: 'outline',
+                  onClick: () => (selectedTab.value = 'pending'),
+                },
+              ]
+            : undefined,
+      }
+    case 'hidden':
+      return {
+        icon: 'i-lucide-eye-off',
+        title: 'No hidden reviews',
+        description: 'Reviews you hide from the shop are kept here.',
+      }
+    default:
+      return noReviews
+  }
 })
 const visitPage = (page: number) =>
   router.visit({
@@ -78,7 +123,8 @@ const columns: TableColumn<Data.Seller.Review>[] = [
       <p class="text-sm text-muted">
         Approve or hide customer reviews before they show in the shop.
       </p>
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <ListEmpty v-if="!total" v-bind="noReviews" />
+      <div v-else class="flex flex-wrap items-center justify-between gap-3">
         <UTabs
           v-model="selectedTab"
           :items="tabItems"
@@ -88,6 +134,7 @@ const columns: TableColumn<Data.Seller.Review>[] = [
         />
       </div>
       <UTable
+        v-if="total"
         :data="reviews.data"
         :columns="columns"
         class="shrink-0"
@@ -206,10 +253,7 @@ const columns: TableColumn<Data.Seller.Review>[] = [
           </div>
         </template>
         <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-star" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">{{ emptyMessages[filters.status] }}</p>
-          </div>
+          <ListEmpty v-bind="emptyProps" variant="naked" />
         </template>
       </UTable>
       <div

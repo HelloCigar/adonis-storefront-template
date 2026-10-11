@@ -6,6 +6,7 @@ import StatusForm from '~/components/seller/orders/StatusForm.vue'
 import WorkflowPanel from '~/components/seller/orders/WorkflowPanel.vue'
 import { provideOrderInteraction } from '~/components/seller/orders/interaction'
 import { orderDate, orderLabel, orderMoney } from '~/components/seller/orders/presentation'
+import { statusColor, statusLabel } from '~/utils/status'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
 import { urlFor } from '~/client'
@@ -116,27 +117,21 @@ const columns: TableColumn<Data.Checkout.OrderLineItem>[] = [
               <UBadge
                 v-if="order.source === 'online'"
                 class="text-default"
-                :label="label(order.lifecycleState)"
-                :color="
-                  order.lifecycleState === 'review_required'
-                    ? 'warning'
-                    : ['cancelled', 'expired'].includes(order.lifecycleState)
-                      ? 'error'
-                      : 'neutral'
-                "
+                :label="statusLabel('order', order.lifecycleState)"
+                :color="statusColor('order', order.lifecycleState)"
                 variant="subtle"
               />
               <template v-else>
                 <UBadge
                   class="text-default"
-                  :label="label(order.financialStatus)"
-                  :color="order.financialStatus === 'paid' ? 'success' : 'neutral'"
+                  :label="statusLabel('payment', order.financialStatus)"
+                  :color="statusColor('payment', order.financialStatus)"
                   variant="subtle"
                 />
                 <UBadge
                   class="text-default"
-                  :label="label(order.fulfillmentStatus)"
-                  color="neutral"
+                  :label="statusLabel('fulfillment', order.fulfillmentStatus)"
+                  :color="statusColor('fulfillment', order.fulfillmentStatus)"
                   variant="subtle"
                 />
                 <UBadge

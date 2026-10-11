@@ -100,7 +100,6 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await browserContext.loginAs(staff)
     await page.goto(`/seller/orders/${order.id}`)
     await page.getByRole('heading', { name: 'Ready to pack', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).click()
     await page.waitForLoadState('networkidle')
     await mkdir('.impeccable/review', { recursive: true })
     await page.setViewportSize({ width: 1280, height: 900 })
@@ -175,7 +174,6 @@ test.group('Guest checkout and store fulfillment', (group) => {
       0
     )
     await page.getByRole('button', { name: 'Recheck payment with provider', exact: true }).waitFor()
-    await page.getByRole('button', { name: 'Accept', exact: true }).click()
     await page.waitForLoadState('networkidle')
     await mkdir('.impeccable/review', { recursive: true })
     await page.setViewportSize({ width: 1280, height: 900 })

@@ -4,6 +4,7 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { urlFor } from '~/client'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 const props = defineProps<{ posts: Data.Seller.Post[] }>()
 const emit = defineEmits<{ delete: [row: Data.Seller.Post] }>()
 const title = 'Blog'
@@ -85,6 +86,10 @@ const rows = computed(() =>
 watch([search, statusFilter, () => props.posts], () => {
   pagination.value.pageIndex = 0
 })
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = 'all'
+}
 const UButton = resolveComponent('UButton')
 const columns = computed<TableColumn<Data.Seller.Post>[]>(() =>
   resourceColumns
@@ -144,7 +149,14 @@ function rowActions(row: Data.Seller.Post): DropdownMenuItem[] {
       <div>
         <p class="text-sm text-muted">{{ description }}</p>
       </div>
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <ListEmpty
+        v-if="!posts.length"
+        icon="i-lucide-newspaper"
+        title="Write your first blog post"
+        description="Posts show on the storefront blog once you publish them. Drafts stay private until then."
+        :actions="[{ label: 'New post', icon: 'i-lucide-plus', to: urlFor('seller.posts.create') }]"
+      />
+      <div v-else class="flex flex-wrap items-center justify-between gap-3">
         <UInput
           v-model="search"
           icon="i-lucide-search"
@@ -186,6 +198,7 @@ function rowActions(row: Data.Seller.Post): DropdownMenuItem[] {
         </div>
       </div>
       <UTable
+        v-if="posts.length"
         ref="table"
         v-model:pagination="pagination"
         v-model:column-visibility="columnVisibility"
@@ -213,20 +226,11 @@ function rowActions(row: Data.Seller.Post): DropdownMenuItem[] {
           </UDropdownMenu>
         </template>
         <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ noun }} found</p>
-            <p class="text-sm text-muted mt-1">
-              {{
-                search || statusFilter !== 'all'
-                  ? 'Try changing your search or filters.'
-                  : `Add your first ${singular} to get started.`
-              }}
-            </p>
-          </div>
+          <ListEmpty filtered :noun="noun" @clear="clearFilters" />
         </template>
       </UTable>
       <div
+        v-if="posts.length"
         class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4 mt-auto"
       >
         <p class="text-sm text-muted">
