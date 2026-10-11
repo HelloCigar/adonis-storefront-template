@@ -5,6 +5,7 @@ import { useRouter } from '@adonisjs/inertia/vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
+import BackButton from '~/components/seller/BackButton.vue'
 import DetailsForm from '~/components/seller/products/DetailsForm.vue'
 import MediaSection from '~/components/seller/products/MediaSection.vue'
 import DeleteImageModal from '~/components/seller/products/DeleteImageModal.vue'
@@ -63,13 +64,7 @@ function requestImageDelete(image: Data.Shared.Media) {
       <UDashboardNavbar :title="product.title">
         <template #leading>
           <UDashboardSidebarCollapse />
-          <UButton
-            icon="i-lucide-arrow-left"
-            color="neutral"
-            variant="ghost"
-            aria-label="Back to products"
-            :to="urlFor('seller.products.index')"
-          />
+          <BackButton :to="urlFor('seller.products.index')" label="products" />
         </template>
         <template #right>
           <UButton

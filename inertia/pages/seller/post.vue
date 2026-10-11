@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
-import { Link } from '@adonisjs/inertia/vue'
+import BackButton from '~/components/seller/BackButton.vue'
 import type { Data } from '@generated/data'
 import type { JSONContent } from '@tiptap/vue-3'
 import { urlFor } from '~/client'
@@ -131,7 +131,10 @@ onBeforeUnmount(() => {
   <UDashboardPanel id="post">
     <template #header>
       <UDashboardNavbar :title="post ? 'Edit post' : 'New post'">
-        <template #leading><UDashboardSidebarCollapse /></template>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+          <BackButton :to="urlFor('seller.posts.index')" label="Blog" />
+        </template>
         <template #right>
           <UBadge
             v-if="statusBadge"
@@ -150,11 +153,6 @@ onBeforeUnmount(() => {
       </UDashboardNavbar>
     </template>
     <template #body>
-      <Link
-        route="seller.posts.index"
-        class="inline-flex items-center gap-1 text-sm text-primary w-fit"
-        ><UIcon name="i-lucide-arrow-left" class="size-4" />Blog</Link
-      >
       <form
         class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start"
         @submit.prevent="save"
