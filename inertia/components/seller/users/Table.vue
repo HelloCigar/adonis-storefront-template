@@ -3,6 +3,7 @@ import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 import { statusColor, statusLabel } from '~/utils/status'
 const props = defineProps<{ users: Data.Seller.User[] }>()
 const emit = defineEmits<{
@@ -57,6 +58,10 @@ const rows = computed(() =>
 watch([search, statusFilter, () => props.users], () => {
   pagination.value.pageIndex = 0
 })
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = 'all'
+}
 const UButton = resolveComponent('UButton')
 const columns = computed<TableColumn<Data.Seller.User>[]>(() =>
   resourceColumns
@@ -191,17 +196,7 @@ function rowActions(row: Data.Seller.User): DropdownMenuItem[] {
           </UDropdownMenu>
         </template>
         <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
-            <p class="text-sm text-muted mt-1">
-              {{
-                search || statusFilter !== 'all'
-                  ? 'Try changing your search or filters.'
-                  : `Add your first ${singular} to get started.`
-              }}
-            </p>
-          </div>
+          <ListEmpty filtered :noun="title.toLowerCase()" @clear="clearFilters" />
         </template>
       </UTable>
       <div
