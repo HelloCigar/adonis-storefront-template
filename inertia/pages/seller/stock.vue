@@ -37,10 +37,10 @@ const stats = computed(() => {
     <template #body>
       <div>
         <Link
-          route="seller.variants.index"
-          :params="{ productId: product.id }"
+          route="seller.products.show"
+          :params="{ id: product.id }"
           class="inline-flex items-center gap-1 text-sm text-primary mb-3"
-          ><UIcon name="i-lucide-arrow-left" class="size-4" />{{ product.title }} variants</Link
+          ><UIcon name="i-lucide-arrow-left" class="size-4" />{{ product.title }}</Link
         >
         <h1 class="text-2xl font-semibold text-highlighted [overflow-wrap:anywhere]">
           {{ variant.title }}

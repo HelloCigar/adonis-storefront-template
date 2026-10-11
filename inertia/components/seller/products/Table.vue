@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed, h, ref, resolveComponent, useTemplateRef, watch } from 'vue'
+import { computed, h, onMounted, ref, resolveComponent, useTemplateRef, watch } from 'vue'
 import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
-import { useRouter } from '@adonisjs/inertia/vue'
+import { Link, useRouter } from '@adonisjs/inertia/vue'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 import { statusColor, statusLabel, statusOptions } from '~/utils/status'
 const router = useRouter()
 const props = defineProps<{ products: Data.Seller.Product[] }>()
 const emit = defineEmits<{
   create: []
-  edit: [row: Data.Seller.Product]
   delete: [row: Data.Seller.Product]
 }>()
 const title = 'Products'
@@ -20,16 +20,17 @@ const searchText = (row: Data.Seller.Product) =>
   `${row.title} ${row.handle} ${row.vendor || ''} ${row.productType || ''}`
 const status = (row: Data.Seller.Product) => row.status
 const badge = resolveComponent('UBadge')
+const stockFilters = [
+  { label: 'All stock', value: 'all' },
+  { label: 'Needs restock', value: 'restock' },
+  { label: 'Out of stock', value: 'out' },
+]
+const stockMatches: Record<string, string[]> = {
+  restock: ['out', 'some_out', 'low'],
+  out: ['out', 'some_out'],
+}
 const resourceColumns: TableColumn<Data.Seller.Product>[] = [
-  {
-    accessorKey: 'title',
-    header: 'Product',
-    cell: ({ row }) =>
-      h('div', [
-        h('p', { class: 'font-medium text-highlighted' }, row.original.title),
-        h('p', { class: 'text-xs text-muted' }, row.original.handle),
-      ]),
-  },
+  { accessorKey: 'title', header: 'Product' },
   {
     accessorKey: 'status',
     header: 'Status',
@@ -46,35 +47,46 @@ const resourceColumns: TableColumn<Data.Seller.Product>[] = [
   {
     id: 'stock',
     header: 'Stock',
-    cell: ({ row }) =>
-      row.original.variants?.some((variant) => variant.inventoryQuantity === null)
-        ? 'Untracked'
-        : row.original.variants?.reduce(
-            (total, variant) => total + (variant.inventoryQuantity || 0),
-            0
-          ) || 0,
+    accessorFn: (row) => row.stock?.available ?? undefined,
+    sortUndefined: 'last',
   },
 ]
 const table = useTemplateRef('table')
 const search = ref('')
 const statusFilter = ref('all')
+const stockFilter = ref('all')
 const pagination = ref({ pageIndex: 0, pageSize: 10 })
 const columnVisibility = ref({})
 const rows = computed(() =>
   props.products.filter(
     (row) =>
       searchText(row).toLowerCase().includes(search.value.toLowerCase()) &&
-      (statusFilter.value === 'all' || status(row) === statusFilter.value)
+      (statusFilter.value === 'all' || status(row) === statusFilter.value) &&
+      (stockFilter.value === 'all' ||
+        stockMatches[stockFilter.value]?.includes(row.stock?.level ?? ''))
   )
 )
-watch([search, statusFilter, () => props.products], () => {
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = 'all'
+  stockFilter.value = 'all'
+}
+watch([search, statusFilter, stockFilter, () => props.products], () => {
   pagination.value.pageIndex = 0
+})
+onMounted(() => {
+  const stock = new URL(window.location.href).searchParams.get('stock')
+  if (stock === 'out') stockFilter.value = 'out'
+  else if (stock === 'low') stockFilter.value = 'restock'
 })
 const UButton = resolveComponent('UButton')
 const columns = computed<TableColumn<Data.Seller.Product>[]>(() =>
   resourceColumns
     .map((column) => {
-      if ('accessorKey' in column && typeof column.header === 'string') {
+      if (
+        ('accessorKey' in column || 'accessorFn' in column) &&
+        typeof column.header === 'string'
+      ) {
         const label = column.header
         return {
           ...column,
@@ -92,20 +104,18 @@ const columns = computed<TableColumn<Data.Seller.Product>[]>(() =>
                     : 'i-lucide-arrow-up-down',
               onClick: () => item.toggleSorting(item.getIsSorted() === 'asc'),
             }),
-        }
+        } as TableColumn<Data.Seller.Product>
       }
       return column
     })
     .concat([{ id: 'actions', enableHiding: false }])
 )
+function openProduct(row: Data.Seller.Product) {
+  router.visit({ route: 'seller.products.show', routeParams: { id: row.id } })
+}
 function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
   return [
-    {
-      label: 'Manage variants',
-      icon: 'i-lucide-boxes',
-      onSelect: () =>
-        router.visit({ route: 'seller.variants.index', routeParams: { productId: row.id } }),
-    },
+    { label: 'Open product', icon: 'i-lucide-eye', onSelect: () => openProduct(row) },
     ...(row.status === 'active'
       ? [
           {
@@ -116,7 +126,6 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
           },
         ]
       : []),
-    { label: 'Edit product', icon: 'i-lucide-pencil', onSelect: () => emit('edit', row) },
     {
       label: 'Delete product',
       icon: 'i-lucide-trash',
@@ -156,6 +165,12 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
             aria-label="Filter status"
             class="min-w-36"
           />
+          <USelect
+            v-model="stockFilter"
+            :items="stockFilters"
+            aria-label="Filter stock"
+            class="min-w-40"
+          />
           <UDropdownMenu
             :items="
               table?.tableApi
@@ -190,7 +205,9 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
         :columns="columns"
         :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
         class="shrink-0"
+        :on-select="(_event, row) => openProduct(row.original)"
         :ui="{
+          tr: 'cursor-pointer',
           base: 'border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
@@ -199,6 +216,61 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
           separator: 'h-0',
         }"
       >
+        <template #title-cell="{ row }">
+          <div class="flex items-center gap-3">
+            <img
+              v-if="row.original.thumbnailUrl"
+              :src="row.original.thumbnailUrl"
+              alt=""
+              loading="lazy"
+              class="size-10 shrink-0 rounded-md object-cover ring-1 ring-default"
+            />
+            <div
+              v-else
+              class="flex size-10 shrink-0 items-center justify-center rounded-md bg-elevated ring-1 ring-default"
+            >
+              <UIcon name="i-lucide-image" class="size-5 text-dimmed" aria-hidden="true" />
+            </div>
+            <div class="min-w-0">
+              <Link
+                route="seller.products.show"
+                :params="{ id: row.original.id }"
+                class="block font-medium text-highlighted hover:underline"
+                >{{ row.original.title }}</Link
+              >
+              <p class="text-xs text-muted">{{ row.original.handle }}</p>
+            </div>
+          </div>
+        </template>
+        <template #stock-cell="{ row }">
+          <UBadge
+            v-if="row.original.stock?.level === 'out'"
+            label="Out of stock"
+            color="error"
+            variant="subtle"
+          />
+          <UBadge
+            v-else-if="row.original.stock?.level === 'some_out'"
+            :label="`${row.original.stock.outOfStock} of ${row.original.variants?.length ?? 0} sold out`"
+            color="warning"
+            variant="subtle"
+          />
+          <div v-else-if="row.original.stock?.level === 'low'" class="flex items-center gap-2">
+            <UBadge
+              :label="`${row.original.stock.lowStock} running low`"
+              color="warning"
+              variant="subtle"
+            />
+            <span class="text-xs text-muted">{{ row.original.stock.available }} in stock</span>
+          </div>
+          <span v-else-if="row.original.stock?.level === 'in_stock'">
+            {{ row.original.stock.available }} in stock
+          </span>
+          <span v-else-if="row.original.stock?.level === 'untracked'" class="text-muted">
+            Not tracked
+          </span>
+          <span v-else class="text-muted">No variants</span>
+        </template>
         <template #actions-cell="{ row }">
           <UDropdownMenu
             v-if="rowActions(row.original).length"
@@ -214,17 +286,21 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
           </UDropdownMenu>
         </template>
         <template #empty>
-          <div class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
-            <p class="text-sm text-muted mt-1">
-              {{
-                search || statusFilter !== 'all'
-                  ? 'Try changing your search or filters.'
-                  : `Add your first ${singular} to get started.`
-              }}
-            </p>
-          </div>
+          <ListEmpty
+            v-if="!products.length"
+            variant="naked"
+            icon="i-lucide-package"
+            title="No products yet"
+            description="Add your first product, then give it images and variants."
+            :actions="[
+              {
+                label: 'Add your first product',
+                icon: 'i-lucide-plus',
+                onClick: () => emit('create'),
+              },
+            ]"
+          />
+          <ListEmpty v-else filtered :noun="title.toLowerCase()" @clear="clearFilters" />
         </template>
       </UTable>
       <div

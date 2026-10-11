@@ -60,6 +60,7 @@ export type ScannedRoutes = {
     'session.destroy': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.products.store': { paramsTuple?: []; params?: {} }
+    'seller.products.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
@@ -134,6 +135,7 @@ export type ScannedRoutes = {
     'settings.members': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
+    'seller.products.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }
@@ -178,6 +180,7 @@ export type ScannedRoutes = {
     'settings.members': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
+    'seller.products.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.index': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
     'seller.stock_adjustments.index': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'variantId': ParamValue} }
     'seller.collections.index': { paramsTuple?: []; params?: {} }

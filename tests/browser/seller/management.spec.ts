@@ -35,33 +35,32 @@ test.group('Store management pages', (group) => {
       }
     })
     await page.getByRole('button', { name: 'Add product', exact: true }).click()
-    await page.getByLabel('Title', { exact: true }).fill('Browser Lamp')
-    await page.getByLabel('Handle', { exact: true }).fill('browser-lamp')
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    const creating = page.getByRole('dialog', { name: 'Add product', exact: true })
+    await creating.getByLabel('Title', { exact: true }).fill('Browser Lamp')
+    assert.equal(await creating.getByLabel('Handle', { exact: true }).inputValue(), 'browser-lamp')
+    await creating.getByRole('button', { name: 'Create product', exact: true }).click()
     await page.getByRole('button', { name: 'Add variant', exact: true }).waitFor()
     const product = await Product.findByOrFail('handle', 'browser-lamp')
-    await page.assertPath(`/seller/products/${product.id}/variants`)
+    await page.assertPath(`/seller/products/${product.id}`)
+    await page.getByText('No variants yet', { exact: true }).waitFor()
+
     await page.getByRole('button', { name: 'Add variant', exact: true }).click()
-    await page.getByLabel('Price', { exact: true }).fill('499')
-    await page.getByLabel('Stock quantity', { exact: true }).fill('10')
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    const adding = page.getByRole('dialog', { name: 'Add variant', exact: true })
+    await adding.getByLabel('Price', { exact: true }).fill('499')
+    await adding.getByLabel('Stock quantity', { exact: true }).fill('10')
+    await adding.getByRole('button', { name: 'Save', exact: true }).click()
     await page.getByRole('cell', { name: 'Default', exact: true }).first().waitFor()
     const variant = await product.related('variants').query().firstOrFail()
     assert.equal(variant.priceAmount, 499)
     assert.equal(variant.inventoryQuantity, 10)
-    await page.getByRole('button', { name: 'Images', exact: true }).click()
-    await page.assertDisabled(page.getByRole('button', { name: 'Upload images', exact: true }))
-    await page.getByLabel('Choose images', { exact: true }).setInputFiles({
+
+    await page.getByLabel('Add images', { exact: true }).setInputFiles({
       name: 'invalid.txt',
       mimeType: 'text/plain',
       buffer: Buffer.from('Not an image'),
     })
-    await page.getByRole('button', { name: 'Upload images', exact: true }).click()
-    await page
-      .getByRole('dialog', { name: 'Product images', exact: true })
-      .locator('[data-slot="error"]')
-      .waitFor()
-    await page.getByLabel('Choose images', { exact: true }).setInputFiles({
+    await page.locator('p[role="alert"]').waitFor()
+    await page.getByLabel('Add images', { exact: true }).setInputFiles({
       name: 'lamp.png',
       mimeType: 'image/png',
       buffer: Buffer.from(
@@ -69,43 +68,43 @@ test.group('Store management pages', (group) => {
         'base64'
       ),
     })
-    await page.getByRole('button', { name: 'Upload images', exact: true }).click()
     await page.getByRole('img', { name: 'lamp.png', exact: true }).waitFor()
-    await page.assertDisabled(page.getByRole('button', { name: 'Upload images', exact: true }))
-    assert.equal(await page.getByLabel('Choose images', { exact: true }).inputValue(), '')
+    assert.equal(await page.getByLabel('Add images', { exact: true }).inputValue(), '')
     await page.getByRole('button', { name: 'Remove image 1', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await page.getByRole('img', { name: 'lamp.png', exact: true }).waitFor({ state: 'detached' })
-    await page
-      .getByRole('dialog', { name: 'Product images', exact: true })
-      .getByRole('button', { name: 'Close', exact: true })
-      .click()
-    await page.getByRole('button', { name: 'Actions for Default', exact: true }).click()
-    await page.getByRole('menuitem', { name: 'Edit variant', exact: true }).click()
-    await page.getByLabel('Price', { exact: true }).fill('599')
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
-    await page.getByRole('dialog').waitFor({ state: 'detached' })
+
+    await page.getByRole('cell', { name: 'Default', exact: true }).first().click()
+    const editing = page.getByRole('dialog', { name: 'Edit variant', exact: true })
+    await editing.getByLabel('Price', { exact: true }).fill('599')
+    await editing.getByRole('button', { name: 'Save', exact: true }).click()
+    await editing.waitFor({ state: 'detached' })
     await variant.refresh()
     assert.equal(variant.priceAmount, 599)
-    await page.getByRole('link', { name: 'Products', exact: true }).last().click()
-    await page.getByRole('button', { name: /Actions for Browser Lamp/ }).click()
-    await page.getByRole('menuitem', { name: 'Manage variants', exact: true }).click()
-    await page.getByRole('cell', { name: 'Default', exact: true }).first().waitFor()
-    await page.assertPath(`/seller/products/${product.id}/variants`)
+
     await page.getByRole('button', { name: 'Actions for Default', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Delete variant', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
-    await page.getByText('No variants found', { exact: true }).waitFor()
-    await page.getByRole('link', { name: 'Products', exact: true }).last().click()
-    await page.getByRole('button', { name: /Actions for Browser Lamp/ }).click()
-    await page.getByRole('menuitem', { name: 'Edit product', exact: true }).click()
+    await page.getByText('No variants yet', { exact: true }).waitFor()
+
+    await page.assertDisabled(page.getByRole('button', { name: 'Save', exact: true }))
     await page.getByLabel('Title', { exact: true }).fill('Updated Lamp')
+    await page.getByText('Unsaved changes', { exact: true }).waitFor()
     await page.getByRole('button', { name: 'Save', exact: true }).click()
-    await page.getByText('Updated Lamp', { exact: true }).waitFor()
-    await page.getByRole('button', { name: /Actions for Updated Lamp/ }).click()
+    await page.getByRole('heading', { name: 'Updated Lamp', exact: true }).waitFor()
+    await page.getByText('Unsaved changes', { exact: true }).waitFor({ state: 'detached' })
+    await product.refresh()
+    assert.equal(product.title, 'Updated Lamp')
+
+    await page.getByRole('link', { name: 'Back to products', exact: true }).click()
+    await page.getByRole('cell', { name: 'Updated Lamp browser-lamp', exact: true }).waitFor()
+    await page.getByRole('cell', { name: 'No variants', exact: true }).click()
+    await page.assertPath(`/seller/products/${product.id}`)
+    await page.getByRole('button', { name: 'More product actions', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Delete product', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
-    await page.getByText('No products found', { exact: true }).waitFor()
+    await page.getByText('No products yet', { exact: true }).waitFor()
+    await page.assertPath('/seller/products')
     assert.isNull(await Product.find(product.id))
     assert.deepEqual(errors, [])
     assert.isAtLeast(requests.length, 6)

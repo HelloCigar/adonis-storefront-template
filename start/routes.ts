@@ -162,7 +162,7 @@ router
   .group(() => {
     router
       .resource('products', controllers.seller.Products)
-      .only(['index', 'store', 'update', 'destroy'])
+      .only(['index', 'store', 'show', 'update', 'destroy'])
     router
       .resource('products.variants', controllers.seller.Variants)
       .only(['index', 'store', 'update', 'destroy'])

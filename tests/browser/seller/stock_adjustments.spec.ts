@@ -7,7 +7,7 @@ import StockAdjustment from '#models/catalog/stock_adjustment'
 test.group('Adjusting variant stock', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('staff add stock from the variants page and see the recorded history', async ({
+  test('staff add stock from the product page and see the recorded history', async ({
     visit,
     browserContext,
     assert,
@@ -33,7 +33,7 @@ test.group('Adjusting variant stock', (group) => {
       position: 0,
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}/variants`)
+    const page = await visit(`/seller/products/${product.id}`)
     await page.getByRole('button', { name: 'Actions for Default MUG-1', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Adjust stock', exact: true }).click()
 

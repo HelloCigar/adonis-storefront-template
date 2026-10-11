@@ -1,12 +1,19 @@
 import { BaseTransformer } from '@adonisjs/core/transformers'
 import type { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
 
+/** Public URL for a product or avatar file served by `attachments.show`. */
+export function mediaUrl(link: AttachmentLinkModel) {
+  const attachment = link.attachment
+  return (
+    attachment.url ??
+    `/attachments/${encodeURIComponent(attachment.id)}/${encodeURIComponent(attachment.name)}`
+  )
+}
+
 export default class MediaTransformer extends BaseTransformer<AttachmentLinkModel> {
   toObject() {
     const attachment = this.resource.attachment
-    const url =
-      attachment.url ??
-      `/attachments/${encodeURIComponent(attachment.id)}/${encodeURIComponent(attachment.name)}`
+    const url = mediaUrl(this.resource)
     const altText = attachment.originalName
     const width = attachment.metadata?.dimension?.width
     const height = attachment.metadata?.dimension?.height

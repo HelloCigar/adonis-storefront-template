@@ -227,7 +227,7 @@ test.group('Stock adjustments', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .json(variantPayload)
-    created.assertRedirectsTo(`/seller/products/${item.id}/variants`)
+    created.assertRedirectsTo(`/seller/products/${item.id}`)
     const row = await item.related('variants').query().firstOrFail()
     const update = (inventoryQuantity: number | null, title = 'Variant') =>
       client
@@ -241,7 +241,7 @@ test.group('Stock adjustments', (group) => {
       [null, 'Variant'],
     ] as const) {
       const updated = await update(quantity, title)
-      updated.assertRedirectsTo(`/seller/products/${item.id}/variants`)
+      updated.assertRedirectsTo(`/seller/products/${item.id}`)
     }
 
     const untracked = await product('untracked-stock-product')
@@ -250,7 +250,7 @@ test.group('Stock adjustments', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .json({ ...variantPayload, inventoryQuantity: null })
-    blank.assertRedirectsTo(`/seller/products/${untracked.id}/variants`)
+    blank.assertRedirectsTo(`/seller/products/${untracked.id}`)
 
     const generated = await product('generated-stock-product')
     generated.optionDefinitions = [{ name: 'Color', values: ['Blue', 'Red'] }]
@@ -266,7 +266,7 @@ test.group('Stock adjustments', (group) => {
         inventoryQuantity: 4,
         availableForSale: true,
       })
-    generation.assertRedirectsTo(`/seller/products/${generated.id}/variants`)
+    generation.assertRedirectsTo(`/seller/products/${generated.id}`)
 
     const entries = await StockAdjustment.query().orderBy('id')
     assert.deepEqual(

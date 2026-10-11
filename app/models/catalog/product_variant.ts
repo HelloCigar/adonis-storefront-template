@@ -12,6 +12,11 @@ import { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
 import { beforeSave, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 
+/** Tracked variants with this many sellable units or fewer are flagged as running low. */
+export const lowStockThreshold = 5
+
+export type StockLevel = 'untracked' | 'out' | 'low' | 'in_stock'
+
 export default class ProductVariant extends ProductVariantSchema {
   @beforeSave()
   static setCombinationKey(variant: ProductVariant) {
@@ -23,6 +28,14 @@ export default class ProductVariant extends ProductVariantSchema {
     return this.inventoryQuantity === null
       ? null
       : this.inventoryQuantity - (this.inventoryReservedQuantity ?? 0)
+  }
+
+  /** Units held by pending orders count as unavailable, matching the dashboard's out of stock. */
+  get stockLevel(): StockLevel {
+    const available = this.quantityAvailable
+    if (available === null) return 'untracked'
+    if (available <= 0) return 'out'
+    return available <= lowStockThreshold ? 'low' : 'in_stock'
   }
 
   get isSellable() {

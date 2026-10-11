@@ -250,7 +250,7 @@ function save() {
             {{ form.errors.featuredMediaId }}
           </p>
           <p v-if="!images.length" class="mt-2 text-sm text-muted">
-            Upload product images using the Images button on the page, then assign one here.
+            Add product images in the Images section, then assign one here.
           </p>
         </fieldset>
         <UFormField name="availableForSale" :error="form.errors.availableForSale"
