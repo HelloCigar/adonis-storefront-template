@@ -7,6 +7,7 @@ import type { Data } from '@generated/data'
 const props = defineProps<{
   filter: 'all' | 'unread'
   threads: Data.Chat.Thread[]
+  openThread: Data.Chat.Thread | null
   conversation: Data.Chat.Conversation | null
 }>()
 
@@ -29,8 +30,17 @@ const threads = computed(() =>
   )
 )
 
+// A linked order opens even when the list leaves it out, such as an older order.
 const selectedThread = ref<Data.Chat.Thread | null>(
-  props.threads.find((thread) => thread.orderId === props.conversation?.orderId) ?? null
+  props.threads.find((thread) => thread.orderId === props.conversation?.orderId) ??
+    (props.conversation ? props.openThread : null)
+)
+
+// The header follows list refreshes, so a newly packed order shows its new step.
+const headerThread = computed(
+  () =>
+    threads.value.find((thread) => thread.orderId === selectedThread.value?.orderId) ??
+    selectedThread.value
 )
 
 const selectedTab = computed({
@@ -101,8 +111,8 @@ const isMobile = breakpoints.smaller('lg')
   </UDashboardPanel>
 
   <InboxMail
-    v-if="selectedThread && !isMobile"
-    :thread="selectedThread"
+    v-if="headerThread && !isMobile"
+    :thread="headerThread"
     :conversation="conversation"
     @close="selectedThread = null"
   />
@@ -113,8 +123,8 @@ const isMobile = breakpoints.smaller('lg')
   <USlideover v-if="isMobile" v-model:open="isMailPanelOpen">
     <template #content>
       <InboxMail
-        v-if="selectedThread"
-        :thread="selectedThread"
+        v-if="headerThread"
+        :thread="headerThread"
         :conversation="conversation"
         @close="selectedThread = null"
       />

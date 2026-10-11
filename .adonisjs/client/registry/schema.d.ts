@@ -619,18 +619,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/members_controller').default['index']>>>
     }
   }
-  'settings.notifications': {
-    methods: ["GET","HEAD"]
-    pattern: '/settings/notifications'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/notifications_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/notifications_controller').default['index']>>>
-    }
-  }
   'settings.security': {
     methods: ["GET","HEAD"]
     pattern: '/settings/security'

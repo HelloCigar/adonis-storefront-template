@@ -312,12 +312,6 @@ const routes = {
     tokens: [{"old":"/settings/members","type":0,"val":"settings","end":""},{"old":"/settings/members","type":0,"val":"members","end":""}],
     types: placeholder as Registry['settings.members']['types'],
   },
-  'settings.notifications': {
-    methods: ["GET","HEAD"],
-    pattern: '/settings/notifications',
-    tokens: [{"old":"/settings/notifications","type":0,"val":"settings","end":""},{"old":"/settings/notifications","type":0,"val":"notifications","end":""}],
-    types: placeholder as Registry['settings.notifications']['types'],
-  },
   'settings.security': {
     methods: ["GET","HEAD"],
     pattern: '/settings/security',

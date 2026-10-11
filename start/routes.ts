@@ -148,9 +148,6 @@ router
       .as('settings.avatar.destroy')
     router.get('/settings/members', [controllers.settings.Members, 'index']).as('settings.members')
     router
-      .get('/settings/notifications', [controllers.settings.Notifications, 'index'])
-      .as('settings.notifications')
-    router
       .get('/settings/security', [controllers.settings.Security, 'show'])
       .as('settings.security')
     router

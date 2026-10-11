@@ -110,7 +110,6 @@ export interface ApiDefinition {
       destroy: typeof routes['settings.avatar.destroy']
     }
     members: typeof routes['settings.members']
-    notifications: typeof routes['settings.notifications']
     security: typeof routes['settings.security']
     password: {
       update: typeof routes['settings.password.update']

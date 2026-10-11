@@ -18,8 +18,20 @@ export const maxImagesPerMessage = 4
 export const inboxFilters = ['all', 'unread'] as const
 export type InboxFilter = (typeof inboxFilters)[number]
 
+/** Where an order stands, in the words staff use in the inbox header and order queue. */
+export type ChatOrderStage =
+  | 'awaiting_payment'
+  | 'needs_attention'
+  | 'to_pack'
+  | 'to_ship'
+  | 'in_transit'
+  | 'delivered'
+  | 'cancelled'
+  | 'expired'
+
 export interface ChatThread {
   order: Order
+  stage: ChatOrderStage
   lastMessage: OrderMessage | null
   unreadCount: number
 }
@@ -156,16 +168,8 @@ export default class OrderChatService {
    * left that state. Most recent conversation first, then newest orders.
    */
   async threads(filter: InboxFilter = 'all'): Promise<ChatThread[]> {
-    const query = Order.query()
-      .whereNotNull('user_id')
+    const query = this.threadQuery()
       .where((scope) => scope.where('lifecycle_state', 'confirmed').orHas('messages'))
-      .withAggregate('messages', (messages) => messages.max('created_at').as('last_message_at'))
-      .withCount('messages', (messages) =>
-        messages.where('sender_role', 'customer').whereNull('read_at').as('unread_count')
-      )
-      .preload('user')
-      // The latest message per order, still in one preload query.
-      .preload('messages', (messages) => messages.groupOrderBy('id', 'desc').groupLimit(1))
       .orderByRaw('last_message_at IS NULL, last_message_at DESC, orders.id DESC')
       .limit(threadLimit)
     if (filter === 'unread') {
@@ -173,13 +177,81 @@ export default class OrderChatService {
         messages.where('sender_role', 'customer').whereNull('read_at')
       )
     }
-
     const orders = await query
-    return orders.map((order) => ({
+    return orders.map((order) => this.toThread(order))
+  }
+
+  /**
+   * One order's thread, even when the inbox list leaves it out (an older order, or a
+   * cancelled one nobody wrote in). Access is the caller's responsibility.
+   */
+  async thread(order: Pick<Order, 'id'>): Promise<ChatThread | null> {
+    const found = await this.threadQuery().where('orders.id', order.id).first()
+    return found ? this.toThread(found) : null
+  }
+
+  /** Customer messages staff have not opened yet. */
+  async unreadCount(order: Order) {
+    const counted = await order
+      .related('messages')
+      .query()
+      .where('sender_role', 'customer')
+      .whereNull('read_at')
+      .count('* as total')
+      .first()
+    return Number(counted?.$extras.total ?? 0)
+  }
+
+  /**
+   * The fulfillment step an order is on. Online orders follow their shipment; manually
+   * recorded orders only have their payment and fulfillment statuses to go on.
+   */
+  stage(order: Order): ChatOrderStage {
+    const state = order.lifecycleState
+    if (state === 'review_required') return 'needs_attention'
+    if (state === 'cancelled' || state === 'expired') return state
+    if (order.source === 'legacy') {
+      if (order.cancelledAt) return 'cancelled'
+      if (order.fulfillmentStatus === 'fulfilled') return 'delivered'
+      return order.financialStatus === 'paid' ? 'to_pack' : 'awaiting_payment'
+    }
+    if (state === 'pending_payment') return 'awaiting_payment'
+    switch (order.shipments?.[0]?.state) {
+      case 'packing':
+        return 'to_ship'
+      case 'shipped':
+        return 'in_transit'
+      case 'delivered':
+        return 'delivered'
+      case 'cancelled':
+        return 'cancelled'
+      default:
+        return 'to_pack'
+    }
+  }
+
+  private threadQuery() {
+    return (
+      Order.query()
+        .whereNotNull('user_id')
+        .withAggregate('messages', (messages) => messages.max('created_at').as('last_message_at'))
+        .withCount('messages', (messages) =>
+          messages.where('sender_role', 'customer').whereNull('read_at').as('unread_count')
+        )
+        .preload('user')
+        .preload('shipments', (shipments) => shipments.groupOrderBy('id', 'desc').groupLimit(1))
+        // The latest message per order, still in one preload query.
+        .preload('messages', (messages) => messages.groupOrderBy('id', 'desc').groupLimit(1))
+    )
+  }
+
+  private toThread(order: Order): ChatThread {
+    return {
       order,
+      stage: this.stage(order),
       lastMessage: order.messages[0] ?? null,
       unreadCount: Number(order.$extras.unread_count ?? 0),
-    }))
+    }
   }
 
   /** Matches how Lucid stores DateTime columns, so raw comparisons sort correctly. */

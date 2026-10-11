@@ -45,7 +45,6 @@ test.group('Managing product options and images', (group) => {
     })
     await browserContext.loginAs(staff)
     const page = await visit(`/seller/products/${product.id}`)
-    await page.getByRole('button', { name: 'Opt out', exact: true }).click()
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('button', { name: 'Edit options', exact: true }).click()

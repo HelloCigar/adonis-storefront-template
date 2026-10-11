@@ -46,7 +46,6 @@ test.group('Order chat photos', (group) => {
     const page = await visit(`/inbox?order=${order.id}`)
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
-    await page.getByRole('button', { name: 'Accept', exact: true }).click()
     // The customer's messages sit on the other side under their name and initials.
     const customerMessage = page.locator('[data-from="theirs"]')
     await customerMessage.getByText('Can I get a shipping label?').waitFor()

@@ -33,6 +33,7 @@ import type SellerCollectionTransformer from '#transformers/seller/collection_tr
 import type SellerDiscountTransformer from '#transformers/seller/discount_transformer'
 import type SellerEmailPreviewTransformer from '#transformers/seller/email_preview_transformer'
 import type SellerOrderOperationsTransformer from '#transformers/seller/order_operations_transformer'
+import type SellerOrderQueueItemTransformer from '#transformers/seller/order_queue_item_transformer'
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
 import type SellerPostTransformer from '#transformers/seller/post_transformer'
 import type SellerProductTransformer from '#transformers/seller/product_transformer'
@@ -166,6 +167,10 @@ export namespace Data {
     export type OrderOperations = InferData<SellerOrderOperationsTransformer>
     export namespace OrderOperations {
       export type Variants = InferVariants<SellerOrderOperationsTransformer>
+    }
+    export type OrderQueueItem = InferData<SellerOrderQueueItemTransformer>
+    export namespace OrderQueueItem {
+      export type Variants = InferVariants<SellerOrderQueueItemTransformer>
     }
     export type Order = InferData<SellerOrderTransformer>
     export namespace Order {
