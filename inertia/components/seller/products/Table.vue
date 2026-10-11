@@ -4,6 +4,7 @@ import type { Data } from '@generated/data'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel, type HeaderContext } from '@tanstack/table-core'
 import { Link, useRouter } from '@adonisjs/inertia/vue'
+import ListEmpty from '~/components/seller/ListEmpty.vue'
 import { statusColor, statusLabel, statusOptions } from '~/utils/status'
 const router = useRouter()
 const props = defineProps<{ products: Data.Seller.Product[] }>()
@@ -65,9 +66,11 @@ const rows = computed(() =>
         stockMatches[stockFilter.value]?.includes(row.stock?.level ?? ''))
   )
 )
-const isFiltered = computed(
-  () => Boolean(search.value) || statusFilter.value !== 'all' || stockFilter.value !== 'all'
-)
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = 'all'
+  stockFilter.value = 'all'
+}
 watch([search, statusFilter, stockFilter, () => props.products], () => {
   pagination.value.pageIndex = 0
 })
@@ -283,24 +286,21 @@ function rowActions(row: Data.Seller.Product): DropdownMenuItem[] {
           </UDropdownMenu>
         </template>
         <template #empty>
-          <div v-if="!isFiltered && !products.length" class="py-12 text-center">
-            <UIcon name="i-lucide-package" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No products yet</p>
-            <p class="mt-1 text-sm text-muted">
-              Add your first product, then give it images and variants.
-            </p>
-            <UButton
-              label="Add your first product"
-              icon="i-lucide-plus"
-              class="mt-4"
-              @click="emit('create')"
-            />
-          </div>
-          <div v-else class="py-12 text-center">
-            <UIcon name="i-lucide-search" class="mx-auto mb-3 block size-8 text-dimmed" />
-            <p class="font-medium text-highlighted">No {{ title.toLowerCase() }} found</p>
-            <p class="mt-1 text-sm text-muted">Try changing your search or filters.</p>
-          </div>
+          <ListEmpty
+            v-if="!products.length"
+            variant="naked"
+            icon="i-lucide-package"
+            title="No products yet"
+            description="Add your first product, then give it images and variants."
+            :actions="[
+              {
+                label: 'Add your first product',
+                icon: 'i-lucide-plus',
+                onClick: () => emit('create'),
+              },
+            ]"
+          />
+          <ListEmpty v-else filtered :noun="title.toLowerCase()" @clear="clearFilters" />
         </template>
       </UTable>
       <div

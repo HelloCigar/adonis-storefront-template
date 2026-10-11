@@ -3,6 +3,7 @@ import { watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
+import { statusOptions } from '~/utils/status'
 const props = defineProps<{ product: Data.Seller.Product }>()
 function values(product: Data.Seller.Product) {
   return {
@@ -67,11 +68,7 @@ function discard() {
             description="Active products appear in the storefront once they have a variant."
             :error="form.errors.status"
           >
-            <USelect
-              v-model="form.status"
-              :items="['draft', 'active', 'archived']"
-              class="w-full"
-            />
+            <USelect v-model="form.status" :items="statusOptions('product')" class="w-full" />
           </UFormField>
         </UCard>
         <UCard>
