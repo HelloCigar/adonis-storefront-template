@@ -15,6 +15,8 @@ export const controllers = {
   auth: {
     EmailVerifications: () => import('#controllers/auth/email_verifications_controller'),
     NewAccount: () => import('#controllers/auth/new_account_controller'),
+    PasskeyLoginChallenges: () => import('#controllers/auth/passkey_login_challenges_controller'),
+    PasskeySession: () => import('#controllers/auth/passkey_session_controller'),
     PasswordResets: () => import('#controllers/auth/password_resets_controller'),
     Session: () => import('#controllers/auth/session_controller'),
   },
@@ -72,6 +74,8 @@ export const controllers = {
   settings: {
     Avatar: () => import('#controllers/settings/avatar_controller'),
     Members: () => import('#controllers/settings/members_controller'),
+    PasskeyRegistrationChallenges: () => import('#controllers/settings/passkey_registration_challenges_controller'),
+    Passkeys: () => import('#controllers/settings/passkeys_controller'),
     Security: () => import('#controllers/settings/security_controller'),
     Settings: () => import('#controllers/settings/settings_controller'),
     StorePolicies: () => import('#controllers/settings/store_policies_controller'),

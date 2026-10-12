@@ -415,6 +415,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/session_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'passkey_login_challenges.store': {
+    methods: ["POST"]
+    pattern: '/login/passkey/challenge'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/passkey_login_challenges_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/passkey_login_challenges_controller').default['store']>>>
+    }
+  }
+  'passkey_session.store': {
+    methods: ["POST"]
+    pattern: '/login/passkey'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/user').passkeyAuthenticationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').passkeyAuthenticationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/passkey_session_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/passkey_session_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'password_resets.create': {
     methods: ["GET","HEAD"]
     pattern: '/forgot-password'
@@ -833,6 +857,54 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/settings/user').updatePasswordValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/security_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/security_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'passkey_registration_challenges.store': {
+    methods: ["POST"]
+    pattern: '/settings/passkeys/challenge'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/passkey_registration_challenges_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/passkey_registration_challenges_controller').default['store']>>>
+    }
+  }
+  'passkeys.store': {
+    methods: ["POST"]
+    pattern: '/settings/passkeys'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/user').passkeyRegistrationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').passkeyRegistrationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'passkeys.update': {
+    methods: ["PUT"]
+    pattern: '/settings/passkeys/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/user').passkeyNameValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').passkeyNameValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'passkeys.destroy': {
+    methods: ["DELETE"]
+    pattern: '/settings/passkeys/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/passkeys_controller').default['destroy']>>>
     }
   }
   'session.destroy': {

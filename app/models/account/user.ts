@@ -1,9 +1,11 @@
+import env from '#start/env'
 import { UserSchema } from '#database/schema'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { withManagedEmail } from '@adonisplus/persona/email'
 import { withManagedPassword } from '@adonisplus/persona/password'
+import { DbPasskeysProvider, withPasskeyManagement } from '@adonisplus/persona/passkeys'
 import { attachment, type AttachmentRelation } from '@jrmc/adonis-attachment/lucid'
 import { beforeSave, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
@@ -20,14 +22,25 @@ export default class User extends compose(
   withAuthFinder(hash),
   withManagedEmail(),
   withManagedPassword(),
+  withPasskeyManagement({
+    rpName: env.get('MAIL_FROM_NAME', 'MediaBunny'),
+    rpId: env.get('PASSKEY_RP_ID'),
+    origins: env.get('PASSKEY_ORIGINS').split(','),
+  }),
   withUlidPrimaryKey()
 ) {
+  static passkeys = DbPasskeysProvider.forModel(User)
+
   declare role: UserRole
 
   /** Email lookups are exact, so every write path stores the canonical form. */
   @beforeSave()
   static normalizeEmail(user: User) {
     if (user.$dirty.email) user.email = user.email.trim().toLowerCase()
+  }
+
+  getPasskeyUserDetails() {
+    return { name: this.email, displayName: this.fullName ?? this.email }
   }
 
   get isStoreStaff() {

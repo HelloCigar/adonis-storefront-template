@@ -38,6 +38,8 @@ export type ScannedRoutes = {
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
+    'passkey_login_challenges.store': { paramsTuple?: []; params?: {} }
+    'passkey_session.store': { paramsTuple?: []; params?: {} }
     'password_resets.create': { paramsTuple?: []; params?: {} }
     'password_resets.store': { paramsTuple?: []; params?: {} }
     'account.show': { paramsTuple?: []; params?: {} }
@@ -73,6 +75,10 @@ export type ScannedRoutes = {
     'settings.members': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
     'settings.password.update': { paramsTuple?: []; params?: {} }
+    'passkey_registration_challenges.store': { paramsTuple?: []; params?: {} }
+    'passkeys.store': { paramsTuple?: []; params?: {} }
+    'passkeys.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'passkeys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'session.destroy': { paramsTuple?: []; params?: {} }
     'seller.products.index': { paramsTuple?: []; params?: {} }
     'seller.products.store': { paramsTuple?: []; params?: {} }
@@ -238,6 +244,8 @@ export type ScannedRoutes = {
     'payments.simulations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
+    'passkey_login_challenges.store': { paramsTuple?: []; params?: {} }
+    'passkey_session.store': { paramsTuple?: []; params?: {} }
     'password_resets.store': { paramsTuple?: []; params?: {} }
     'email_verifications.store': { paramsTuple?: []; params?: {} }
     'account.addresses.create': { paramsTuple?: []; params?: {} }
@@ -246,6 +254,8 @@ export type ScannedRoutes = {
     'chat.messages.store': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'settings.update': { paramsTuple?: []; params?: {} }
     'settings.password.update': { paramsTuple?: []; params?: {} }
+    'passkey_registration_challenges.store': { paramsTuple?: []; params?: {} }
+    'passkeys.store': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }
     'seller.products.store': { paramsTuple?: []; params?: {} }
     'seller.variants.store': { paramsTuple: [ParamValue]; params: {'productId': ParamValue} }
@@ -285,6 +295,7 @@ export type ScannedRoutes = {
     'reviews.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'launch_checklist.destroy': { paramsTuple?: []; params?: {} }
     'settings.avatar.destroy': { paramsTuple?: []; params?: {} }
+    'passkeys.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.images.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
@@ -299,6 +310,7 @@ export type ScannedRoutes = {
     'setup.update': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
     'settings.store_policies.update': { paramsTuple?: []; params?: {} }
     'settings.store.update': { paramsTuple?: []; params?: {} }
+    'passkeys.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

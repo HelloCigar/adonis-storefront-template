@@ -7,6 +7,7 @@
 import type { InferData, InferVariants } from '@adonisjs/core/types/transformers'
 import type { InferSharedProps, InferFlashData } from '@adonisjs/inertia/types'
 import type AccountCustomerAddressTransformer from '#transformers/account/customer_address_transformer'
+import type AccountPasskeyTransformer from '#transformers/account/passkey_transformer'
 import type AccountUserTransformer from '#transformers/account/user_transformer'
 import type CatalogCollectionCatalogueTransformer from '#transformers/catalog/collection_catalogue_transformer'
 import type CatalogCollectionTransformer from '#transformers/catalog/collection_transformer'
@@ -51,6 +52,10 @@ export namespace Data {
     export type CustomerAddress = InferData<AccountCustomerAddressTransformer>
     export namespace CustomerAddress {
       export type Variants = InferVariants<AccountCustomerAddressTransformer>
+    }
+    export type Passkey = InferData<AccountPasskeyTransformer>
+    export namespace Passkey {
+      export type Variants = InferVariants<AccountPasskeyTransformer>
     }
     export type User = InferData<AccountUserTransformer>
     export namespace User {

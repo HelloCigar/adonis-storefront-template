@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import type { Data } from '@generated/data'
 import { Form } from '@adonisjs/inertia/vue'
+import PasskeysSettings from '~/components/account/PasskeysSettings.vue'
+
+defineProps<{ passkeys: Data.Account.Passkey[] }>()
 
 const toast = useToast()
 
@@ -56,4 +60,6 @@ function onSaved() {
       />
     </Form>
   </UPageCard>
+
+  <PasskeysSettings :passkeys="passkeys" />
 </template>

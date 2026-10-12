@@ -13,6 +13,7 @@ import { searchValidator } from '#validators/catalog/search'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
 import StoreSetting from '#models/settings/store_setting'
 import StoreSettingPolicy from '#policies/settings/store_setting_policy'
+import type { PasskeySignal } from '@adonisplus/persona/passkeys/types'
 
 @inject()
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
@@ -73,6 +74,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
     return {
       success: session?.flashMessages.get('success') as string | undefined,
       error: session?.flashMessages.get('error') as string | undefined,
+      passkeySignals: session?.flashMessages.get('passkeySignals') as PasskeySignal[] | undefined,
     }
   }
 

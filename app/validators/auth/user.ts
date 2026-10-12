@@ -23,3 +23,36 @@ export const resetPasswordValidator = vine.create({
     confirmationField: 'passwordConfirmation',
   }),
 })
+
+export const passkeyRegistrationValidator = vine.create({
+  response: vine.object({
+    id: vine.string().maxLength(1364),
+    rawId: vine.string().maxLength(1364),
+    type: vine.literal('public-key'),
+    response: vine.object({
+      clientDataJSON: vine.string(),
+      attestationObject: vine.string(),
+      transports: vine.array(vine.string()).optional(),
+    }),
+    clientExtensionResults: vine.object({}),
+  }),
+})
+
+export const passkeyAuthenticationValidator = vine.create({
+  response: vine.object({
+    id: vine.string().maxLength(1364),
+    rawId: vine.string().maxLength(1364),
+    type: vine.literal('public-key'),
+    response: vine.object({
+      clientDataJSON: vine.string(),
+      authenticatorData: vine.string(),
+      signature: vine.string(),
+      userHandle: vine.string().optional(),
+    }),
+    clientExtensionResults: vine.object({}),
+  }),
+})
+
+export const passkeyNameValidator = vine.create({
+  name: vine.string().trim().minLength(1).maxLength(100),
+})

@@ -83,6 +83,12 @@ export interface ApiDefinition {
     store: typeof routes['session.store']
     destroy: typeof routes['session.destroy']
   }
+  passkeyLoginChallenges: {
+    store: typeof routes['passkey_login_challenges.store']
+  }
+  passkeySession: {
+    store: typeof routes['passkey_session.store']
+  }
   account: {
     show: typeof routes['account.show']
     logout: typeof routes['account.logout']
@@ -142,6 +148,14 @@ export interface ApiDefinition {
     password: {
       update: typeof routes['settings.password.update']
     }
+  }
+  passkeyRegistrationChallenges: {
+    store: typeof routes['passkey_registration_challenges.store']
+  }
+  passkeys: {
+    store: typeof routes['passkeys.store']
+    update: typeof routes['passkeys.update']
+    destroy: typeof routes['passkeys.destroy']
   }
   seller: {
     products: {

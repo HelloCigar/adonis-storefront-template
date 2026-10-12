@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AuthLayout from '~/layouts/auth.vue'
 import PasswordInput from '~/components/auth/PasswordInput.vue'
+import PasskeySignIn from '~/components/auth/PasskeySignIn.vue'
 import { Form, Link } from '@adonisjs/inertia/vue'
 
 const email = ref('')
@@ -38,7 +39,6 @@ const email = ref('')
             route="password_resets.create"
             component="auth/forgot_password"
             :page-props="{}"
-            class="text-sm font-medium text-highlighted underline underline-offset-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
           >
             Forgot password?
           </Link>
@@ -56,6 +56,10 @@ const email = ref('')
         class="mt-1 min-h-11 text-highlighted dark:text-inverted"
       />
     </Form>
+
+    <USeparator label="or" class="my-6" />
+
+    <PasskeySignIn />
 
     <p class="mt-6 text-center text-sm text-default">
       New here?
