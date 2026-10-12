@@ -73,8 +73,8 @@ test.group('Seller management', (group) => {
       '/seller/collections',
       '/seller/orders',
       '/seller/users',
-      '/seller/products/1',
-      '/seller/products/1/variants',
+      '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/variants',
       '/customers',
     ]) {
       const guest = await client.get(path).redirects(0)
@@ -85,20 +85,20 @@ test.group('Seller management', (group) => {
     }
     for (const [method, path] of [
       ['post', '/seller/products'],
-      ['patch', '/seller/products/1'],
-      ['delete', '/seller/products/1'],
+      ['patch', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+      ['delete', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
       ['post', '/seller/collections'],
-      ['patch', '/seller/collections/1'],
-      ['delete', '/seller/collections/1'],
-      ['post', '/seller/products/1/variants'],
-      ['patch', '/seller/products/1/variants/1'],
-      ['delete', '/seller/products/1/variants/1'],
-      ['post', '/seller/products/1/images'],
-      ['delete', '/seller/products/1/images/image-id'],
-      ['patch', '/seller/orders/1'],
+      ['patch', '/seller/collections/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+      ['delete', '/seller/collections/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+      ['post', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/variants'],
+      ['patch', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/variants/01ARZ3NDEKTSV4RRFFQ69G5FAW'],
+      ['delete', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/variants/01ARZ3NDEKTSV4RRFFQ69G5FAW'],
+      ['post', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/images'],
+      ['delete', '/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/images/image-id'],
+      ['patch', '/seller/orders/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
       ['post', '/seller/users'],
-      ['patch', '/seller/users/1'],
-      ['delete', '/seller/users/1'],
+      ['patch', '/seller/users/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+      ['delete', '/seller/users/01ARZ3NDEKTSV4RRFFQ69G5FAV'],
     ] as const) {
       const denied = await client[method](path)
         .loginAs(customer)
@@ -225,7 +225,10 @@ test.group('Seller management', (group) => {
     guest.assertHeader('location', '/login')
     const denied = await client.get(`/seller/products/${item.id}`).loginAs(customer).accept('json')
     denied.assertStatus(403)
-    const missing = await client.get('/seller/products/999999').loginAs(owner).accept('json')
+    const missing = await client
+      .get('/seller/products/01ARZ3NDEKTSV4RRFFQ69G5FAV')
+      .loginAs(owner)
+      .accept('json')
     missing.assertStatus(404)
     assert.isNotNull(await Product.find(item.id))
   })
@@ -286,8 +289,8 @@ test.group('Seller management', (group) => {
     const links = await withMedia.media.all()
     const page = await client.get('/seller/products').loginAs(owner).withInertia()
     page.assertInertiaComponent('seller/products')
-    const byId = new Map<number, { thumbnailUrl: string | null }>(
-      page.inertiaProps.products.map((item: { id: number; thumbnailUrl: string | null }) => [
+    const byId = new Map<string, { thumbnailUrl: string | null }>(
+      page.inertiaProps.products.map((item: { id: string; thumbnailUrl: string | null }) => [
         item.id,
         item,
       ])
@@ -338,7 +341,7 @@ test.group('Seller management', (group) => {
     const none = await ProductFactory.apply('published').merge({ title: 'none' }).create()
     const page = await client.get('/seller/products').loginAs(owner).withInertia()
     const stockOf = (item: Product) =>
-      page.inertiaProps.products.find((row: { id: number }) => row.id === item.id).stock
+      page.inertiaProps.products.find((row: { id: string }) => row.id === item.id).stock
     assert.deepEqual(stockOf(out), {
       level: 'out',
       available: 0,
@@ -539,7 +542,7 @@ test.group('Seller management', (group) => {
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
-      .json({ ...payload, productIds: [999999] })
+      .json({ ...payload, productIds: ['01ARZ3NDEKTSV4RRFFQ69G5FAV'] })
     invalid.assertStatus(422)
     const updated = await client
       .patch(`/seller/collections/${collection.id}`)
@@ -771,7 +774,7 @@ test.group('Seller management', (group) => {
     const list = await client.get('/seller/users').loginAs(admin).withInertia()
     assert.isTrue(list.inertiaProps.canAssignAdmin)
     const target = list.inertiaProps.users.find(
-      (user: { id: number }) => user.id === secondAdmin.id
+      (user: { id: string }) => user.id === secondAdmin.id
     )
     assert.deepEqual(target.can, { edit: true, delete: true })
     const selfUpdate = await client

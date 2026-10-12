@@ -9,7 +9,7 @@ export default class CatalogueService {
       .preload('variants', (query) => query.orderBy('position', 'asc'))
   }
 
-  newestProducts(limit: number, excludedProductId?: number) {
+  newestProducts(limit: number, excludedProductId?: string) {
     const query = this.publishedProducts().orderBy('published_at', 'desc').limit(limit)
     if (excludedProductId !== undefined) query.whereNot('id', excludedProductId)
     return query

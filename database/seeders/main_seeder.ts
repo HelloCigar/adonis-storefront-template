@@ -129,8 +129,8 @@ export default class MainSeeder extends BaseSeeder {
         const existingIds = new Set(existing.map((product) => product.id))
         const missing = Object.fromEntries(
           members
-            .map((product, position) => [product.id, { position }])
-            .filter(([id]) => !existingIds.has(Number(id)))
+            .map((product, position) => [product.id, { position }] as const)
+            .filter(([id]) => !existingIds.has(id))
         )
         if (Object.keys(missing).length) await collection.related('products').attach(missing)
       }

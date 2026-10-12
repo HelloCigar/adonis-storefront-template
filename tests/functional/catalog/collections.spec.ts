@@ -73,7 +73,7 @@ test.group('Collection queries', (group) => {
     first.assertStatus(200)
     const catalogue = first.inertiaProps.catalogue
     assert.deepEqual(
-      catalogue.products.map((product: { id: number }) => product.id),
+      catalogue.products.map((product: { id: string }) => product.id),
       products.slice(0, 12).map((product) => product.id)
     )
     assert.deepEqual(catalogue.vendors, ['First vendor', 'Last vendor'])
@@ -122,7 +122,7 @@ test.group('Collection queries', (group) => {
     response.assertStatus(200)
     const catalogue = response.inertiaProps.catalogue
     assert.deepEqual(
-      catalogue.products.map((product: { id: number }) => product.id),
+      catalogue.products.map((product: { id: string }) => product.id),
       [first.id, second.id]
     )
     assert.equal(catalogue.pageInfo.total, 2)
@@ -132,7 +132,7 @@ test.group('Collection queries', (group) => {
 
     const unavailable = await client.get('/collection/filtered?available=false').withInertia()
     assert.deepEqual(
-      unavailable.inertiaProps.catalogue.products.map((product: { id: number }) => product.id),
+      unavailable.inertiaProps.catalogue.products.map((product: { id: string }) => product.id),
       [soldOut.id]
     )
 

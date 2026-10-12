@@ -2,6 +2,7 @@ import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 import RefundLookupService from '#services/payments/refund_lookup_service'
 import { inject } from '@adonisjs/core'
+import { isUlid } from '#models/shared/with_ulid_primary_key'
 
 export default class CheckoutRetryRefundLookup extends BaseCommand {
   static commandName = 'checkout:retry-refund-lookup'
@@ -12,9 +13,9 @@ export default class CheckoutRetryRefundLookup extends BaseCommand {
 
   @inject()
   async run(lookups: RefundLookupService) {
-    const id = Number(this.lookupId)
-    if (!Number.isSafeInteger(id) || id <= 0) {
-      this.logger.error('Provide a positive lookup ID')
+    const id = this.lookupId.trim().toUpperCase()
+    if (!isUlid(id)) {
+      this.logger.error('Provide a lookup ID (a 26-character ULID)')
       this.exitCode = 1
       return
     }

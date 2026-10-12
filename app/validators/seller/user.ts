@@ -18,4 +18,4 @@ export const userCreateValidator = vine.create({
   ...userFields,
   password: newPassword(),
 })
-export const userUpdateValidator = vine.withMetaData<{ id: number }>().create({ ...userFields })
+export const userUpdateValidator = vine.withMetaData<{ id: string }>().create({ ...userFields })

@@ -14,7 +14,7 @@ export default class OrderNotification extends BaseMail {
     private kind: Notification['kind'],
     private accessUrl: string,
     private shipment: Shipment | null,
-    private notificationId: number,
+    private notificationId: string,
     private invoice: { filename: string; content: Buffer } | null = null
   ) {
     super()

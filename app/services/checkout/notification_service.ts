@@ -23,7 +23,7 @@ export default class NotificationService {
     private outbox: OutboxService,
     private invoices: InvoiceService
   ) {}
-  async run(id: number) {
+  async run(id: string) {
     const token = randomUUID()
     const claimed = await Notification.query()
       .where('id', id)
@@ -79,7 +79,7 @@ export default class NotificationService {
       return null
     }
   }
-  async failed(id: number) {
+  async failed(id: string) {
     await Notification.query()
       .where('id', id)
       .whereNot('state', 'sent')

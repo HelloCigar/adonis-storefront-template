@@ -2,7 +2,7 @@ import vine from '@vinejs/vine'
 import { emailAddress } from '#validators/shared/email'
 import { newPassword } from '#validators/shared/password'
 
-export const updateProfileValidator = vine.withMetaData<{ userId: number }>().create({
+export const updateProfileValidator = vine.withMetaData<{ userId: string }>().create({
   fullName: vine.string().trim().minLength(2).maxLength(100),
   email: emailAddress().unique({
     table: 'users',

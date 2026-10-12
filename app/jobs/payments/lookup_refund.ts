@@ -4,7 +4,7 @@ import type { JobOptions } from '@adonisjs/queue/types'
 import RefundLookupService from '#services/payments/refund_lookup_service'
 
 @inject()
-export default class LookupRefund extends Job<{ entityId: number }> {
+export default class LookupRefund extends Job<{ entityId: string }> {
   static options: JobOptions = {
     queue: 'payments',
     timeout: '90s',

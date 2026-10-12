@@ -58,7 +58,7 @@ export const useAccount = () => {
       address,
       defaultAddress,
     }: {
-      addressId: number
+      addressId: string
       address: AddressInput
       defaultAddress?: boolean
     }) =>
@@ -69,11 +69,11 @@ export const useAccount = () => {
           options
         )
       ),
-    setDefaultAddress: (id: number) =>
+    setDefaultAddress: (id: string) =>
       save((options) =>
         router.post({ route: 'account.addresses.default', routeParams: { id } }, {}, options)
       ),
-    deleteAddress: ({ addressId }: { addressId: number }) =>
+    deleteAddress: ({ addressId }: { addressId: string }) =>
       save((options) =>
         router.delete(
           { route: 'account.addresses.delete', routeParams: { id: addressId } },

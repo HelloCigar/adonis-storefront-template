@@ -7,8 +7,6 @@ export const collectionCreateValidator = vine.create({
   handle: handle('collections'),
   description: description(),
   published: vine.boolean(),
-  productIds: vine.array(
-    vine.number().withoutDecimals().positive().exists({ table: 'products', column: 'id' })
-  ),
+  productIds: vine.array(vine.string().ulid().exists({ table: 'products', column: 'id' })),
 })
 export const collectionUpdateValidator = vine.create(collectionCreateValidator.schema.clone())

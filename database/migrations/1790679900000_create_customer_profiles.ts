@@ -10,8 +10,8 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('customer_addresses', (table) => {
-      table.increments('id').notNullable()
-      table.integer('user_id').unsigned().notNullable().references('users.id').onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('user_id', 26).notNullable().references('users.id').onDelete('CASCADE')
       table.string('first_name').nullable()
       table.string('last_name').nullable()
       table.string('company').nullable()
@@ -30,8 +30,7 @@ export default class extends BaseSchema {
 
     this.schema.alterTable('users', (table) => {
       table
-        .integer('default_address_id')
-        .unsigned()
+        .string('default_address_id', 26)
         .nullable()
         .unique()
         .references('customer_addresses.id')

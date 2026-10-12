@@ -97,7 +97,7 @@ export default class EmailPreviewService {
       { prefixUrl: origin, qs: { token: 'preview' } }
     )
     const shipment = preview.shipment ? new Shipment().merge(preview.shipment) : null
-    const email = new OrderNotification(this.order(), preview.kind, accessUrl, shipment, 0)
+    const email = new OrderNotification(this.order(), preview.kind, accessUrl, shipment, 'preview')
     await email.build()
     // Mirrors Mailer.sendCompiled: templates receive the mailer globals, such as brandName.
     if (render) await email.message.computeContents(mail.config.globals)

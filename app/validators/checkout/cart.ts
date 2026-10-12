@@ -1,7 +1,7 @@
 import vine from '@vinejs/vine'
 
 export const cartAddValidator = vine.create({
-  variantId: vine.number().withoutDecimals().positive(),
+  variantId: vine.string().ulid(),
   quantity: vine.number().withoutDecimals().min(1).max(10),
 })
 export const cartUpdateValidator = vine.create({

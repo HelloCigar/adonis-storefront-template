@@ -104,7 +104,12 @@ test.group('Order chat rooms', (group) => {
     }).create()
     const guest = await OrderFactory.merge({ lifecycleState: 'confirmed' }).create()
 
-    for (const roomKey of [`order:${theirs.id}`, `order:${guest.id}`, 'order:999999', 'lobby']) {
+    for (const roomKey of [
+      `order:${theirs.id}`,
+      `order:${guest.id}`,
+      'order:01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      'lobby',
+    ]) {
       const joined = await request(customerSocket, 'order:join', { roomKey })
       assert.isFalse(joined.ok, roomKey)
       if (!joined.ok) assert.equal(joined.error.code, 'NOT_FOUND')

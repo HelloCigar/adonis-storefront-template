@@ -123,7 +123,7 @@ export default class DiscountService {
   }
 
   /** Returns an order's use of its code once, when the order closes unpaid or is cancelled. */
-  async release(trx: TransactionClientContract, orderId: number) {
+  async release(trx: TransactionClientContract, orderId: string) {
     const redemption = await DiscountRedemption.query({ client: trx })
       .where('order_id', orderId)
       .whereNull('released_at')

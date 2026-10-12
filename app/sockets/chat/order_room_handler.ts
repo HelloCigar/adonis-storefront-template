@@ -23,7 +23,7 @@ type Ack<T> = (reply: ChatReply<T>) => void
 
 /** Set on every socket by the session handshake; nothing else about the client is trusted. */
 export interface ChatSocketData {
-  userId: number
+  userId: string
 }
 type ChatSocket = Socket<any, any, any, ChatSocketData>
 

@@ -45,7 +45,7 @@ test.group('Shared store resource access', (group) => {
     for (const actor of [first, second, admin]) {
       const list = await client.get('/seller/products').loginAs(actor).withInertia()
       assert.sameMembers(
-        list.inertiaProps.products.map((item: { id: number }) => item.id),
+        list.inertiaProps.products.map((item: { id: string }) => item.id),
         [product.id, another.id, unassigned.id]
       )
       const variants = await client
@@ -163,7 +163,7 @@ test.group('Shared store resource access', (group) => {
     for (const actor of [first, second]) {
       const list = await client.get('/seller/orders').loginAs(actor).withInertia()
       assert.sameMembers(
-        list.inertiaProps.orders.map((item: { id: number }) => item.id),
+        list.inertiaProps.orders.map((item: { id: string }) => item.id),
         orders.map((order) => order.id)
       )
       for (const order of orders) {

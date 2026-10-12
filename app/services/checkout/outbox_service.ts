@@ -1,3 +1,4 @@
+import { isUlid } from '#models/shared/with_ulid_primary_key'
 import WorkflowOutbox, { type WorkflowKind } from '#models/checkout/workflow_outbox'
 import CheckoutException from '#exceptions/checkout_exception'
 import WorkflowOutboxReady from '#events/checkout/workflow_outbox_ready'
@@ -14,16 +15,11 @@ export default class OutboxService {
     operation: {
       key: string
       kind: WorkflowKind
-      entityId: number
+      entityId: string
       availableAtMs?: number
     }
   ) {
-    if (
-      !operation.key ||
-      operation.key.length > 200 ||
-      !Number.isSafeInteger(operation.entityId) ||
-      operation.entityId < 1
-    ) {
+    if (!operation.key || operation.key.length > 200 || !isUlid(operation.entityId)) {
       throw new CheckoutException('Invalid workflow operation', 'E_WORKFLOW_INPUT', 422)
     }
     const row = await WorkflowOutbox.firstOrCreate(

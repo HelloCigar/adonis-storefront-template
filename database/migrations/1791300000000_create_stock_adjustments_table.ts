@@ -6,13 +6,13 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table
-        .integer('product_variant_id')
+        .string('product_variant_id', 26)
         .notNullable()
         .references('product_variants.id')
         .onDelete('CASCADE')
-      table.integer('actor_id').nullable().references('users.id').onDelete('SET NULL')
+      table.string('actor_id', 26).nullable().references('users.id').onDelete('SET NULL')
       table.string('reason', 24).notNullable()
       // Null means stock was untracked on that side of the change.
       table.integer('quantity_before').nullable()

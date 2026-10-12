@@ -2,7 +2,7 @@
 import { Form, type FormRef } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import { ref, watch } from 'vue'
-defineProps<{ variant: Data.Seller.Variant; productId: number }>()
+defineProps<{ variant: Data.Seller.Variant; productId: string }>()
 const open = defineModel<boolean>('open', { required: true })
 const form = ref<FormRef>()
 watch(open, () => form.value?.clearErrors())

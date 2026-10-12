@@ -4,8 +4,8 @@ import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
 import { stockReasonLabel } from './reasons'
 const props = defineProps<{
-  productId: number
-  variantId: number
+  productId: string
+  variantId: string
   adjustments: {
     data: Data.Seller.StockAdjustment[]
     metadata: { total: number; perPage: number; currentPage: number }

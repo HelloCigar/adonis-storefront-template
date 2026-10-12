@@ -63,7 +63,7 @@ async function sellable(priceAmount: number, inventoryQuantity = 10) {
 }
 
 /** A cart with the given lines and code, quoted and ready to submit. */
-async function cartWith(lines: [variantId: number, quantity: number][], code?: string) {
+async function cartWith(lines: [variantId: string, quantity: number][], code?: string) {
   const token = randomUUID()
   const carts = await app.container.make(CartService)
   for (const [variantId, quantity] of lines) await carts.add(token, undefined, variantId, quantity)

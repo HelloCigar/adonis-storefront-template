@@ -28,7 +28,7 @@ export default class SellerVariantService {
     product: Product,
     variant: ProductVariant,
     { options, featuredMediaId, ...payload }: Infer<typeof variantCreateValidator>,
-    actorId: number | null
+    actorId: string | null
   ) {
     if (
       payload.compareAtPriceAmount !== null &&
@@ -79,7 +79,7 @@ export default class SellerVariantService {
       }
       const currencies = await ProductVariant.query({ client: trx })
         .where('productId', product.id)
-        .whereNot('id', variant.id || 0)
+        .whereNot('id', variant.id || '')
       if (currencies.some((item) => item.currencyCode !== payload.currencyCode)) {
         throw new errors.E_VALIDATION_ERROR([
           {
@@ -222,7 +222,7 @@ export default class SellerVariantService {
   async generateVariants(
     product: Product,
     payload: Infer<typeof variantGenerationValidator>,
-    actorId: number | null
+    actorId: string | null
   ) {
     if (payload.compareAtPriceAmount !== null && payload.compareAtPriceAmount < payload.priceAmount)
       this.options.fail(
@@ -304,7 +304,7 @@ export default class SellerVariantService {
     product: Product,
     variant: ProductVariant,
     { mode, quantity, reason, note }: Infer<typeof stockAdjustmentValidator>,
-    actorId: number | null
+    actorId: string | null
   ) {
     if (mode !== 'set' && quantity < 1) this.stockError('Enter how many units to add or remove.')
     return db.transaction(async (trx) => {
@@ -343,7 +343,7 @@ export default class SellerVariantService {
   }
 
   /** Takes SQLite's write lock before reading the product's options or variant combinations. */
-  private async lockProduct(trx: TransactionClientContract, productId: number) {
+  private async lockProduct(trx: TransactionClientContract, productId: string) {
     await trx.from('products').where('id', productId).update({ id: productId })
   }
 }

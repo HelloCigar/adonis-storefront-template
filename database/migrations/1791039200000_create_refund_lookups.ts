@@ -3,7 +3,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('refund_lookups', (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table.string('provider', 64).notNullable()
       table.boolean('live_mode').notNullable()
       table.string('external_id').notNullable()

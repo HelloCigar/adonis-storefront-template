@@ -23,12 +23,12 @@ const { locked, callbacks, requestOptions, announce } = useOrderInteraction()
 const label = orderLabel
 const money = (amount: number, currency = props.order.currencyCode) =>
   orderMoney(amount / 100, currency)
-const refundConfirmed = ref<Record<number, boolean>>({})
+const refundConfirmed = ref<Record<string, boolean>>({})
 const showAllActivity = ref(false)
 const visibleActivity = computed(() =>
   showAllActivity.value ? props.order.activities : props.order.activities.slice(0, 8)
 )
-const refundAction = (paymentId: number) =>
+const refundAction = (paymentId: string) =>
   props.operations.payments.find((payment) => payment.paymentId === paymentId)
 watch(
   () => props.operations,

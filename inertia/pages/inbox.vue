@@ -23,7 +23,7 @@ const tabItems = [
 ]
 
 // Opened threads are read on the server; show that before the next list refresh.
-const opened = ref(new Set<number>(props.conversation ? [props.conversation.orderId] : []))
+const opened = ref(new Set<string>(props.conversation ? [props.conversation.orderId] : []))
 const threads = computed(() =>
   props.threads.map((thread) =>
     opened.value.has(thread.orderId) ? { ...thread, unreadCount: 0 } : thread

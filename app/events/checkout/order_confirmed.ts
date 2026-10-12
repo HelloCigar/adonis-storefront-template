@@ -5,7 +5,7 @@ import { BaseEvent } from '@adonisjs/core/events'
  * so listeners see the confirmed order. Listener failure never reverses the payment.
  */
 export default class OrderConfirmed extends BaseEvent {
-  constructor(public orderId: number) {
+  constructor(public orderId: string) {
     super()
   }
 }

@@ -4,6 +4,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
+import { newUlid } from '#models/shared/with_ulid_primary_key'
 
 async function createProductOptions() {
   const product = await Product.create({
@@ -56,13 +57,13 @@ test.group('Product option availability', (group) => {
     assert.isTrue(await radio('Blue').isEnabled())
 
     await page.getByText('Blue', { exact: true }).click()
-    await page.assertQueryString({ variantId: String(variants[3].id) })
+    await page.assertQueryString({ variantId: variants[3].id })
     assert.isTrue(await radio('Large').isChecked())
     assert.isFalse(await radio('Small').isEnabled())
     assert.isTrue(await page.getByRole('button', { name: 'Add to cart', exact: true }).isEnabled())
 
     await page.getByText('Red', { exact: true }).click()
-    await page.assertQueryString({ variantId: String(variants[0].id) })
+    await page.assertQueryString({ variantId: variants[0].id })
     assert.isTrue(await radio('Small').isChecked())
     assert.isFalse(await radio('Large').isEnabled())
     assert.isFalse(await radio('Green').isEnabled())
@@ -77,7 +78,7 @@ test.group('Product option availability', (group) => {
     assert.isFalse(await page.getByRole('button', { name: 'Sold out', exact: true }).isEnabled())
     assert.isFalse(await page.getByRole('spinbutton').isEnabled())
     await page.getByText('Small', { exact: true }).click()
-    await page.assertQueryString({ variantId: String(variants[0].id) })
+    await page.assertQueryString({ variantId: variants[0].id })
     assert.isTrue(await page.getByRole('button', { name: 'Add to cart', exact: true }).isEnabled())
     assert.isTrue(await page.getByRole('spinbutton').isEnabled())
   })
@@ -106,6 +107,7 @@ test.group('Product option availability', (group) => {
     )
     // Migrated duplicates retain a null combination key; ordinary model writes reject duplicates.
     await db.table('product_variants').insert({
+      id: newUlid(),
       product_id: product.id,
       title: 'Sellable Blue',
       options: JSON.stringify({ Color: 'Blue' }),
@@ -127,7 +129,7 @@ test.group('Product option availability', (group) => {
     assert.isTrue(await blue.isEnabled())
 
     await page.getByText('Blue', { exact: true }).click()
-    await page.assertQueryString({ variantId: String(sellableBlue.id) })
+    await page.assertQueryString({ variantId: sellableBlue.id })
     assert.isTrue(await blue.isChecked())
     assert.isTrue(await page.getByRole('button', { name: 'Add to cart', exact: true }).isEnabled())
 

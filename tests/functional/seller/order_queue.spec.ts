@@ -18,7 +18,7 @@ const ago = (values: { days?: number; hours?: number; minutes?: number }) =>
 const millis = (iso: string | null) => (iso ? DateTime.fromISO(iso).toMillis() : null)
 
 interface QueueRow {
-  id: number
+  id: string
   number: string
   customer: string | null
   stages: string[]

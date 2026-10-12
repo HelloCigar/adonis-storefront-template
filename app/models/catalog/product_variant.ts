@@ -11,13 +11,15 @@ import {
 import { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
 import { beforeSave, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 /** Tracked variants with this many sellable units or fewer are flagged as running low. */
 export const lowStockThreshold = 5
 
 export type StockLevel = 'untracked' | 'out' | 'low' | 'in_stock'
 
-export default class ProductVariant extends ProductVariantSchema {
+export default class ProductVariant extends compose(ProductVariantSchema, withUlidPrimaryKey()) {
   @beforeSave()
   static setCombinationKey(variant: ProductVariant) {
     if (!variant.$isPersisted || Object.hasOwn(variant.$dirty, 'options'))

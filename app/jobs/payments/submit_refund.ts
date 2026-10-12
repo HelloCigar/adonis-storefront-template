@@ -4,7 +4,7 @@ import { inject } from '@adonisjs/core'
 import RefundService from '#services/payments/refund_service'
 
 @inject()
-export default class SubmitRefund extends Job<{ entityId: number }> {
+export default class SubmitRefund extends Job<{ entityId: string }> {
   static options: JobOptions = {
     queue: 'payments',
     timeout: '90s',

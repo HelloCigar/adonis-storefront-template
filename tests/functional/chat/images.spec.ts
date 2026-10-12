@@ -145,7 +145,7 @@ test.group('Order chat images', (group) => {
     assert,
   }) => {
     const { customer, order } = await people()
-    const upload = (orderId: number) =>
+    const upload = (orderId: string) =>
       client.post(`/chat/orders/${orderId}/messages`).loginAs(customer).withCsrfToken().redirects(0)
 
     const text = await upload(order.id)

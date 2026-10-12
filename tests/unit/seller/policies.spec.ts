@@ -14,7 +14,7 @@ import CollectionPolicy from '#policies/seller/collection_policy'
 import OrderPolicy from '#policies/seller/order_policy'
 import UserPolicy from '#policies/seller/user_policy'
 
-function actor(role: UserRole, id = 1) {
+function actor(role: UserRole, id = '1') {
   const user = new User()
   user.id = id
   user.role = role
@@ -26,20 +26,20 @@ test.group('Shared store policies', () => {
     assert,
   }) => {
     const product = new Product()
-    product.id = 10
+    product.id = '10'
     const variant = new ProductVariant()
     variant.productId = product.id
     const collection = new Collection()
-    const target = actor('customer', 4)
-    for (const creator of [null, 1, 2]) {
+    const target = actor('customer', '4')
+    for (const creator of [null, '1', '2']) {
       product.sellerId = creator
       collection.sellerId = creator
       for (const user of [
         null,
         actor('customer'),
         actor('staff'),
-        actor('staff', 2),
-        actor('admin', 3),
+        actor('staff', '2'),
+        actor('admin', '3'),
       ]) {
         const bouncer = new Bouncer<User>(user)
         const allowed = Boolean(user?.isStoreStaff)
@@ -82,9 +82,9 @@ test.group('Shared store policies', () => {
 
   test('variant parent associations are enforced for both staff and admins', async ({ assert }) => {
     const product = new Product()
-    product.id = 1
+    product.id = '1'
     const variant = new ProductVariant()
-    variant.productId = 2
+    variant.productId = '2'
     for (const user of [actor('staff'), actor('admin')]) {
       const bouncer = new Bouncer(user)
       assert.isFalse(await bouncer.with(VariantPolicy).allows('update', variant, product))
@@ -95,7 +95,7 @@ test.group('Shared store policies', () => {
   test('order access does not depend on line-item creator attribution or missing items', async ({
     assert,
   }) => {
-    for (const creators of [[], [null], [1, 2], [1, null], [2], [1, 1]]) {
+    for (const creators of [[], [null], ['1', '2'], ['1', null], ['2'], ['1', '1']]) {
       const order = new Order()
       order.$setRelated(
         'lineItems',
@@ -109,7 +109,7 @@ test.group('Shared store policies', () => {
         null,
         actor('customer'),
         actor('staff'),
-        actor('staff', 2),
+        actor('staff', '2'),
         actor('admin'),
       ]) {
         const bouncer = new Bouncer<User>(user)

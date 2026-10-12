@@ -18,7 +18,7 @@ export default class MessageTransformer extends BaseTransformer<OrderMessage> {
   }
 
   toObject() {
-    const messageId = String(this.resource.id)
+    const messageId = this.resource.id
     return {
       id: this.resource.publicId,
       body: this.resource.body,

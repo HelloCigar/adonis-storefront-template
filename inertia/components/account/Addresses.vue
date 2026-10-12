@@ -6,7 +6,7 @@ import AccountAddress from '~/components/account/Address.vue'
 import AccountAddressForm from '~/components/account/AddressForm.vue'
 const props = defineProps<{
   addresses: Data.Account.CustomerAddress[]
-  defaultAddressId?: number
+  defaultAddressId?: string
 }>()
 
 const emit = defineEmits<{

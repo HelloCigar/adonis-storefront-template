@@ -13,13 +13,13 @@ import LookupRefund from '#jobs/payments/lookup_refund'
 import SendNotification from '#jobs/checkout/send_notification'
 
 const jobs = {
-  create_checkout: (payload: { entityId: number }) => CreateCheckout.dispatch(payload),
-  reconcile_checkout: (payload: { entityId: number }) => ReconcileCheckout.dispatch(payload),
-  expire_checkout: (payload: { entityId: number }) => ExpireCheckout.dispatch(payload),
-  submit_refund: (payload: { entityId: number }) => SubmitRefund.dispatch(payload),
-  reconcile_refund: (payload: { entityId: number }) => ReconcileRefund.dispatch(payload),
-  lookup_refund: (payload: { entityId: number }) => LookupRefund.dispatch(payload),
-  notification: (payload: { entityId: number }) => SendNotification.dispatch(payload),
+  create_checkout: (payload: { entityId: string }) => CreateCheckout.dispatch(payload),
+  reconcile_checkout: (payload: { entityId: string }) => ReconcileCheckout.dispatch(payload),
+  expire_checkout: (payload: { entityId: string }) => ExpireCheckout.dispatch(payload),
+  submit_refund: (payload: { entityId: string }) => SubmitRefund.dispatch(payload),
+  reconcile_refund: (payload: { entityId: string }) => ReconcileRefund.dispatch(payload),
+  lookup_refund: (payload: { entityId: string }) => LookupRefund.dispatch(payload),
+  notification: (payload: { entityId: string }) => SendNotification.dispatch(payload),
 }
 
 /** Queue publication is at least once. Each job's domain operation is idempotent. */

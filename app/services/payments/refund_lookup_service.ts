@@ -51,7 +51,7 @@ export default class RefundLookupService {
     })
   }
 
-  async run(id: number) {
+  async run(id: string) {
     const token = randomUUID()
     const changed = await RefundLookup.query()
       .where('id', id)
@@ -90,7 +90,7 @@ export default class RefundLookupService {
     }
   }
 
-  async review(id: number) {
+  async review(id: string) {
     await RefundLookup.query()
       .where('id', id)
       .whereNot('state', 'resolved')
@@ -117,7 +117,7 @@ export default class RefundLookupService {
       )
   }
 
-  async retry(id: number) {
+  async retry(id: string) {
     await db.transaction(async (trx) => {
       const row = await RefundLookup.findOrFail(id, { client: trx })
       if (row.state === 'resolved') return

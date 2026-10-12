@@ -5,7 +5,7 @@ export default class extends BaseSchema {
     // Existing records stay unassigned rather than guessing their seller.
     for (const tableName of ['products', 'collections', 'order_line_items']) {
       this.schema.alterTable(tableName, (table) => {
-        table.integer('seller_id').unsigned().nullable().references('users.id').onDelete('SET NULL')
+        table.string('seller_id', 26).nullable().references('users.id').onDelete('SET NULL')
         table.index('seller_id')
       })
     }

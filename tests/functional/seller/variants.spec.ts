@@ -6,6 +6,7 @@ import ProductVariant from '#models/catalog/product_variant'
 import db from '@adonisjs/lucid/services/db'
 import { attachmentManager } from '@jrmc/adonis-attachment'
 import { DateTime } from 'luxon'
+import { newUlid } from '#models/shared/with_ulid_primary_key'
 import { optionCombinationKey } from '#services/catalog/options_service'
 import { inferLegacyOptionDefinitions } from '#database/migrations/1791150000000_add_product_options'
 
@@ -521,6 +522,7 @@ test.group('Product options and variants', (group) => {
       { ...defaults, title: 'Red / Small', options: { Color: 'Red', Size: 'Small' }, position: 2 },
     ])
     await db.table('product_variants').insert({
+      id: newUlid(),
       product_id: item.id,
       title: 'Legacy duplicate Blue',
       options: JSON.stringify({ Color: 'Blue', Size: 'Small' }),
@@ -555,6 +557,7 @@ test.group('Product options and variants', (group) => {
       .related('variants')
       .create({ ...defaults, title: 'Blue', options: { Color: 'Blue' }, position: 0 })
     await db.table('product_variants').insert({
+      id: newUlid(),
       product_id: item.id,
       title: 'Legacy duplicate',
       options: JSON.stringify({ Color: 'Blue' }),
@@ -676,6 +679,7 @@ test.group('Product options and variants', (group) => {
     const legacyOptions = [{ color: 'blue' }, { ' Color ': ' Blue ' }]
     for (const [index, options] of legacyOptions.entries()) {
       await db.table('product_variants').insert({
+        id: newUlid(),
         product_id: item.id,
         title: `Legacy ${index}`,
         sku: `LEGACY-${index}`,
@@ -767,6 +771,7 @@ test.group('Product options and variants', (group) => {
     item.merge({ status: 'active', publishedAt: DateTime.utc() })
     await item.save()
     await db.table('product_variants').insert({
+      id: newUlid(),
       product_id: item.id,
       title: 'Malformed legacy',
       sku: 'MALFORMED-SKU',

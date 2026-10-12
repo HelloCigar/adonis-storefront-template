@@ -3,7 +3,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('refund_observations', (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table.string('provider', 64).notNullable()
       table.boolean('live_mode').notNullable()
       table.string('external_id').notNullable()
@@ -12,7 +12,7 @@ export default class extends BaseSchema {
       table.string('currency', 3).notNullable()
       table.enum('state', ['pending', 'succeeded', 'failed']).notNullable()
       table
-        .integer('refund_operation_id')
+        .string('refund_operation_id', 26)
         .nullable()
         .references('refund_operations.id')
         .onDelete('SET NULL')

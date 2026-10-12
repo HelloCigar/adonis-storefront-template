@@ -366,7 +366,7 @@ export async function seedDemoOnlineOrders(
         }),
       })
 
-    const activity = (event: string, at: DateTime, details = {}, actorId?: number) =>
+    const activity = (event: string, at: DateTime, details = {}, actorId?: string) =>
       Activity.create(
         {
           orderId: order.id,
@@ -425,7 +425,7 @@ export async function seedDemoOnlineOrders(
       shipment.merge({
         state: 'shipped',
         carrier: 'LBC Express',
-        trackingNumber: 'LBC' + (1_000_000_000 + order.id * 7919),
+        trackingNumber: 'LBC' + order.id.slice(-10),
         trackingUrl: null,
         shippedAt: ago(demoOrder.shipped),
       })

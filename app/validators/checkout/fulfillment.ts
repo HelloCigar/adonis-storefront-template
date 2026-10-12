@@ -11,10 +11,10 @@ export const shipmentValidator = vine.create({
     .optional(),
 })
 export const refundValidator = vine.create({
-  paymentId: vine.number().withoutDecimals().positive().optional(),
+  paymentId: vine.string().ulid().optional(),
 })
 export const operationRetryValidator = vine.create({
   kind: vine.enum(['payment', 'refund', 'notification']),
-  operationId: vine.number().withoutDecimals().positive(),
+  operationId: vine.string().ulid(),
   externalId: vine.string().trim().maxLength(255).optional(),
 })

@@ -17,8 +17,10 @@ import { belongsTo, hasMany, hasOne, column } from '@adonisjs/lucid/orm'
 import { toMajor, toMinor } from '#models/shared/money'
 import type { OrderState } from '#services/checkout/state_service'
 import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class Order extends OrderSchema {
+export default class Order extends compose(OrderSchema, withUlidPrimaryKey()) {
   @hasMany(() => Attempt) declare attempts: HasMany<typeof Attempt>
   @hasMany(() => RefundOperation) declare refunds: HasMany<typeof RefundOperation>
   @hasMany(() => Shipment) declare shipments: HasMany<typeof Shipment>

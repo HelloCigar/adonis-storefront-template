@@ -73,7 +73,7 @@ const countReviews = async () => {
   return rows.length
 }
 const storeUrl = (product: Product) => `/products/${product.id}/reviews`
-const reviewUrl = (row: ProductReview | { id: number }) => `/reviews/${row.id}`
+const reviewUrl = (row: ProductReview | { id: string }) => `/reviews/${row.id}`
 const productPath = (product: Product) => `/product/${product.handle}`
 const errorFields = (body: { errors?: { field: string }[] }) =>
   (body.errors ?? []).map((error) => error.field)
@@ -296,7 +296,11 @@ test.group('Product reviews | writing', (group) => {
     await purchase(customer, draft)
     await purchase(customer, unscheduled)
 
-    for (const url of [storeUrl(draft), storeUrl(unscheduled), '/products/999999/reviews']) {
+    for (const url of [
+      storeUrl(draft),
+      storeUrl(unscheduled),
+      '/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/reviews',
+    ]) {
       const response = await client
         .post(url)
         .loginAs(customer)
@@ -407,7 +411,7 @@ test.group('Product reviews | writing', (group) => {
   test('editing or deleting a missing review returns 404', async ({ client }) => {
     const customer = await account()
     const update = await client
-      .patch(reviewUrl({ id: 999999 }))
+      .patch(reviewUrl({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV' }))
       .loginAs(customer)
       .withCsrfToken()
       .accept('json')
@@ -415,7 +419,7 @@ test.group('Product reviews | writing', (group) => {
     update.assertStatus(404)
 
     const destroy = await client
-      .delete(reviewUrl({ id: 999999 }))
+      .delete(reviewUrl({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV' }))
       .loginAs(customer)
       .withCsrfToken()
       .accept('json')
@@ -537,11 +541,11 @@ test.group('Product reviews | product page', (group) => {
     const at = DateTime.utc().startOf('second').minus({ days: 1 })
     const earlier = await review(product, { title: 'First saved', createdAt: at })
     const later = await review(product, { title: 'Second saved', createdAt: at })
-    assert.isAbove(later.id, earlier.id)
+    assert.isTrue(later.id > earlier.id)
 
     const page = await client.get(productPath(product)).withInertia()
     assert.deepEqual(
-      page.inertiaProps.reviews.data.map((item: { id: number }) => item.id),
+      page.inertiaProps.reviews.data.map((item: { id: string }) => item.id),
       [later.id, earlier.id]
     )
   })
@@ -642,7 +646,7 @@ test.group('Product reviews | product page', (group) => {
     })
     assert.isFalse(pending.inertiaProps.canReview)
     assert.notInclude(
-      pending.inertiaProps.reviews.data.map((item: { id: number }) => item.id),
+      pending.inertiaProps.reviews.data.map((item: { id: string }) => item.id),
       own.id
     )
     assert.equal(pending.inertiaProps.reviewSummary.count, 1)
@@ -653,7 +657,7 @@ test.group('Product reviews | product page', (group) => {
     assert.equal(hidden.inertiaProps.viewerReview.id, own.id)
     assert.equal(hidden.inertiaProps.viewerReview.status, 'hidden')
     assert.notInclude(
-      hidden.inertiaProps.reviews.data.map((item: { id: number }) => item.id),
+      hidden.inertiaProps.reviews.data.map((item: { id: string }) => item.id),
       own.id
     )
     assert.isFalse(hidden.inertiaProps.canReview)
@@ -664,7 +668,7 @@ test.group('Product reviews | product page', (group) => {
     assert.equal(approved.inertiaProps.viewerReview.id, own.id)
     assert.equal(approved.inertiaProps.viewerReview.status, 'approved')
     assert.include(
-      approved.inertiaProps.reviews.data.map((item: { id: number }) => item.id),
+      approved.inertiaProps.reviews.data.map((item: { id: string }) => item.id),
       own.id
     )
 

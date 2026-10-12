@@ -1,5 +1,7 @@
 import { WorkflowOutboxSchema } from '#database/schema'
 import { column } from '@adonisjs/lucid/orm'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 export type WorkflowKind =
   | 'create_checkout'
@@ -10,7 +12,7 @@ export type WorkflowKind =
   | 'lookup_refund'
   | 'notification'
 
-export default class WorkflowOutbox extends WorkflowOutboxSchema {
+export default class WorkflowOutbox extends compose(WorkflowOutboxSchema, withUlidPrimaryKey()) {
   static table = 'workflow_outbox'
   @column() declare kind: WorkflowKind
 }

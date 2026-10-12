@@ -87,18 +87,18 @@ test.group('Initial factories and seeder', (group) => {
     assert.isFalse(variant.availableForSale)
     assert.equal(variant.inventoryQuantity, 0)
     const line = await CartLineFactory.create()
-    assert.isAbove(line.cartId, 0)
-    assert.isAbove(line.productVariantId, 0)
+    assert.lengthOf(line.cartId, 26)
+    assert.lengthOf(line.productVariantId, 26)
     const address = await CustomerAddressFactory.create()
-    assert.isAbove(address.userId, 0)
+    assert.lengthOf(address.userId, 26)
     const shipping = await OrderAddressFactory.create()
-    assert.isAbove(shipping.orderId, 0)
+    assert.lengthOf(shipping.orderId, 26)
     const snapshot = await OrderLineItemFactory.create()
     assert.equal(
       snapshot.totalAmount,
       (Math.round(snapshot.unitPriceAmount * 100) * snapshot.quantity) / 100
     )
-    assert.isAbove(snapshot.orderId, 0)
+    assert.lengthOf(snapshot.orderId, 26)
   }).timeout(60_000)
 
   test('persists opt-in media through attachment relations without remote requests', async ({

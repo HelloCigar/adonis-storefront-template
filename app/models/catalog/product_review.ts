@@ -4,11 +4,13 @@ import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import User from '#models/account/user'
 import Product from '#models/catalog/product'
 import Order from '#models/checkout/order'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 export const reviewStatuses = ['pending', 'approved', 'hidden'] as const
 export type ReviewStatus = (typeof reviewStatuses)[number]
 
-export default class ProductReview extends ProductReviewSchema {
+export default class ProductReview extends compose(ProductReviewSchema, withUlidPrimaryKey()) {
   /** Reviews shoppers can see. */
   static approved = scope((query) => {
     query.where('status', 'approved')
