@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 
@@ -49,6 +50,9 @@ test.group('Rate limits', (group) => {
     client,
     assert,
   }) => {
+    // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
+    using mails = mail.fake()
+
     for (let index = 0; index < 5; index++) {
       const created = await client
         .post('/signup')

@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 
@@ -13,6 +14,9 @@ test.group('Account emails', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
   test('emails are stored lowercase and match regardless of case', async ({ client, assert }) => {
+    // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
+    using mails = mail.fake()
+
     const created = await client
       .post('/signup')
       .withCsrfToken()

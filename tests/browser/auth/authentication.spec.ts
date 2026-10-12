@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 
@@ -32,6 +33,9 @@ test.group('Account authentication', (group) => {
     visit,
     assert,
   }) => {
+    // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
+    using mails = mail.fake()
+
     const page = await visit('/login')
     await page.getByRole('link', { name: 'Create an account', exact: true }).click()
     await page.assertPath('/signup')
