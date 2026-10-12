@@ -3,7 +3,7 @@ import type { Infer } from '@vinejs/vine/types'
 import type { storefrontProfileValidator } from '#validators/account/profile'
 
 export default class AccountService {
-  loadCustomer(userId: number) {
+  loadCustomer(userId: string) {
     return User.query()
       .where('id', userId)
       .preload('defaultAddress')

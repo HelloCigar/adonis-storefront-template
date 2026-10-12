@@ -3,8 +3,10 @@ import Cart from '#models/checkout/cart'
 import ProductVariant from '#models/catalog/product_variant'
 import { belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class CartLine extends CartLineSchema {
+export default class CartLine extends compose(CartLineSchema, withUlidPrimaryKey()) {
   @belongsTo(() => Cart, { foreignKey: 'cartId' })
   declare cart: BelongsTo<typeof Cart>
 

@@ -9,16 +9,16 @@ export default class extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      table.increments('id')
-      table.integer('product_id').notNullable().references('products.id').onDelete('CASCADE')
-      table.integer('user_id').notNullable().references('users.id').onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('product_id', 26).notNullable().references('products.id').onDelete('CASCADE')
+      table.string('user_id', 26).notNullable().references('users.id').onDelete('CASCADE')
       // The delivered order that made the author eligible.
-      table.integer('order_id').nullable().references('orders.id').onDelete('SET NULL')
+      table.string('order_id', 26).nullable().references('orders.id').onDelete('SET NULL')
       table.integer('rating').notNullable()
       table.string('title', 120).nullable()
       table.text('body').nullable()
       table.enum('status', ['pending', 'approved', 'hidden']).notNullable().defaultTo('pending')
-      table.integer('moderated_by_id').nullable().references('users.id').onDelete('SET NULL')
+      table.string('moderated_by_id', 26).nullable().references('users.id').onDelete('SET NULL')
       table.timestamp('moderated_at').nullable()
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()

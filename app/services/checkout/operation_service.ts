@@ -21,9 +21,9 @@ export default class OperationService {
     private activities: ActivityService
   ) {}
   async retry(
-    orderId: number,
+    orderId: string,
     actor: User,
-    input: { kind: 'payment' | 'refund' | 'notification'; operationId: number; externalId?: string }
+    input: { kind: 'payment' | 'refund' | 'notification'; operationId: string; externalId?: string }
   ) {
     CheckoutException.assertStaff(actor, 'E_OPERATION_ACCESS')
     if (input.kind === 'payment') {

@@ -32,7 +32,7 @@ export default class RecoveryService {
     private discounts: DiscountService
   ) {}
 
-  async run(id: number, expire = false) {
+  async run(id: string, expire = false) {
     const claim = await this.claim(id, expire)
     if (!claim) return
     const { attempt, token, firstSubmission } = claim
@@ -118,7 +118,7 @@ export default class RecoveryService {
     )
   }
 
-  async retry(id: number, actor: User, externalId?: string) {
+  async retry(id: string, actor: User, externalId?: string) {
     CheckoutException.assertStaff(actor, 'E_PAYMENT_RETRY_ACCESS')
     const original = await Attempt.findOrFail(id)
     if (original.state === 'paid' || original.state === 'expired')
@@ -158,7 +158,7 @@ export default class RecoveryService {
     })
   }
 
-  async requestCancel(orderId: number) {
+  async requestCancel(orderId: string) {
     await db.transaction(async (trx) => {
       await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
       const order = await Order.findOrFail(orderId, { client: trx })
@@ -201,7 +201,7 @@ export default class RecoveryService {
       )
   }
 
-  async review(id: number, code = 'E_PAYMENT_RETRIES_EXHAUSTED', token?: string) {
+  async review(id: string, code = 'E_PAYMENT_RETRIES_EXHAUSTED', token?: string) {
     await db.transaction(async (trx) => {
       const query = Attempt.query({ client: trx }).where('id', id).whereNot('state', 'paid')
       if (token) query.where('claim_token', token)
@@ -220,7 +220,7 @@ export default class RecoveryService {
     })
   }
 
-  private async claim(id: number, expire: boolean) {
+  private async claim(id: string, expire: boolean) {
     const token = randomUUID()
     return db.transaction(async (trx) => {
       const changed = await Attempt.query({ client: trx })
@@ -282,7 +282,7 @@ export default class RecoveryService {
     attempt.externalId = checkout.id
   }
 
-  private async closed(id: number, token: string) {
+  private async closed(id: string, token: string) {
     await db.transaction(async (trx) => {
       const changed = await Attempt.query({ client: trx })
         .where('id', id)
@@ -295,7 +295,7 @@ export default class RecoveryService {
     })
   }
 
-  private async closeRejected(id: number) {
+  private async closeRejected(id: string) {
     await db.transaction(async (trx) => {
       const attempt = await Attempt.findOrFail(id, { client: trx })
       if (attempt.state !== 'failed') return

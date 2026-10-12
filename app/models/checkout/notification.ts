@@ -2,8 +2,10 @@ import { OrderNotificationSchema } from '#database/schema'
 import { column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class Notification extends OrderNotificationSchema {
+export default class Notification extends compose(OrderNotificationSchema, withUlidPrimaryKey()) {
   static table = 'order_notifications'
   @column() declare kind: 'receipt' | 'shipment' | 'delivery'
   @column() declare state: 'pending' | 'sent' | 'failed'

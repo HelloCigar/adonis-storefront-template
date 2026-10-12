@@ -31,7 +31,7 @@ export default class SettlementService {
     private balances: BalanceService
   ) {}
 
-  async apply(checkout: CheckoutSession, expectedAttemptId?: number) {
+  async apply(checkout: CheckoutSession, expectedAttemptId?: string) {
     const query = Attempt.query()
       .where('provider', checkout.provider)
       .where('live_mode', checkout.liveMode)

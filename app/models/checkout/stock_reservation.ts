@@ -3,8 +3,13 @@ import { belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import ProductVariant from '#models/catalog/product_variant'
 import type { ReservationState } from '#services/checkout/state_service'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class StockReservation extends StockReservationSchema {
+export default class StockReservation extends compose(
+  StockReservationSchema,
+  withUlidPrimaryKey()
+) {
   @column() declare state: ReservationState
 
   @belongsTo(() => ProductVariant, { foreignKey: 'productVariantId' })

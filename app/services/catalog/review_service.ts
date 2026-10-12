@@ -24,7 +24,7 @@ export function reviewAuthorName(
 
 export default class CatalogReviewService {
   /** The most recent order of this account that holds the product in a delivered shipment. */
-  async eligibleOrderId(userId: number, productId: number) {
+  async eligibleOrderId(userId: string, productId: string) {
     const row = await db
       .from('orders')
       .where('orders.user_id', userId)
@@ -43,16 +43,16 @@ export default class CatalogReviewService {
       .orderBy('orders.id', 'desc')
       .select('orders.id')
       .first()
-    return row ? (row.id as number) : null
+    return row ? (row.id as string) : null
   }
 
   /** Signed-in, delivered a purchase of this product, and no review of it yet. */
-  async canReview(user: User, productId: number) {
+  async canReview(user: User, productId: string) {
     if (await this.findByUser(user.id, productId)) return false
     return (await this.eligibleOrderId(user.id, productId)) !== null
   }
 
-  findByUser(userId: number, productId: number) {
+  findByUser(userId: string, productId: string) {
     return ProductReview.query()
       .where('userId', userId)
       .where('productId', productId)
@@ -60,7 +60,7 @@ export default class CatalogReviewService {
       .first()
   }
 
-  async create(user: User, productId: number, payload: ReviewPayload) {
+  async create(user: User, productId: string, payload: ReviewPayload) {
     const orderId = await this.eligibleOrderId(user.id, productId)
     return ProductReview.create({
       productId,
@@ -88,7 +88,7 @@ export default class CatalogReviewService {
   }
 
   /** Rating summary counts approved reviews only. */
-  async summary(productId: number): Promise<ReviewSummary> {
+  async summary(productId: string): Promise<ReviewSummary> {
     const rows = await db
       .from('product_reviews')
       .where('product_id', productId)
@@ -116,7 +116,7 @@ export default class CatalogReviewService {
   }
 
   /** Approved reviews, newest first; ids keep ties stable across pages. */
-  approvedFor(productId: number, page: number, perPage = 10) {
+  approvedFor(productId: string, page: number, perPage = 10) {
     return ProductReview.query()
       .where('productId', productId)
       .withScopes((scopes) => scopes.approved())

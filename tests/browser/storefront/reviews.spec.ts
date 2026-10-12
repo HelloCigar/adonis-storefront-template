@@ -155,7 +155,7 @@ test.group('Product reviews', (group) => {
     // The second reviews page keeps the selected variant in the URL.
     await section.getByRole('button', { name: 'Page 2', exact: true }).click()
     await page.waitForURL((url) => url.searchParams.get('reviewsPage') === '2')
-    assert.equal(new URL(page.url()).searchParams.get('variantId'), String(variant.id))
+    assert.equal(new URL(page.url()).searchParams.get('variantId'), variant.id)
     const listed = section.locator('ul.divide-y > li')
     await listed.nth(1).waitFor({ state: 'detached' })
     assert.equal(await listed.count(), 1)

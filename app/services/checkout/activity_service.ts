@@ -4,10 +4,10 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 export default class ActivityService {
   record(
     trx: TransactionClientContract,
-    orderId: number,
+    orderId: string,
     event: string,
     details: Record<string, string | number | null> = {},
-    actorId?: number
+    actorId?: string
   ) {
     return Activity.create(
       { orderId, event, details, actorId: actorId ?? null, source: actorId ? 'staff' : 'system' },

@@ -44,7 +44,7 @@ export default class FulfillmentService {
     private discounts: DiscountService
   ) {}
 
-  async pack(orderId: number, actor: User) {
+  async pack(orderId: string, actor: User) {
     this.staff(actor)
     return db.transaction(async (trx) => {
       const order = await this.claimOrder(trx, orderId)
@@ -60,7 +60,7 @@ export default class FulfillmentService {
   }
 
   async ship(
-    orderId: number,
+    orderId: string,
     actor: User,
     details: { carrier: string; trackingNumber: string; trackingUrl?: string }
   ) {
@@ -109,7 +109,7 @@ export default class FulfillmentService {
    * Records that the carrier delivered a dispatched parcel. Delivery is a fact staff confirm
    * after shipping, so it skips the dispatch prerequisites and only requires the shipped state.
    */
-  async deliver(orderId: number, actor: User) {
+  async deliver(orderId: string, actor: User) {
     this.staff(actor)
     return db.transaction(async (trx) => {
       await this.claimOrder(trx, orderId)
@@ -135,7 +135,7 @@ export default class FulfillmentService {
     })
   }
 
-  async cancel(orderId: number, actor: User) {
+  async cancel(orderId: string, actor: User) {
     this.staff(actor)
     return db.transaction(async (trx) => {
       const order = await this.claimOrder(trx, orderId)
@@ -183,7 +183,7 @@ export default class FulfillmentService {
   private staff(actor: User) {
     CheckoutException.assertStaff(actor, 'E_FULFILLMENT_ACCESS')
   }
-  private async claimOrder(trx: TransactionClientContract, orderId: number) {
+  private async claimOrder(trx: TransactionClientContract, orderId: string) {
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
     const order = await Order.findOrFail(orderId, { client: trx })
     if (order.source !== 'online')

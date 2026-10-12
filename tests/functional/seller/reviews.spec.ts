@@ -55,8 +55,8 @@ async function deliveredOrder(user: User, product: Product) {
   return order
 }
 
-const reviewUrl = (row: ProductReview | { id: number }) => `/seller/reviews/${row.id}`
-const ids = (items: { id: number }[]) => items.map((item) => item.id)
+const reviewUrl = (row: ProductReview | { id: string }) => `/seller/reviews/${row.id}`
+const ids = (items: { id: string }[]) => items.map((item) => item.id)
 
 test.group('Seller reviews | access', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -303,7 +303,7 @@ test.group('Seller reviews | moderation', (group) => {
   test('moderating a missing review returns 404', async ({ client }) => {
     const staff = await staffMember()
     const response = await client
-      .patch(reviewUrl({ id: 999999 }))
+      .patch(reviewUrl({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV' }))
       .loginAs(staff)
       .withCsrfToken()
       .accept('json')

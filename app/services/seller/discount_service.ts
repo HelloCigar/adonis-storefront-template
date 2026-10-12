@@ -15,7 +15,7 @@ export type DiscountPayload = Infer<typeof discountValidator>
 export default class SellerDiscountService {
   constructor(private money: MoneyService) {}
 
-  async save(discount: DiscountCode, payload: DiscountPayload, actorId: number) {
+  async save(discount: DiscountCode, payload: DiscountPayload, actorId: string) {
     const startsAt = payload.startsAt?.toUTC() ?? null
     const endsAt = payload.endsAt?.toUTC() ?? null
     if (startsAt && endsAt && endsAt <= startsAt)

@@ -46,13 +46,13 @@ export default class extends BaseSchema {
     this.rebuild(
       'shipments',
       (table) => {
-        table.increments('id')
-        table.integer('order_id').notNullable().references('orders.id').onDelete('CASCADE')
+        table.string('id', 26).notNullable().primary()
+        table.string('order_id', 26).notNullable().references('orders.id').onDelete('CASCADE')
         table.enum('state', states).notNullable().defaultTo('pending')
         table.string('carrier').nullable()
         table.string('tracking_number').nullable()
         table.string('tracking_url', 2048).nullable()
-        table.integer('actor_id').nullable().references('users.id').onDelete('SET NULL')
+        table.string('actor_id', 26).nullable().references('users.id').onDelete('SET NULL')
         table.timestamp('packing_at').nullable()
         table.timestamp('shipped_at').nullable()
         if (delivery) table.timestamp('delivered_at').nullable()
@@ -76,8 +76,8 @@ export default class extends BaseSchema {
     this.rebuild(
       'order_notifications',
       (table) => {
-        table.increments('id')
-        table.integer('order_id').notNullable().references('orders.id').onDelete('CASCADE')
+        table.string('id', 26).notNullable().primary()
+        table.string('order_id', 26).notNullable().references('orders.id').onDelete('CASCADE')
         table.enum('kind', kinds).notNullable()
         table.enum('state', ['pending', 'sent', 'failed']).notNullable().defaultTo('pending')
         table.timestamp('sent_at').nullable()

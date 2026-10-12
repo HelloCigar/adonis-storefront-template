@@ -7,7 +7,7 @@ import UserPolicy from '#policies/account/user_policy'
 import AddressPolicy from '#policies/account/address_policy'
 import OrderPolicy from '#policies/account/order_policy'
 
-function actor(id: number, role: UserRole) {
+function actor(id: string, role: UserRole) {
   const user = new User()
   user.id = id
   user.role = role
@@ -17,18 +17,18 @@ function actor(id: number, role: UserRole) {
 test.group('Account ownership policies', () => {
   test('self-service requires ownership for customers, staff, and admins', async ({ assert }) => {
     const address = new CustomerAddress()
-    address.userId = 1
+    address.userId = '1'
     const order = new Order()
-    order.userId = 1
+    order.userId = '1'
 
     for (const role of ['customer', 'staff', 'admin'] as const) {
-      const account = actor(1, role)
+      const account = actor('1', role)
       for (const user of [
         null,
         account,
-        actor(2, 'customer'),
-        actor(3, 'staff'),
-        actor(4, 'admin'),
+        actor('2', 'customer'),
+        actor('3', 'staff'),
+        actor('4', 'admin'),
       ]) {
         const bouncer = new Bouncer<User>(user)
         const allowed = user?.id === account.id

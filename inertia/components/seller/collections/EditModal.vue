@@ -13,7 +13,7 @@ const form = useForm({
   handle: '',
   description: '',
   published: false,
-  productIds: [] as number[],
+  productIds: [] as string[],
 })
 watch(
   open,

@@ -17,7 +17,7 @@ export interface OrderIssue {
   fix: OrderIssueFix
   /** A recorded review reason that the title and detail do not already state. */
   note: string | null
-  products: { id: number; title: string }[]
+  products: { id: string; title: string }[]
 }
 
 @inject()
@@ -44,8 +44,8 @@ export default class OrderOperationsService {
       (order.lifecycleState === 'pending_payment' ||
         (['confirmed', 'review_required'].includes(order.lifecycleState) && !activePayment))
     const observedRefunds: {
-      id: number
-      paymentId: number
+      id: string
+      paymentId: string
       externalId: string
       state: string
       amountMinor: number
@@ -162,7 +162,7 @@ export default class OrderOperationsService {
         products: [],
       })
     if (codes.has('inventory')) {
-      const products = new Map<number, string>()
+      const products = new Map<string, string>()
       for (const item of order.lineItems ?? [])
         if (item.productId) products.set(item.productId, item.title)
       issues.push({
@@ -191,7 +191,7 @@ export default class OrderOperationsService {
   /** What cancelling would do now, mirroring FulfillmentService.cancel and RecoveryService. */
   private async cancellation(
     order: Order,
-    payments: { paymentId: number; refundableAmountMinor: number }[]
+    payments: { paymentId: string; refundableAmountMinor: number }[]
   ) {
     const reservations = await order.related('stockReservations').query()
     const held = reservations

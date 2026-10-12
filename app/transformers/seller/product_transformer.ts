@@ -11,7 +11,7 @@ import { inject } from '@adonisjs/core'
 export default class SellerProductTransformer extends BaseTransformer<Product> {
   constructor(
     resource: Product,
-    private covers?: Map<number, AttachmentLinkModel>
+    private covers?: Map<string, AttachmentLinkModel>
   ) {
     super(resource)
   }

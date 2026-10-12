@@ -3,7 +3,7 @@ import { watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
-const props = defineProps<{ productId: number; review?: Data.Catalog.Review | null }>()
+const props = defineProps<{ productId: string; review?: Data.Catalog.Review | null }>()
 const open = defineModel<boolean>('open', { required: true })
 const ratings = [1, 2, 3, 4, 5].map((value) => ({
   label: value === 1 ? '1 star' : `${value} stars`,

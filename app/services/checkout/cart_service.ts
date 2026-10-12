@@ -27,7 +27,7 @@ export default class CartService {
     private discounts: DiscountService
   ) {}
 
-  async findOrCreate(token: string, userId?: number) {
+  async findOrCreate(token: string, userId?: string) {
     const existing = await Cart.findBy('token', token)
     if (existing && existing.status !== 'active')
       invalidCart('This cart has already been submitted.')
@@ -68,7 +68,7 @@ export default class CartService {
     return cart
   }
 
-  async add(token: string, userId: number | undefined, variantId: number, quantity: number) {
+  async add(token: string, userId: string | undefined, variantId: string, quantity: number) {
     const variant = await ProductVariant.query()
       .where('id', variantId)
       .whereHas('product', (query) => query.withScopes((scopes) => scopes.published()))
@@ -114,7 +114,7 @@ export default class CartService {
     })
   }
 
-  async update(token: string, userId: number | undefined, id: number, quantity: number) {
+  async update(token: string, userId: string | undefined, id: string, quantity: number) {
     const cart = await this.findOrCreate(token, userId)
     return db.transaction(async (trx) => {
       cart.useTransaction(trx)
@@ -140,7 +140,7 @@ export default class CartService {
     })
   }
 
-  async remove(token: string, userId: number | undefined, id: number) {
+  async remove(token: string, userId: string | undefined, id: string) {
     const cart = await this.findOrCreate(token, userId)
     return db.transaction(async (trx) => {
       cart.useTransaction(trx)
@@ -154,7 +154,7 @@ export default class CartService {
    * Saves a discount code on the cart after checking it against the current subtotal, or
    * removes it when `code` is null. The quote rechecks the code every time it is priced.
    */
-  async applyDiscount(token: string, userId: number | undefined, code: string | null) {
+  async applyDiscount(token: string, userId: string | undefined, code: string | null) {
     const cart = await this.findOrCreate(token, userId)
     const discountCode = code === null ? null : DiscountCode.normalize(code)
     if (discountCode !== null) {

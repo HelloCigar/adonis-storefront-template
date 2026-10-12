@@ -13,20 +13,20 @@ export default class SellerMediaService {
 
   /** Each product's first image, the storefront cover, loaded in one query for a list. */
   async covers(products: Product[]) {
-    const covers = new Map<number, AttachmentLinkModel>()
+    const covers = new Map<string, AttachmentLinkModel>()
     if (!products.length) return covers
     const links = await AttachmentLinkModel.query()
       .where('attachable_type', Product.table)
       .where('field', 'media')
       .whereIn(
         'attachable_id',
-        products.map((product) => String(product.id))
+        products.map((product) => product.id)
       )
       .preload('attachment')
       .orderBy('position', 'asc')
       .orderBy('id', 'asc')
     for (const link of links) {
-      const productId = Number(link.attachableId)
+      const productId = link.attachableId
       if (!covers.has(productId) && link.attachment.mimeType.startsWith('image/'))
         covers.set(productId, link)
     }

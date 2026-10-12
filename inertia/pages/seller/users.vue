@@ -5,7 +5,7 @@ import type { Data } from '@generated/data'
 import UsersTable from '~/components/seller/users/Table.vue'
 import EditModal from '~/components/seller/users/EditModal.vue'
 import DeleteModal from '~/components/seller/users/DeleteModal.vue'
-defineProps<{ users: Data.Seller.User[]; currentUserId: number; canAssignAdmin: boolean }>()
+defineProps<{ users: Data.Seller.User[]; currentUserId: string; canAssignAdmin: boolean }>()
 const selected = ref<Data.Seller.User>()
 const open = ref(false)
 const deleting = ref(false)

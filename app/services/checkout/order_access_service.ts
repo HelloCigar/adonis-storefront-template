@@ -7,7 +7,7 @@ import { affectedRows } from '#models/shared/affected_rows'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
 export default class OrderAccessService {
-  async issue(orderId: number, trx?: TransactionClientContract) {
+  async issue(orderId: string, trx?: TransactionClientContract) {
     const token = randomBytes(32).toString('base64url')
     await AccessGrant.create(
       { orderId, tokenHash: this.hash(token), expiresAtMs: Date.now() + 30 * 24 * 60 * 60 * 1000 },
@@ -16,7 +16,7 @@ export default class OrderAccessService {
     return token
   }
 
-  async canAccess(order: Order, userId?: number, token?: string) {
+  async canAccess(order: Order, userId?: string, token?: string) {
     if (userId && order.userId === userId) return true
     if (!token || token.length > 128) return false
     return !!(await order
@@ -28,7 +28,7 @@ export default class OrderAccessService {
       .first())
   }
 
-  async authorize(publicId: string, userId?: number, token?: string) {
+  async authorize(publicId: string, userId?: string, token?: string) {
     const order = await Order.findBy('publicId', publicId)
     if (!order || !(await this.canAccess(order, userId, token))) {
       throw new CheckoutException('Order not found', 'E_ORDER_NOT_FOUND', 404)
@@ -36,7 +36,7 @@ export default class OrderAccessService {
     return order
   }
 
-  async claim(order: Order, userId: number, token?: string) {
+  async claim(order: Order, userId: string, token?: string) {
     if (!(await this.canAccess(order, undefined, token))) {
       throw new CheckoutException('Order not found', 'E_ORDER_NOT_FOUND', 404)
     }

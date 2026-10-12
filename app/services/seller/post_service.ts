@@ -17,7 +17,7 @@ export default class SellerPostService {
    * always matches `content`. Publishing without a date publishes now and keeps the original
    * date on later edits; a future date schedules the post.
    */
-  async save(post: BlogPost, payload: PostPayload, actorId: number) {
+  async save(post: BlogPost, payload: PostPayload, actorId: string) {
     const content = this.richText.normalize(payload.content)
     const published = payload.status === 'published'
     if (published && !this.richText.hasContent(content))

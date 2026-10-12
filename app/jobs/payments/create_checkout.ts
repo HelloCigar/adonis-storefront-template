@@ -4,7 +4,7 @@ import { inject } from '@adonisjs/core'
 import RecoveryService from '#services/payments/recovery_service'
 
 @inject()
-export default class CreateCheckout extends Job<{ entityId: number }> {
+export default class CreateCheckout extends Job<{ entityId: string }> {
   static options: JobOptions = {
     queue: 'payments',
     timeout: '90s',

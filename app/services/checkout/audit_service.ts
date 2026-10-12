@@ -24,10 +24,10 @@ export default class AuditService {
         .sum('quantity as quantity')
         .groupBy('product_variant_id')
       const holds = new Map(
-        reservations.map((row) => [Number(row.product_variant_id), Number(row.quantity)])
+        reservations.map((row) => [String(row.product_variant_id), Number(row.quantity)])
       )
-      const invalidPrices: number[] = []
-      const invalidStock: number[] = []
+      const invalidPrices: string[] = []
+      const invalidStock: string[] = []
       for (const row of variants) {
         try {
           this.money.toMinor(row.price_amount)

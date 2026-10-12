@@ -3,10 +3,12 @@ import DiscountRedemption from '#models/checkout/discount_redemption'
 import User from '#models/account/user'
 import { belongsTo, column, hasMany, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 export type DiscountKind = 'percentage' | 'fixed'
 
-export default class DiscountCode extends DiscountCodeSchema {
+export default class DiscountCode extends compose(DiscountCodeSchema, withUlidPrimaryKey()) {
   /** Codes are matched case-insensitively and stored upper case. */
   static normalize(code: string) {
     return code.trim().toUpperCase()

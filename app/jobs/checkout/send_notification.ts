@@ -4,7 +4,7 @@ import { inject } from '@adonisjs/core'
 import NotificationService from '#services/checkout/notification_service'
 
 @inject()
-export default class SendNotification extends Job<{ entityId: number }> {
+export default class SendNotification extends Job<{ entityId: string }> {
   static options: JobOptions = {
     queue: 'notifications',
     timeout: '60s',

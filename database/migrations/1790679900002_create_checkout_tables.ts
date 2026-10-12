@@ -3,9 +3,9 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('carts', (table) => {
-      table.increments('id').notNullable()
+      table.string('id', 26).notNullable().primary()
       table.string('token', 64).notNullable().unique()
-      table.integer('user_id').unsigned().nullable().references('users.id').onDelete('SET NULL')
+      table.string('user_id', 26).nullable().references('users.id').onDelete('SET NULL')
       table.string('email', 254).nullable()
       table.string('currency_code', 3).notNullable()
       table.string('status', 24).notNullable().defaultTo('active')
@@ -19,11 +19,10 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('cart_lines', (table) => {
-      table.increments('id').notNullable()
-      table.integer('cart_id').unsigned().notNullable().references('carts.id').onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('cart_id', 26).notNullable().references('carts.id').onDelete('CASCADE')
       table
-        .integer('product_variant_id')
-        .unsigned()
+        .string('product_variant_id', 26)
         .notNullable()
         .references('product_variants.id')
         .onDelete('CASCADE')
@@ -38,15 +37,9 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('orders', (table) => {
-      table.increments('id').notNullable()
-      table.integer('user_id').unsigned().nullable().references('users.id').onDelete('SET NULL')
-      table
-        .integer('cart_id')
-        .unsigned()
-        .nullable()
-        .unique()
-        .references('carts.id')
-        .onDelete('SET NULL')
+      table.string('id', 26).notNullable().primary()
+      table.string('user_id', 26).nullable().references('users.id').onDelete('SET NULL')
+      table.string('cart_id', 26).nullable().unique().references('carts.id').onDelete('SET NULL')
       table.string('number', 64).notNullable().unique()
       table.string('email', 254).notNullable()
       table.string('phone_number', 32).nullable()
@@ -70,8 +63,8 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('order_addresses', (table) => {
-      table.increments('id').notNullable()
-      table.integer('order_id').unsigned().notNullable().references('orders.id').onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('order_id', 26).notNullable().references('orders.id').onDelete('CASCADE')
       table.string('type', 16).notNullable()
       table.string('first_name').nullable()
       table.string('last_name').nullable()
@@ -90,17 +83,11 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('order_line_items', (table) => {
-      table.increments('id').notNullable()
-      table.integer('order_id').unsigned().notNullable().references('orders.id').onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('order_id', 26).notNullable().references('orders.id').onDelete('CASCADE')
+      table.string('product_id', 26).nullable().references('products.id').onDelete('SET NULL')
       table
-        .integer('product_id')
-        .unsigned()
-        .nullable()
-        .references('products.id')
-        .onDelete('SET NULL')
-      table
-        .integer('product_variant_id')
-        .unsigned()
+        .string('product_variant_id', 26)
         .nullable()
         .references('product_variants.id')
         .onDelete('SET NULL')

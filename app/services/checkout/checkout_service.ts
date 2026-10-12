@@ -35,7 +35,7 @@ export default class CheckoutService {
     private payments: PaymentService
   ) {}
 
-  async submit(cartToken: string, userId: number | undefined, input: CheckoutPayload) {
+  async submit(cartToken: string, userId: string | undefined, input: CheckoutPayload) {
     const fingerprint = createHash('sha256').update(JSON.stringify(input)).digest('hex')
     const replay = await this.replay(cartToken, input.submissionKey, fingerprint)
     if (replay) return replay
@@ -122,7 +122,7 @@ export default class CheckoutService {
       input,
       quote,
       fingerprint,
-    }: { cart: Cart; userId?: number; input: CheckoutPayload; quote: Quote; fingerprint: string }
+    }: { cart: Cart; userId?: string; input: CheckoutPayload; quote: Quote; fingerprint: string }
   ) {
     const publicId = randomUUID()
     const order = await Order.create(

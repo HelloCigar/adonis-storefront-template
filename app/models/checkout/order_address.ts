@@ -2,8 +2,10 @@ import { OrderAddressSchema } from '#database/schema'
 import Order from '#models/checkout/order'
 import { belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class OrderAddress extends OrderAddressSchema {
+export default class OrderAddress extends compose(OrderAddressSchema, withUlidPrimaryKey()) {
   @column({ columnName: 'address1' })
   declare address1: string
 

@@ -11,7 +11,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('discount_codes', (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table.string('code', 40).notNullable().unique()
       table.string('description', 255).nullable()
       table.enum('kind', ['percentage', 'fixed']).notNullable()
@@ -25,8 +25,7 @@ export default class extends BaseSchema {
       table.timestamp('starts_at').nullable()
       table.timestamp('ends_at').nullable()
       table
-        .integer('created_by_id')
-        .unsigned()
+        .string('created_by_id', 26)
         .nullable()
         .references('id')
         .inTable('users')
@@ -42,17 +41,15 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('discount_redemptions', (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table
-        .integer('discount_code_id')
-        .unsigned()
+        .string('discount_code_id', 26)
         .notNullable()
         .references('id')
         .inTable('discount_codes')
         .onDelete('RESTRICT')
       table
-        .integer('order_id')
-        .unsigned()
+        .string('order_id', 26)
         .notNullable()
         .unique()
         .references('id')

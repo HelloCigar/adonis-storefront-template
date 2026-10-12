@@ -29,15 +29,31 @@ test.group('Workflow outbox events', (group) => {
     const second = await app.container.make(OutboxService)
     assert.notStrictEqual(first, second)
     await db.transaction(async (trx) => {
-      await first.record(trx, { key: 'first', kind: 'create_checkout', entityId: 42 })
-      await second.record(trx, { key: 'second', kind: 'expire_checkout', entityId: 42 })
-      await first.record(trx, { key: 'first', kind: 'create_checkout', entityId: 42 })
+      await first.record(trx, {
+        key: 'first',
+        kind: 'create_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
+      await second.record(trx, {
+        key: 'second',
+        kind: 'expire_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
+      await first.record(trx, {
+        key: 'first',
+        kind: 'create_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
       events.assertNotEmitted(WorkflowOutboxReady)
     })
     events.assertEmittedCount(WorkflowOutboxReady, 1)
     assert.lengthOf(await WorkflowOutbox.all(), 2)
     await db.transaction((trx) =>
-      first.record(trx, { key: 'first', kind: 'create_checkout', entityId: 42 })
+      first.record(trx, {
+        key: 'first',
+        kind: 'create_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
     )
     events.assertEmittedCount(WorkflowOutboxReady, 2)
   })

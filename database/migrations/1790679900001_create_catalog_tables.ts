@@ -3,7 +3,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('products', (table) => {
-      table.increments('id').notNullable()
+      table.string('id', 26).notNullable().primary()
       table.string('title').notNullable()
       table.string('handle').notNullable().unique()
       table.text('description').nullable()
@@ -25,13 +25,8 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('product_variants', (table) => {
-      table.increments('id').notNullable()
-      table
-        .integer('product_id')
-        .unsigned()
-        .notNullable()
-        .references('products.id')
-        .onDelete('CASCADE')
+      table.string('id', 26).notNullable().primary()
+      table.string('product_id', 26).notNullable().references('products.id').onDelete('CASCADE')
       table
         .string('featured_media_id')
         .nullable()
@@ -55,7 +50,7 @@ export default class extends BaseSchema {
     })
 
     this.schema.createTable('collections', (table) => {
-      table.increments('id').notNullable()
+      table.string('id', 26).notNullable().primary()
       table.string('title').notNullable()
       table.string('handle').notNullable().unique()
       table.text('description').nullable()
@@ -71,17 +66,11 @@ export default class extends BaseSchema {
 
     this.schema.createTable('collection_products', (table) => {
       table
-        .integer('collection_id')
-        .unsigned()
+        .string('collection_id', 26)
         .notNullable()
         .references('collections.id')
         .onDelete('CASCADE')
-      table
-        .integer('product_id')
-        .unsigned()
-        .notNullable()
-        .references('products.id')
-        .onDelete('CASCADE')
+      table.string('product_id', 26).notNullable().references('products.id').onDelete('CASCADE')
       table.integer('position').unsigned().notNullable().defaultTo(0)
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()

@@ -20,6 +20,9 @@ import {
   signupThrottle,
 } from '#start/limiter'
 
+/** Record ids are ULIDs: 26 Crockford base32 characters. */
+const ulid = { match: /^[0-9A-HJKMNP-TV-Z]{26}$/ }
+
 const FakePayMongoController = () => import('#providers/payments/fake_paymongo_controller')
 
 router.get('/', [controllers.storefront.Storefront, 'index']).as('home')
@@ -42,7 +45,7 @@ router
     router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
     router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
   })
-  .where('id', router.matchers.number())
+  .where('id', ulid)
 router.get('/checkout', [controllers.checkout.Checkout, 'create']).as('checkout.create')
 router
   .post('/checkout', [controllers.checkout.Checkout, 'store'])
@@ -149,7 +152,7 @@ router
       .as('account.addresses.delete')
     router
       .post('/products/:productId/reviews', [controllers.storefront.Reviews, 'store'])
-      .where('productId', router.matchers.number())
+      .where('productId', ulid)
       .as('reviews.store')
     router.patch('/reviews/:id', [controllers.storefront.Reviews, 'update']).as('reviews.update')
     router.delete('/reviews/:id', [controllers.storefront.Reviews, 'destroy']).as('reviews.destroy')
@@ -157,13 +160,13 @@ router
     router.get('/account/orders/:id', [controllers.account.Orders, 'show']).as('orders.show')
     router
       .post('/chat/orders/:orderId/messages', [controllers.chat.Messages, 'store'])
-      .where('orderId', router.matchers.number())
+      .where('orderId', ulid)
       .as('chat.messages.store')
       .use(chatImageThrottle)
     router
       .get('/chat/orders/:orderId/images/:id', [controllers.chat.Images, 'show'])
-      .where('orderId', router.matchers.number())
-      // Attachment ids are UUIDs, so override the group's numeric id matcher.
+      .where('orderId', ulid)
+      // Attachment ids are UUIDs, so override the group's ULID id matcher.
       .where('id', { match: /^[\w-]+$/ })
       .as('chat.images.show')
     router
@@ -214,7 +217,7 @@ router
       .as('settings.password.update')
     router.post('logout', [controllers.auth.Session, 'destroy']).as('session.destroy')
   })
-  .where('id', router.matchers.number())
+  .where('id', ulid)
   .use(middleware.auth())
 
 router
@@ -253,7 +256,7 @@ router
       .as('images.store')
     router
       .delete('/products/:productId/images/:id', [controllers.seller.Images, 'destroy'])
-      // Attachment ids are strings, so override the group's numeric id matcher.
+      // Attachment ids are strings, so override the group's ULID id matcher.
       .where('id', { match: /^[\w-]+$/ })
       .as('images.destroy')
     router
@@ -287,7 +290,7 @@ router
   })
   .prefix('/seller')
   .as('seller')
-  .where('id', router.matchers.number())
-  .where('productId', router.matchers.number())
-  .where('variantId', router.matchers.number())
+  .where('id', ulid)
+  .where('productId', ulid)
+  .where('variantId', ulid)
   .use([middleware.auth(), middleware.staff()])

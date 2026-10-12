@@ -6,7 +6,7 @@ import { urlFor } from '~/client'
 import { statusOptions } from '~/utils/status'
 const props = defineProps<{
   user?: Data.Seller.User
-  currentUserId: number
+  currentUserId: string
   canAssignAdmin: boolean
 }>()
 const open = defineModel<boolean>('open', { required: true })

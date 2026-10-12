@@ -4,8 +4,10 @@ import User from '#models/account/user'
 import { attachment, type AttachmentRelation } from '@jrmc/adonis-attachment/lucid'
 import { belongsTo, manyToMany, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class Collection extends CollectionSchema {
+export default class Collection extends compose(CollectionSchema, withUlidPrimaryKey()) {
   static published = scope((query) => {
     query.whereNotNull('published_at')
   })

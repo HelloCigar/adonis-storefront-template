@@ -8,8 +8,10 @@ import { attachments, type AttachmentCollectionRelation } from '@jrmc/adonis-att
 import { belongsTo, column, hasMany, manyToMany, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { jsonColumn } from '#models/shared/json_column'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class Product extends ProductSchema {
+export default class Product extends compose(ProductSchema, withUlidPrimaryKey()) {
   /** Products shoppers can see: active and published. */
   static published = scope((query) => {
     query.where('status', 'active').whereNotNull('published_at')

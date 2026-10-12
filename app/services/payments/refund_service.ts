@@ -32,15 +32,15 @@ export default class RefundService {
     private balances: BalanceService
   ) {}
 
-  async requestFull(orderId: number, actor: User, paymentId?: number) {
+  async requestFull(orderId: string, actor: User, paymentId?: string) {
     return db.transaction((trx) => this.requestFullWithin(trx, orderId, actor, paymentId))
   }
 
   async requestFullWithin(
     trx: TransactionClientContract,
-    orderId: number,
+    orderId: string,
     actor: User,
-    paymentId?: number
+    paymentId?: string
   ) {
     CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     await Order.query({ client: trx }).where('id', orderId).increment('version', 1)
@@ -116,7 +116,7 @@ export default class RefundService {
     return refund
   }
 
-  async run(id: number) {
+  async run(id: string) {
     const token = randomUUID()
     const claim = await db.transaction(async (trx) => {
       const changed = await RefundOperation.query({ client: trx })
@@ -189,7 +189,7 @@ export default class RefundService {
     }
   }
 
-  async apply(result: PaymentRefund, expectedId?: number, token?: string): Promise<void> {
+  async apply(result: PaymentRefund, expectedId?: string, token?: string): Promise<void> {
     this.money.assertMinor(result.amount)
     const reconcile = await db.transaction(async (trx) => {
       // Provider facts and their financial effect commit together, including refunds
@@ -314,7 +314,7 @@ export default class RefundService {
     for (const row of rows) await this.enqueue(row.id)
   }
 
-  async retry(id: number, actor: User, externalId?: string) {
+  async retry(id: string, actor: User, externalId?: string) {
     CheckoutException.assertStaff(actor, 'E_REFUND_ACCESS')
     const original = await RefundOperation.findOrFail(id)
     const payment = await Payment.findOrFail(original.paymentId)
@@ -360,7 +360,7 @@ export default class RefundService {
     })
   }
 
-  async review(id: number, code = 'E_REFUND_RETRIES_EXHAUSTED', token?: string) {
+  async review(id: string, code = 'E_REFUND_RETRIES_EXHAUSTED', token?: string) {
     const query = RefundOperation.query().where('id', id).whereNot('state', 'succeeded')
     if (token) query.where('claim_token', token)
     await query.update({
@@ -371,7 +371,7 @@ export default class RefundService {
     logger.error({ refundId: id, code }, 'Refund operation requires staff review')
   }
 
-  private async enqueue(id: number) {
+  private async enqueue(id: string) {
     await db.transaction((trx) =>
       this.outbox.record(trx, {
         key: `refund-reconcile:${id}:${Math.floor(Date.now() / 60_000)}`,
@@ -381,7 +381,7 @@ export default class RefundService {
     )
   }
 
-  private async balance(trx: TransactionClientContract, orderId: number) {
+  private async balance(trx: TransactionClientContract, orderId: string) {
     const order = await Order.findOrFail(orderId, { client: trx })
     const payments = await Payment.query({ client: trx }).where('order_id', orderId)
     const balances = await this.balances.forPayments(trx, payments)

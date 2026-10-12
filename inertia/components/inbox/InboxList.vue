@@ -7,7 +7,7 @@ const props = defineProps<{
   threads: Data.Chat.Thread[]
 }>()
 
-const threadsRefs = ref<Record<number, Element | null>>({})
+const threadsRefs = ref<Record<string, Element | null>>({})
 
 const selectedThread = defineModel<Data.Chat.Thread | null>()
 

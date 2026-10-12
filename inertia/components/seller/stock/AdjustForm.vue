@@ -5,7 +5,7 @@ import type { Data } from '@generated/data'
 import { urlFor } from '~/client'
 import { stockReasonLabel } from './reasons'
 const props = defineProps<{
-  productId: number
+  productId: string
   variant: Data.Seller.Variant
   reasons: string[]
 }>()

@@ -11,11 +11,11 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 export default class InventoryService {
   async reserve(
     trx: TransactionClientContract,
-    orderId: number,
-    items: { variantId: number; quantity: number }[],
+    orderId: string,
+    items: { variantId: string; quantity: number }[],
     expiresAtMs: number
   ) {
-    const combined = new Map<number, number>()
+    const combined = new Map<string, number>()
     for (const item of items) {
       if (!Number.isSafeInteger(item.quantity) || item.quantity < 1) this.unavailable()
       const quantity = (combined.get(item.variantId) ?? 0) + item.quantity
@@ -38,7 +38,7 @@ export default class InventoryService {
     }
   }
 
-  async consume(trx: TransactionClientContract, orderId: number) {
+  async consume(trx: TransactionClientContract, orderId: string) {
     for (const row of await StockReservation.query({ client: trx }).where('orderId', orderId)) {
       if (row.state === 'consumed') continue
       if (row.state !== 'reserved' || row.productVariantId === null) this.unavailable()
@@ -60,7 +60,7 @@ export default class InventoryService {
     }
   }
 
-  async release(trx: TransactionClientContract, orderId: number) {
+  async release(trx: TransactionClientContract, orderId: string) {
     for (const row of await StockReservation.query({ client: trx })
       .where('orderId', orderId)
       .where('state', 'reserved')) {
@@ -79,7 +79,7 @@ export default class InventoryService {
     }
   }
 
-  async restock(trx: TransactionClientContract, orderId: number) {
+  async restock(trx: TransactionClientContract, orderId: string) {
     for (const row of await StockReservation.query({ client: trx })
       .where('orderId', orderId)
       .where('state', 'consumed')
@@ -101,7 +101,7 @@ export default class InventoryService {
     trx: TransactionClientContract,
     variant: ProductVariant,
     quantityAfter: number,
-    entry: { reason: StockAdjustmentReason; note: string | null; actorId: number | null }
+    entry: { reason: StockAdjustmentReason; note: string | null; actorId: string | null }
   ) {
     if (variant.inventoryQuantity === null || !Number.isSafeInteger(quantityAfter)) return null
     const changed = await ProductVariant.query({ client: trx })
@@ -116,10 +116,10 @@ export default class InventoryService {
   /** Logs a staff stock change that the caller already wrote. Unchanged stock is not logged. */
   async record(
     trx: TransactionClientContract,
-    variantId: number,
+    variantId: string,
     quantityBefore: number | null,
     quantityAfter: number | null,
-    entry: { reason: StockAdjustmentReason; note?: string | null; actorId: number | null }
+    entry: { reason: StockAdjustmentReason; note?: string | null; actorId: string | null }
   ) {
     if (quantityBefore === quantityAfter) return null
     return StockAdjustment.create(
@@ -138,7 +138,7 @@ export default class InventoryService {
   /** Whether an unpaid online checkout still references this variant or product. */
   async hasPendingCheckout(
     trx: TransactionClientContract,
-    target: { variantId: number } | { productId: number }
+    target: { variantId: string } | { productId: string }
   ) {
     const query = OrderLineItem.query({ client: trx }).whereHas('order', (order) =>
       order.where('source', 'online').where('lifecycle_state', 'pending_payment')

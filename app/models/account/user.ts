@@ -10,6 +10,7 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Cart from '#models/checkout/cart'
 import CustomerAddress from '#models/account/customer_address'
 import Order from '#models/checkout/order'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 export const userRoles = ['customer', 'staff', 'admin'] as const
 export type UserRole = (typeof userRoles)[number]
@@ -18,7 +19,8 @@ export default class User extends compose(
   UserSchema,
   withAuthFinder(hash),
   withManagedEmail(),
-  withManagedPassword()
+  withManagedPassword(),
+  withUlidPrimaryKey()
 ) {
   declare role: UserRole
 

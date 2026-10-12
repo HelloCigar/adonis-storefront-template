@@ -68,7 +68,7 @@ test.group('Order chat inbox', (group) => {
     const page = await client.get('/inbox').loginAs(staff).withInertia()
     page.assertStatus(200)
     const threads = page.inertiaProps.threads as {
-      orderId: number
+      orderId: string
       customerName: string
       unreadCount: number
       lastMessage: { body: string } | null
@@ -85,7 +85,7 @@ test.group('Order chat inbox', (group) => {
 
     const unread = await client.get('/inbox').qs({ filter: 'unread' }).loginAs(staff).withInertia()
     assert.deepEqual(
-      unread.inertiaProps.threads.map((thread: { orderId: number }) => thread.orderId),
+      unread.inertiaProps.threads.map((thread: { orderId: string }) => thread.orderId),
       [busy.id, cancelledWithHistory.id]
     )
   })
@@ -181,12 +181,12 @@ test.group('Order chat inbox', (group) => {
     const page = await client.get('/inbox').loginAs(staff).withInertia()
     page.assertStatus(200)
     const threads = page.inertiaProps.threads as {
-      orderId: number
+      orderId: string
       stage: string
       totalAmount: number
       currencyCode: string
     }[]
-    const stageOf = (id: number) => threads.find((thread) => thread.orderId === id)?.stage
+    const stageOf = (id: string) => threads.find((thread) => thread.orderId === id)?.stage
     assert.deepEqual(
       orders.map((order) => stageOf(order.id)),
       expected
@@ -216,7 +216,7 @@ test.group('Order chat inbox', (group) => {
       .withInertia()
     linked.assertStatus(200)
     assert.notInclude(
-      linked.inertiaProps.threads.map((thread: { orderId: number }) => thread.orderId),
+      linked.inertiaProps.threads.map((thread: { orderId: string }) => thread.orderId),
       cancelled.id
     )
     assert.equal(linked.inertiaProps.openThread.orderId, cancelled.id)

@@ -34,7 +34,7 @@ watch(
   (product) => {
     const id = new URLSearchParams(page.url.split('?')[1]).get('variantId')
     selectedVariant.value =
-      product.variants?.find((variant) => String(variant.id) === id) ??
+      product.variants?.find((variant) => variant.id === id) ??
       product.selectedOrFirstAvailableVariant ??
       product.variants?.[0]
   },
@@ -43,8 +43,8 @@ watch(
 watch(selectedVariant, (variant) => {
   if (!variant) return
   const query = new URLSearchParams(page.url.split('?')[1])
-  if (query.get('variantId') === String(variant.id)) return
-  query.set('variantId', String(variant.id))
+  if (query.get('variantId') === variant.id) return
+  query.set('variantId', variant.id)
   router.replace({
     url: urlFor('products.show', { handle: props.product.handle }) + '?' + query,
     preserveState: true,

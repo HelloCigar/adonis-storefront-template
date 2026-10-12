@@ -47,7 +47,7 @@ const createCart = () => {
     return task
   }
 
-  const add = async (variantId: number, quantity = 1) => {
+  const add = async (variantId: string, quantity = 1) => {
     const saved = await submit((options) =>
       router.post({ route: 'cart.add' }, { variantId, quantity }, options)
     )
@@ -74,11 +74,11 @@ const createCart = () => {
     quantity: computed(() => cart.value?.totalQuantity ?? 0),
     total: computed(() => cart.value?.cost?.totalAmount),
     add,
-    update: (id: number, quantity: number) =>
+    update: (id: string, quantity: number) =>
       submit((options) =>
         router.patch({ route: 'cart.update', routeParams: { id } }, { quantity }, options)
       ),
-    remove: (id: number) =>
+    remove: (id: string) =>
       submit((options) => router.delete({ route: 'cart.remove', routeParams: { id } }, options)),
   }
 }

@@ -157,7 +157,7 @@ test.group('Dashboard attention', (group) => {
     const { toPack } = await attention(client, staff)
     assert.equal(toPack.count, 3)
     assert.deepEqual(
-      toPack.items.map((item: { id: number }) => item.id),
+      toPack.items.map((item: { id: string }) => item.id),
       [manual.id, online.id, partial.id]
     )
     const [first, second] = toPack.items
@@ -188,7 +188,7 @@ test.group('Dashboard attention', (group) => {
     assert.equal(millis(toShip.items[0].since), packedAt.toMillis())
     // A packed order has left the packing queue.
     assert.notInclude(
-      toPack.items.map((item: { id: number }) => item.id),
+      toPack.items.map((item: { id: string }) => item.id),
       packed.id
     )
   })
@@ -217,7 +217,7 @@ test.group('Dashboard attention', (group) => {
     const { paymentReview } = await attention(client, staff)
     assert.equal(paymentReview.count, 3)
     assert.sameMembers(
-      paymentReview.items.map((item: { id: number }) => item.id),
+      paymentReview.items.map((item: { id: string }) => item.id),
       [overlapping.id, flaggedAttempt.id, flaggedRefund.id]
     )
   })
@@ -272,7 +272,7 @@ test.group('Dashboard attention', (group) => {
     const { unreadChats } = await attention(client, staff)
     assert.equal(unreadChats.count, 2)
     assert.deepEqual(
-      unreadChats.items.map((item: { orderId: number }) => item.orderId),
+      unreadChats.items.map((item: { orderId: string }) => item.orderId),
       [longest.id, waiting.id]
     )
     const [first, second] = unreadChats.items
@@ -314,7 +314,7 @@ test.group('Dashboard attention', (group) => {
     await review('approved', ago({ days: 4 }))
     await review('hidden', ago({ days: 5 }))
 
-    const variant = (productId: number, title: string, values = {}) =>
+    const variant = (productId: string, title: string, values = {}) =>
       ProductVariantFactory.merge({
         productId,
         title,
@@ -341,7 +341,7 @@ test.group('Dashboard attention', (group) => {
     const { pendingReviews, outOfStock } = await attention(client, staff)
     assert.equal(pendingReviews.count, 2)
     assert.deepEqual(
-      pendingReviews.items.map((item: { id: number }) => item.id),
+      pendingReviews.items.map((item: { id: string }) => item.id),
       [older.id, newer.id]
     )
     assert.equal(pendingReviews.items[0].product, 'Canvas Tote')
@@ -350,7 +350,7 @@ test.group('Dashboard attention', (group) => {
 
     assert.equal(outOfStock.count, 3)
     assert.sameMembers(
-      outOfStock.items.map((item: { id: number }) => item.id),
+      outOfStock.items.map((item: { id: string }) => item.id),
       [zero.id, held.id, hidden.id]
     )
     for (const item of outOfStock.items) {
@@ -386,7 +386,7 @@ test.group('Dashboard attention', (group) => {
       assert.lengthOf(queue.items, 3)
     }
     assert.deepEqual(
-      toPack.items.map((item: { id: number }) => item.id),
+      toPack.items.map((item: { id: string }) => item.id),
       manual.slice(0, 3).map((order) => order.id)
     )
   })

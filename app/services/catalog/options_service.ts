@@ -3,7 +3,7 @@ import { errors } from '@vinejs/vine'
 
 export type OptionDefinition = { name: string; values: string[] }
 export type OptionIssue = {
-  variantId: number | null
+  variantId: string | null
   kind: 'configuration' | 'invalid' | 'duplicate'
   message: string
 }
@@ -94,7 +94,7 @@ export default class OptionsService {
 
   issues(
     definitions: OptionDefinition[],
-    variants: { id: number; options: unknown }[]
+    variants: { id: string; options: unknown }[]
   ): OptionIssue[] {
     const issues: OptionIssue[] = []
     try {
@@ -107,7 +107,7 @@ export default class OptionsService {
           'Legacy product options need repair: use up to three dimensions with unique names and values.',
       })
     }
-    const seen = new Map<string, number>()
+    const seen = new Set<string>()
     for (const variant of variants) {
       if (!this.matches(definitions, variant.options))
         issues.push({
@@ -120,9 +120,10 @@ export default class OptionsService {
         issues.push({
           variantId: variant.id,
           kind: 'duplicate',
-          message: `This combination is also used by variant #${seen.get(key)}. Choose a different combination.`,
+          message:
+            'This combination is also used by another variant. Choose a different combination.',
         })
-      if (key) seen.set(key, seen.get(key) ?? variant.id)
+      if (key) seen.add(key)
     }
     return issues
   }

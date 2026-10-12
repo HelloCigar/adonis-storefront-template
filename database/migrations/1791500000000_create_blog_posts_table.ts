@@ -8,7 +8,7 @@ import { BaseSchema } from '@adonisjs/lucid/schema'
 export default class extends BaseSchema {
   async up() {
     this.schema.createTable('blog_posts', (table) => {
-      table.increments('id')
+      table.string('id', 26).notNullable().primary()
       table.string('handle', 255).notNullable().unique()
       table.string('title', 255).notNullable()
       table.string('excerpt', 500).nullable()
@@ -19,8 +19,7 @@ export default class extends BaseSchema {
       table.enum('status', ['draft', 'published']).notNullable().defaultTo('draft')
       table.timestamp('published_at').nullable()
       table
-        .integer('author_id')
-        .unsigned()
+        .string('author_id', 26)
         .nullable()
         .references('id')
         .inTable('users')

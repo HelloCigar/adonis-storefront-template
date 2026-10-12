@@ -15,7 +15,7 @@ export interface AttentionGroup<Item> {
 }
 
 export interface AttentionOrder {
-  id: number
+  id: string
   number: string
   customer: string
   /** When the order started waiting on this step. */

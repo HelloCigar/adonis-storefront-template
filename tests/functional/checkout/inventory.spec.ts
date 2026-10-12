@@ -142,7 +142,9 @@ test.group('Checkout stock invariants', (group) => {
     cart.status = 'submitted'
     await cart.save()
     await assert.rejects(() => carts.findOrCreate('test-frozen-token'), 'Validation failure')
-    await assert.rejects(() => carts.remove('test-frozen-token', undefined, 1))
+    await assert.rejects(() =>
+      carts.remove('test-frozen-token', undefined, '01ARZ3NDEKTSV4RRFFQ69G5FAV')
+    )
     await cart.refresh()
     assert.equal(cart.status, 'submitted')
     assert.equal(cart.version, 0)
@@ -162,7 +164,7 @@ test.group('Checkout stock invariants', (group) => {
         await outbox.record(trx, {
           key: 'checkout:rollback',
           kind: 'create_checkout',
-          entityId: 42,
+          entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
         })
         throw new Error('rollback')
       })
@@ -172,10 +174,18 @@ test.group('Checkout stock invariants', (group) => {
     assert.isEmpty(await WorkflowOutbox.all())
     events.assertNotEmitted(WorkflowOutboxReady)
     const first = await db.transaction((trx) =>
-      outbox.record(trx, { key: 'checkout:42', kind: 'create_checkout', entityId: 42 })
+      outbox.record(trx, {
+        key: 'checkout:42',
+        kind: 'create_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
     )
     const replay = await db.transaction((trx) =>
-      outbox.record(trx, { key: 'checkout:42', kind: 'create_checkout', entityId: 42 })
+      outbox.record(trx, {
+        key: 'checkout:42',
+        kind: 'create_checkout',
+        entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+      })
     )
     assert.equal(first.id, replay.id)
     assert.isNull(replay.publishedAt)
@@ -183,7 +193,11 @@ test.group('Checkout stock invariants', (group) => {
     await assert.rejects(
       () =>
         db.transaction((trx) =>
-          outbox.record(trx, { key: 'checkout:42', kind: 'create_checkout', entityId: 43 })
+          outbox.record(trx, {
+            key: 'checkout:42',
+            kind: 'create_checkout',
+            entityId: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
+          })
         ),
       'Workflow key is already used for another operation'
     )

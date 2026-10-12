@@ -3,6 +3,8 @@ import { belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import User from '#models/account/user'
 import ProductVariant from '#models/catalog/product_variant'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 /** Reasons staff choose when adjusting stock by hand. */
 export const manualStockReasons = [
@@ -18,7 +20,7 @@ export const variantFormStockReasons = ['initial', 'edited'] as const
 export type StockAdjustmentReason =
   (typeof manualStockReasons)[number] | (typeof variantFormStockReasons)[number]
 
-export default class StockAdjustment extends StockAdjustmentSchema {
+export default class StockAdjustment extends compose(StockAdjustmentSchema, withUlidPrimaryKey()) {
   @column() declare reason: StockAdjustmentReason
 
   get change() {

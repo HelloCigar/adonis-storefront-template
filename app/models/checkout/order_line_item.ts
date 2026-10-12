@@ -8,8 +8,10 @@ import { beforeCreate, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { toMajor, toMinor } from '#models/shared/money'
 import { jsonColumn } from '#models/shared/json_column'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class OrderLineItem extends OrderLineItemSchema {
+export default class OrderLineItem extends compose(OrderLineItemSchema, withUlidPrimaryKey()) {
   @beforeCreate()
   static async snapshotCreator(item: OrderLineItem) {
     let productId = item.productId

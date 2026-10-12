@@ -5,8 +5,10 @@ import Order from '#models/checkout/order'
 import { jsonColumn } from '#models/shared/json_column'
 import type { CheckoutInput } from '#services/payments/payment_service'
 import type { AttemptState } from '#services/checkout/state_service'
+import { compose } from '@adonisjs/core/helpers'
+import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
-export default class Attempt extends PaymentAttemptSchema {
+export default class Attempt extends compose(PaymentAttemptSchema, withUlidPrimaryKey()) {
   static table = 'payment_attempts'
 
   /** Checkouts that may still take or settle a payment. */

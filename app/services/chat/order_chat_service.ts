@@ -1,3 +1,4 @@
+import { isUlid } from '#models/shared/with_ulid_primary_key'
 import { randomUUID } from 'node:crypto'
 import { DateTime } from 'luxon'
 import type { MultipartFile } from '@adonisjs/core/bodyparser'
@@ -44,8 +45,8 @@ export default class OrderChatService {
 
   orderIdFromRoomKey(key: unknown) {
     if (typeof key !== 'string' || !key.startsWith(roomPrefix)) return null
-    const id = Number(key.slice(roomPrefix.length))
-    return Number.isSafeInteger(id) && id > 0 ? id : null
+    const id = key.slice(roomPrefix.length)
+    return isUlid(id) ? id : null
   }
 
   /** An admin who bought the order still writes as its customer. */
@@ -54,7 +55,7 @@ export default class OrderChatService {
   }
 
   /** The newest messages, returned oldest first for display, with their images. */
-  async messages(orderId: number) {
+  async messages(orderId: string) {
     const newestFirst = await OrderMessage.query()
       .where('order_id', orderId)
       .orderBy('id', 'desc')
@@ -123,7 +124,7 @@ export default class OrderChatService {
       .where('field', 'images')
       .whereIn(
         'attachable_id',
-        messages.map((message) => String(message.id))
+        messages.map((message) => message.id)
       )
       .preload('attachment')
       .orderBy('position', 'asc')
@@ -142,10 +143,10 @@ export default class OrderChatService {
       .query()
       .whereIn(
         'id',
-        links.map((link) => Number(link.attachableId))
+        links.map((link) => link.attachableId)
       )
       .first()
-    return links.find((link) => link.attachableId === String(message?.id))?.attachment ?? null
+    return links.find((link) => link.attachableId === message?.id)?.attachment ?? null
   }
 
   /** Marks everything the other side sent as read by the reader's side. */
