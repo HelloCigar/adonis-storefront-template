@@ -35,7 +35,7 @@ export default defineConfig({
     () => import('@adonisjs/bouncer/commands'),
     () => import('@adonisjs/queue/commands'),
     () => import('@adonisjs/mail/commands'),
-    () => import('@adonisplus/flow/commands')
+    () => import('@adonisplus/flow/commands'),
   ],
 
   /*
@@ -75,7 +75,8 @@ export default defineConfig({
     {
       file: () => import('@adonisplus/flow/flow_dashboard_provider'),
       environment: ['web'],
-    }
+    },
+    () => import('@adonisplus/persona/persona_provider'),
   ],
 
   /*

@@ -84,6 +84,13 @@ router
   .as('payments.simulations.store')
 
 router
+  .get('email-verifications/:token', [controllers.auth.EmailVerifications, 'show'])
+  .as('email_verifications.show')
+router
+  .put('email-verifications/:token', [controllers.auth.EmailVerifications, 'update'])
+  .as('email_verifications.update')
+
+router
   .group(() => {
     router.get('signup', [controllers.auth.NewAccount, 'create']).as('new_account.create')
     router
@@ -98,7 +105,16 @@ router
 
 router
   .group(() => {
-    router.get('/account', [controllers.account.Account, 'show']).as('account.show')
+    router
+      .get('/account', [controllers.account.Account, 'show'])
+      .as('account.show')
+      .use(middleware.verifiedAccount())
+    router
+      .post('email-verifications', [controllers.auth.EmailVerifications, 'store'])
+      .as('email_verifications.store')
+    router
+      .get('account/activate', [controllers.auth.EmailVerifications, 'create'])
+      .as('email_verifications.create')
     router.get('/account/logout', [controllers.account.Logout, 'show']).as('account.logout')
     router
       .patch('/account/profile', [controllers.account.Profile, 'update'])

@@ -17,6 +17,12 @@ export const UserFactory = factory
       acceptsMarketing: false,
     }
   })
+  .state('verified', (user) => {
+    user.unverifiedEmail = null
+  })
+  .state('unverified', (user) => {
+    user.unverifiedEmail = user.email
+  })
   .relation('addresses', () => CustomerAddressFactory)
   .relation('carts', () => CartFactory)
   .relation('orders', () => OrderFactory)

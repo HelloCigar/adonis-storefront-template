@@ -62,6 +62,12 @@ export interface ApiDefinition {
       store: typeof routes['payments.simulations.store']
     }
   }
+  emailVerifications: {
+    show: typeof routes['email_verifications.show']
+    update: typeof routes['email_verifications.update']
+    store: typeof routes['email_verifications.store']
+    create: typeof routes['email_verifications.create']
+  }
   newAccount: {
     create: typeof routes['new_account.create']
     store: typeof routes['new_account.store']

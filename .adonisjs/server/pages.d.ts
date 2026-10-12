@@ -9,12 +9,14 @@ type ExtractProps<T> = Omit<
 
 declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
+    'account/activate': ExtractProps<(typeof import('../../inertia/pages/account/activate.vue'))['default']>
     'account/index': ExtractProps<(typeof import('../../inertia/pages/account/index.vue'))['default']>
     'account/logout': ExtractProps<(typeof import('../../inertia/pages/account/logout.vue'))['default']>
     'account/orders/[id]': ExtractProps<(typeof import('../../inertia/pages/account/orders/[id].vue'))['default']>
     'account/orders/index': ExtractProps<(typeof import('../../inertia/pages/account/orders/index.vue'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.vue'))['default']>
     'auth/signup': ExtractProps<(typeof import('../../inertia/pages/auth/signup.vue'))['default']>
+    'auth/verify_email': ExtractProps<(typeof import('../../inertia/pages/auth/verify_email.vue'))['default']>
     'blog/[handle]': ExtractProps<(typeof import('../../inertia/pages/blog/[handle].vue'))['default']>
     'blog/index': ExtractProps<(typeof import('../../inertia/pages/blog/index.vue'))['default']>
     'checkout/index': ExtractProps<(typeof import('../../inertia/pages/checkout/index.vue'))['default']>
