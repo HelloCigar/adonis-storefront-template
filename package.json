@@ -22,6 +22,7 @@
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
+    "#commands/*": "./controllers/*.js",
     "#exceptions/*": "./app/exceptions/*.js",
     "#models/*": "./app/models/*.js",
     "#mails/*": "./app/mails/*.js",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.4.0",
+    "@adonisjs/eslint-ast-grep": "^1.0.0",
     "@adonisjs/eslint-config": "^3.1.0",
     "@adonisjs/prettier-config": "^1.5.0",
     "@adonisjs/tsconfig": "^2.0.0",
