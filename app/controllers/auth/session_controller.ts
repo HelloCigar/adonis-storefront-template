@@ -8,8 +8,10 @@ const failedLogins = () =>
   limiter.use({ requests: 5, duration: '15 minutes', blockDuration: '15 minutes' })
 
 export default class SessionController {
-  async create({ inertia }: HttpContext) {
-    return inertia.render('auth/login', {})
+  async create({ inertia, request }: HttpContext) {
+    return inertia.render('auth/login', {
+      lastLoginMethod: request.plainCookie('last_login_method') ?? null,
+    })
   }
 
   async store({ request, auth, response }: HttpContext) {
@@ -29,6 +31,7 @@ export default class SessionController {
     }
 
     await auth.use('web').login(user)
+    response.plainCookie('last_login_method', 'email', { maxAge: '60 days' })
     response.redirect().toRoute(user.isStoreStaff ? 'dashboard' : 'account.show')
   }
 

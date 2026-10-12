@@ -28,7 +28,7 @@ test.group('Single store authorization', (group) => {
       role: 'admin',
     })
     signup.assertStatus(302)
-    signup.assertHeader('location', '/account')
+    signup.assertHeader('location', '/account/activate')
     const registered = await User.findByOrFail('email', 'new@example.com')
     assert.equal(registered.role, 'customer')
     for (const role of ['customer', 'staff', 'admin'] as const) {

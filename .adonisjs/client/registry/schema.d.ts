@@ -319,6 +319,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'email_verifications.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/email-verifications/:token'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { token: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['show']>>>
+    }
+  }
+  'email_verifications.update': {
+    methods: ["PUT"]
+    pattern: '/email-verifications/:token'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { token: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['update']>>>
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'
@@ -377,6 +401,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/account_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/account_controller').default['show']>>>
+    }
+  }
+  'email_verifications.store': {
+    methods: ["POST"]
+    pattern: '/email-verifications'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['store']>>>
+    }
+  }
+  'email_verifications.create': {
+    methods: ["GET","HEAD"]
+    pattern: '/account/activate'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['create']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['create']>>>
     }
   }
   'account.logout': {

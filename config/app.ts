@@ -1,5 +1,9 @@
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
+import env from '#start/env'
+
+/** The public origin used to build absolute links in emails. */
+export const appUrl = env.get('APP_URL') ?? `http://${env.get('HOST')}:${env.get('PORT')}`
 
 /**
  * The configuration settings used by the HTTP server

@@ -3,7 +3,11 @@ import { ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AuthLayout from '~/layouts/auth.vue'
 import PasswordInput from '~/components/auth/PasswordInput.vue'
+import PasswordStrength from '~/components/auth/PasswordStrength.vue'
 import { Form, Link } from '@adonisjs/inertia/vue'
+import type { PasswordPolicy } from '@adonisplus/persona/password_policy/types'
+
+defineProps<{ passwordPolicy: PasswordPolicy; lastLoginMethod?: string | null }>()
 
 const fullName = ref('')
 const email = ref('')
@@ -50,14 +54,11 @@ const email = ref('')
         />
       </UFormField>
 
-      <UFormField
-        label="Password"
-        name="password"
-        description="Use 8–32 characters."
-        :error="errors.password"
-      >
-        <PasswordInput name="password" autocomplete="new-password" />
-      </UFormField>
+      <PasswordStrength :policy="passwordPolicy">
+        <UFormField label="Password" name="password" :error="errors.password">
+          <PasswordInput name="password" autocomplete="new-password" />
+        </UFormField>
+      </PasswordStrength>
 
       <UFormField
         label="Confirm password"

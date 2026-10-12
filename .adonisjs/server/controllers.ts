@@ -13,6 +13,7 @@ export const controllers = {
     Profile: () => import('#controllers/account/profile_controller'),
   },
   auth: {
+    EmailVerifications: () => import('#controllers/auth/email_verifications_controller'),
     NewAccount: () => import('#controllers/auth/new_account_controller'),
     Session: () => import('#controllers/auth/session_controller'),
   },

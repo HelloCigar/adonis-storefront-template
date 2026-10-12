@@ -604,6 +604,23 @@ export class DiscountRedemptionSchema extends BaseModel {
   declare releasedAt: DateTime | null
 }
 
+export class EmailVerificationTokenSchema extends BaseModel {
+  static $columns = ['createdAt', 'email', 'expiresAt', 'hash', 'id', 'tokenableId'] as const
+  $columns = EmailVerificationTokenSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column()
+  declare hash: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare tokenableId: number
+}
+
 export class OrderAccessGrantSchema extends BaseModel {
   static $columns = ['createdAt', 'expiresAtMs', 'id', 'orderId', 'revokedAt', 'tokenHash', 'updatedAt'] as const
   $columns = OrderAccessGrantSchema.$columns
@@ -1189,7 +1206,7 @@ export class StockReservationSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'updatedAt'] as const
+  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column({ consume: (value)=>Boolean(value) })
   declare acceptsMarketing: boolean
@@ -1215,6 +1232,8 @@ export class UserSchema extends BaseModel {
   declare phoneNumber: string | null
   @column()
   declare role: string
+  @column()
+  declare unverifiedEmail: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

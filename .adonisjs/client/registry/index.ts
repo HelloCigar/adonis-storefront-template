@@ -162,6 +162,18 @@ const routes = {
     tokens: [{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"_dev","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"paymongo","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"checkouts","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['payments.simulations.store']['types'],
   },
+  'email_verifications.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/email-verifications/:token',
+    tokens: [{"old":"/email-verifications/:token","type":0,"val":"email-verifications","end":""},{"old":"/email-verifications/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['email_verifications.show']['types'],
+  },
+  'email_verifications.update': {
+    methods: ["PUT"],
+    pattern: '/email-verifications/:token',
+    tokens: [{"old":"/email-verifications/:token","type":0,"val":"email-verifications","end":""},{"old":"/email-verifications/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['email_verifications.update']['types'],
+  },
   'new_account.create': {
     methods: ["GET","HEAD"],
     pattern: '/signup',
@@ -191,6 +203,18 @@ const routes = {
     pattern: '/account',
     tokens: [{"old":"/account","type":0,"val":"account","end":""}],
     types: placeholder as Registry['account.show']['types'],
+  },
+  'email_verifications.store': {
+    methods: ["POST"],
+    pattern: '/email-verifications',
+    tokens: [{"old":"/email-verifications","type":0,"val":"email-verifications","end":""}],
+    types: placeholder as Registry['email_verifications.store']['types'],
+  },
+  'email_verifications.create': {
+    methods: ["GET","HEAD"],
+    pattern: '/account/activate',
+    tokens: [{"old":"/account/activate","type":0,"val":"account","end":""},{"old":"/account/activate","type":0,"val":"activate","end":""}],
+    types: placeholder as Registry['email_verifications.create']['types'],
   },
   'account.logout': {
     methods: ["GET","HEAD"],

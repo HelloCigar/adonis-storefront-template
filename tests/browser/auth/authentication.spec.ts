@@ -55,7 +55,7 @@ test.group('Account authentication', (group) => {
     )
     await page.getByRole('button', { name: 'Hide confirm password', exact: true }).click()
     await page.getByRole('button', { name: 'Create account', exact: true }).click()
-    await page.assertPath('/account')
+    await page.assertPath('/account/activate')
 
     const user = await User.findByOrFail('email', 'new-auth@example.com')
     assert.equal(user.role, 'customer')
