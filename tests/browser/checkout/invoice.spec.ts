@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
+import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import database from '@adonisjs/lucid/services/db'
 import InventoryService from '#services/catalog/inventory_service'
@@ -22,6 +23,9 @@ test.group('Invoices carry the saved store details', (group) => {
   })
 
   test('the invoice names the saved store', async ({ visit, browserContext, assert }) => {
+    // @ts-ignore -- the fake keeps the receipt mail away from a real mailbox
+    using mails = mail.fake()
+
     await savedStoreSettings({ storeName: 'Lantern Goods', contactEmail: 'hello@lantern.test' })
     const { order, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })

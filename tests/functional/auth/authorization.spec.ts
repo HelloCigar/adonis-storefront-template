@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import ace from '@adonisjs/core/services/ace'
 import db from '@adonisjs/lucid/services/db'
@@ -21,6 +22,9 @@ test.group('Single store authorization', (group) => {
     client,
     assert,
   }) => {
+    // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
+    using mails = mail.fake()
+
     const signup = await client.post('/signup').withCsrfToken().redirects(0).json({
       fullName: 'Customer',
       email: 'new@example.com',
