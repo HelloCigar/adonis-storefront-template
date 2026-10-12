@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
 import FlashToasts from '~/components/flash_toasts.vue'
+import PasskeySignals from '~/components/passkey_signals.vue'
 import ThemeToggle from '~/components/theme_toggle.vue'
 
 const page = usePage()
@@ -73,5 +74,6 @@ const storeName = computed(() => page.props.storeName)
     </aside>
 
     <FlashToasts />
+    <PasskeySignals />
   </div>
 </template>

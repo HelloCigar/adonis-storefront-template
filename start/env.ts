@@ -22,6 +22,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   APP_KEY: Env.schema.secret(),
   APP_URL: Env.schema.string.optional(),
 
+  // Passkeys (the relying party; PASSKEY_RP_ID cannot change once users register passkeys)
+  PASSKEY_RP_ID: Env.schema.string({ format: 'host' }),
+  PASSKEY_ORIGINS: Env.schema.string(),
+
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 

@@ -4,6 +4,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
 import { usePage } from '@inertiajs/vue3'
 import FlashToasts from '~/components/flash_toasts.vue'
+import PasskeySignals from '~/components/passkey_signals.vue'
 import StorefrontLayout from '~/layouts/default.vue'
 import { useDashboard } from '~/composables/useDashboard'
 
@@ -194,5 +195,6 @@ if (page.props.permissions.manageStore) useDashboard()
     <slot />
 
     <FlashToasts />
+    <PasskeySignals />
   </UDashboardGroup>
 </template>

@@ -14,7 +14,7 @@ export default class SessionController {
     })
   }
 
-  async store({ request, auth, response }: HttpContext) {
+  async store({ request, auth, response, session }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
     const [throttled, user] = await failedLogins().penalize(`login_${email}_${request.ip()}`, () =>
       User.verifyCredentials(email, password)
@@ -31,6 +31,7 @@ export default class SessionController {
     }
 
     await auth.use('web').login(user)
+    session.flash('passkeySignals', await user.getPasskeySignals())
     response.plainCookie('last_login_method', 'email', { maxAge: '60 days' })
     response.redirect().toRoute(user.isStoreStaff ? 'dashboard' : 'account.show')
   }

@@ -210,6 +210,18 @@ const routes = {
     tokens: [{"old":"/login","type":0,"val":"login","end":""}],
     types: placeholder as Registry['session.store']['types'],
   },
+  'passkey_login_challenges.store': {
+    methods: ["POST"],
+    pattern: '/login/passkey/challenge',
+    tokens: [{"old":"/login/passkey/challenge","type":0,"val":"login","end":""},{"old":"/login/passkey/challenge","type":0,"val":"passkey","end":""},{"old":"/login/passkey/challenge","type":0,"val":"challenge","end":""}],
+    types: placeholder as Registry['passkey_login_challenges.store']['types'],
+  },
+  'passkey_session.store': {
+    methods: ["POST"],
+    pattern: '/login/passkey',
+    tokens: [{"old":"/login/passkey","type":0,"val":"login","end":""},{"old":"/login/passkey","type":0,"val":"passkey","end":""}],
+    types: placeholder as Registry['passkey_session.store']['types'],
+  },
   'password_resets.create': {
     methods: ["GET","HEAD"],
     pattern: '/forgot-password',
@@ -419,6 +431,30 @@ const routes = {
     pattern: '/settings/security',
     tokens: [{"old":"/settings/security","type":0,"val":"settings","end":""},{"old":"/settings/security","type":0,"val":"security","end":""}],
     types: placeholder as Registry['settings.password.update']['types'],
+  },
+  'passkey_registration_challenges.store': {
+    methods: ["POST"],
+    pattern: '/settings/passkeys/challenge',
+    tokens: [{"old":"/settings/passkeys/challenge","type":0,"val":"settings","end":""},{"old":"/settings/passkeys/challenge","type":0,"val":"passkeys","end":""},{"old":"/settings/passkeys/challenge","type":0,"val":"challenge","end":""}],
+    types: placeholder as Registry['passkey_registration_challenges.store']['types'],
+  },
+  'passkeys.store': {
+    methods: ["POST"],
+    pattern: '/settings/passkeys',
+    tokens: [{"old":"/settings/passkeys","type":0,"val":"settings","end":""},{"old":"/settings/passkeys","type":0,"val":"passkeys","end":""}],
+    types: placeholder as Registry['passkeys.store']['types'],
+  },
+  'passkeys.update': {
+    methods: ["PUT"],
+    pattern: '/settings/passkeys/:id',
+    tokens: [{"old":"/settings/passkeys/:id","type":0,"val":"settings","end":""},{"old":"/settings/passkeys/:id","type":0,"val":"passkeys","end":""},{"old":"/settings/passkeys/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['passkeys.update']['types'],
+  },
+  'passkeys.destroy': {
+    methods: ["DELETE"],
+    pattern: '/settings/passkeys/:id',
+    tokens: [{"old":"/settings/passkeys/:id","type":0,"val":"settings","end":""},{"old":"/settings/passkeys/:id","type":0,"val":"passkeys","end":""},{"old":"/settings/passkeys/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['passkeys.destroy']['types'],
   },
   'session.destroy': {
     methods: ["POST"],

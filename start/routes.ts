@@ -111,6 +111,12 @@ router
 
     router.get('login', [controllers.auth.Session, 'create']).as('session.create')
     router.post('login', [controllers.auth.Session, 'store']).as('session.store').use(loginThrottle)
+    router
+      .post('login/passkey/challenge', [controllers.auth.PasskeyLoginChallenges, 'store'])
+      .as('passkey_login_challenges.store')
+    router
+      .post('login/passkey', [controllers.auth.PasskeySession, 'store'])
+      .as('passkey_session.store')
 
     router
       .get('forgot-password', [controllers.auth.PasswordResets, 'create'])
@@ -215,6 +221,22 @@ router
     router
       .post('/settings/security', [controllers.settings.Security, 'update'])
       .as('settings.password.update')
+    router
+      .post('/settings/passkeys/challenge', [
+        controllers.settings.PasskeyRegistrationChallenges,
+        'store',
+      ])
+      .as('passkey_registration_challenges.store')
+    router.post('/settings/passkeys', [controllers.settings.Passkeys, 'store']).as('passkeys.store')
+    router
+      .put('/settings/passkeys/:id', [controllers.settings.Passkeys, 'update'])
+      // Passkey ids are integers, so override the group's ULID id matcher.
+      .where('id', { match: /^\d+$/ })
+      .as('passkeys.update')
+    router
+      .delete('/settings/passkeys/:id', [controllers.settings.Passkeys, 'destroy'])
+      .where('id', { match: /^\d+$/ })
+      .as('passkeys.destroy')
     router.post('logout', [controllers.auth.Session, 'destroy']).as('session.destroy')
   })
   .where('id', ulid)

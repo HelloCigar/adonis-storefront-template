@@ -846,6 +846,56 @@ export class OrderSchema extends BaseModel {
   declare version: number
 }
 
+export class PasskeyChallengeSchema extends BaseModel {
+  static $columns = ['challenge', 'createdAt', 'expiresAt', 'id', 'purpose', 'userId'] as const
+  $columns = PasskeyChallengeSchema.$columns
+  @column()
+  declare challenge: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare purpose: string
+  @column()
+  declare userId: string | null
+}
+
+export class PasskeySchema extends BaseModel {
+  static $columns = ['aaguid', 'backedUp', 'counter', 'createdAt', 'credentialId', 'credentialIdHash', 'deviceType', 'id', 'lastUsedAt', 'name', 'publicKey', 'transports', 'updatedAt', 'userId'] as const
+  $columns = PasskeySchema.$columns
+  @column()
+  declare aaguid: string | null
+  @column({ consume: (value)=>Boolean(value) })
+  declare backedUp: boolean
+  @column({ consume: (value)=>value === null ? null : Number(value) })
+  declare counter: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare credentialId: string
+  @column()
+  declare credentialIdHash: string
+  @column()
+  declare deviceType: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare lastUsedAt: DateTime | null
+  @column()
+  declare name: string
+  @column()
+  declare publicKey: string
+  @column()
+  declare transports: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: string
+}
+
 export class PasswordResetTokenSchema extends BaseModel {
   static $columns = ['createdAt', 'expiresAt', 'hash', 'id', 'tokenableId'] as const
   $columns = PasswordResetTokenSchema.$columns
@@ -1271,7 +1321,7 @@ export class StoreSettingSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt'] as const
+  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt', 'webauthnUserHandle'] as const
   $columns = UserSchema.$columns
   @column({ consume: (value)=>Boolean(value) })
   declare acceptsMarketing: boolean
@@ -1301,6 +1351,8 @@ export class UserSchema extends BaseModel {
   declare unverifiedEmail: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+  @column()
+  declare webauthnUserHandle: string | null
 }
 
 export class WorkflowOutboxSchema extends BaseModel {
