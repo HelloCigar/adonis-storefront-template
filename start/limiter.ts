@@ -20,6 +20,11 @@ export const signupThrottle = limiter.define('signup', (ctx) =>
   limiter.allowRequests(5).every('15 minutes').usingKey(`signup_${ctx.request.ip()}`)
 )
 
+/** Password reset requests; each sends at most one email per address per minute on its own. */
+export const passwordResetThrottle = limiter.define('password_reset', (ctx) =>
+  limiter.allowRequests(5).every('15 minutes').usingKey(`password_reset_${ctx.request.ip()}`)
+)
+
 /** Order submission; each order reserves stock until its payment expires. */
 export const checkoutThrottle = limiter.define('checkout', (ctx) =>
   limiter.allowRequests(10).every('10 minutes').usingKey(`checkout_${ctx.request.ip()}`)

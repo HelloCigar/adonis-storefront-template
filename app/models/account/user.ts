@@ -3,6 +3,7 @@ import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { withManagedEmail } from '@adonisplus/persona/email'
+import { withManagedPassword } from '@adonisplus/persona/password'
 import { attachment, type AttachmentRelation } from '@jrmc/adonis-attachment/lucid'
 import { beforeSave, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
@@ -13,7 +14,12 @@ import Order from '#models/checkout/order'
 export const userRoles = ['customer', 'staff', 'admin'] as const
 export type UserRole = (typeof userRoles)[number]
 
-export default class User extends compose(UserSchema, withAuthFinder(hash), withManagedEmail()) {
+export default class User extends compose(
+  UserSchema,
+  withAuthFinder(hash),
+  withManagedEmail(),
+  withManagedPassword()
+) {
   declare role: UserRole
 
   /** Email lookups are exact, so every write path stores the canonical form. */

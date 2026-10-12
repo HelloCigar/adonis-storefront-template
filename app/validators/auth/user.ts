@@ -13,3 +13,13 @@ export const signupValidator = vine.create({
   password: newPassword(),
   passwordConfirmation: vine.string().sameAs('password'),
 })
+
+export const forgotPasswordValidator = vine.create({
+  email: emailAddress(),
+})
+
+export const resetPasswordValidator = vine.create({
+  password: newPassword().confirmed({
+    confirmationField: 'passwordConfirmation',
+  }),
+})

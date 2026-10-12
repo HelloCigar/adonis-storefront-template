@@ -16,6 +16,7 @@ import {
   checkoutThrottle,
   discountThrottle,
   loginThrottle,
+  passwordResetThrottle,
   signupThrottle,
 } from '#start/limiter'
 
@@ -91,6 +92,13 @@ router
   .as('email_verifications.update')
 
 router
+  .get('password-resets/:token', [controllers.auth.PasswordResets, 'show'])
+  .as('password_resets.show')
+router
+  .put('password-resets/:token', [controllers.auth.PasswordResets, 'update'])
+  .as('password_resets.update')
+
+router
   .group(() => {
     router.get('signup', [controllers.auth.NewAccount, 'create']).as('new_account.create')
     router
@@ -100,6 +108,14 @@ router
 
     router.get('login', [controllers.auth.Session, 'create']).as('session.create')
     router.post('login', [controllers.auth.Session, 'store']).as('session.store').use(loginThrottle)
+
+    router
+      .get('forgot-password', [controllers.auth.PasswordResets, 'create'])
+      .as('password_resets.create')
+    router
+      .post('password-resets', [controllers.auth.PasswordResets, 'store'])
+      .as('password_resets.store')
+      .use(passwordResetThrottle)
   })
   .use(middleware.guest())
 

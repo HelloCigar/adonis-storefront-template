@@ -68,6 +68,12 @@ export interface ApiDefinition {
     store: typeof routes['email_verifications.store']
     create: typeof routes['email_verifications.create']
   }
+  passwordResets: {
+    show: typeof routes['password_resets.show']
+    update: typeof routes['password_resets.update']
+    create: typeof routes['password_resets.create']
+    store: typeof routes['password_resets.store']
+  }
   newAccount: {
     create: typeof routes['new_account.create']
     store: typeof routes['new_account.store']
