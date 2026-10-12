@@ -35,6 +35,7 @@ export default defineConfig({
     () => import('@adonisjs/bouncer/commands'),
     () => import('@adonisjs/queue/commands'),
     () => import('@adonisjs/mail/commands'),
+    () => import('@adonisplus/flow/commands')
   ],
 
   /*
@@ -71,8 +72,10 @@ export default defineConfig({
     () => import('#providers/chat_provider'),
     () => import('@adonisjs/limiter/limiter_provider'),
     () => import('@adonisjs/drive/drive_provider'),
-    // () => import('@adonis-agora/agent/agent_provider'),
-    // () => import('@adonis-agora/agent/dashboard_provider')
+    {
+      file: () => import('@adonisplus/flow/flow_dashboard_provider'),
+      environment: ['web'],
+    }
   ],
 
   /*
