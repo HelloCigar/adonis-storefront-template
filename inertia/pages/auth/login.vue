@@ -35,11 +35,7 @@ const email = ref('')
 
       <UFormField label="Password" name="password" :error="errors.password">
         <template #hint>
-          <Link
-            route="password_resets.create"
-            component="auth/forgot_password"
-            :page-props="{}"
-          >
+          <Link route="password_resets.create" component="auth/forgot_password" :page-props="{}">
             Forgot password?
           </Link>
         </template>
