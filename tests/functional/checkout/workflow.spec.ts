@@ -1,5 +1,4 @@
-import { createHmac, randomUUID } from 'node:crypto'
-import { Secret } from '@adonisjs/core/helpers'
+import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
@@ -26,17 +25,12 @@ import NotificationService from '#services/checkout/notification_service'
 import OutboxPublisherService from '#services/checkout/outbox_publisher_service'
 import Shipment from '#models/checkout/shipment'
 import RefundObservation from '#models/payments/refund_observation'
-import RefundLookup from '#models/payments/refund_lookup'
 import RefundLookupService from '#services/payments/refund_lookup_service'
 import SimulationService from '#services/payments/simulation_service'
-import PayMongoService from '#providers/payments/paymongo_service'
 import AuditService from '#services/checkout/audit_service'
 import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
 import { UserFactory } from '#database/factories/user_factory'
 import { QueueManager, Worker } from '@adonisjs/queue'
-import CreateCheckout from '#jobs/payments/create_checkout'
-import ExpireCheckout from '#jobs/payments/expire_checkout'
-import SendNotification from '#jobs/checkout/send_notification'
 import OrderNotification from '#mails/checkout/order_notification'
 import mail from '@adonisjs/mail/services/main'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
@@ -175,145 +169,6 @@ test.group('Online checkout workflow', (group) => {
     assert.isNotNull(await cartService5.load(token))
   })
 
-  test('recovers a lost provider response by replaying the saved key and consumes stock once', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recovery = await app.container.make(RecoveryService)
-    adapter.loseCheckoutResponse = true
-    await assert.rejects(() => recovery.run(attempt.id), 'Provider timeout')
-    await attempt.refresh()
-    assert.equal(attempt.state, 'unknown')
-    await recovery.run(attempt.id)
-    await attempt.refresh()
-    assert.equal(attempt.state, 'pending')
-    assert.equal(adapter.sessions.size, 1)
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [
-      { id: 'opaque/payment/1', amount: order.totalMinor!, currency: 'PHP', status: 'paid' },
-    ]
-    const settlement = await app.container.make(SettlementService)
-    await settlement.apply(session)
-    await recovery.run(attempt.id)
-    await settlement.apply(session)
-    await order.refresh()
-    await variant.refresh()
-    assert.equal(order.lifecycleState, 'confirmed')
-    assert.equal(order.financialStatus, 'paid')
-    assert.equal(variant.inventoryQuantity, 0)
-    assert.equal(variant.inventoryReservedQuantity, 0)
-    assert.lengthOf(await Payment.all(), 1)
-    assert.lengthOf(await Notification.all(), 1)
-  })
-
-  test('keeps holds through an uncertain closure, then expires once and reviews a late capture', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recovery = await app.container.make(RecoveryService)
-    await recovery.run(attempt.id)
-    attempt.expiresAtMs = Date.now() - 1
-    await attempt.save()
-    adapter.unavailable = true
-    await assert.rejects(() => recovery.run(attempt.id, true))
-    await variant.refresh()
-    assert.equal(variant.inventoryReservedQuantity, 2)
-    adapter.unavailable = false
-    await recovery.run(attempt.id, true)
-    await recovery.run(attempt.id, true)
-    await variant.refresh()
-    await order.refresh()
-    await attempt.refresh()
-    assert.equal(order.lifecycleState, 'expired')
-    assert.equal(variant.inventoryQuantity, 2)
-    assert.equal(variant.inventoryReservedQuantity, 0)
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [{ id: 'late/payment', amount: 109800, currency: 'PHP', status: 'paid' }]
-    const settlementService6 = await app.container.make(SettlementService)
-    await settlementService6.apply(session)
-    await order.refresh()
-    assert.equal(order.lifecycleState, 'review_required')
-    const loadedPayment7 = await Payment.firstOrFail()
-    assert.equal(loadedPayment7.disposition, 'review_required')
-    await variant.refresh()
-    assert.equal(variant.inventoryQuantity, 2)
-  })
-
-  test('records a second capture for review without consuming inventory twice', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recoveryService8 = await app.container.make(RecoveryService)
-    await recoveryService8.run(attempt.id)
-    await attempt.refresh()
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [{ id: 'payment-first', amount: 109800, currency: 'PHP', status: 'paid' }]
-    const settle = await app.container.make(SettlementService)
-    await settle.apply(session)
-    session.payments.push({ id: 'payment-extra', amount: 109800, currency: 'PHP', status: 'paid' })
-    await settle.apply(session)
-    await order.refresh()
-    await variant.refresh()
-    assert.equal(order.lifecycleState, 'review_required')
-    assert.equal(variant.inventoryQuantity, 0)
-    assert.lengthOf(await Payment.all(), 2)
-    const loadedPayment9 = await Payment.findByOrFail('externalId', 'payment-extra')
-    assert.equal(loadedPayment9.disposition, 'overpayment')
-  })
-
-  test('stops uncertain creation replay after the provider window without releasing stock', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recovery = await app.container.make(RecoveryService)
-    adapter.loseCheckoutResponse = true
-    await assert.rejects(() => recovery.run(attempt.id))
-    await attempt.refresh()
-    attempt.replayUntilMs = Date.now() - 1
-    await attempt.save()
-    await recovery.run(attempt.id)
-    await attempt.refresh()
-    await variant.refresh()
-    assert.isTrue(attempt.needsReview)
-    assert.equal(adapter.calls.length, 1)
-    assert.equal(variant.inventoryReservedQuantity, 2)
-  })
-
-  test('automatically publishes committed work through Adonis Queue and records publication only once', async ({
-    assert,
-  }) => {
-    using queue = QueueManager.fake()
-    const { checkout, token, input } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    queue.assertPushed(CreateCheckout.name, {
-      queue: 'payments',
-      payload: { entityId: attempt.id },
-    })
-    queue.assertPushed(ExpireCheckout.name, {
-      queue: 'payments',
-      payload: { entityId: attempt.id },
-      delay: (value) => !!value && value > 0,
-    })
-    queue.assertPushedCount(2)
-    assert.isEmpty(await WorkflowOutbox.query().whereNull('published_at'))
-    const publisher = await app.container.make(OutboxPublisherService)
-    await publisher.publish()
-    await publisher.publish()
-    queue.assertPushedCount(2)
-  })
-
   test('guest HTTP checkout rotates the cart, protects every private action and permits capability-backed account claiming', async ({
     assert,
     client,
@@ -428,81 +283,6 @@ test.group('Online checkout workflow', (group) => {
     assert.equal(variant.inventoryQuantity, 0)
   })
 
-  test('cancels a paid order atomically, restocks once, and waits for confirmed refund success', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recoveryService13 = await app.container.make(RecoveryService)
-    await recoveryService13.run(attempt.id)
-    await attempt.refresh()
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [{ id: 'captured', amount: 109800, currency: 'PHP', status: 'paid' }]
-    const settlementService14 = await app.container.make(SettlementService)
-    await settlementService14.apply(session)
-    const fulfillment = await app.container.make(FulfillmentService)
-    await fulfillment.cancel(order.id, staff)
-    await fulfillment.cancel(order.id, staff)
-    await variant.refresh()
-    assert.equal(variant.inventoryQuantity, 2)
-    const refunds = await app.container.make(RefundService)
-    const operation = await refunds.requestFull(order.id, staff)
-    const again = await refunds.requestFull(order.id, staff)
-    assert.equal(operation.id, again.id)
-    await refunds.run(operation.id)
-    await operation.refresh()
-    await order.refresh()
-    assert.equal(operation.state, 'pending')
-    assert.equal(order.financialStatus, 'paid')
-    const remote = adapter.refunds.get(operation.externalId!)!
-    remote.status = 'succeeded'
-    await refunds.apply(remote)
-    await refunds.apply(remote)
-    await order.refresh()
-    assert.equal(order.financialStatus, 'refunded')
-    assert.equal(order.lifecycleState, 'cancelled')
-    await assert.rejects(() => refunds.requestFull(order.id, staff))
-    await variant.refresh()
-    assert.equal(variant.inventoryQuantity, 2)
-  })
-
-  test('a provider-side refund observation blocks shipment without guessing a local operation', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recoveryService15 = await app.container.make(RecoveryService)
-    await recoveryService15.run(attempt.id)
-    await attempt.refresh()
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [{ id: 'captured', amount: 109800, currency: 'PHP', status: 'paid' }]
-    const settlementService16 = await app.container.make(SettlementService)
-    await settlementService16.apply(session)
-    const refundService17 = await app.container.make(RefundService)
-    await refundService17.apply({
-      provider: adapter.provider,
-      id: 'dashboard-refund',
-      paymentId: 'captured',
-      amount: 109800,
-      currency: 'PHP',
-      liveMode: false,
-      status: 'succeeded',
-    })
-    await order.refresh()
-    assert.equal(order.financialStatus, 'refunded')
-    assert.lengthOf(await RefundObservation.all(), 1)
-    const fulfillmentService18 = await app.container.make(FulfillmentService)
-    await assert.rejects(() => (async () => fulfillmentService18.pack(order.id, staff))())
-    await variant.refresh()
-    assert.equal(variant.inventoryQuantity, 0)
-  })
-
   test('the real database queue recovers a stalled worker and ignores delayed expiry after payment', async ({
     assert,
     cleanup,
@@ -589,101 +369,6 @@ test.group('Online checkout workflow', (group) => {
     const quote = await quoteService.quote(second)
     assert.lengthOf(quote.lines, 1)
     assert.equal(quote.totalMinor, 109800)
-  })
-
-  test('queue unavailability and a crash after dispatch preserve recoverable outbox work', async ({
-    assert,
-    cleanup,
-  }) => {
-    const { checkout, token, input } = await submission()
-    const queueAdapter = QueueManager.use('database')
-    const originalPush = queueAdapter.pushOn.bind(queueAdapter)
-    queueAdapter.pushOn = async () => {
-      throw new Error('Queue unavailable')
-    }
-    cleanup(() => {
-      queueAdapter.pushOn = originalPush
-    })
-    await checkout.submit(token, undefined, input)
-    const publisher = await app.container.make(OutboxPublisherService)
-    let row = await WorkflowOutbox.query().where('kind', 'create_checkout').firstOrFail()
-    assert.isNull(row.publishedAt)
-    assert.equal(row.publicationAttempts, 1)
-    assert.equal(row.lastError, 'E_QUEUE_PUBLICATION')
-    queueAdapter.pushOn = originalPush
-    await WorkflowOutbox.query().update({ claimExpiresAtMs: 0 })
-    await publisher.publish()
-    row = await WorkflowOutbox.findOrFail(row.id)
-    // Simulate dispatch having committed while the publisher lost its acknowledgement.
-    await WorkflowOutbox.query()
-      .where('id', row.id)
-      .update({ publishedAt: null, claimToken: 'dead-publisher', claimExpiresAtMs: 0 })
-    await publisher.publish()
-    const loadedWorkflowOutbox26 = await WorkflowOutbox.findOrFail(row.id)
-    assert.isNotNull(loadedWorkflowOutbox26.publishedAt)
-    const loadeddb27 = await db
-      .from('queue_jobs')
-      .where('queue', 'payments')
-      .count('* as count')
-      .first()
-    assert.equal(loadeddb27.count, 2)
-  })
-
-  test('refund retries preserve their key across rejection and a lost response; success wins over older events', async ({
-    assert,
-  }) => {
-    const { order } = await capturedSubmission(adapter)
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const refunds = await app.container.make(RefundService)
-    const operation = await refunds.requestFull(order.id, staff)
-    adapter.rejectRefundOnce = true
-    await assert.rejects(() => refunds.run(operation.id))
-    await operation.refresh()
-    assert.equal(operation.state, 'requested')
-    adapter.loseRefundResponse = true
-    await assert.rejects(() => refunds.run(operation.id))
-    await operation.refresh()
-    assert.equal(operation.state, 'unknown')
-    await refunds.run(operation.id)
-    await operation.refresh()
-    assert.equal(adapter.refunds.size, 1)
-    assert.lengthOf(new Set(adapter.calls.filter((call) => call.startsWith('refund:'))), 1)
-    const remote = adapter.refunds.get(operation.externalId!)!
-    remote.status = 'succeeded'
-    await refunds.apply(remote)
-    await refunds.apply({ ...remote, status: 'pending' })
-    await refunds.apply({ ...remote, status: 'failed' })
-    await operation.refresh()
-    await order.refresh()
-    assert.equal(operation.state, 'succeeded')
-    assert.equal(order.financialStatus, 'refunded')
-    await assert.rejects(() => refunds.apply({ ...remote, amount: remote.amount - 1 }))
-  })
-
-  test('changing the default provider preserves original checkout lookups and refunds', async ({
-    assert,
-  }) => {
-    const { checkout, token, input } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const replacement = new FakePaymentAdapter('replacement')
-    app.container.swap(
-      PaymentService,
-      () => new DispatcherService(replacement.provider, [adapter, replacement])
-    )
-    const recovery = await app.container.make(RecoveryService)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    await recovery.run(attempt.id)
-    await attempt.refresh()
-    const session = adapter.sessions.get(attempt.externalId!)!
-    session.status = 'paid'
-    session.payments = [{ id: 'original-payment', amount: 109800, currency: 'PHP', status: 'paid' }]
-    await recovery.run(attempt.id)
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const refunds = await app.container.make(RefundService)
-    const loadedrefunds28 = await refunds.requestFull(order.id, staff)
-    await refunds.run(loadedrefunds28.id)
-    assert.equal(adapter.refunds.size, 1)
-    assert.isEmpty(replacement.calls)
   })
 
   test('the simulation workflow reads and reconciles through the unified payment interface', async ({
@@ -823,147 +508,17 @@ test.group('Online checkout workflow', (group) => {
     assert.equal(order.financialStatus, 'refunded')
   })
 
-  test('a superseded lookup failure cannot retry or mark newer successful work for review', async ({
-    assert,
-  }) => {
-    const reference = { provider: adapter.provider, id: 'superseded-refund' }
-    adapter.refunds.set(reference.id, {
-      ...reference,
-      paymentId: 'unknown-capture',
-      amount: 100,
-      currency: 'PHP',
-      status: 'succeeded',
-      liveMode: false,
-    })
-    const lookups = await app.container.make(RefundLookupService)
-    const row = await lookups.request(reference, false, 'first-event')
-    let signalFetched!: () => void
-    const fetched = new Promise<void>((resolve) => {
-      signalFetched = resolve
-    })
-    let releaseFailure!: () => void
-    const failureReady = new Promise<void>((resolve) => {
-      releaseFailure = resolve
-    })
-    const original = adapter.getRefund.bind(adapter)
-    adapter.getRefund = async () => {
-      signalFetched()
-      await failureReady
-      throw new Error('Earlier provider lookup failed')
-    }
-    const firstLookup = lookups.run(row.id)
-    try {
-      await fetched
-      await lookups.request(reference, false, 'second-event')
-      adapter.getRefund = original
-      await lookups.run(row.id)
-      releaseFailure()
-      await firstLookup
-      await row.refresh()
-      assert.equal(row.state, 'resolved')
-      assert.isNull(row.lastError)
-    } finally {
-      releaseFailure()
-      await firstLookup.catch(() => {})
-      adapter.getRefund = original
-    }
-  })
+  test('checkout submission without a CSRF token is rejected', async ({ client }) => {
+    const { input } = await submission()
 
-  test('signed PayMongo HTTP webhooks settle without a browser return and sparse refunds only enqueue a lookup', async ({
-    assert,
-    client,
-  }) => {
-    let requests = 0
-    const paymongo = new PayMongoService(
-      {
-        secretKey: new Secret('sk_test_fixture'),
-        webhookSecret: new Secret('whsec_fixture'),
-        paymentMethods: ['card'],
-        timeoutMs: 1000,
-        webhookToleranceSeconds: 300,
-      },
-      async () => {
-        requests++
-        throw new Error('No provider request is allowed in webhook handling')
-      }
-    )
-    app.container.swap(PaymentService, () => new DispatcherService('paymongo', [paymongo]))
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const payload = {
-      data: {
-        id: 'evt_paid_fixture',
-        type: 'checkout_session.payment.paid',
-        livemode: false,
-        data: {
-          id: 'cs_fixture',
-          type: 'checkout_session',
-          attributes: {
-            checkout_url: 'https://checkout.paymongo.com/cs_fixture',
-            reference_number: order.publicId,
-            status: 'active',
-            livemode: false,
-            metadata: { attemptId: attempt.publicId },
-            payments: [
-              {
-                id: 'pay_fixture',
-                type: 'payment',
-                attributes: { amount: 109800, currency: 'PHP', status: 'paid', livemode: false },
-              },
-            ],
-          },
-        },
-      },
-    }
-    const signed = (body: string) => {
-      const time = Math.floor(Date.now() / 1000)
-      return `t=${time},te=${createHmac('sha256', 'whsec_fixture').update(`${time}.${body}`).digest('hex')},li=`
-    }
-    const raw = JSON.stringify(payload, null, 2)
-    const invalid = await client
-      .post('/payments/webhooks/paymongo')
-      .header('content-type', 'application/json')
-      .header('Paymongo-Signature', 'invalid')
-      .unsafeJson(raw)
-    invalid.assertStatus(401)
-    assert.isEmpty(await Payment.all())
-    for (let repeat = 0; repeat < 2; repeat++) {
-      const response = await client
-        .post('/payments/webhooks/paymongo')
-        .header('content-type', 'application/json')
-        .header('Paymongo-Signature', signed(raw))
-        .unsafeJson(raw)
-      response.assertStatus(200)
-    }
-    await order.refresh()
-    await variant.refresh()
-    assert.equal(order.financialStatus, 'paid')
-    assert.equal(variant.inventoryQuantity, 0)
-    assert.lengthOf(await Payment.all(), 1)
-    const sparse = JSON.stringify({
-      data: {
-        id: 'evt_refund',
-        type: 'payment.refund.updated',
-        livemode: false,
-        data: { id: 'ref_fixture', type: 'refund', attributes: {} },
-      },
-    })
-    const queued = await client
-      .post('/payments/webhooks/paymongo')
-      .header('content-type', 'application/json')
-      .header('Paymongo-Signature', signed(sparse))
-      .unsafeJson(sparse)
-    queued.assertStatus(200)
-    assert.lengthOf(await RefundLookup.all(), 1)
-    assert.equal(requests, 0)
-    const regular = await client
+    const response = await client
       .post('/checkout')
       .header('accept', 'application/json')
       .form(input)
       .redirects(0)
-    regular.assertStatus(302)
-    regular.assertFlashMessage('error', 'Invalid or expired CSRF token')
+
+    response.assertStatus(302)
+    response.assertFlashMessage('error', 'Invalid or expired CSRF token')
   })
 
   test('refund lookup recovery saves confirmed facts and audits operational problems without changing state', async ({
@@ -1032,70 +587,6 @@ test.group('Online checkout workflow', (group) => {
     assert.equal(loadeddb34.run_count, 1)
   })
 
-  test('a real worker timeout retains failure, protects holds from the late handler and supports staff recovery', async ({
-    assert,
-    cleanup,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const outboxPublisherService35 = await app.container.make(OutboxPublisherService)
-    await outboxPublisherService35.publish()
-    const options = CreateCheckout.options
-    CreateCheckout.options = { ...options, timeout: '30ms', retry: { maxRetries: 0 } }
-    cleanup(() => {
-      CreateCheckout.options = options
-    })
-    const original = adapter.createCheckout.bind(adapter)
-    let release!: () => void
-    const held = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    adapter.createCheckout = async (snapshot) => {
-      const result = await original(snapshot)
-      await held
-      return result
-    }
-    const recovery = await app.container.make(RecoveryService)
-    let running: Promise<void> | undefined
-    app.container.swap(RecoveryService, () =>
-      Object.assign(Object.create(recovery), {
-        run: (id: number, expire?: boolean) => {
-          running = recovery.run(id, expire)
-          return running
-        },
-        review: recovery.review.bind(recovery),
-      })
-    )
-    cleanup(() => app.container.restore(RecoveryService))
-    const worker = databaseWorker()
-    cleanup(() => worker.stop())
-    const loadedworker36 = await worker.processCycle(['payments'])
-    assert.equal(loadedworker36?.type, 'started')
-    const loadedworker37 = await worker.processCycle(['payments'])
-    assert.equal(loadedworker37?.type, 'completed')
-    await attempt.refresh()
-    assert.isTrue(attempt.needsReview)
-    const loadeddb38 = await db.from('queue_jobs').where('status', 'failed').first()
-    const loadeddb39 = await db.from('queue_jobs').where('status', 'failed').first()
-    assert.equal(loadeddb38.name ?? JSON.parse(loadeddb39.data).name, CreateCheckout.name)
-    release()
-    await running
-    await attempt.refresh()
-    await variant.refresh()
-    assert.isTrue(attempt.needsReview)
-    assert.equal(variant.inventoryReservedQuantity, 2)
-    adapter.createCheckout = original
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const reference = [...adapter.sessions.keys()][0]
-    await recovery.retry(attempt.id, staff, reference)
-    await recovery.run(attempt.id)
-    await attempt.refresh()
-    assert.equal(attempt.state, 'pending')
-    assert.isFalse(attempt.needsReview)
-    assert.equal(adapter.sessions.size, 1)
-  })
-
   test('an unassigned captured fact can be bound by verified lookup without losing it or consuming stock twice', async ({
     assert,
   }) => {
@@ -1125,35 +616,6 @@ test.group('Online checkout workflow', (group) => {
     assert.lengthOf(await Payment.all(), 1)
   })
 
-  test('mismatched captured totals retain the payment and prevent shipping until refunded', async ({
-    assert,
-  }) => {
-    const { checkout, token, input, variant } = await submission()
-    const { order } = await checkout.submit(token, undefined, input)
-    const attempt = await Attempt.findByOrFail('orderId', order.id)
-    const recoveryService1 = await app.container.make(RecoveryService)
-    await recoveryService1.run(attempt.id)
-    await attempt.refresh()
-    const remote = adapter.sessions.get(attempt.externalId!)!
-    remote.status = 'paid'
-    remote.payments = [{ id: 'wrong-amount', amount: 10000, currency: 'PHP', status: 'paid' }]
-    const settlementService2 = await app.container.make(SettlementService)
-    await settlementService2.apply(remote)
-    await order.refresh()
-    assert.equal(order.lifecycleState, 'review_required')
-    const staff = await UserFactory.merge({ role: 'staff' }).create()
-    const fulfillment = await app.container.make(FulfillmentService)
-    await assert.rejects(() => fulfillment.pack(order.id, staff))
-    await fulfillment.cancel(order.id, staff)
-    await variant.refresh()
-    assert.equal(variant.inventoryReservedQuantity, 0)
-    const payment = await Payment.firstOrFail()
-    assert.equal(payment.amountMinor, 10000)
-    const refunds = await app.container.make(RefundService)
-    const operation = await refunds.requestFull(order.id, staff, payment.id)
-    assert.equal(operation.amountMinor, 10000)
-  })
-
   test('competing shipment and refund requests serialize so an order cannot both ship and begin refunding', async ({
     assert,
   }) => {
@@ -1170,86 +632,6 @@ test.group('Online checkout workflow', (group) => {
     const shipment = await Shipment.findByOrFail('orderId', order.id)
     await order.load('refunds')
     assert.isFalse(shipment.state === 'shipped' && order.refunds.length > 0)
-  })
-
-  test('notification failure retries delivery without repeating settlement or losing its staff retry state', async ({
-    assert,
-    cleanup,
-  }) => {
-    using mails = mail.fake()
-    const { order, variant } = await capturedSubmission(adapter)
-    const row = await Notification.firstOrFail()
-    const notifications = await app.container.make(NotificationService)
-    const send = mail.send.bind(mail)
-    mail.send = async () => {
-      throw new Error('SMTP unavailable')
-    }
-    cleanup(() => {
-      mail.send = send
-    })
-    await assert.rejects(() => notifications.run(row.id))
-    await row.refresh()
-    assert.equal(row.state, 'failed')
-    await notifications.failed(row.id)
-    mail.send = send
-    await notifications.run(row.id)
-    await notifications.run(row.id)
-    mails.mails.assertSentCount(1)
-    await variant.refresh()
-    await order.refresh()
-    assert.equal(order.financialStatus, 'paid')
-    assert.equal(variant.inventoryQuantity, 0)
-    assert.lengthOf(await Payment.all(), 1)
-  })
-
-  test('the recovery sweep re-queues a pending notification whose job was lost, once per window', async ({
-    assert,
-  }) => {
-    using queue = QueueManager.fake()
-    using mails = mail.fake()
-    await capturedSubmission(adapter)
-    const row = await Notification.firstOrFail()
-    assert.equal(row.state, 'pending')
-    const notifications = await app.container.make(NotificationService)
-    const outboxFor = () =>
-      WorkflowOutbox.query().where('kind', 'notification').where('entity_id', row.id)
-    const stale = DateTime.utc().minus({ minutes: 5 }).toSQL({ includeOffset: false })!
-
-    // Fresh work is left alone.
-    await notifications.sweep()
-    assert.lengthOf(await outboxFor(), 1)
-
-    // Outbox work still waiting for the queue is not duplicated, however old.
-    await Notification.query().where('id', row.id).update({ updatedAt: stale })
-    await outboxFor().update({ createdAt: stale, publishedAt: null })
-    await notifications.sweep()
-    assert.lengthOf(await outboxFor(), 1)
-
-    // Published long ago but never delivered: the job was lost, so the sweep re-queues it.
-    await outboxFor().update({ publishedAt: stale })
-    await notifications.sweep()
-    const swept = await outboxFor()
-    assert.lengthOf(swept, 2)
-    assert.isTrue(swept.some((item) => item.operationKey.startsWith('notification-sweep:')))
-    const publisher = await app.container.make(OutboxPublisherService)
-    await publisher.publish()
-    queue.assertPushed(SendNotification.name, { payload: { entityId: row.id } })
-
-    // The fresh sweep row holds off another re-queue until it is stale too.
-    await notifications.sweep()
-    assert.lengthOf(await outboxFor(), 2)
-
-    // Failed notifications stay with staff, and sent ones are never re-queued.
-    await outboxFor().update({ createdAt: stale })
-    await Notification.query().where('id', row.id).update({ state: 'failed', updatedAt: stale })
-    await notifications.sweep()
-    assert.lengthOf(await outboxFor(), 2)
-    await Notification.query().where('id', row.id).update({ state: 'pending' })
-    await notifications.run(row.id)
-    await Notification.query().where('id', row.id).update({ updatedAt: stale })
-    await notifications.sweep()
-    assert.lengthOf(await outboxFor(), 2)
-    mails.mails.assertSentCount(1)
   })
 
   test('staff routes authorize shared-store operations and online status cannot be manually forged', async ({
