@@ -95,6 +95,16 @@ const sections = computed(() => {
       items: [
         { label: 'General', icon: 'i-lucide-user', to: urlFor('settings'), exact: true },
         { label: 'Security', icon: 'i-lucide-shield', to: urlFor('settings.security') },
+        ...(page.props.permissions.manageStoreSettings
+          ? [
+              { label: 'Store', icon: 'i-lucide-store', to: urlFor('settings.store.edit') },
+              {
+                label: 'Policies',
+                icon: 'i-lucide-scroll-text',
+                to: urlFor('settings.store_policies.edit'),
+              },
+            ]
+          : []),
       ],
     },
   ]

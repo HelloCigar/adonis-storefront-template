@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import type { MultipartFile } from '@adonisjs/core/bodyparser'
 import { attachmentManager } from '@jrmc/adonis-attachment'
 import { AttachmentLinkModel } from '@jrmc/adonis-attachment/lucid'
-import { storeName } from '#config/mail'
+import StoreSetting from '#models/settings/store_setting'
 import OrderMessagePosted from '#events/chat/order_message_posted'
 import type User from '#models/account/user'
 import Order from '#models/checkout/order'
@@ -96,13 +96,14 @@ export default class OrderChatService {
     if (!order.userId || order.lifecycleState !== 'confirmed') return null
     if (await order.related('messages').query().first()) return null
     await order.load('user')
+    const settings = await StoreSetting.current()
     const name = order.user.firstName?.trim() || order.user.fullName?.trim().split(/\s+/)[0]
     const message = await OrderMessage.create({
       publicId: randomUUID(),
       orderId: order.id,
       senderId: null,
       senderRole: 'staff',
-      senderName: storeName,
+      senderName: settings.effectiveStoreName,
       body:
         `Thanks for ordering${name ? `, ${name}` : ''}! We received your payment for order ` +
         `${order.number} and will post updates here. Reply anytime if you have a question.`,

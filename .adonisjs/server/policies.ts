@@ -14,5 +14,6 @@ export const policies = {
   SellerReviewPolicy: () => import('#policies/seller/review_policy'),
   SellerUserPolicy: () => import('#policies/seller/user_policy'),
   SellerVariantPolicy: () => import('#policies/seller/variant_policy'),
+  SettingsStoreSettingPolicy: () => import('#policies/settings/store_setting_policy'),
 }
 

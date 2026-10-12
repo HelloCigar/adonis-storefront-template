@@ -1205,6 +1205,56 @@ export class StockReservationSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class StorePolicySchema extends BaseModel {
+  static $columns = ['content', 'contentHtml', 'createdAt', 'handle', 'id', 'updatedAt'] as const
+  $columns = StorePolicySchema.$columns
+  @column()
+  declare content: Record<string, unknown>
+  @column()
+  declare contentHtml: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare handle: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class StoreSettingSchema extends BaseModel {
+  static $columns = ['checklistDismissedAt', 'contactEmail', 'createdAt', 'id', 'identitySavedAt', 'policiesSavedAt', 'policiesTickedAt', 'productTickedAt', 'setupCompletedAt', 'shippingMinor', 'shippingSavedAt', 'staffTickedAt', 'storeName', 'updatedAt'] as const
+  $columns = StoreSettingSchema.$columns
+  @column.dateTime()
+  declare checklistDismissedAt: DateTime | null
+  @column()
+  declare contactEmail: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare identitySavedAt: DateTime | null
+  @column.dateTime()
+  declare policiesSavedAt: DateTime | null
+  @column.dateTime()
+  declare policiesTickedAt: DateTime | null
+  @column.dateTime()
+  declare productTickedAt: DateTime | null
+  @column.dateTime()
+  declare setupCompletedAt: DateTime | null
+  @column()
+  declare shippingMinor: number | null
+  @column.dateTime()
+  declare shippingSavedAt: DateTime | null
+  @column.dateTime()
+  declare staffTickedAt: DateTime | null
+  @column()
+  declare storeName: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt'] as const
   $columns = UserSchema.$columns

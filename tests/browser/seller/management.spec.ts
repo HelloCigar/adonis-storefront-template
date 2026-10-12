@@ -4,6 +4,7 @@ import User from '#models/account/user'
 import Product from '#models/catalog/product'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
+import { finishedStoreSetup } from '#tests/helpers/store_setup'
 
 test.group('Store management pages', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -232,6 +233,7 @@ test.group('Store management pages', (group) => {
       password: 'secret-password',
       role: 'admin',
     })
+    await finishedStoreSetup()
     await browserContext.loginAs(admin)
     const page = await visit('/dashboard')
     await page.getByRole('link', { name: 'Products', exact: true }).waitFor()

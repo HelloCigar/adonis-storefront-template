@@ -11,7 +11,8 @@ import CartTransformer from '#transformers/checkout/cart_transformer'
 import SearchResultTransformer from '#transformers/catalog/search_result_transformer'
 import { searchValidator } from '#validators/catalog/search'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
-import { storeName } from '#config/mail'
+import StoreSetting from '#models/settings/store_setting'
+import StoreSettingPolicy from '#policies/settings/store_setting_policy'
 
 @inject()
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
@@ -31,7 +32,14 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
      * transformers for rich data-types like Models.
      */
     return {
-      storeName,
+      storeName: async () => {
+        const settings = await StoreSetting.current()
+        return settings.effectiveStoreName
+      },
+      storeContactEmail: async () => {
+        const settings = await StoreSetting.current()
+        return settings.effectiveContactEmail
+      },
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
       permissions: async () => ({
@@ -41,8 +49,11 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
         manageUsers: ctx.bouncer
           ? await ctx.bouncer.with('SellerUserPolicy').allows('viewAny')
           : false,
+        manageStoreSettings: ctx.bouncer
+          ? await ctx.bouncer.with(StoreSettingPolicy).allows('update')
+          : false,
       }),
-      policies: ContentTransformer.transform(this.contentService.policies()),
+      policies: async () => ContentTransformer.transform(await this.contentService.policies()),
       cart: async () => {
         const cart = await this.cartService.load(ctx.checkoutSession?.cartToken())
         return cart ? CartTransformer.transform(cart).depth(4) : null

@@ -38,6 +38,7 @@ export const controllers = {
   dashboard: {
     Dashboard: () => import('#controllers/dashboard/dashboard_controller'),
     Inbox: () => import('#controllers/dashboard/inbox_controller'),
+    LaunchChecklist: () => import('#controllers/dashboard/launch_checklist_controller'),
   },
   media: {
     Attachments: () => import('#controllers/media/attachments_controller'),
@@ -72,6 +73,11 @@ export const controllers = {
     Members: () => import('#controllers/settings/members_controller'),
     Security: () => import('#controllers/settings/security_controller'),
     Settings: () => import('#controllers/settings/settings_controller'),
+    StorePolicies: () => import('#controllers/settings/store_policies_controller'),
+    StoreSettings: () => import('#controllers/settings/store_settings_controller'),
+  },
+  setup: {
+    SetupSteps: () => import('#controllers/setup/setup_steps_controller'),
   },
   storefront: {
     Cart: () => import('#controllers/storefront/cart_controller'),

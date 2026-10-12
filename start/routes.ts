@@ -152,9 +152,36 @@ router
       .as('chat.images.show')
     router
       .group(() => {
-        router.get('/dashboard', [controllers.dashboard.Dashboard, 'index']).as('dashboard')
+        router
+          .get('/dashboard', [controllers.dashboard.Dashboard, 'index'])
+          .as('dashboard')
+          .use(middleware.setupOffer())
+        router
+          .delete('/dashboard/launch-checklist', [controllers.dashboard.LaunchChecklist, 'destroy'])
+          .as('launch_checklist.destroy')
         router.get('/inbox', [controllers.dashboard.Inbox, 'index']).as('inbox')
         router.get('/customers', [controllers.seller.Customers, 'index']).as('customers')
+        router.get('/setup', [controllers.setup.SetupSteps, 'index']).as('setup.index')
+        router
+          .get('/setup/:step', [controllers.setup.SetupSteps, 'show'])
+          .where('step', { match: /^(identity|shipping|policies)$/ })
+          .as('setup.show')
+        router
+          .put('/setup/:step', [controllers.setup.SetupSteps, 'update'])
+          .where('step', { match: /^(identity|shipping|policies)$/ })
+          .as('setup.update')
+        router
+          .get('/settings/store/policies', [controllers.settings.StorePolicies, 'edit'])
+          .as('settings.store_policies.edit')
+        router
+          .put('/settings/store/policies', [controllers.settings.StorePolicies, 'update'])
+          .as('settings.store_policies.update')
+        router
+          .get('/settings/store', [controllers.settings.StoreSettings, 'edit'])
+          .as('settings.store.edit')
+        router
+          .put('/settings/store', [controllers.settings.StoreSettings, 'update'])
+          .as('settings.store.update')
       })
       .use(middleware.staff())
     router.get('/settings', [controllers.settings.Settings, 'index']).as('settings')

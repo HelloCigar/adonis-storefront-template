@@ -9,7 +9,7 @@
     {{-- Server-rendered pages bring their own title through @inertiaHead --}}
     @if(!page.ssrHead)
       <title data-inertia>
-        Your store
+        {{ page.props.storeName || 'Your store' }}
       </title>
     @end
 

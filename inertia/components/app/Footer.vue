@@ -24,6 +24,14 @@ const showPreferences = () =>
     <template #left>
       <p class="mb-5 lg:mb-0 text-muted font-medium text-sm">
         {{ copyright }}
+        <span aria-hidden="true"> · </span>
+        <ULink
+          :to="`mailto:${page.props.storeContactEmail}`"
+          external
+          class="text-muted hover:text-default"
+        >
+          {{ page.props.storeContactEmail }}
+        </ULink>
       </p>
     </template>
 

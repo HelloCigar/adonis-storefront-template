@@ -108,9 +108,25 @@ export interface ApiDefinition {
     }
   }
   dashboard: typeof routes['dashboard']
+  launchChecklist: {
+    destroy: typeof routes['launch_checklist.destroy']
+  }
   inbox: typeof routes['inbox']
   customers: typeof routes['customers']
+  setup: {
+    index: typeof routes['setup.index']
+    show: typeof routes['setup.show']
+    update: typeof routes['setup.update']
+  }
   settings: typeof routes['settings'] & {
+    storePolicies: {
+      edit: typeof routes['settings.store_policies.edit']
+      update: typeof routes['settings.store_policies.update']
+    }
+    store: {
+      edit: typeof routes['settings.store.edit']
+      update: typeof routes['settings.store.update']
+    }
     update: typeof routes['settings.update']
     avatar: {
       destroy: typeof routes['settings.avatar.destroy']
