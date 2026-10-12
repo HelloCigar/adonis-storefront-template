@@ -15,36 +15,6 @@
       "skillPath": "skills/adonis-attachment-media/SKILL.md",
       "computedHash": "9ee5790f9c74ef8d0084f831e96f0546ad83ab98f53c6f6b427166ce470cdca1"
     },
-    "adonisjs": {
-      "source": "lncitador/adonisjs-maestro",
-      "sourceType": "github",
-      "skillPath": "skills/adonisjs/SKILL.md",
-      "computedHash": "d2df7782b8ce73f31774997c715b38c03e4ac98c1a0dace74d6adefd0ec3f17c"
-    },
-    "inertia-vue": {
-      "source": "lncitador/adonisjs-maestro",
-      "sourceType": "github",
-      "skillPath": "skills/inertia-vue/SKILL.md",
-      "computedHash": "4b3b3b37f10facdccf8e8f84df361802c74ff194adc5efc03b93de198e99ec43"
-    },
-    "japa": {
-      "source": "lncitador/adonisjs-maestro",
-      "sourceType": "github",
-      "skillPath": "skills/japa/SKILL.md",
-      "computedHash": "f5f449e85032c4bd8fa1aa96c846ffad9caf77a59297b555e82edc06d8eb045e"
-    },
-    "lucid": {
-      "source": "lncitador/adonisjs-maestro",
-      "sourceType": "github",
-      "skillPath": "skills/lucid/SKILL.md",
-      "computedHash": "749ab53a4a219b0a3989bf342adbc56098756bf09bc25ee3cfb8c8e7c044be60"
-    },
-    "maestro": {
-      "source": "lncitador/adonisjs-maestro",
-      "sourceType": "github",
-      "skillPath": "skills/maestro/SKILL.md",
-      "computedHash": "8287395186ca67dfb57f3110bf14ba53ddafe72a7e6e42f13dc1f48ef377ae2a"
-    },
     "nuxt-ui": {
       "source": "nuxt/ui",
       "sourceType": "github",
