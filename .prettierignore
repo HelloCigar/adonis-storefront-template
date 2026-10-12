@@ -6,3 +6,9 @@ build
 .agents/skills/flow-*
 .agents/
 .claude/
+resources/views/
+.impeccable/
+docs/
+DESIGN.md
+inertia/assets/main.css
+database/schema.ts
