@@ -9,6 +9,7 @@ import MakeAdmin from '../../../commands/make_admin.js'
 import MakeStaff from '../../../commands/make_staff.js'
 import MakeSeller from '../../../commands/make_seller.js'
 import StaffRoleMigration from '#database/migrations/1791000000000_use_staff_role_for_single_store'
+import { finishedStoreSetup } from '#tests/helpers/store_setup'
 
 const account = (email: string, role: UserRole = 'customer') =>
   User.create({ email, role, fullName: email, password: 'secret-password' })
@@ -50,6 +51,8 @@ test.group('Single store authorization', (group) => {
     const customer = await account('customer@example.com')
     const staff = await account('staff@example.com', 'staff')
     const admin = await account('admin@example.com', 'admin')
+    // A finished store, so the admin's dashboard request reaches the dashboard, not store setup.
+    await finishedStoreSetup()
     for (const path of ['/dashboard', '/inbox', '/settings/members', '/seller/products']) {
       const guest = await client.get(path).redirects(0)
       guest.assertStatus(302)

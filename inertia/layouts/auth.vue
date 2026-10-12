@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
 import FlashToasts from '~/components/flash_toasts.vue'
 import ThemeToggle from '~/components/theme_toggle.vue'
+
+const page = usePage()
+const storeName = computed(() => page.props.storeName)
 </script>
 
 <template>
@@ -10,11 +15,11 @@ import ThemeToggle from '~/components/theme_toggle.vue'
       <header class="flex items-center justify-between gap-4">
         <Link
           route="home"
-          aria-label="Your store — back to shopping"
+          :aria-label="`${storeName} — back to shopping`"
           class="inline-flex items-center gap-2.5 text-lg font-semibold text-highlighted rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
           <UIcon name="i-lucide-shopping-bag" class="size-6 text-primary" />
-          Your store
+          {{ storeName }}
         </Link>
         <ThemeToggle />
       </header>

@@ -2,22 +2,36 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { urlFor } from '~/client'
 import { usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
 
 const page = usePage()
 
-const links = [
-  {
-    label: 'General',
-    icon: 'i-lucide-user',
-    to: urlFor('settings'),
-    exact: true,
-  },
-  {
-    label: 'Security',
-    icon: 'i-lucide-shield',
-    to: urlFor('settings.security'),
-  },
-] satisfies NavigationMenuItem[]
+const links = computed(
+  () =>
+    [
+      {
+        label: 'General',
+        icon: 'i-lucide-user',
+        to: urlFor('settings'),
+        exact: true,
+      },
+      {
+        label: 'Security',
+        icon: 'i-lucide-shield',
+        to: urlFor('settings.security'),
+      },
+      ...(page.props.permissions.manageStoreSettings
+        ? [
+            { label: 'Store', icon: 'i-lucide-store', to: urlFor('settings.store.edit') },
+            {
+              label: 'Policies',
+              icon: 'i-lucide-scroll-text',
+              to: urlFor('settings.store_policies.edit'),
+            },
+          ]
+        : []),
+    ] satisfies NavigationMenuItem[]
+)
 </script>
 
 <template>

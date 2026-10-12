@@ -3,8 +3,11 @@ import { defineConfig, transports } from '@adonisjs/mail'
 
 const username = env.get('SMTP_USERNAME')
 const password = env.get('SMTP_PASSWORD')?.release()
-/** One setting names the store as the sender, in the email wordmark, on invoices, and in the storefront header and footer. */
-export const storeName = env.get('MAIL_FROM_NAME', 'MediaBunny')
+/**
+ * The deployment's store name. It stands in wherever the store's name appears until an admin
+ * saves one in store setup; StoreSetting resolves the name to show.
+ */
+export const defaultStoreName = env.get('MAIL_FROM_NAME', 'MediaBunny')
 export const storeEmail = env.get('MAIL_FROM_ADDRESS', 'store@example.com')
 
 const mailConfig = defineConfig({
@@ -17,7 +20,7 @@ const mailConfig = defineConfig({
    */
   from: {
     address: storeEmail,
-    name: storeName,
+    name: defaultStoreName,
   },
 
   /**
@@ -25,7 +28,7 @@ const mailConfig = defineConfig({
    * configured template engine.
    */
   globals: {
-    brandName: storeName,
+    brandName: defaultStoreName,
   },
 
   /**

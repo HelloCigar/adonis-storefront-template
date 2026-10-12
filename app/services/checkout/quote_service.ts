@@ -4,6 +4,7 @@ import Cart from '#models/checkout/cart'
 import MoneyService from '#services/checkout/money_service'
 import DiscountService from '#services/checkout/discount_service'
 import checkout from '#config/checkout'
+import StoreSetting from '#models/settings/store_setting'
 import CheckoutException from '#exceptions/checkout_exception'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 
@@ -23,6 +24,9 @@ export default class QuoteService {
       query.orderBy('id').preload('variant', (q) => q.preload('product'))
     )
     if (!cart.lines.length) throw new CheckoutException('Your cart is empty', 'E_CART_EMPTY', 422)
+    // The store's current flat fee; placed orders keep the fee frozen into them.
+    const settings = await StoreSetting.current(trx)
+    const shippingMinor = settings.shippingFeeMinor
     const lines = cart.lines.map((line) => {
       const variant = line.variant
       const product = variant?.product
@@ -64,10 +68,7 @@ export default class QuoteService {
       discountMinor,
       lines.map((line) => line.totalAmount)
     )
-    const totalMinor = this.money.add(
-      subtotalMinor - discountMinor,
-      checkout.flatShippingAmountMinor
-    )
+    const totalMinor = this.money.add(subtotalMinor - discountMinor, shippingMinor)
     const value = {
       cartVersion: cart.version,
       currency: checkout.currency,
@@ -79,7 +80,7 @@ export default class QuoteService {
         amountMinor: discountMinor,
       },
       discountMinor,
-      shippingMinor: checkout.flatShippingAmountMinor,
+      shippingMinor,
       totalMinor,
     }
     const fingerprint = createHash('sha256').update(JSON.stringify(value)).digest('hex')

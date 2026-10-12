@@ -41,6 +41,8 @@ import type SellerReviewTransformer from '#transformers/seller/review_transforme
 import type SellerStockAdjustmentTransformer from '#transformers/seller/stock_adjustment_transformer'
 import type SellerUserTransformer from '#transformers/seller/user_transformer'
 import type SellerVariantTransformer from '#transformers/seller/variant_transformer'
+import type SettingsStoreSettingTransformer from '#transformers/settings/store_setting_transformer'
+import type SettingsStoreSetupTransformer from '#transformers/settings/store_setup_transformer'
 import type SharedMediaTransformer from '#transformers/shared/media_transformer'
 import type InertiaMiddleware from '#middleware/http/inertia_middleware'
 
@@ -199,6 +201,16 @@ export namespace Data {
     export type Variant = InferData<SellerVariantTransformer>
     export namespace Variant {
       export type Variants = InferVariants<SellerVariantTransformer>
+    }
+  }
+  export namespace Settings {
+    export type StoreSetting = InferData<SettingsStoreSettingTransformer>
+    export namespace StoreSetting {
+      export type Variants = InferVariants<SettingsStoreSettingTransformer>
+    }
+    export type StoreSetup = InferData<SettingsStoreSetupTransformer>
+    export namespace StoreSetup {
+      export type Variants = InferVariants<SettingsStoreSetupTransformer>
     }
   }
   export namespace Shared {

@@ -16,7 +16,7 @@ export function resolveLayout(name: string) {
     return [DashboardLayout, SettingsLayout]
   }
 
-  if (dashboardPages.has(name) || name.startsWith('seller/')) {
+  if (dashboardPages.has(name) || name.startsWith('seller/') || name.startsWith('setup/')) {
     return DashboardLayout
   }
 }

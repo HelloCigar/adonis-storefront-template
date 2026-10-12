@@ -1,8 +1,27 @@
 <script setup lang="ts">
 import type { EditorSuggestionMenuItem, EditorToolbarItem } from '@nuxt/ui'
 import type { JSONContent } from '@tiptap/vue-3'
-defineProps<{ invalid?: boolean }>()
-const content = defineModel<JSONContent>({ required: true })
+import { computed, useTemplateRef, watch } from 'vue'
+const props = defineProps<{
+  invalid?: boolean
+  /** Accessible name for the editing area, when no visible label points at it. */
+  label?: string
+  placeholder?: string
+  compact?: boolean
+}>()
+/** Tiptap JSON. An HTML string seeds the editor once and is replaced by the JSON it parses to. */
+const content = defineModel<JSONContent | string>({ required: true })
+
+// A string seed is read as HTML; once the editor converts it, the editor reports JSON.
+const contentType = computed(() => (typeof content.value === 'string' ? 'html' : 'json'))
+const editorRef = useTemplateRef<{ editor?: { getJSON(): JSONContent } }>('editorRef')
+watch(
+  () => editorRef.value?.editor,
+  (editor) => {
+    if (editor && typeof content.value === 'string') content.value = editor.getJSON()
+  },
+  { immediate: true }
+)
 
 /** Only nodes and marks the server renders; see app/services/content/rich_text_service.ts. */
 const toolbar: EditorToolbarItem[][] = [
@@ -91,13 +110,25 @@ const commands: EditorSuggestionMenuItem[][] = [
     :class="invalid ? 'border-error' : 'border-default focus-within:border-primary'"
   >
     <UEditor
+      ref="editorRef"
       v-slot="{ editor }"
       v-model="content"
-      content-type="json"
+      :content-type="contentType"
       :mention="false"
-      placeholder="Write your post, or type / for blocks…"
+      :placeholder="props.placeholder ?? 'Write your post, or type / for blocks…'"
+      :editor-props="
+        props.label
+          ? {
+              attributes: {
+                'role': 'textbox',
+                'aria-multiline': 'true',
+                'aria-label': props.label,
+              },
+            }
+          : undefined
+      "
       class="w-full"
-      :ui="{ base: 'min-h-96 px-4 py-6 sm:px-10' }"
+      :ui="{ base: props.compact ? 'min-h-40 px-4 py-4' : 'min-h-96 px-4 py-6 sm:px-10' }"
     >
       <UEditorToolbar
         :editor="editor"

@@ -7,14 +7,14 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class PoliciesController {
   constructor(private contentService: ContentService) {}
 
-  index({ inertia }: HttpContext) {
+  async index({ inertia }: HttpContext) {
     return inertia.render('policies/index', {
-      policies: ContentTransformer.transform(this.contentService.policies()),
+      policies: ContentTransformer.transform(await this.contentService.policies()),
     })
   }
 
-  show({ params, inertia }: HttpContext) {
-    const policy = this.contentService.findPolicyOrFail(params.handle)
+  async show({ params, inertia }: HttpContext) {
+    const policy = await this.contentService.findPolicyOrFail(params.handle)
     return inertia.render('policies/[handle]', { policy: ContentTransformer.transform(policy) })
   }
 }

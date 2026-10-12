@@ -12,12 +12,14 @@ import { resolveLayout } from './layouts/resolve'
 const appName = import.meta.env.VITE_APP_NAME || 'Your store'
 
 export default function render(page: any) {
+  // The saved store name ends every page title, falling back to the build-time name.
+  const siteName: string = page.props?.storeName || appName
   return createInertiaApp({
     // Props reach this function before JSON serialization (Luxon dates, models with toJSON).
     // Render from the same plain data the browser hydrates with so the markup matches.
     page: JSON.parse(JSON.stringify(page)),
     render: renderToString,
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => (title ? `${title} - ${siteName}` : siteName),
     resolve: (name) => {
       return resolvePageComponent(
         `./pages/${name}.vue`,

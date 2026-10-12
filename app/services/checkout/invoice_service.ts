@@ -4,7 +4,7 @@ import edge from 'edge.js'
 import { render } from 'takumi-pdf'
 import app from '@adonisjs/core/services/app'
 import type Order from '#models/checkout/order'
-import { storeEmail, storeName } from '#config/mail'
+import StoreSetting from '#models/settings/store_setting'
 
 /** Matches the storefront and receipt email: en-PH formatting, Manila calendar dates. */
 const locale = 'en-PH'
@@ -72,9 +72,15 @@ export default class InvoiceService {
     await order.load('lineItems', (items) => items.orderBy('id'))
     await order.load('addresses')
 
-    const html = await edge.render('invoices/invoice', this.viewData(order))
+    // Invoices show the store's saved name and the contact email shoppers reach it at.
+    const settings = await StoreSetting.current()
+    const store = {
+      storeName: settings.effectiveStoreName,
+      storeEmail: settings.effectiveContactEmail,
+    }
+    const html = await edge.render('invoices/invoice', this.viewData(order, store))
     // Takumi fills the pageNumber and totalPages classes on every page.
-    const footer = await edge.render('invoices/footer', { storeName, storeEmail })
+    const footer = await edge.render('invoices/footer', store)
     const pdf = await render(html, {
       size: 'a4',
       margin: { left: 64, right: 64, top: 64 },
@@ -84,7 +90,7 @@ export default class InvoiceService {
       footer,
       metadata: {
         title: `Invoice ${order.number}`,
-        authors: [storeName],
+        authors: [store.storeName],
         creationDate: order.paidAt.toUTC().toFormat("yyyy-LL-dd'T'HH:mm:ss"),
       },
     })
@@ -92,7 +98,7 @@ export default class InvoiceService {
   }
 
   /** Templates receive display-ready values, so the layout holds no formatting rules. */
-  private viewData(order: Order) {
+  private viewData(order: Order, store: { storeName: string; storeEmail: string }) {
     const money = new Intl.NumberFormat(locale, { style: 'currency', currency: order.currencyCode })
     const date = (value: DateTime) =>
       value.setZone(zone).setLocale(locale).toLocaleString(DateTime.DATE_FULL)
@@ -100,8 +106,7 @@ export default class InvoiceService {
     const shipping = order.addresses.find((address) => address.type === 'shipping')
 
     return {
-      storeName,
-      storeEmail,
+      ...store,
       facts: [
         { label: 'Invoice number', value: order.number },
         { label: 'Date issued', value: date(order.paidAt!) },

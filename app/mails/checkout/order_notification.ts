@@ -1,4 +1,6 @@
 import { BaseMail } from '@adonisjs/mail'
+import { storeEmail } from '#config/mail'
+import StoreSetting from '#models/settings/store_setting'
 import type Order from '#models/checkout/order'
 import type Shipment from '#models/checkout/shipment'
 import type Notification from '#models/checkout/notification'
@@ -18,9 +20,13 @@ export default class OrderNotification extends BaseMail {
     super()
   }
 
-  prepare() {
-    const view = this.viewData()
+  async prepare() {
+    const settings = await StoreSetting.current()
+    // Overrides the mailer's deployment-wide brandName with the name the store saved.
+    const view = { ...this.viewData(), brandName: settings.effectiveStoreName }
     this.message
+      .from(storeEmail, settings.effectiveStoreName)
+      .replyTo(settings.effectiveContactEmail)
       .to(this.order.email)
       .subject(
         this.kind === 'receipt'

@@ -595,6 +595,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/dashboard/dashboard_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'launch_checklist.destroy': {
+    methods: ["DELETE"]
+    pattern: '/dashboard/launch-checklist'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/dashboard/launch_checklist_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/dashboard/launch_checklist_controller').default['destroy']>>>
+    }
+  }
   'inbox': {
     methods: ["GET","HEAD"]
     pattern: '/inbox'
@@ -617,6 +629,90 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/customers_controller').default['index']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/customers_controller').default['index']>>>
+    }
+  }
+  'setup.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/setup'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['index']>>>
+    }
+  }
+  'setup.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/setup/:step'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { step: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['show']>>>
+    }
+  }
+  'setup.update': {
+    methods: ["PUT"]
+    pattern: '/setup/:step'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/settings/store_setting').storeIdentityValidator)>|InferInput<(typeof import('#validators/settings/store_setting').storeShippingValidator)>|InferInput<(typeof import('#validators/settings/store_policy').storePoliciesValidator)>>
+      paramsTuple: [ParamValue]
+      params: { step: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/settings/store_setting').storeIdentityValidator)>|InferInput<(typeof import('#validators/settings/store_setting').storeShippingValidator)>|InferInput<(typeof import('#validators/settings/store_policy').storePoliciesValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/setup/setup_steps_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'settings.store_policies.edit': {
+    methods: ["GET","HEAD"]
+    pattern: '/settings/store/policies'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['edit']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['edit']>>>
+    }
+  }
+  'settings.store_policies.update': {
+    methods: ["PUT"]
+    pattern: '/settings/store/policies'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/settings/store_policy').storePoliciesValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/settings/store_policy').storePoliciesValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'settings.store.edit': {
+    methods: ["GET","HEAD"]
+    pattern: '/settings/store'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/store_settings_controller').default['edit']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/store_settings_controller').default['edit']>>>
+    }
+  }
+  'settings.store.update': {
+    methods: ["PUT"]
+    pattern: '/settings/store'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/settings/store_setting').storeSettingsValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/settings/store_setting').storeSettingsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/store_settings_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/store_settings_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'settings': {

@@ -53,8 +53,16 @@ export type ScannedRoutes = {
     'chat.messages.store': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'chat.images.show': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'id': ParamValue} }
     'dashboard': { paramsTuple?: []; params?: {} }
+    'launch_checklist.destroy': { paramsTuple?: []; params?: {} }
     'inbox': { paramsTuple?: []; params?: {} }
     'customers': { paramsTuple?: []; params?: {} }
+    'setup.index': { paramsTuple?: []; params?: {} }
+    'setup.show': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
+    'setup.update': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
+    'settings.store_policies.edit': { paramsTuple?: []; params?: {} }
+    'settings.store_policies.update': { paramsTuple?: []; params?: {} }
+    'settings.store.edit': { paramsTuple?: []; params?: {} }
+    'settings.store.update': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
     'settings.update': { paramsTuple?: []; params?: {} }
     'settings.avatar.destroy': { paramsTuple?: []; params?: {} }
@@ -137,6 +145,10 @@ export type ScannedRoutes = {
     'dashboard': { paramsTuple?: []; params?: {} }
     'inbox': { paramsTuple?: []; params?: {} }
     'customers': { paramsTuple?: []; params?: {} }
+    'setup.index': { paramsTuple?: []; params?: {} }
+    'setup.show': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
+    'settings.store_policies.edit': { paramsTuple?: []; params?: {} }
+    'settings.store.edit': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
     'settings.members': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
@@ -184,6 +196,10 @@ export type ScannedRoutes = {
     'dashboard': { paramsTuple?: []; params?: {} }
     'inbox': { paramsTuple?: []; params?: {} }
     'customers': { paramsTuple?: []; params?: {} }
+    'setup.index': { paramsTuple?: []; params?: {} }
+    'setup.show': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
+    'settings.store_policies.edit': { paramsTuple?: []; params?: {} }
+    'settings.store.edit': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
     'settings.members': { paramsTuple?: []; params?: {} }
     'settings.security': { paramsTuple?: []; params?: {} }
@@ -258,6 +274,7 @@ export type ScannedRoutes = {
     'checkout.discount.destroy': { paramsTuple?: []; params?: {} }
     'account.addresses.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'reviews.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'launch_checklist.destroy': { paramsTuple?: []; params?: {} }
     'settings.avatar.destroy': { paramsTuple?: []; params?: {} }
     'seller.products.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
@@ -269,6 +286,9 @@ export type ScannedRoutes = {
   }
   PUT: {
     'email_verifications.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
+    'setup.update': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
+    'settings.store_policies.update': { paramsTuple?: []; params?: {} }
+    'settings.store.update': { paramsTuple?: []; params?: {} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.variants.update': { paramsTuple: [ParamValue,ParamValue]; params: {'productId': ParamValue,'id': ParamValue} }
     'seller.collections.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

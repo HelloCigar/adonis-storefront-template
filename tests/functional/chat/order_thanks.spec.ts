@@ -1,6 +1,5 @@
 import { test } from '@japa/runner'
 import emitter from '@adonisjs/core/services/emitter'
-import { storeName } from '#config/mail'
 import OrderMessagePosted from '#events/chat/order_message_posted'
 import OrderMessage from '#models/chat/order_message'
 import { UserFactory } from '#database/factories/user_factory'
@@ -10,6 +9,7 @@ import {
   sendWebhook,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { savedStoreSettings } from '#tests/helpers/store_setup'
 
 test.group('Order chat thank-you', (group) => {
   group.each.setup(() => resetCheckoutState())
@@ -19,6 +19,7 @@ test.group('Order chat thank-you', (group) => {
     assert,
   }) => {
     using events = emitter.fake([OrderMessagePosted])
+    await savedStoreSettings({ storeName: 'Lantern Goods' })
     const provider = useFakeProvider()
     const customer = await UserFactory.merge({
       firstName: 'Casey',
@@ -32,7 +33,7 @@ test.group('Order chat thank-you', (group) => {
     const [thanks] = messages
     assert.isNull(thanks.senderId)
     assert.equal(thanks.senderRole, 'staff')
-    assert.equal(thanks.senderName, storeName)
+    assert.equal(thanks.senderName, 'Lantern Goods')
     assert.isNull(thanks.readAt)
     assert.include(thanks.body, 'Thanks for ordering, Casey!')
     assert.include(thanks.body, order.number)
@@ -50,6 +51,7 @@ test.group('Order chat thank-you', (group) => {
   })
 
   test('the customer sees the thank-you on their order page', async ({ client, assert }) => {
+    await savedStoreSettings({ storeName: 'Lantern Goods' })
     const provider = useFakeProvider()
     const customer = await UserFactory.merge({ firstName: 'Casey' }).create()
     const { order } = await paidOrder(client, provider, { customer })
@@ -67,7 +69,7 @@ test.group('Order chat thank-you', (group) => {
       body: string
     }[]
     assert.lengthOf(messages, 1)
-    assert.equal(messages[0].senderName, storeName)
+    assert.equal(messages[0].senderName, 'Lantern Goods')
     assert.equal(messages[0].senderRole, 'staff')
     assert.isTrue(messages[0].automated)
     assert.include(messages[0].body, 'Thanks for ordering, Casey!')

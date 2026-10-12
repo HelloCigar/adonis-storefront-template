@@ -9,10 +9,13 @@ import type { Period, Range } from '../types'
 import { urlFor } from '~/client'
 import Default from '~/layouts/admin.vue'
 import HomeAttention from '~/components/home/HomeAttention.vue'
+import SetupResumePrompt from '~/components/home/SetupResumePrompt.vue'
+import LaunchChecklist from '~/components/home/LaunchChecklist.vue'
 
 const props = defineProps<{
   summary: Data.Dashboard.Summary
   attention: Data.Dashboard.Attention
+  storeSetup: Data.Settings.StoreSetup | null
 }>()
 
 const page = usePage()
@@ -107,6 +110,8 @@ const period = computed<Period>({
 
       <template #body>
         <div class="flex flex-col gap-8">
+          <SetupResumePrompt v-if="storeSetup && !storeSetup.finished" />
+          <LaunchChecklist v-if="storeSetup?.checklist" :items="storeSetup.checklist.items" />
           <HomeAttention :attention="attention" />
 
           <section aria-labelledby="home-sales-title" class="flex flex-col gap-4">

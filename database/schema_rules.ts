@@ -33,6 +33,14 @@ export default {
         },
       },
     },
+    store_policies: {
+      columns: {
+        content: {
+          tsType: 'Record<string, unknown>',
+          decorators: [{ name: '@column' }],
+        },
+      },
+    },
     products: {
       columns: {
         option_definitions: {

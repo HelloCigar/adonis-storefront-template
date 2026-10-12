@@ -300,6 +300,12 @@ const routes = {
     tokens: [{"old":"/dashboard","type":0,"val":"dashboard","end":""}],
     types: placeholder as Registry['dashboard']['types'],
   },
+  'launch_checklist.destroy': {
+    methods: ["DELETE"],
+    pattern: '/dashboard/launch-checklist',
+    tokens: [{"old":"/dashboard/launch-checklist","type":0,"val":"dashboard","end":""},{"old":"/dashboard/launch-checklist","type":0,"val":"launch-checklist","end":""}],
+    types: placeholder as Registry['launch_checklist.destroy']['types'],
+  },
   'inbox': {
     methods: ["GET","HEAD"],
     pattern: '/inbox',
@@ -311,6 +317,48 @@ const routes = {
     pattern: '/customers',
     tokens: [{"old":"/customers","type":0,"val":"customers","end":""}],
     types: placeholder as Registry['customers']['types'],
+  },
+  'setup.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/setup',
+    tokens: [{"old":"/setup","type":0,"val":"setup","end":""}],
+    types: placeholder as Registry['setup.index']['types'],
+  },
+  'setup.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/setup/:step',
+    tokens: [{"old":"/setup/:step","type":0,"val":"setup","end":""},{"old":"/setup/:step","type":1,"val":"step","end":""}],
+    types: placeholder as Registry['setup.show']['types'],
+  },
+  'setup.update': {
+    methods: ["PUT"],
+    pattern: '/setup/:step',
+    tokens: [{"old":"/setup/:step","type":0,"val":"setup","end":""},{"old":"/setup/:step","type":1,"val":"step","end":""}],
+    types: placeholder as Registry['setup.update']['types'],
+  },
+  'settings.store_policies.edit': {
+    methods: ["GET","HEAD"],
+    pattern: '/settings/store/policies',
+    tokens: [{"old":"/settings/store/policies","type":0,"val":"settings","end":""},{"old":"/settings/store/policies","type":0,"val":"store","end":""},{"old":"/settings/store/policies","type":0,"val":"policies","end":""}],
+    types: placeholder as Registry['settings.store_policies.edit']['types'],
+  },
+  'settings.store_policies.update': {
+    methods: ["PUT"],
+    pattern: '/settings/store/policies',
+    tokens: [{"old":"/settings/store/policies","type":0,"val":"settings","end":""},{"old":"/settings/store/policies","type":0,"val":"store","end":""},{"old":"/settings/store/policies","type":0,"val":"policies","end":""}],
+    types: placeholder as Registry['settings.store_policies.update']['types'],
+  },
+  'settings.store.edit': {
+    methods: ["GET","HEAD"],
+    pattern: '/settings/store',
+    tokens: [{"old":"/settings/store","type":0,"val":"settings","end":""},{"old":"/settings/store","type":0,"val":"store","end":""}],
+    types: placeholder as Registry['settings.store.edit']['types'],
+  },
+  'settings.store.update': {
+    methods: ["PUT"],
+    pattern: '/settings/store',
+    tokens: [{"old":"/settings/store","type":0,"val":"settings","end":""},{"old":"/settings/store","type":0,"val":"store","end":""}],
+    types: placeholder as Registry['settings.store.update']['types'],
   },
   'settings': {
     methods: ["GET","HEAD"],
