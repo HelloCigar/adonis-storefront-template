@@ -20,14 +20,6 @@ env:
   HOST: 127.0.0.1
 
 jobs:
-  debug:
-    name: Debug npmrc
-    runs-on: |
-      sed 's/_authToken=.*/_authToken=<redacted>/' .npmrc | cat -A
-      echo "token length: ${#NPM_TOKEN}"
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   checks:
     name: Typecheck and lint
     runs-on: ubuntu-latest
