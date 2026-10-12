@@ -33,6 +33,16 @@ const email = ref('')
       </UFormField>
 
       <UFormField label="Password" name="password" :error="errors.password">
+        <template #hint>
+          <Link
+            route="password_resets.create"
+            component="auth/forgot_password"
+            :page-props="{}"
+            class="text-sm font-medium text-highlighted underline underline-offset-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          >
+            Forgot password?
+          </Link>
+        </template>
         <PasswordInput name="password" autocomplete="current-password" />
       </UFormField>
 

@@ -15,6 +15,7 @@ export const controllers = {
   auth: {
     EmailVerifications: () => import('#controllers/auth/email_verifications_controller'),
     NewAccount: () => import('#controllers/auth/new_account_controller'),
+    PasswordResets: () => import('#controllers/auth/password_resets_controller'),
     Session: () => import('#controllers/auth/session_controller'),
   },
   chat: {

@@ -174,6 +174,18 @@ const routes = {
     tokens: [{"old":"/email-verifications/:token","type":0,"val":"email-verifications","end":""},{"old":"/email-verifications/:token","type":1,"val":"token","end":""}],
     types: placeholder as Registry['email_verifications.update']['types'],
   },
+  'password_resets.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/password-resets/:token',
+    tokens: [{"old":"/password-resets/:token","type":0,"val":"password-resets","end":""},{"old":"/password-resets/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['password_resets.show']['types'],
+  },
+  'password_resets.update': {
+    methods: ["PUT"],
+    pattern: '/password-resets/:token',
+    tokens: [{"old":"/password-resets/:token","type":0,"val":"password-resets","end":""},{"old":"/password-resets/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['password_resets.update']['types'],
+  },
   'new_account.create': {
     methods: ["GET","HEAD"],
     pattern: '/signup',
@@ -197,6 +209,18 @@ const routes = {
     pattern: '/login',
     tokens: [{"old":"/login","type":0,"val":"login","end":""}],
     types: placeholder as Registry['session.store']['types'],
+  },
+  'password_resets.create': {
+    methods: ["GET","HEAD"],
+    pattern: '/forgot-password',
+    tokens: [{"old":"/forgot-password","type":0,"val":"forgot-password","end":""}],
+    types: placeholder as Registry['password_resets.create']['types'],
+  },
+  'password_resets.store': {
+    methods: ["POST"],
+    pattern: '/password-resets',
+    tokens: [{"old":"/password-resets","type":0,"val":"password-resets","end":""}],
+    types: placeholder as Registry['password_resets.store']['types'],
   },
   'account.show': {
     methods: ["GET","HEAD"],

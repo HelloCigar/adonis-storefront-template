@@ -343,6 +343,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/email_verifications_controller').default['update']>>>
     }
   }
+  'password_resets.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/password-resets/:token'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { token: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['show']>>>
+    }
+  }
+  'password_resets.update': {
+    methods: ["PUT"]
+    pattern: '/password-resets/:token'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/user').resetPasswordValidator)>>
+      paramsTuple: [ParamValue]
+      params: { token: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').resetPasswordValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'
@@ -389,6 +413,30 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').loginValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/session_controller').default['store']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/session_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'password_resets.create': {
+    methods: ["GET","HEAD"]
+    pattern: '/forgot-password'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['create']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['create']>>>
+    }
+  }
+  'password_resets.store': {
+    methods: ["POST"]
+    pattern: '/password-resets'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth/user').forgotPasswordValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth/user').forgotPasswordValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_resets_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'account.show': {
