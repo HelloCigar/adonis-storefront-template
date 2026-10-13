@@ -19,7 +19,12 @@ test.group('Forgot Password', (group) => {
       page.getByText('We have sent you the instructions to reset your password', { exact: true })
     )
 
-    mailFake.mails.assertQueued(PasswordResetProvision)
+    mailFake.mails.assertQueued(PasswordResetProvision, ({ message }) => {
+      message.assertHtmlIncludes('Need a new password?')
+      message.assertTextIncludes('Need a new password?')
+      message.assertTextIncludes('/password-resets/')
+      return true
+    })
   })
 
   test('does not reveal whether an email is registered', async ({ visit, route }) => {

@@ -21,8 +21,11 @@ test.group('Passkey Registration', (group) => {
     await page.assertVisible(page.getByText('Passkey added', { exact: true }))
     const list = page.getByRole('list', { name: 'Passkeys', exact: true })
     await page.assertVisible(list.getByText('Passkey', { exact: true }))
-    mailFake.mails.assertQueued(PasskeyChangedNotification, (message) => {
-      return message.event === 'added' && message.passkeyName === 'Passkey'
+    mailFake.mails.assertQueued(PasskeyChangedNotification, (queued) => {
+      queued.message.assertHtmlIncludes('A passkey was added')
+      queued.message.assertTextIncludes('A passkey was added')
+      queued.message.assertTextIncludes('your account may be compromised')
+      return queued.event === 'added' && queued.passkeyName === 'Passkey'
     })
   })
 

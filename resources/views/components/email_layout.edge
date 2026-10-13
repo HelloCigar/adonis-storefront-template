@@ -1,19 +1,51 @@
 @mjml()
-  <mjml>
+  <mjml lang="en">
     <mj-head>
       <mj-preview>{{ title }}</mj-preview>
       <mj-title>{{ title }}</mj-title>
+      <mj-font name="Bricolage Grotesque" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" />
+      <mj-breakpoint width="620px" />
       <mj-attributes>
-        <mj-text padding="0" color="#202020" />
-        <mj-divider padding="0" border-width="2px" border-color="#cecece" />
-        <mj-button padding="0" align="left" />
-        <mj-class name="title" font-size="28px" font-weight="600" />
-        <mj-class name="text" font-size="16px" line-height="22px" />
-        <mj-class name="help" font-size="14px" line-height="18px" color="#646464" />
-        <mj-class name="footer" font-size="14px" line-height="18px" color="#8d8d8d" />
-        <mj-all font-family="Arial" />
+        <mj-all font-family="'Bricolage Grotesque', 'Helvetica Neue', Helvetica, Arial, sans-serif" />
+        <mj-section padding="0 24px" />
+        <mj-text padding="0" color="#473c39" />
+        <mj-divider padding="0" border-width="1px" border-color="#e8e4e3" css-class="rule" />
+        <mj-button padding="0" align="left" background-color="#ca3500" color="#fbfaf9" font-size="16px" font-weight="500" line-height="20px" border-radius="15px" inner-padding="12px 22px" css-class="button" />
+        <mj-class name="wordmark" css-class="ink" color="#1d1816" font-size="20px" font-weight="800" line-height="28px" letter-spacing="-0.01em" />
+        <mj-class name="title" css-class="ink headline" color="#1d1816" font-size="30px" font-weight="700" line-height="36px" letter-spacing="-0.015em" />
+        <mj-class name="text" css-class="body" color="#473c39" font-size="16px" line-height="24px" />
+        <mj-class name="help" css-class="muted" color="#7c6d67" font-size="14px" line-height="20px" />
+        <mj-class name="footer" css-class="muted" color="#7c6d67" font-size="14px" line-height="20px" />
       </mj-attributes>
+      <mj-style>
+        a.link { color: #ca3500; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
+        @media (max-width: 620px) {
+          .headline div { font-size: 24px !important; line-height: 32px !important; }
+        }
+        @media (prefers-color-scheme: dark) {
+          body, .canvas { background-color: #1d1816 !important; }
+          .ink div { color: #fbfaf9 !important; }
+          .body div { color: #e8e4e3 !important; }
+          .muted div { color: #aba09c !important; }
+          .rule p { border-color: #473c39 !important; }
+          .button table td { background-color: #ff8904 !important; }
+          .button a { background-color: #ff8904 !important; color: #1d1816 !important; }
+          a.link { color: #ff8904 !important; }
+        }
+      </mj-style>
     </mj-head>
-    <mj-body>{{{ await $slots.main() }}}</mj-body>
+    <mj-body background-color="#fbfaf9" width="600px" css-class="canvas">
+      <mj-section padding="40px 24px 32px">
+        <mj-column>
+          <mj-text mj-class="wordmark">{{ brandName }}</mj-text>
+        </mj-column>
+      </mj-section>
+      {{{ await $slots.main() }}}
+      <mj-section padding="0 24px 48px">
+        <mj-column>
+          <mj-spacer height="8px" />
+        </mj-column>
+      </mj-section>
+    </mj-body>
   </mjml>
 @end
