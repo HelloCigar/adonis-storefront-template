@@ -65,6 +65,12 @@ export default defineConfig({
     },
   },
 
+  optimizeDeps: {
+    // The startup scan misses these dashboard dependencies, so Vite finds them on the first
+    // dashboard visit and force-reloads the page, dropping any flash message mid-test.
+    include: ['@unovis/vue', '@internationalized/date'],
+  },
+
   ssr: {
     // Nuxt UI resolves its virtual `#imports` through the Vite plugin, so the SSR bundle has to include it.
     noExternal: ['@nuxt/ui'],

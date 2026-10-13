@@ -57,8 +57,14 @@ jobs:
       - run: node ace test unit functional
 
   browser:
-    name: Browser tests
+    name: Browser tests (shard ${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
+    # Japa shards by test file, round-robin. The total in --shard below must match the number of
+    # entries in the matrix, or files are skipped. fail-fast is off so one run reports every shard.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -77,7 +83,7 @@ jobs:
       # WebAuthn rejects an IP address as the relying party, so passkey tests need the browser on
       # localhost. Resolving localhost to IPv4 first keeps the server and in-process clients on one
       # address, which is what the job-level HOST override above protects.
-      - run: node ace test browser
+      - run: node ace test browser --shard=${{ matrix.shard }}/3
         env:
           HOST: localhost
           NODE_OPTIONS: --dns-result-order=ipv4first
