@@ -299,7 +299,7 @@ test.group('Store management pages', (group) => {
     assert.equal(await page.getByRole('link', { name: 'Members', exact: true }).count(), 0)
     await page.getByLabel('Name', { exact: true }).fill('Updated Customer')
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
-    await page.getByText('Profile updated', { exact: true }).waitFor()
+    await page.getByText('Your profile has been updated.', { exact: true }).waitFor()
     await customer.refresh()
     assert.equal(customer.fullName, 'Updated Customer')
     assert.equal(customer.role, 'customer')

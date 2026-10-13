@@ -4,7 +4,6 @@ import { usePage } from '@inertiajs/vue3'
 import { computed, onUnmounted, ref } from 'vue'
 
 const page = usePage()
-const toast = useToast()
 const router = useRouter()
 const fileRef = ref<HTMLInputElement>()
 const name = ref(page.props.user?.fullName ?? '')
@@ -25,17 +24,13 @@ function clearPreview() {
 
 function onSaved() {
   clearPreview()
-  toast.add({ title: 'Profile updated', color: 'success', icon: 'i-lucide-check' })
 }
 
 function removeAvatar() {
   router.delete(
     { route: 'settings.avatar.destroy' },
     {
-      onSuccess: () => {
-        clearPreview()
-        toast.add({ title: 'Avatar removed', color: 'success', icon: 'i-lucide-check' })
-      },
+      onSuccess: clearPreview,
     }
   )
 }
