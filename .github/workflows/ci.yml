@@ -74,4 +74,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Create .env
         run: cp .env.example .env && node ace generate:key
+      # WebAuthn rejects an IP address as the relying party, so passkey tests need the browser on
+      # localhost. Resolving localhost to IPv4 first keeps the server and in-process clients on one
+      # address, which is what the job-level HOST override above protects.
       - run: node ace test browser
+        env:
+          HOST: localhost
+          NODE_OPTIONS: --dns-result-order=ipv4first
