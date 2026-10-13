@@ -9,6 +9,7 @@ import { DateTime } from 'luxon'
 import { newUlid } from '#models/shared/with_ulid_primary_key'
 import { optionCombinationKey } from '#services/catalog/options_service'
 import { inferLegacyOptionDefinitions } from '#database/migrations/1791150000000_add_product_options'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const staff = () =>
   User.create({ email: 'variants-staff@example.com', password: 'secret-password', role: 'staff' })
@@ -62,6 +63,7 @@ test.group('Product options and variants', (group) => {
   test('protects option configuration and generation from customers', async ({
     client,
     assert,
+    route,
   }) => {
     const customer = await User.create({
       email: 'customer@example.com',
@@ -69,8 +71,8 @@ test.group('Product options and variants', (group) => {
     })
     const item = await product()
     for (const [method, path] of [
-      ['patch', `/seller/products/${item.id}/options`],
-      ['post', `/seller/products/${item.id}/variants/generate`],
+      ['patch', urlFor('seller.options.update', { productId: item.id })],
+      ['post', urlFor('seller.variant_generation.store', { productId: item.id })],
     ] as const) {
       const denied = await client[method](path)
         .loginAs(customer)
@@ -80,7 +82,7 @@ test.group('Product options and variants', (group) => {
       denied.assertStatus(403)
       const guest = await client[method](path).withCsrfToken().json({}).redirects(0)
       guest.assertStatus(302)
-      guest.assertHeader('location', '/login')
+      guest.assertHeader('location', route('session.create'))
     }
     assert.lengthOf(await item.related('variants').query(), 0)
   })
@@ -88,6 +90,7 @@ test.group('Product options and variants', (group) => {
   test('rejects invalid shared dimensions and duplicate variant combinations', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product(colorDefinitions)
@@ -101,7 +104,7 @@ test.group('Product options and variants', (group) => {
       ],
     ]) {
       const invalid = await client
-        .post(`/seller/products/${item.id}/variants`)
+        .post(urlFor('seller.variants.store', { productId: item.id }))
         .loginAs(owner)
         .withCsrfToken()
         .accept('json')
@@ -111,14 +114,14 @@ test.group('Product options and variants', (group) => {
     }
     const blue = [{ name: 'Color', value: 'Blue' }]
     const added = await client
-      .post(`/seller/products/${item.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(payload(blue))
-    added.assertRedirectsTo(`/seller/products/${item.id}`)
+    added.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const first = await item.related('variants').query().firstOrFail()
     const duplicate = await client
-      .post(`/seller/products/${item.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -129,7 +132,7 @@ test.group('Product options and variants', (group) => {
       .related('variants')
       .create({ ...defaults, title: 'Red', options: { Color: 'Red' }, position: 1 })
     const updated = await client
-      .patch(`/seller/products/${item.id}/variants/${red.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: red.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -139,27 +142,28 @@ test.group('Product options and variants', (group) => {
     assert.deepEqual(red.options, { Color: 'Red' })
     assert.lengthOf(await item.related('variants').query(), 2)
     const same = await client
-      .patch(`/seller/products/${item.id}/variants/${first.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(payload(blue))
-    same.assertRedirectsTo(`/seller/products/${item.id}`)
+    same.assertRedirectsTo(route('seller.products.show', { id: item.id }))
   })
 
   test('allows only one default combination and protects combinations at the database boundary', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product()
     const created = await client
-      .post(`/seller/products/${item.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(payload())
-    created.assertRedirectsTo(`/seller/products/${item.id}`)
+    created.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const duplicate = await client
-      .post(`/seller/products/${item.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -178,6 +182,7 @@ test.group('Product options and variants', (group) => {
   test('uses the product definitions on the storefront, including allowed values without variants', async ({
     client,
     assert,
+    route,
   }) => {
     const item = await product(colorDefinitions)
     item.merge({ status: 'active', publishedAt: DateTime.utc() })
@@ -185,7 +190,7 @@ test.group('Product options and variants', (group) => {
     await item
       .related('variants')
       .create({ ...defaults, title: 'Blue', options: { Color: 'Blue' }, position: 0 })
-    const page = await client.get(`/product/${item.handle}`).withInertia()
+    const page = await client.get(route('products.show', { handle: item.handle })).withInertia()
     page.assertStatus(200)
     assert.deepInclude(page.inertiaProps.product.options[0], {
       name: 'Color',
@@ -197,6 +202,7 @@ test.group('Product options and variants', (group) => {
   test('generates only missing combinations and preserves existing variant business data', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product([...colorDefinitions, { name: 'Size', values: ['Small', 'Large'] }])
@@ -214,11 +220,11 @@ test.group('Product options and variants', (group) => {
     })
     for (const priceAmount of [300, 800]) {
       const generated = await client
-        .post(`/seller/products/${item.id}/variants/generate`)
+        .post(urlFor('seller.variant_generation.store', { productId: item.id }))
         .loginAs(owner)
         .withCsrfToken()
         .json({ ...defaults, priceAmount, inventoryQuantity: 4 })
-      generated.assertRedirectsTo(`/seller/products/${item.id}`)
+      generated.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     }
     const variants = await item.related('variants').query().orderBy('position')
     assert.lengthOf(variants, 4)
@@ -237,7 +243,7 @@ test.group('Product options and variants', (group) => {
     await item.refresh()
     assert.isNotNull(item.publishedAt)
     const wrongCurrency = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -255,7 +261,7 @@ test.group('Product options and variants', (group) => {
       { name: 'Size', values: Array.from({ length: 10 }, (_, index) => `Size ${index}`) },
     ])
     const tooMany = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -263,7 +269,7 @@ test.group('Product options and variants', (group) => {
     tooMany.assertStatus(422)
     assert.include(tooMany.body().errors[0].message, '100')
     const invalidPrice = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -275,6 +281,7 @@ test.group('Product options and variants', (group) => {
   test('adds dimensions using the first value, permits unused removals, and rejects unsafe schema edits', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product(colorDefinitions)
@@ -297,11 +304,11 @@ test.group('Product options and variants', (group) => {
     await first.save()
     const definitions = [{ name: 'Size', values: ['Small', 'Large'] }, ...colorDefinitions]
     const updated = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ optionDefinitions: definitions })
-    updated.assertRedirectsTo(`/seller/products/${item.id}`)
+    updated.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await first.refresh()
     assert.deepEqual(first.options, { Color: 'Blue', Size: 'Small' })
     assert.equal(first.featuredMediaId, link.id)
@@ -313,11 +320,11 @@ test.group('Product options and variants', (group) => {
       { name: 'Size', values: ['Small'] },
     ]
     const reordered = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ optionDefinitions: unusedRemoved })
-    reordered.assertRedirectsTo(`/seller/products/${item.id}`)
+    reordered.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     for (const optionDefinitions of [
       [
         { name: 'Color', values: ['Red'] },
@@ -333,7 +340,7 @@ test.group('Product options and variants', (group) => {
       ],
     ]) {
       const invalid = await client
-        .patch(`/seller/products/${item.id}/options`)
+        .patch(urlFor('seller.options.update', { productId: item.id }))
         .loginAs(owner)
         .withCsrfToken()
         .accept('json')
@@ -346,11 +353,11 @@ test.group('Product options and variants', (group) => {
     assert.equal(persistedVariant.priceAmount, defaults.priceAmount)
     for (const optionDefinitions of [[{ name: 'Color', values: ['Blue'] }], []]) {
       const removed = await client
-        .patch(`/seller/products/${item.id}/options`)
+        .patch(urlFor('seller.options.update', { productId: item.id }))
         .loginAs(owner)
         .withCsrfToken()
         .json({ optionDefinitions })
-      removed.assertRedirectsTo(`/seller/products/${item.id}`)
+      removed.assertRedirectsTo(route('seller.products.show', { id: item.id }))
       await first.refresh()
       assert.deepEqual(first.options, optionDefinitions.length ? { Color: 'Blue' } : {})
       assert.equal(first.featuredMediaId, link.id)
@@ -368,6 +375,7 @@ test.group('Product options and variants', (group) => {
   test('removes a used dimension only when projected combinations stay distinct', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const definitions = [...colorDefinitions, { name: 'Size', values: ['Small', 'Large'] }]
@@ -389,11 +397,11 @@ test.group('Product options and variants', (group) => {
       },
     ])
     const removed = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ optionDefinitions: [definitions[1]] })
-    removed.assertRedirectsTo(`/seller/products/${item.id}`)
+    removed.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     for (const [index, size] of ['Small', 'Large'].entries()) {
       await variants[index].refresh()
       assert.deepEqual(variants[index].options, { Size: size })
@@ -403,7 +411,7 @@ test.group('Product options and variants', (group) => {
     }
     const before = await db.from('product_variants').where('product_id', item.id).orderBy('id')
     const collision = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -425,6 +433,7 @@ test.group('Product options and variants', (group) => {
   test('preserves legacy selections when an option is added during removal or repair', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product([
@@ -439,7 +448,7 @@ test.group('Product options and variants', (group) => {
       position: 0,
     })
     const replaced = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
@@ -448,7 +457,7 @@ test.group('Product options and variants', (group) => {
           { name: 'Material', values: ['Cotton', 'Silk'] },
         ],
       })
-    replaced.assertRedirectsTo(`/seller/products/${item.id}`)
+    replaced.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await legacy.refresh()
     assert.deepEqual(legacy.options, { Color: 'Blue', Material: 'Silk' })
     assert.equal(legacy.sku, 'KEEP-SILK')
@@ -475,7 +484,7 @@ test.group('Product options and variants', (group) => {
       .where('product_id', repairItem.id)
       .orderBy('id')
     const expanded = await client
-      .patch(`/seller/products/${repairItem.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: repairItem.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
@@ -484,13 +493,13 @@ test.group('Product options and variants', (group) => {
           { name: 'Size', values: ['Small', 'Large'] },
         ],
       })
-    expanded.assertRedirectsTo(`/seller/products/${repairItem.id}`)
+    expanded.assertRedirectsTo(route('seller.products.show', { id: repairItem.id }))
     assert.deepEqual(
       await db.from('product_variants').where('product_id', repairItem.id).orderBy('id'),
       before
     )
     const repaired = await client
-      .patch(`/seller/products/${repairItem.id}/variants/${missingSize.id}`)
+      .patch(urlFor('seller.variants.update', { productId: repairItem.id, id: missingSize.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(
@@ -499,10 +508,13 @@ test.group('Product options and variants', (group) => {
           { name: 'Size', value: 'Large' },
         ])
       )
-    repaired.assertRedirectsTo(`/seller/products/${repairItem.id}`)
+    repaired.assertRedirectsTo(route('seller.products.show', { id: repairItem.id }))
     await historicalSize.refresh()
     assert.deepEqual(historicalSize.options, { Color: 'Blue', Size: 'Small' })
-    const page = await client.get(`/seller/products/${repairItem.id}`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.products.show', { id: repairItem.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.lengthOf(page.inertiaProps.product.optionIssues, 0)
   })
 
@@ -534,7 +546,7 @@ test.group('Product options and variants', (group) => {
     })
     const before = await db.from('product_variants').where('product_id', item.id).orderBy('id')
     const blocked = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -550,6 +562,7 @@ test.group('Product options and variants', (group) => {
   test('preserves legacy duplicates, reports repair issues, and repairs individual variants', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product(colorDefinitions)
@@ -571,32 +584,35 @@ test.group('Product options and variants', (group) => {
       option_combination_key: null,
     })
     const duplicate = await item.related('variants').query().whereNot('id', first.id).firstOrFail()
-    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.deepInclude(page.inertiaProps.product.optionIssues[0], {
       kind: 'duplicate',
       variantId: duplicate.id,
     })
     const blocked = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(defaults)
     blocked.assertStatus(422)
     const added = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
         optionDefinitions: [...colorDefinitions, { name: 'Size', values: ['Small', 'Large'] }],
       })
-    added.assertRedirectsTo(`/seller/products/${item.id}`)
+    added.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await duplicate.refresh()
     assert.isNull(duplicate.optionCombinationKey)
     assert.equal(duplicate.priceAmount, 101)
     assert.equal(duplicate.inventoryReservedQuantity, 1)
     const repaired = await client
-      .patch(`/seller/products/${item.id}/variants/${duplicate.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: duplicate.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
@@ -607,8 +623,11 @@ test.group('Product options and variants', (group) => {
         priceAmount: 101,
         inventoryQuantity: 7,
       })
-    repaired.assertRedirectsTo(`/seller/products/${item.id}`)
-    const clean = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    repaired.assertRedirectsTo(route('seller.products.show', { id: item.id }))
+    const clean = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.lengthOf(clean.inertiaProps.product.optionIssues, 0)
     assert.lengthOf(await item.related('variants').query(), 2)
   })
@@ -616,6 +635,7 @@ test.group('Product options and variants', (group) => {
   test('repairs legacy configurations with more than three dimensions without dropping records', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const definitions = ['Color', 'Size', 'Material', 'Style'].map((name) => ({
@@ -629,21 +649,24 @@ test.group('Product options and variants', (group) => {
       options: Object.fromEntries(definitions.map(({ name }) => [name, 'Default'])),
       position: 0,
     })
-    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.equal(page.inertiaProps.product.optionIssues[0].kind, 'configuration')
     assert.isNull(page.inertiaProps.product.optionIssues[0].variantId)
     const repaired = await client
-      .patch(`/seller/products/${item.id}/variants/${first.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(payload(definitions.slice(0, 3).map(({ name }) => ({ name, value: 'Default' }))))
-    repaired.assertRedirectsTo(`/seller/products/${item.id}`)
+    repaired.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const updated = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ optionDefinitions: definitions.slice(0, 3) })
-    updated.assertRedirectsTo(`/seller/products/${item.id}`)
+    updated.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     assert.lengthOf(await item.related('variants').query(), 1)
     await first.refresh()
     assert.equal(first.inventoryQuantity, defaults.inventoryQuantity)
@@ -670,6 +693,7 @@ test.group('Product options and variants', (group) => {
   test('expands repair choices without changing case and whitespace legacy tuples or business data', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product([{ name: 'Color', values: ['Blue', 'Green'] }])
@@ -699,19 +723,22 @@ test.group('Product options and variants', (group) => {
       .where('product_id', item.id)
       .orderBy('position')
     const expanded = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
         optionDefinitions: [{ name: 'Color', values: ['Blue', 'Green', 'Red'] }],
       })
-    expanded.assertRedirectsTo(`/seller/products/${item.id}`)
+    expanded.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const preserved = await db
       .from('product_variants')
       .where('product_id', item.id)
       .orderBy('position')
     assert.deepEqual(preserved, historical)
-    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.lengthOf(
       page.inertiaProps.product.optionIssues.filter(
         (issue: { kind: string }) => issue.kind === 'invalid'
@@ -719,14 +746,14 @@ test.group('Product options and variants', (group) => {
       2
     )
     const generation = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(defaults)
     generation.assertStatus(422)
     const unsafeRemoval = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -735,7 +762,7 @@ test.group('Product options and variants', (group) => {
       })
     unsafeRemoval.assertStatus(422)
     const duplicateRepair = await client
-      .patch(`/seller/products/${item.id}/variants/${historical[1].id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: historical[1].id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -743,7 +770,9 @@ test.group('Product options and variants', (group) => {
     duplicateRepair.assertStatus(422)
     for (const [index, value] of ['Red', 'Green'].entries()) {
       const repaired = await client
-        .patch(`/seller/products/${item.id}/variants/${historical[index + 1].id}`)
+        .patch(
+          urlFor('seller.variants.update', { productId: item.id, id: historical[index + 1].id })
+        )
         .loginAs(owner)
         .withCsrfToken()
         .json({
@@ -752,19 +781,23 @@ test.group('Product options and variants', (group) => {
           priceAmount: 101 + index,
           inventoryQuantity: 7 + index,
         })
-      repaired.assertRedirectsTo(`/seller/products/${item.id}`)
+      repaired.assertRedirectsTo(route('seller.products.show', { id: item.id }))
       const row = await ProductVariant.findOrFail(historical[index + 1].id)
       assert.equal(row.inventoryReservedQuantity, 1)
       assert.equal(row.priceAmount, 101 + index)
       assert.equal(row.sku, `LEGACY-${index}`)
     }
-    const clean = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const clean = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     assert.lengthOf(clean.inertiaProps.product.optionIssues, 0)
   })
 
   test('lists malformed JSON safely and preserves it until explicit variant repair', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product([{ name: 'Color', values: ['Blue'] }])
@@ -786,41 +819,46 @@ test.group('Product options and variants', (group) => {
       created_at: DateTime.utc().toSQL(),
     })
     const historical = await db.from('product_variants').where('product_id', item.id).firstOrFail()
-    const page = await client.get(`/seller/products/${item.id}`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.products.show', { id: item.id }))
+      .loginAs(owner)
+      .withInertia()
     page.assertStatus(200)
     assert.isNull(page.inertiaProps.product.variants[0].options)
     assert.isTrue(page.inertiaProps.product.variants[0].hasInvalidOptions)
     assert.equal(page.inertiaProps.product.optionIssues[0].kind, 'invalid')
-    const publicPage = await client.get(`/product/${item.handle}`).withInertia()
+    const publicPage = await client
+      .get(route('products.show', { handle: item.handle }))
+      .withInertia()
     publicPage.assertStatus(200)
     assert.isFalse(publicPage.inertiaProps.product.variants[0].availableForSale)
     assert.deepEqual(publicPage.inertiaProps.product.variants[0].selectedOptions, [])
     const expanded = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
         optionDefinitions: [{ name: 'Color', values: ['Blue', 'Red'] }],
       })
-    expanded.assertRedirectsTo(`/seller/products/${item.id}`)
+    expanded.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const untouched = await db.from('product_variants').where('id', historical.id).firstOrFail()
     assert.deepEqual(untouched, historical)
     const removed = await client
-      .patch(`/seller/products/${item.id}/options`)
+      .patch(urlFor('seller.options.update', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json({ optionDefinitions: [] })
     removed.assertStatus(422)
     const generation = await client
-      .post(`/seller/products/${item.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(defaults)
     generation.assertStatus(422)
     const repaired = await client
-      .patch(`/seller/products/${item.id}/variants/${historical.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: historical.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
@@ -829,7 +867,7 @@ test.group('Product options and variants', (group) => {
         priceAmount: 99,
         inventoryQuantity: 5,
       })
-    repaired.assertRedirectsTo(`/seller/products/${item.id}`)
+    repaired.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const row = await ProductVariant.findOrFail(historical.id)
     assert.deepEqual(row.options, { Color: 'Blue' })
     assert.isFalse(row.hasInvalidOptions)
@@ -841,6 +879,7 @@ test.group('Product options and variants', (group) => {
   test('assigns only product images and allows clearing the assignment', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const item = await product()
@@ -848,11 +887,11 @@ test.group('Product options and variants', (group) => {
       .related('variants')
       .create({ ...defaults, title: 'Default', options: {}, position: 0 })
     const upload = await client
-      .post(`/seller/products/${item.id}/images`)
+      .post(urlFor('seller.images.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .file('images[0]', png, { filename: 'image.png', contentType: 'image/png' })
-    upload.assertRedirectsTo(`/seller/products/${item.id}`)
+    upload.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const [image] = await item.media.all()
     const other = await Product.create({ title: 'Other', handle: 'other', status: 'draft' })
     other.media.addMany([
@@ -874,7 +913,7 @@ test.group('Product options and variants', (group) => {
     const file = media.find((link) => link.attachment.mimeType === 'text/plain')!
     for (const featuredMediaId of [otherImage.id, file.id, 'missing-image']) {
       const invalid = await client
-        .patch(`/seller/products/${item.id}/variants/${first.id}`)
+        .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
         .loginAs(owner)
         .withCsrfToken()
         .accept('json')
@@ -883,27 +922,27 @@ test.group('Product options and variants', (group) => {
       assert.equal(invalid.body().errors[0].field, 'featuredMediaId')
     }
     const assigned = await client
-      .patch(`/seller/products/${item.id}/variants/${first.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ ...payload(), featuredMediaId: image.id })
-    assigned.assertRedirectsTo(`/seller/products/${item.id}`)
+    assigned.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await first.refresh()
     assert.equal(first.featuredMediaId, image.id)
     const retained = await client
-      .patch(`/seller/products/${item.id}/variants/${first.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ ...payload(), featuredMediaId: undefined, title: 'Renamed variant' })
-    retained.assertRedirectsTo(`/seller/products/${item.id}`)
+    retained.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await first.refresh()
     assert.equal(first.featuredMediaId, image.id)
     const cleared = await client
-      .patch(`/seller/products/${item.id}/variants/${first.id}`)
+      .patch(urlFor('seller.variants.update', { productId: item.id, id: first.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(payload())
-    cleared.assertRedirectsTo(`/seller/products/${item.id}`)
+    cleared.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     await first.refresh()
     assert.isNull(first.featuredMediaId)
   })

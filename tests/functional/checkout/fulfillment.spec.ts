@@ -13,6 +13,7 @@ import {
   resetCheckoutState,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const tracking = {
   carrier: 'Sample Carrier',
@@ -29,7 +30,7 @@ test.group('Order fulfillment', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
 
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -47,7 +48,7 @@ test.group('Order fulfillment', (group) => {
 
     for (let request = 0; request < 2; request++)
       await client
-        .post(`/seller/orders/${order.id}/packing`)
+        .post(urlFor('seller.packing.store', { id: order.id }))
         .loginAs(staff)
         .withCsrfToken()
         .redirects(0)
@@ -64,14 +65,14 @@ test.group('Order fulfillment', (group) => {
     const { order } = await paidOrder(client, useFakeProvider())
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
 
     for (let request = 0; request < 2; request++)
       await client
-        .post(`/seller/orders/${order.id}/shipment`)
+        .post(urlFor('seller.shipments.store', { id: order.id }))
         .loginAs(staff)
         .withCsrfToken()
         .form(tracking)
@@ -87,19 +88,19 @@ test.group('Order fulfillment', (group) => {
     const { order, variant } = await paidOrder(client, useFakeProvider())
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
     await client
-      .post(`/seller/orders/${order.id}/shipment`)
+      .post(urlFor('seller.shipments.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .form(tracking)
       .redirects(0)
 
     await client
-      .post(`/seller/orders/${order.id}/cancel`)
+      .post(urlFor('seller.cancellations.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -117,12 +118,12 @@ test.group('Order fulfillment', (group) => {
     const { order } = await paidOrder(client, useFakeProvider())
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
     await client
-      .post(`/seller/orders/${order.id}/shipment`)
+      .post(urlFor('seller.shipments.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .form(tracking)
@@ -158,7 +159,7 @@ test.group('Order fulfillment', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
 
     await client
-      .post(`/seller/orders/${order.id}/operations`)
+      .post(urlFor('seller.operations.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .form({ kind: 'notification', operationId: receipt.id })
@@ -175,19 +176,23 @@ test.group('Order fulfillment', (group) => {
     const { order } = await paidOrder(client, useFakeProvider())
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
 
     await Promise.all([
       client
-        .post(`/seller/orders/${order.id}/shipment`)
+        .post(urlFor('seller.shipments.store', { id: order.id }))
         .loginAs(staff)
         .withCsrfToken()
         .form({ carrier: 'Carrier', trackingNumber: 'RACE-123' })
         .redirects(0),
-      client.post(`/seller/orders/${order.id}/refund`).loginAs(staff).withCsrfToken().redirects(0),
+      client
+        .post(urlFor('seller.refunds.store', { id: order.id }))
+        .loginAs(staff)
+        .withCsrfToken()
+        .redirects(0),
     ])
 
     const shipment = await Shipment.findByOrFail('orderId', order.id)
@@ -196,13 +201,19 @@ test.group('Order fulfillment', (group) => {
   })
 
   test('customers are refused the staff {path} action')
-    .with(['packing', 'shipment', 'refund', 'cancel', 'operations'].map((path) => ({ path })))
-    .run(async ({ client }, { path }) => {
+    .with([
+      { path: 'packing', name: 'seller.packing.store' },
+      { path: 'shipment', name: 'seller.shipments.store' },
+      { path: 'refund', name: 'seller.refunds.store' },
+      { path: 'cancel', name: 'seller.cancellations.store' },
+      { path: 'operations', name: 'seller.operations.store' },
+    ] as const)
+    .run(async ({ client }, { name }) => {
       const { order } = await paidOrder(client, useFakeProvider())
       const customer = await UserFactory.create()
 
       const response = await client
-        .post(`/seller/orders/${order.id}/${path}`)
+        .post(urlFor(name, { id: order.id }))
         .loginAs(customer)
         .withCsrfToken()
         .accept('json')
@@ -218,7 +229,7 @@ test.group('Order fulfillment', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
 
     const forged = await client
-      .patch(`/seller/orders/${order.id}`)
+      .patch(urlFor('seller.orders.update', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .accept('json')

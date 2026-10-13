@@ -12,6 +12,7 @@ test.group('Reference port', (group) => {
   test('navigates catalogue pages, searches and changes the local cart', async ({
     visit,
     assert,
+    route,
   }) => {
     const product = await Product.create({
       title: 'Desk Lamp',
@@ -34,7 +35,7 @@ test.group('Reference port', (group) => {
       publishedAt: DateTime.utc(),
     })
     await collection.related('products').attach({ [product.id]: { position: 0 } })
-    const page = await visit('/')
+    const page = await visit(route('home'))
     const errors: string[] = []
     const storeRequests: {
       method: string
@@ -59,11 +60,11 @@ test.group('Reference port', (group) => {
     })
     await page.getByRole('heading', { name: 'Bestselling products' }).waitFor()
     await page.getByRole('link', { name: 'Collections', exact: true }).first().click()
-    await page.assertPath('/collections')
+    await page.assertPath(route('collections.index'))
     await page.getByText('Lighting', { exact: true }).click()
-    await page.assertPath('/collection/lighting')
+    await page.assertPath(route('collections.show', { handle: 'lighting' }))
     await page.getByRole('link', { name: 'Desk Lamp' }).last().click()
-    await page.assertPath('/product/desk-lamp')
+    await page.assertPath(route('products.show', { handle: 'desk-lamp' }))
     await page.getByRole('button', { name: 'Add to cart', exact: true }).click()
     await page.getByRole('button', { name: 'Open cart', exact: true }).click()
     await page.assertTextContains('[role="dialog"]', 'Desk Lamp - Default')
@@ -78,7 +79,7 @@ test.group('Reference port', (group) => {
     await page.getByRole('button', { name: 'Search', exact: true }).click()
     await page.getByPlaceholder('Search our store…').fill('Desk')
     await page.getByRole('option').filter({ hasText: 'Desk Lamp' }).waitFor()
-    await page.assertPath('/product/desk-lamp')
+    await page.assertPath(route('products.show', { handle: 'desk-lamp' }))
     assert.isTrue(
       storeRequests.some((request) => request.method === 'POST' && request.inertia === 'true')
     )
@@ -88,7 +89,8 @@ test.group('Reference port', (group) => {
     assert.isTrue(
       storeRequests.some(
         (request) =>
-          request.partial === 'searchResults' && request.url.includes('/product/desk-lamp')
+          request.partial === 'searchResults' &&
+          request.url.includes(route('products.show', { handle: 'desk-lamp' }))
       )
     )
     assert.isFalse(
@@ -106,15 +108,15 @@ test.group('Reference port', (group) => {
     assert.isTrue(fitsViewport)
   })
 
-  test('marks only the current page as active in the header menu', async ({ visit }) => {
-    const page = await visit('/')
+  test('marks only the current page as active in the header menu', async ({ visit, route }) => {
+    const page = await visit(route('home'))
     const menu = page.locator('header nav').first()
     const current = (name: string) => menu.locator('a[aria-current="page"]', { hasText: name })
     await page.assertExists(current('Home'))
     await page.assertNotExists(current('Collections'))
 
     await menu.getByRole('link', { name: 'Collections', exact: true }).click()
-    await page.assertPath('/collections')
+    await page.assertPath(route('collections.index'))
     await page.assertExists(current('Collections'))
     await page.assertNotExists(current('Home'))
   })
@@ -123,6 +125,7 @@ test.group('Reference port', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const user = await User.create({
       email: 'customer@example.com',
@@ -131,7 +134,7 @@ test.group('Reference port', (group) => {
       fullName: 'Mina',
     })
     await browserContext.loginAs(user)
-    const page = await visit('/account')
+    const page = await visit(route('account.show'))
     await page.getByRole('button', { name: 'Edit', exact: true }).click()
     await page.getByLabel('First name', { exact: true }).fill('Luna')
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()

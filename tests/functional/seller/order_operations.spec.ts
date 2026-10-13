@@ -42,19 +42,29 @@ test.group('Order operations availability', (group) => {
   test('the detail page follows guarded packing state and preserves manual order controls', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, staff } = await paidOrder()
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     response.assertOk()
     assert.isTrue(response.inertiaProps.operations.canPack)
     assert.isFalse(response.inertiaProps.operations.canShip)
     const fulfillment = await app.container.make(FulfillmentService)
     await fulfillment.pack(order.id, staff)
-    const packed = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const packed = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isFalse(packed.inertiaProps.operations.canPack)
     assert.isTrue(packed.inertiaProps.operations.canShip)
     const manual = await OrderFactory.create()
-    const legacy = await client.get(`/seller/orders/${manual.id}`).loginAs(staff).withInertia()
+    const legacy = await client
+      .get(route('seller.orders.show', { id: manual.id }))
+      .loginAs(staff)
+      .withInertia()
     legacy.assertOk()
     assert.isNull(legacy.inertiaProps.operations)
   })
@@ -62,6 +72,7 @@ test.group('Order operations availability', (group) => {
   test('a provider-only pending refund blocks the same actions as the fulfillment transaction', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, payment, staff } = await paidOrder()
     await RefundObservation.create({
@@ -73,7 +84,10 @@ test.group('Order operations availability', (group) => {
       currency: 'PHP',
       state: 'pending',
     })
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     response.assertOk()
     assert.isFalse(response.inertiaProps.operations.canPack)
     assert.isFalse(response.inertiaProps.operations.canShip)
@@ -96,6 +110,7 @@ test.group('Order operations availability', (group) => {
   test('restocked inventory is blocked in both the detail page and packing', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, staff } = await paidOrder()
     const variant = await ProductVariantFactory.create()
@@ -107,7 +122,10 @@ test.group('Order operations availability', (group) => {
       expiresAtMs: Date.now(),
       restockedAt: DateTime.utc(),
     })
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     response.assertOk()
     assert.isFalse(response.inertiaProps.operations.canPack)
     const [inventory] = response.inertiaProps.operations.issues
@@ -120,6 +138,7 @@ test.group('Order operations availability', (group) => {
   test('issues lead with the payment root cause and point to the reconcile form', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, staff } = await paidOrder()
     await order.merge({ lifecycleState: 'review_required', reviewReason: null }).save()
@@ -146,7 +165,10 @@ test.group('Order operations availability', (group) => {
       },
     })
     await Shipment.query().where('orderId', order.id).delete()
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     const issues = response.inertiaProps.operations.issues
     assert.deepEqual(
       issues.map((issue: { cause: string }) => issue.cause),
@@ -159,6 +181,7 @@ test.group('Order operations availability', (group) => {
   test('the cancellation preview states the refund and the stock that will return', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, staff } = await paidOrder()
     const variant = await ProductVariantFactory.create()
@@ -169,7 +192,10 @@ test.group('Order operations availability', (group) => {
       state: 'consumed',
       expiresAtMs: Date.now(),
     })
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isTrue(response.inertiaProps.operations.canCancel)
     assert.deepInclude(response.inertiaProps.operations.cancellation, {
       closesCheckout: false,
@@ -186,6 +212,7 @@ test.group('Order operations availability', (group) => {
   test('refund amounts use the remaining matching currency and reject mismatched observations', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, payment, staff } = await paidOrder()
     await RefundObservation.create({
@@ -197,7 +224,10 @@ test.group('Order operations availability', (group) => {
       currency: 'PHP',
       state: 'succeeded',
     })
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isTrue(response.inertiaProps.operations.payments[0].canRefund)
     assert.equal(response.inertiaProps.operations.payments[0].refundableAmountMinor, 49900)
     await RefundObservation.create({
@@ -209,7 +239,10 @@ test.group('Order operations availability', (group) => {
       currency: 'USD',
       state: 'succeeded',
     })
-    const mismatch = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const mismatch = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isFalse(mismatch.inertiaProps.operations.payments[0].canRefund)
     assert.equal(mismatch.inertiaProps.operations.payments[0].refundableAmountMinor, 49900)
     assert.includeMembers(
@@ -224,6 +257,7 @@ test.group('Order operations availability', (group) => {
   test('an existing refund operation still permits cancellation without a new provider mutation', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, payment, staff } = await paidOrder()
     const refund = await RefundOperation.create({
@@ -249,7 +283,10 @@ test.group('Order operations availability', (group) => {
       state: 'pending',
       refundOperationId: refund.id,
     })
-    const response = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const response = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isTrue(response.inertiaProps.operations.canCancel)
     assert.isTrue(response.inertiaProps.operations.cancellation.refunds[0].existing)
     const fulfillment = await app.container.make(FulfillmentService)

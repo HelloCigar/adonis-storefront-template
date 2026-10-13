@@ -6,6 +6,7 @@ import app from '@adonisjs/core/services/app'
 import PaymentService from '#services/payments/payment_service'
 import DispatcherService from '#services/payments/dispatcher_service'
 import PayMongoService from '#providers/payments/paymongo_service'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const webhookSecret = 'whsec_fixture'
 
@@ -39,7 +40,7 @@ export function sendPayMongoWebhook(client: ApiClient, body: unknown, signature?
   const time = Math.floor(Date.now() / 1000)
   const digest = createHmac('sha256', webhookSecret).update(`${time}.${raw}`).digest('hex')
   return client
-    .post('/payments/webhooks/paymongo')
+    .post(urlFor('payments.webhooks.store', { provider: 'paymongo' }))
     .header('content-type', 'application/json')
     .header('Paymongo-Signature', signature ?? `t=${time},te=${digest},li=`)
     .unsafeJson(raw)

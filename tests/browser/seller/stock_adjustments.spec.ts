@@ -11,6 +11,7 @@ test.group('Adjusting variant stock', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await User.create({
       email: 'stock-ui@example.com',
@@ -33,7 +34,7 @@ test.group('Adjusting variant stock', (group) => {
       position: 0,
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}`)
+    const page = await visit(route('seller.products.show', { id: product.id }))
     await page.getByRole('button', { name: 'Actions for Default MUG-1', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Adjust stock', exact: true }).click()
 
@@ -69,6 +70,7 @@ test.group('Adjusting variant stock', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await User.create({
       email: 'stock-remove-ui@example.com',
@@ -90,7 +92,9 @@ test.group('Adjusting variant stock', (group) => {
       position: 0,
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}/variants/${variant.id}/stock`)
+    const page = await visit(
+      route('seller.stock_adjustments.index', { productId: product.id, variantId: variant.id })
+    )
 
     await page.getByText('Damaged, lost, or written off', { exact: true }).click()
     await page.getByLabel('Units', { exact: true }).fill('9')

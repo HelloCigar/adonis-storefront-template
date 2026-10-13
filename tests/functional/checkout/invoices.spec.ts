@@ -42,10 +42,11 @@ test.group('Invoices', (group) => {
   test('a paid order’s invoice downloads as a PDF for whoever may view the order', async ({
     client,
     assert,
+    route,
   }) => {
     const { order: paid, grant } = await order()
     const request = client
-      .get(`/checkout/orders/${paid.publicId}/invoice`)
+      .get(route('checkout.invoices.show', { publicId: paid.publicId! }))
       .withSession({ store_order_grants: { [paid.publicId!]: grant } })
     // Keep the PDF bytes; the client only parses text and JSON bodies by default.
     request.request.buffer(true).parse((res, done) => {
@@ -64,28 +65,39 @@ test.group('Invoices', (group) => {
     assert.isTrue(isPdf(response.body()))
   })
 
-  test('the invoice stays private and only exists once payment settled', async ({ client }) => {
+  test('the invoice stays private and only exists once payment settled', async ({
+    client,
+    route,
+  }) => {
     const { order: paid } = await order()
     const outsider = await UserFactory.create()
-    const anonymous = await client.get(`/checkout/orders/${paid.publicId}/invoice`)
+    const anonymous = await client.get(
+      route('checkout.invoices.show', { publicId: paid.publicId! })
+    )
     anonymous.assertStatus(404)
-    const stranger = await client.get(`/checkout/orders/${paid.publicId}/invoice`).loginAs(outsider)
+    const stranger = await client
+      .get(route('checkout.invoices.show', { publicId: paid.publicId! }))
+      .loginAs(outsider)
     stranger.assertStatus(404)
 
     const { order: unpaid, grant } = await order(null)
     const pending = await client
-      .get(`/checkout/orders/${unpaid.publicId}/invoice`)
+      .get(route('checkout.invoices.show', { publicId: unpaid.publicId! }))
       .withSession({ store_order_grants: { [unpaid.publicId!]: grant } })
     pending.assertStatus(404)
   })
 
-  test('the order page offers the invoice once the order is paid', async ({ client, assert }) => {
+  test('the order page offers the invoice once the order is paid', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const customer = await UserFactory.create()
     const { order: paid } = await order()
     paid.userId = customer.id
     await paid.save()
     const page = await client
-      .get(`/checkout/orders/${paid.publicId}`)
+      .get(route('checkout.orders.show', { publicId: paid.publicId! }))
       .loginAs(customer)
       .withInertia()
     page.assertStatus(200)
@@ -95,7 +107,7 @@ test.group('Invoices', (group) => {
     unpaid.userId = customer.id
     await unpaid.save()
     const pending = await client
-      .get(`/checkout/orders/${unpaid.publicId}`)
+      .get(route('checkout.orders.show', { publicId: unpaid.publicId! }))
       .loginAs(customer)
       .withInertia()
     assert.isFalse(pending.inertiaProps.hasInvoice)

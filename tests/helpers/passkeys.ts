@@ -4,6 +4,7 @@ import type { Page } from 'playwright'
 import { isoCBOR } from '@simplewebauthn/server/helpers'
 import type { RecordedSignal } from '#tests/helpers/types'
 import { generateKeyPairSync, randomBytes } from 'node:crypto'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 /**
  * Stores a passkey directly, for tests that do not depend on the
@@ -134,7 +135,7 @@ export async function recordPasskeySignals(page: Page) {
 export async function addPasskey(page: Page) {
   const saved = page.waitForResponse(
     (response) =>
-      response.url().endsWith('/settings/passkeys') && response.request().method() === 'POST'
+      response.url().endsWith(urlFor('passkeys.store')) && response.request().method() === 'POST'
   )
   await page.getByRole('button', { name: 'Add a passkey', exact: true }).click()
   await saved

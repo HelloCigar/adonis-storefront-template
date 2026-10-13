@@ -11,6 +11,7 @@ import RefundOperation from '#models/payments/refund_operation'
 import type { ShipmentState } from '#services/checkout/state_service'
 import { OrderFactory } from '#database/factories/order_factory'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 /** Whole seconds, so values survive the SQLite round trip unchanged. */
 const ago = (values: { days?: number; hours?: number; minutes?: number }) =>
@@ -29,8 +30,15 @@ interface QueueRow {
 const staffUser = () => UserFactory.merge({ role: 'staff' }).create()
 
 /** Opens the staff order list and returns the page props. */
-async function queue(client: any, staff: Awaited<ReturnType<typeof staffUser>>, qs = '') {
-  const page = await client.get(`/seller/orders${qs}`).loginAs(staff).withInertia()
+async function queue(
+  client: any,
+  staff: Awaited<ReturnType<typeof staffUser>>,
+  qs: Record<string, string> = {}
+) {
+  const page = await client
+    .get(urlFor('seller.orders.index', [], { qs }))
+    .loginAs(staff)
+    .withInertia()
   page.assertStatus(200)
   return page.inertiaProps as { orders: QueueRow[]; stage: string }
 }
@@ -272,7 +280,7 @@ test.group('Staff order queue', (group) => {
     assert,
   }) => {
     const staff = await staffUser()
-    const stageOf = async (qs = '') => {
+    const stageOf = async (qs: Record<string, string> = {}) => {
       const { stage } = await queue(client, staff, qs)
       return stage
     }
@@ -285,10 +293,10 @@ test.group('Staff order queue', (group) => {
       'needs_attention',
       'all',
     ]) {
-      assert.equal(await stageOf(`?stage=${stage}`), stage)
+      assert.equal(await stageOf({ stage }), stage)
     }
-    assert.equal(await stageOf('?stage=bogus'), 'to_pack')
-    assert.equal(await stageOf('?stage='), 'to_pack')
+    assert.equal(await stageOf({ stage: 'bogus' }), 'to_pack')
+    assert.equal(await stageOf({ stage: '' }), 'to_pack')
   })
 
   test('lists every order with its customer, newest first', async ({ client, assert }) => {
@@ -316,25 +324,29 @@ test.group('Staff order queue', (group) => {
     assert.isNull(orders[1].customer)
   })
 
-  test('keeps the staff order queue closed to guests and customers', async ({ client }) => {
+  test('keeps the staff order queue closed to guests and customers', async ({ client, route }) => {
     const customer = await UserFactory.merge({ role: 'customer' }).create()
 
-    const guest = await client.get('/seller/orders').redirects(0)
+    const guest = await client.get(route('seller.orders.index')).redirects(0)
     guest.assertStatus(302)
-    guest.assertHeader('location', '/login')
+    guest.assertHeader('location', route('session.create'))
 
-    const denied = await client.get('/seller/orders').loginAs(customer).accept('json')
+    const denied = await client.get(route('seller.orders.index')).loginAs(customer).accept('json')
     denied.assertStatus(403)
   })
   test('gives the order page the same stage and next step as its queue row', async ({
     client,
     assert,
+    route,
   }) => {
     const packingAt = ago({ hours: 4 })
     const order = await onlineOrder({}, { state: 'packing', packingAt })
     const staff = await staffUser()
 
-    const page = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const page = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     page.assertStatus(200)
     const detail = (page.inertiaProps as { queue: QueueRow }).queue
     const row = await rowFor(client, order)

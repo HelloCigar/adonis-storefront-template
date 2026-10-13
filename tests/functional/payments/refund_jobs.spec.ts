@@ -13,6 +13,7 @@ import {
   sendWebhook,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Payment refund jobs', (group) => {
   group.each.setup(() => resetCheckoutState())
@@ -25,7 +26,7 @@ test.group('Payment refund jobs', (group) => {
     const { order } = await paidOrder(client, provider)
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -56,7 +57,7 @@ test.group('Payment refund jobs', (group) => {
 
     for (let request = 0; request < 2; request++)
       await client
-        .post(`/seller/orders/${order.id}/cancel`)
+        .post(urlFor('seller.cancellations.store', { id: order.id }))
         .loginAs(staff)
         .withCsrfToken()
         .redirects(0)
@@ -135,7 +136,7 @@ test.group('Payment refund jobs', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
 
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -153,7 +154,7 @@ test.group('Payment refund jobs', (group) => {
     const { order } = await paidOrder(client, provider)
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -195,7 +196,11 @@ test.group('Payment refund jobs', (group) => {
     const { order } = await paidOrder(client, provider)
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     const requestRefund = () =>
-      client.post(`/seller/orders/${order.id}/refund`).loginAs(staff).withCsrfToken().redirects(0)
+      client
+        .post(urlFor('seller.refunds.store', { id: order.id }))
+        .loginAs(staff)
+        .withCsrfToken()
+        .redirects(0)
     await requestRefund()
     await runQueue(['payments'])
     const operation = await RefundOperation.findByOrFail('orderId', order.id)

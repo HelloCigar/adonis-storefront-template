@@ -1,22 +1,27 @@
 import { test } from '@japa/runner'
 import { UserFactory } from '#database/factories/user_factory'
 import { orderTotalMinor, placedByGuest, resetCheckoutState } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Guest orders', (group) => {
   group.each.setup(() => resetCheckoutState())
 
-  test('a guest checkout lands on the order page with a fresh cart', async ({ client, assert }) => {
+  test('a guest checkout lands on the order page with a fresh cart', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const { order, response, cartToken, guestSession } = await placedByGuest(client)
 
-    response.assertHeader('location', `/checkout/orders/${order.publicId}`)
+    response.assertHeader('location', route('checkout.orders.show', { publicId: order.publicId! }))
     assert.notEqual(guestSession.store_cart_token, cartToken)
   })
 
-  test('the guest who placed the order can view it', async ({ client, assert }) => {
+  test('the guest who placed the order can view it', async ({ client, assert, route }) => {
     const { order, guestSession } = await placedByGuest(client)
 
     const page = await client
-      .get(`/checkout/orders/${order.publicId}`)
+      .get(route('checkout.orders.show', { publicId: order.publicId! }))
       .withSession(guestSession)
       .withInertia()
 
@@ -28,15 +33,15 @@ test.group('Guest orders', (group) => {
 
   test('an outsider cannot reach the order through {action}')
     .with([
-      { action: 'its page', method: 'get', path: '' },
-      { action: 'cancel', method: 'post', path: '/cancel' },
-      { action: 'reconcile', method: 'post', path: '/reconcile' },
+      { action: 'its page', method: 'get', name: 'checkout.orders.show' },
+      { action: 'cancel', method: 'post', name: 'checkout.cancellations.store' },
+      { action: 'reconcile', method: 'post', name: 'checkout.reconciliations.store' },
     ] as const)
-    .run(async ({ client }, { method, path }) => {
+    .run(async ({ client }, { method, name }) => {
       const { order } = await placedByGuest(client)
       const outsider = await UserFactory.create()
 
-      const request = client[method](`/checkout/orders/${order.publicId}${path}`).loginAs(outsider)
+      const request = client[method](urlFor(name, { publicId: order.publicId! })).loginAs(outsider)
       const response = await (method === 'get' ? request.withInertia() : request.withCsrfToken())
 
       response.assertStatus(404)
@@ -50,7 +55,7 @@ test.group('Guest orders', (group) => {
     const customer = await UserFactory.create()
 
     const claim = await client
-      .post(`/checkout/orders/${order.publicId}/claim`)
+      .post(urlFor('checkout.access.store', { publicId: order.publicId! }))
       .loginAs(customer)
       .withSession(guestSession)
       .withCsrfToken()
@@ -66,14 +71,14 @@ test.group('Guest orders', (group) => {
     const customer = await UserFactory.create()
     const outsider = await UserFactory.create()
     await client
-      .post(`/checkout/orders/${order.publicId}/claim`)
+      .post(urlFor('checkout.access.store', { publicId: order.publicId! }))
       .loginAs(customer)
       .withSession(guestSession)
       .withCsrfToken()
       .redirects(0)
 
     const stolen = await client
-      .post(`/checkout/orders/${order.publicId}/claim`)
+      .post(urlFor('checkout.access.store', { publicId: order.publicId! }))
       .loginAs(outsider)
       .withSession(guestSession)
       .withCsrfToken()
@@ -83,18 +88,21 @@ test.group('Guest orders', (group) => {
     assert.equal(order.userId, customer.id)
   })
 
-  test("a claimed order's account link leads to its order page", async ({ client }) => {
+  test("a claimed order's account link leads to its order page", async ({ client, route }) => {
     const { order, guestSession } = await placedByGuest(client)
     const customer = await UserFactory.create()
     await client
-      .post(`/checkout/orders/${order.publicId}/claim`)
+      .post(urlFor('checkout.access.store', { publicId: order.publicId! }))
       .loginAs(customer)
       .withSession(guestSession)
       .withCsrfToken()
       .redirects(0)
 
-    const account = await client.get(`/account/orders/${order.id}`).loginAs(customer).redirects(0)
+    const account = await client
+      .get(route('orders.show', { id: order.id }))
+      .loginAs(customer)
+      .redirects(0)
 
-    account.assertHeader('location', `/checkout/orders/${order.publicId}`)
+    account.assertHeader('location', route('checkout.orders.show', { publicId: order.publicId! }))
   })
 })

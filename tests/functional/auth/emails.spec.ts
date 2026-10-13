@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const signup = (email: string) => ({
   fullName: 'Customer',
@@ -13,12 +14,16 @@ const signup = (email: string) => ({
 test.group('Account emails', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('emails are stored lowercase and match regardless of case', async ({ client, assert }) => {
+  test('emails are stored lowercase and match regardless of case', async ({
+    client,
+    assert,
+    route,
+  }) => {
     // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
     using mails = mail.fake()
 
     const created = await client
-      .post('/signup')
+      .post(urlFor('new_account.store'))
       .withCsrfToken()
       .redirects(0)
       .json(signup('  Mixed.Case@Example.COM '))
@@ -26,7 +31,7 @@ test.group('Account emails', (group) => {
     const user = await User.findByOrFail('email', 'mixed.case@example.com')
 
     const duplicate = await client
-      .post('/signup')
+      .post(urlFor('new_account.store'))
       .withCsrfToken()
       .accept('json')
       .json(signup('MIXED.case@example.com'))
@@ -34,12 +39,12 @@ test.group('Account emails', (group) => {
     assert.lengthOf(await User.query().whereILike('email', 'mixed.case@example.com'), 1)
 
     const login = await client
-      .post('/login')
+      .post(urlFor('session.store'))
       .withCsrfToken()
       .redirects(0)
       .json({ email: 'MIXED.CASE@example.com', password: 'secret-password' })
     login.assertStatus(302)
-    login.assertHeader('location', '/account')
+    login.assertHeader('location', route('account.show'))
 
     await user.merge({ email: 'Renamed@Example.com' }).save()
     const renamed = await User.findOrFail(user.id)

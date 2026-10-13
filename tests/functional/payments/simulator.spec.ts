@@ -19,6 +19,7 @@ import RefundOperation from '#models/payments/refund_operation'
 import Shipment from '#models/checkout/shipment'
 import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Development payment simulator', (group) => {
   group.each.setup(async () => {
@@ -63,6 +64,7 @@ test.group('Development payment simulator', (group) => {
   test('successful and repeated simulator submissions settle stock once and permit shipping', async ({
     assert,
     client,
+    route,
   }) => {
     const { order, attempt, variant } = await simulatedCheckout()
     const path = new URL(attempt.checkoutUrl!).pathname
@@ -76,7 +78,7 @@ test.group('Development payment simulator', (group) => {
     for (let repeat = 0; repeat < 2; repeat++) {
       const paid = await client.post(path).withCsrfToken().form({ outcome: 'paid' }).redirects(0)
       paid.assertStatus(302)
-      paid.assertHeader('location', `/checkout/orders/${order.publicId}`)
+      paid.assertHeader('location', route('checkout.orders.show', { publicId: order.publicId! }))
     }
     await order.refresh()
     await variant.refresh()
@@ -227,6 +229,7 @@ test.group('Development payment simulator', (group) => {
 
   test('rejects invalid mutations, unknown resources, and unauthenticated fake webhooks', async ({
     client,
+    route,
   }) => {
     const { attempt } = await simulatedCheckout()
     const path = new URL(attempt.checkoutUrl!).pathname
@@ -236,10 +239,12 @@ test.group('Development payment simulator', (group) => {
       .header('accept', 'application/json')
       .json({ outcome: 'wrong' })
     invalid.assertStatus(422)
-    const unknown = await client.get('/_dev/paymongo/checkouts/unknown').withInertia()
+    const unknown = await client
+      .get(route('payments.simulations.show', { id: 'unknown' }))
+      .withInertia()
     unknown.assertStatus(404)
     const webhook = await client
-      .post('/payments/webhooks/fake_paymongo')
+      .post(urlFor('payments.webhooks.store', { provider: 'fake_paymongo' }))
       .json({ type: 'checkout.paid' })
     webhook.assertStatus(404)
   })

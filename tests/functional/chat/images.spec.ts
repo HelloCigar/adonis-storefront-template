@@ -6,6 +6,7 @@ import User from '#models/account/user'
 import OrderMessage from '#models/chat/order_message'
 import { OrderFactory } from '#database/factories/order_factory'
 import { nextEvent, request, startChatServer, type ChatServer } from '#tests/helpers/chat_socket'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 interface Message {
   id: string
@@ -47,7 +48,11 @@ test.group('Order chat images', (group) => {
     return { customer, staff, order }
   }
 
-  test('a photo with a caption is stored and broadcast to the room', async ({ client, assert }) => {
+  test('a photo with a caption is stored and broadcast to the room', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const { customer, staff, order } = await people()
     const { cookie } = await chat.login(client, staff)
     const staffSocket = await chat.connected(cookie)
@@ -57,15 +62,15 @@ test.group('Order chat images', (group) => {
     const delivered = nextEvent<Message>(staffSocket, 'message:new', 2000)
 
     const response = await client
-      .post(`/chat/orders/${order.id}/messages`)
+      .post(urlFor('chat.messages.store', { orderId: order.id }))
       .loginAs(customer)
       .withCsrfToken()
-      .header('referer', `/account/orders/${order.id}`)
+      .header('referer', route('orders.show', { id: order.id }))
       .redirects(0)
       .field('body', '  The box arrived crushed  ')
       .file('images[]', png, { filename: 'parcel.png', contentType: 'image/png' })
     response.assertStatus(302)
-    response.assertHeader('location', `/account/orders/${order.id}`)
+    response.assertHeader('location', route('orders.show', { id: order.id }))
 
     const message = await OrderMessage.findByOrFail('order_id', order.id)
     assert.equal(message.body, 'The box arrived crushed')
@@ -82,14 +87,17 @@ test.group('Order chat images', (group) => {
       [
         [
           link.attachmentId,
-          `/chat/orders/${order.id}/images/${link.attachmentId}`,
+          route('chat.images.show', { orderId: order.id, id: link.attachmentId }),
           'parcel.png',
           'image/png',
         ],
       ]
     )
 
-    const inbox = await client.get(`/inbox?order=${order.id}`).loginAs(staff).withInertia()
+    const inbox = await client
+      .get(route('inbox', [], { qs: { order: order.id } }))
+      .loginAs(staff)
+      .withInertia()
     assert.deepEqual(
       inbox.inertiaProps.conversation.messages.map((item: Message) => item.images.length),
       [1]
@@ -98,7 +106,11 @@ test.group('Order chat images', (group) => {
     assert.isTrue(thread.ok && thread.data.messages[0].images[0].id === link.attachmentId)
   })
 
-  test('chat photos are served only to the order holder and staff', async ({ client, assert }) => {
+  test('chat photos are served only to the order holder and staff', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const { customer, staff, order } = await people()
     const stranger = await User.create({
       email: 'stranger@example.com',
@@ -106,7 +118,7 @@ test.group('Order chat images', (group) => {
       role: 'customer',
     })
     await client
-      .post(`/chat/orders/${order.id}/messages`)
+      .post(urlFor('chat.messages.store', { orderId: order.id }))
       .loginAs(customer)
       .withCsrfToken()
       .redirects(0)
@@ -114,7 +126,7 @@ test.group('Order chat images', (group) => {
     const message = await OrderMessage.findByOrFail('order_id', order.id)
     assert.equal(message.body, '')
     const [link] = await message.images.all()
-    const url = `/chat/orders/${order.id}/images/${link.attachmentId}`
+    const url = route('chat.images.show', { orderId: order.id, id: link.attachmentId })
 
     for (const viewer of [customer, staff]) {
       const response = await client.get(url).loginAs(viewer)
@@ -133,10 +145,12 @@ test.group('Order chat images', (group) => {
       userId: stranger.id,
       lifecycleState: 'confirmed',
     }).create()
-    const elsewhere = `/chat/orders/${otherOrder.id}/images/${link.attachmentId}`
+    const elsewhere = route('chat.images.show', { orderId: otherOrder.id, id: link.attachmentId })
     const wrongOrder = await client.get(elsewhere).loginAs(stranger)
     wrongOrder.assertStatus(404)
-    const publicRoute = await client.get(`/attachments/${link.attachmentId}/parcel.png`)
+    const publicRoute = await client.get(
+      route('attachments.show', { id: link.attachmentId, name: 'parcel.png' })
+    )
     publicRoute.assertStatus(404)
   })
 
@@ -146,7 +160,11 @@ test.group('Order chat images', (group) => {
   }) => {
     const { customer, order } = await people()
     const upload = (orderId: string) =>
-      client.post(`/chat/orders/${orderId}/messages`).loginAs(customer).withCsrfToken().redirects(0)
+      client
+        .post(urlFor('chat.messages.store', { orderId }))
+        .loginAs(customer)
+        .withCsrfToken()
+        .redirects(0)
 
     const text = await upload(order.id)
       .field('body', 'see attached')

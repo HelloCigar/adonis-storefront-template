@@ -50,14 +50,14 @@ test.group('Order chat thank-you', (group) => {
     assert.lengthOf(await OrderMessage.query().where('order_id', order.id), 1)
   })
 
-  test('the customer sees the thank-you on their order page', async ({ client, assert }) => {
+  test('the customer sees the thank-you on their order page', async ({ client, assert, route }) => {
     await savedStoreSettings({ storeName: 'Lantern Goods' })
     const provider = useFakeProvider()
     const customer = await UserFactory.merge({ firstName: 'Casey' }).create()
     const { order } = await paidOrder(client, provider, { customer })
 
     const page = await client
-      .get(`/checkout/orders/${order.publicId}`)
+      .get(route('checkout.orders.show', { publicId: order.publicId! }))
       .loginAs(customer)
       .withInertia()
 

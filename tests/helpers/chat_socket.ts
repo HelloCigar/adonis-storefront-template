@@ -10,6 +10,7 @@ import User, { type UserRole } from '#models/account/user'
 import ChatOrderRoomHandler, { type ChatReply } from '#sockets/chat/order_room_handler'
 import ChatUserMiddleware from '#middleware/chat/user_middleware'
 import env from '#start/env'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 interface OpenOptions {
   cookie?: string
@@ -70,10 +71,14 @@ export async function startChatServer() {
             })
           : user
       if (typeof user !== 'string') await account.merge({ password: 'secret-password' }).save()
-      const response = await client.post('/login').withCsrfToken().redirects(0).json({
-        email: account.email,
-        password: 'secret-password',
-      })
+      const response = await client
+        .post(urlFor('session.store'))
+        .withCsrfToken()
+        .redirects(0)
+        .json({
+          email: account.email,
+          password: 'secret-password',
+        })
       response.assertStatus(302)
       // Japa deletes response sessions during teardown. Restore the real login
       // session so the subsequent network socket can authenticate like a browser.

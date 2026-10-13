@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const signup = (email: string) => ({
   fullName: 'Customer',
@@ -20,14 +21,14 @@ test.group('Rate limits', (group) => {
     await User.create({ email: 'locked@example.com', password: 'secret-password' })
     for (let attempt = 0; attempt < 5; attempt++) {
       const failed = await client
-        .post('/login')
+        .post(urlFor('session.store'))
         .withCsrfToken()
         .accept('json')
         .json({ email: 'locked@example.com', password: 'wrong-password' })
       failed.assertStatus(400)
     }
     const locked = await client
-      .post('/login')
+      .post(urlFor('session.store'))
       .withCsrfToken()
       .accept('json')
       .json({ email: 'Locked@example.com', password: 'secret-password' })
@@ -39,7 +40,7 @@ test.group('Rate limits', (group) => {
       password: 'secret-password',
     })
     const unaffected = await client
-      .post('/login')
+      .post(urlFor('session.store'))
       .withCsrfToken()
       .redirects(0)
       .json({ email: otherEmail.email, password: 'secret-password' })
@@ -49,20 +50,21 @@ test.group('Rate limits', (group) => {
   test('signup volume per client is capped and Inertia forms get a flash message', async ({
     client,
     assert,
+    route,
   }) => {
     // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
     using mails = mail.fake()
 
     for (let index = 0; index < 5; index++) {
       const created = await client
-        .post('/signup')
+        .post(urlFor('new_account.store'))
         .withCsrfToken()
         .redirects(0)
         .json(signup(`customer-${index}@example.com`))
       created.assertStatus(302)
     }
     const blocked = await client
-      .post('/signup')
+      .post(urlFor('new_account.store'))
       .withCsrfToken()
       .accept('json')
       .json(signup('blocked@example.com'))
@@ -70,10 +72,10 @@ test.group('Rate limits', (group) => {
     assert.isNull(await User.findBy('email', 'blocked@example.com'))
 
     const inertia = await client
-      .post('/signup')
+      .post(urlFor('new_account.store'))
       .withCsrfToken()
       .header('X-Inertia', 'true')
-      .header('Referer', '/signup')
+      .header('Referer', route('new_account.create'))
       .redirects(0)
       .json(signup('blocked@example.com'))
     assert.include([302, 303], inertia.status())

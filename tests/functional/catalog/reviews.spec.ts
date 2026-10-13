@@ -10,6 +10,7 @@ import { OrderFactory } from '#database/factories/order_factory'
 import { OrderLineItemFactory } from '#database/factories/order_line_item_factory'
 import { ProductFactory } from '#database/factories/product_factory'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const storeMessage = 'Thanks for your review. It will appear once the store approves it.'
 const updateMessage = 'Review updated. It will appear again once the store approves it.'
@@ -72,16 +73,16 @@ const countReviews = async () => {
   const rows = await ProductReview.all()
   return rows.length
 }
-const storeUrl = (product: Product) => `/products/${product.id}/reviews`
-const reviewUrl = (row: ProductReview | { id: string }) => `/reviews/${row.id}`
-const productPath = (product: Product) => `/product/${product.handle}`
+const storeUrl = (product: Product) => urlFor('reviews.store', { productId: product.id })
+const reviewUrl = (row: ProductReview | { id: string }) => urlFor('reviews.update', { id: row.id })
+const productPath = (product: Product) => urlFor('products.show', { handle: product.handle })
 const errorFields = (body: { errors?: { field: string }[] }) =>
   (body.errors ?? []).map((error) => error.field)
 
 test.group('Product reviews | writing', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('guests are sent to the login page', async ({ client, assert }) => {
+  test('guests are sent to the login page', async ({ client, assert, route }) => {
     const product = await publishedProduct()
     const existing = await review(product)
 
@@ -91,7 +92,7 @@ test.group('Product reviews | writing', (group) => {
       .redirects(0)
       .json({ rating: 5 })
     store.assertStatus(302)
-    store.assertHeader('location', '/login')
+    store.assertHeader('location', route('session.create'))
 
     const update = await client
       .patch(reviewUrl(existing))
@@ -99,11 +100,11 @@ test.group('Product reviews | writing', (group) => {
       .redirects(0)
       .json({ rating: 1 })
     update.assertStatus(302)
-    update.assertHeader('location', '/login')
+    update.assertHeader('location', route('session.create'))
 
     const destroy = await client.delete(reviewUrl(existing)).withCsrfToken().redirects(0)
     destroy.assertStatus(302)
-    destroy.assertHeader('location', '/login')
+    destroy.assertHeader('location', route('session.create'))
 
     assert.equal(await countReviews(), 1)
     await existing.refresh()
@@ -299,7 +300,7 @@ test.group('Product reviews | writing', (group) => {
     for (const url of [
       storeUrl(draft),
       storeUrl(unscheduled),
-      '/products/01ARZ3NDEKTSV4RRFFQ69G5FAV/reviews',
+      urlFor('reviews.store', { productId: '01ARZ3NDEKTSV4RRFFQ69G5FAV' }),
     ]) {
       const response = await client
         .post(url)

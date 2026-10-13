@@ -28,10 +28,11 @@ test.group('Local payment simulator controls', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, attempt, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })
-    const page = await visit(`/checkout/orders/${order.publicId}`)
+    const page = await visit(route('checkout.orders.show', { publicId: order.publicId! }))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('link', { name: 'Pay now', exact: true }).click()
@@ -41,7 +42,7 @@ test.group('Local payment simulator controls', (group) => {
     await page.getByRole('status').getByText('Payment failed.', { exact: false }).waitFor()
     await page.getByRole('button', { name: 'Simulate successful payment', exact: true }).click()
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()
-    await page.assertPath(`/checkout/orders/${order.publicId}`)
+    await page.assertPath(route('checkout.orders.show', { publicId: order.publicId! }))
     await order.refresh()
     assert.equal(order.lifecycleState, 'confirmed')
     assert.isEmpty(errors)

@@ -17,6 +17,7 @@ test.group('Order chat photos', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const customer = await User.create({
       email: 'buyer@example.com',
@@ -43,7 +44,7 @@ test.group('Order chat photos', (group) => {
       body: 'Can I get a shipping label?',
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/inbox?order=${order.id}`)
+    const page = await visit(route('inbox', [], { qs: { order: order.id } }))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     // The customer's messages sit on the other side under their name and initials.
@@ -68,7 +69,9 @@ test.group('Order chat photos', (group) => {
       .where('sender_role', 'staff')
       .firstOrFail()
     const [link] = await message.images.all()
-    const photo = page.locator(`img[src="/chat/orders/${order.id}/images/${link.attachmentId}"]`)
+    const photo = page.locator(
+      `img[src="${route('chat.images.show', { orderId: order.id, id: link.attachmentId })}"]`
+    )
     await photo.waitFor()
     // The browser decoded the bytes served by the authorized chat route. decode() waits for the
     // image to load, which can finish after the element is attached.
@@ -101,7 +104,9 @@ test.group('Order chat photos', (group) => {
       .firstOrFail()
     const [receipt] = await photoOnly.images.all()
     await page
-      .locator(`img[src="/chat/orders/${order.id}/images/${receipt.attachmentId}"]`)
+      .locator(
+        `img[src="${route('chat.images.show', { orderId: order.id, id: receipt.attachmentId })}"]`
+      )
       .waitFor()
     // A photo without text is no empty bubble; only the latest message carries the receipt.
     assert.equal(

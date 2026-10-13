@@ -4,6 +4,7 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { UserFactory } from '#database/factories/user_factory'
 import { addVirtualAuthenticator, recordPasskeySignals } from '#tests/helpers/passkeys'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const rpId = env.get('PASSKEY_RP_ID')
 
@@ -128,7 +129,9 @@ test.group('Passkey Login', (group) => {
 
     const statuses: number[] = []
     for (let attempt = 0; attempt < 11; attempt++) {
-      const response = await page.request.post('/login/passkey/challenge', { headers })
+      const response = await page.request.post(urlFor('passkey_login_challenges.store'), {
+        headers,
+      })
       statuses.push(response.status())
     }
 

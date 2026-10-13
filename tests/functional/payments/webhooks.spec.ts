@@ -12,6 +12,7 @@ import {
   sendWebhook,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Payment webhooks', (group) => {
   group.each.setup(() => resetCheckoutState())
@@ -71,12 +72,12 @@ test.group('Payment webhooks', (group) => {
     })
 
     const tampered = await client
-      .post(`/payments/webhooks/${provider.provider}`)
+      .post(urlFor('payments.webhooks.store', { provider: provider.provider }))
       .header('content-type', 'application/json')
       .headers(signed.headers)
       .unsafeJson(`${signed.rawBody} `)
     const unsigned = await client
-      .post(`/payments/webhooks/${provider.provider}`)
+      .post(urlFor('payments.webhooks.store', { provider: provider.provider }))
       .header('content-type', 'application/json')
       .unsafeJson(signed.rawBody)
 
@@ -120,7 +121,7 @@ test.group('Payment webhooks', (group) => {
       checkoutId: attempt.externalId!,
     })
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -148,7 +149,7 @@ test.group('Payment webhooks', (group) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
 
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .form({ paymentId: payment.id })
@@ -212,7 +213,7 @@ test.group('Payment webhooks', (group) => {
     const { order } = await paidOrder(client, provider)
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
@@ -257,7 +258,7 @@ test.group('Payment webhooks', (group) => {
       refundId: 'ref_dashboard',
     })
     await client
-      .post(`/seller/orders/${order.id}/packing`)
+      .post(urlFor('seller.packing.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)

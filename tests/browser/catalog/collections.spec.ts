@@ -7,7 +7,7 @@ import { DateTime } from 'luxon'
 test.group('Collection controls', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('filters and paginates through partial Inertia visits', async ({ visit, assert }) => {
+  test('filters and paginates through partial Inertia visits', async ({ visit, assert, route }) => {
     const collection = await Collection.create({
       title: 'Query test',
       handle: 'query-test',
@@ -31,12 +31,12 @@ test.group('Collection controls', (group) => {
       await collection.related('products').attach({ [product.id]: { position: index } })
     }
 
-    const page = await visit('/collection/query-test')
+    const page = await visit(route('collections.show', { handle: 'query-test' }))
     const errors: string[] = []
     const requests: { inertia?: string; partial?: string; navigation: boolean }[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     page.on('request', (request) => {
-      if (request.url().includes('/collection/query-test')) {
+      if (request.url().includes(route('collections.show', { handle: 'query-test' }))) {
         const headers = request.headers()
         requests.push({
           inertia: headers['x-inertia'],

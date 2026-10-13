@@ -21,6 +21,7 @@ import DiscountRedemption from '#models/checkout/discount_redemption'
 import StockReservation from '#models/checkout/stock_reservation'
 import { UserFactory } from '#database/factories/user_factory'
 import { ProductVariantFactory } from '#database/factories/product_variant_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const shipping = {
   firstName: 'Guest',
@@ -332,7 +333,7 @@ test.group('Discount codes at checkout', (group) => {
     assert.equal(code.timesUsed, 0)
   })
 
-  test('shoppers apply and remove a code over HTTP', async ({ assert, client }) => {
+  test('shoppers apply and remove a code over HTTP', async ({ assert, client, route }) => {
     const shirt = await sellable(499)
     await discount({ code: 'SAVE10' })
     const token = randomUUID()
@@ -340,27 +341,27 @@ test.group('Discount codes at checkout', (group) => {
     await carts.add(token, undefined, shirt.id, 1)
 
     const rejected = await client
-      .post('/checkout/discount')
+      .post(urlFor('checkout.discount.store'))
       .withSession({ store_cart_token: token })
       .withCsrfToken()
-      .header('referer', '/checkout')
+      .header('referer', route('checkout.create'))
       .form({ code: 'NOPE' })
       .redirects(0)
     rejected.assertStatus(302)
     assert.isNull(await savedCode(token))
 
     const applied = await client
-      .post('/checkout/discount')
+      .post(urlFor('checkout.discount.store'))
       .withSession({ store_cart_token: token })
       .withCsrfToken()
       .form({ code: 'save10' })
       .redirects(0)
     applied.assertStatus(302)
-    applied.assertHeader('location', '/checkout')
+    applied.assertHeader('location', route('checkout.create'))
     assert.equal(await savedCode(token), 'SAVE10')
 
     const page = await client
-      .get('/checkout')
+      .get(route('checkout.create'))
       .withSession({ store_cart_token: token })
       .withInertia()
     page.assertInertiaComponent('checkout/index')
@@ -372,7 +373,7 @@ test.group('Discount codes at checkout', (group) => {
     assert.equal(page.inertiaProps.quote.totalMinor, 49_900 - 4_990 + 10_000)
 
     const removed = await client
-      .delete('/checkout/discount')
+      .delete(urlFor('checkout.discount.destroy'))
       .withSession({ store_cart_token: token })
       .withCsrfToken()
       .redirects(0)
