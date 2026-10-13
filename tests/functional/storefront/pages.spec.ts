@@ -8,6 +8,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 import storefront from '#config/storefront'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Storefront', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -16,6 +17,7 @@ test.group('Storefront', (group) => {
     client,
     assert,
     cleanup,
+    route,
   }) => {
     storefront.pages.push({
       id: 'about',
@@ -34,19 +36,22 @@ test.group('Storefront', (group) => {
       storefront.policies.splice(0)
     })
 
-    const page = await client.get('/pages/about').withInertia()
+    const page = await client.get(route('pages.show', { handle: 'about' })).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('pages/[handle]')
     assert.equal(page.inertiaProps.page.title, 'About us')
-    const policies = await client.get('/policies').withInertia()
+    const policies = await client.get(route('policies.index')).withInertia()
     policies.assertStatus(200)
     policies.assertInertiaComponent('policies/index')
     assert.equal(policies.inertiaProps.policies[0].handle, 'returns')
-    const policy = await client.get('/policies/returns').withInertia()
+    const policy = await client.get(route('policies.show', { handle: 'returns' })).withInertia()
     policy.assertStatus(200)
     policy.assertInertiaComponent('policies/[handle]')
     assert.equal(policy.inertiaProps.policy.body, '<p>Returns policy.</p>')
-    for (const url of ['/pages/missing', '/policies/missing']) {
+    for (const url of [
+      route('pages.show', { handle: 'missing' }),
+      route('policies.show', { handle: 'missing' }),
+    ]) {
       const missing = await client.get(url).withInertia()
       missing.assertStatus(404)
     }
@@ -55,6 +60,7 @@ test.group('Storefront', (group) => {
   test('updates account profiles and manages only the signed-in customer addresses', async ({
     client,
     assert,
+    route,
   }) => {
     const user = await User.create({ email: 'addresses@example.com', password: 'secret-password' })
     const otherUser = await User.create({
@@ -62,21 +68,21 @@ test.group('Storefront', (group) => {
       password: 'secret-password',
     })
     const profile = await client
-      .patch('/account/profile')
+      .patch(urlFor('account.profile.update'))
       .loginAs(user)
       .withCsrfToken()
       .json({ firstName: 'Mina', lastName: 'Bunny' })
-    profile.assertRedirectsTo('/account')
+    profile.assertRedirectsTo(route('account.show'))
     await user.refresh()
     assert.equal(user.fullName, 'Mina Bunny')
 
     const payload = { address1: 'First Street', city: 'Manila', zip: '1000', territoryCode: 'ph' }
     const created = await client
-      .post('/account/addresses')
+      .post(urlFor('account.addresses.create'))
       .loginAs(user)
       .withCsrfToken()
       .json(payload)
-    created.assertRedirectsTo('/account')
+    created.assertRedirectsTo(route('account.show'))
     const first = await user.related('addresses').query().firstOrFail()
     await user.refresh()
     assert.equal(user.defaultAddressId, first.id)
@@ -84,51 +90,57 @@ test.group('Storefront', (group) => {
     assert.equal(first.postalCode, '1000')
 
     const updated = await client
-      .patch(`/account/addresses/${first.id}`)
+      .patch(urlFor('account.addresses.update', { id: first.id }))
       .loginAs(user)
       .withCsrfToken()
       .json({ ...payload, address1: 'Updated Street' })
-    updated.assertRedirectsTo('/account')
+    updated.assertRedirectsTo(route('account.show'))
     await first.refresh()
     assert.equal(first.address1, 'Updated Street')
 
     const secondCreated = await client
-      .post('/account/addresses')
+      .post(urlFor('account.addresses.create'))
       .loginAs(user)
       .withCsrfToken()
       .json({ ...payload, address1: 'Second Street', defaultAddress: true })
-    secondCreated.assertRedirectsTo('/account')
+    secondCreated.assertRedirectsTo(route('account.show'))
     const second = await user.related('addresses').query().whereNot('id', first.id).firstOrFail()
     await user.refresh()
     assert.equal(user.defaultAddressId, second.id)
     const defaulted = await client
-      .post(`/account/addresses/${first.id}/default`)
+      .post(urlFor('account.addresses.default', { id: first.id }))
       .loginAs(user)
       .withCsrfToken()
-    defaulted.assertRedirectsTo('/account')
+    defaulted.assertRedirectsTo(route('account.show'))
     await user.refresh()
     assert.equal(user.defaultAddressId, first.id)
 
-    for (const method of ['patch', 'post', 'delete'] as const) {
-      const url = `/account/addresses/${first.id}${method === 'post' ? '/default' : ''}`
-      const denied = await client[method](url).loginAs(otherUser).withCsrfToken().json(payload)
+    for (const [method, name] of [
+      ['patch', 'account.addresses.update'],
+      ['post', 'account.addresses.default'],
+      ['delete', 'account.addresses.delete'],
+    ] as const) {
+      const denied = await client[method](urlFor(name, { id: first.id }))
+        .loginAs(otherUser)
+        .withCsrfToken()
+        .json(payload)
       denied.assertStatus(404)
     }
     await first.refresh()
     assert.equal(first.address1, 'Updated Street')
 
     const deleted = await client
-      .delete(`/account/addresses/${first.id}`)
+      .delete(urlFor('account.addresses.delete', { id: first.id }))
       .loginAs(user)
       .withCsrfToken()
-    deleted.assertRedirectsTo('/account')
+    deleted.assertRedirectsTo(route('account.show'))
     await user.refresh()
     assert.isNull(user.defaultAddressId)
     assert.isNull(await user.related('addresses').query().where('id', first.id).first())
     assert.isNotNull(await user.related('addresses').query().where('id', second.id).first())
   })
 
-  test('renders published catalogue data through Inertia', async ({ client, assert }) => {
+  test('renders published catalogue data through Inertia', async ({ client, assert, route }) => {
     const product = await Product.create({
       title: 'Bunny Lamp',
       handle: 'bunny-lamp',
@@ -152,7 +164,7 @@ test.group('Storefront', (group) => {
     })
     await collection.related('products').attach({ [product.id]: { position: 0 } })
 
-    const home = await client.get('/').withInertia()
+    const home = await client.get(route('home')).withInertia()
     home.assertStatus(200)
     home.assertInertiaComponent('index')
     assert.equal(home.inertiaProps.newestProducts[0].title, 'Bunny Lamp')
@@ -164,7 +176,7 @@ test.group('Storefront', (group) => {
 
     await Product.create({ title: 'Bunny draft', handle: 'draft', status: 'draft' })
     const search = await client
-      .get('/?search=Bunny')
+      .get(route('home', [], { qs: { search: 'Bunny' } }))
       .withInertiaPartialReload('index', ['searchResults'])
     search.assertStatus(200)
     assert.equal(search.inertiaProps.searchResults.products.length, 1)
@@ -174,17 +186,21 @@ test.group('Storefront', (group) => {
     assert.notProperty(search.inertiaProps, 'cart')
 
     const clearedSearch = await client
-      .get('/?search=')
+      .get(route('home', [], { qs: { search: '' } }))
       .withInertiaPartialReload('index', ['searchResults'])
     assert.deepEqual(clearedSearch.inertiaProps.searchResults, { products: [], collections: [] })
 
-    const collectionPage = await client.get('/collection/desk-friends').withInertia()
+    const collectionPage = await client
+      .get(route('collections.show', { handle: 'desk-friends' }))
+      .withInertia()
     collectionPage.assertStatus(200)
     collectionPage.assertInertiaComponent('collection/[handle]')
     assert.equal(collectionPage.inertiaProps.collection.handle, 'desk-friends')
     assert.equal(collectionPage.inertiaProps.catalogue.products[0].handle, 'bunny-lamp')
 
-    const productPage = await client.get('/product/bunny-lamp').withInertia()
+    const productPage = await client
+      .get(route('products.show', { handle: 'bunny-lamp' }))
+      .withInertia()
     productPage.assertStatus(200)
     productPage.assertInertiaComponent('product/[handle]')
     assert.equal(productPage.inertiaProps.product.selectedOrFirstAvailableVariant.title, 'Default')
@@ -193,6 +209,7 @@ test.group('Storefront', (group) => {
   test('cart form visits redirect and reload only the session-owned cart prop', async ({
     client,
     assert,
+    route,
   }) => {
     const product = await Product.create({
       title: 'Lamp',
@@ -212,16 +229,16 @@ test.group('Storefront', (group) => {
     const cart = await Cart.create({ token: 'test-cart', status: 'active', currencyCode: 'PHP' })
     const session = { store_cart_token: cart.token }
     const added = await client
-      .post('/store/cart')
+      .post(urlFor('cart.add'))
       .withSession(session)
       .withCsrfToken()
       .withInertia()
-      .header('referer', '/product/lamp')
+      .header('referer', route('products.show', { handle: 'lamp' }))
       .json({ variantId: variant.id, quantity: 1 })
-    added.assertRedirectsTo('/product/lamp')
+    added.assertRedirectsTo(route('products.show', { handle: 'lamp' }))
     const readCart = () =>
       client
-        .get('/product/lamp')
+        .get(route('products.show', { handle: 'lamp' }))
         .withSession(session)
         .withInertiaPartialReload('product/[handle]', ['cart'])
     const page = await readCart()
@@ -231,54 +248,55 @@ test.group('Storefront', (group) => {
     assert.notProperty(page.inertiaProps, 'recommendations')
     const id = page.inertiaProps.cart.lines[0].id
     const updated = await client
-      .patch('/store/cart/' + id)
+      .patch(urlFor('cart.update', { id }))
       .withSession(session)
       .withCsrfToken()
       .withInertia()
-      .header('referer', '/product/lamp')
+      .header('referer', route('products.show', { handle: 'lamp' }))
       .json({ quantity: 2 })
-    updated.assertRedirectsTo('/product/lamp')
+    updated.assertRedirectsTo(route('products.show', { handle: 'lamp' }))
     const updatedPage = await readCart()
     assert.equal(updatedPage.inertiaProps.cart.cost.totalAmount.amount, 98)
 
     const rejected = await client
-      .patch('/store/cart/' + id)
+      .patch(urlFor('cart.update', { id }))
       .withSession(session)
       .withCsrfToken()
       .withInertia()
       .accept('html')
-      .header('referer', '/product/lamp')
+      .header('referer', route('products.show', { handle: 'lamp' }))
       .json({ quantity: 4 })
-    rejected.assertRedirectsTo('/product/lamp')
+    rejected.assertRedirectsTo(route('products.show', { handle: 'lamp' }))
     const rejectedPage = await readCart()
     assert.equal(rejectedPage.inertiaProps.cart.totalQuantity, 2)
 
     const otherCart = await client
-      .get('/product/lamp')
+      .get(route('products.show', { handle: 'lamp' }))
       .withSession({ store_cart_token: 'someone-else' })
       .withInertiaPartialReload('product/[handle]', ['cart'])
     assert.isNull(otherCart.inertiaProps.cart)
     const removed = await client
-      .delete('/store/cart/' + id)
+      .delete(urlFor('cart.remove', { id }))
       .withSession(session)
       .withCsrfToken()
       .withInertia()
-      .header('referer', '/product/lamp')
-    removed.assertRedirectsTo('/product/lamp')
+      .header('referer', route('products.show', { handle: 'lamp' }))
+    removed.assertRedirectsTo(route('products.show', { handle: 'lamp' }))
     const emptyPage = await readCart()
     assert.deepEqual(emptyPage.inertiaProps.cart.lines, [])
     const oldSearch = await client.get('/store/search')
     oldSearch.assertStatus(404)
-    const oldCart = await client.get('/store/cart')
+    const oldCart = await client.get(urlFor('cart.add'))
     oldCart.assertStatus(404)
   })
 
   test('protects account pages and exposes only the signed-in customer orders', async ({
     client,
     assert,
+    route,
   }) => {
-    const guestResponse = await client.get('/account')
-    guestResponse.assertRedirectsTo('/login')
+    const guestResponse = await client.get(route('account.show'))
+    guestResponse.assertRedirectsTo(route('session.create'))
 
     const customer = await User.create({
       fullName: 'Mina Bunny',
@@ -316,14 +334,14 @@ test.group('Storefront', (group) => {
       currencyCode: 'USD',
     })
 
-    const account = await client.get('/account').loginAs(customer).withInertia()
+    const account = await client.get(route('account.show')).loginAs(customer).withInertia()
     account.assertStatus(200)
     account.assertInertiaComponent('account/index')
     assert.equal(account.inertiaProps.customer.emailAddress.emailAddress, customer.email)
     assert.equal(account.inertiaProps.recentOrders[0].name, 'MB-1001')
 
     const orderPage = await client
-      .get(`/account/orders/${order.id}`)
+      .get(route('orders.show', { id: order.id }))
       .loginAs(customer)
       .withInertia()
     orderPage.assertStatus(200)
@@ -331,7 +349,7 @@ test.group('Storefront', (group) => {
     assert.equal(orderPage.inertiaProps.order.lineItems[0].title, 'Bunny Lamp')
 
     const hiddenOrder = await client
-      .get(`/account/orders/${order.id}`)
+      .get(route('orders.show', { id: order.id }))
       .loginAs(otherCustomer)
       .withInertia()
     hiddenOrder.assertStatus(404)

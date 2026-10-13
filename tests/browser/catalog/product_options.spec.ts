@@ -44,9 +44,10 @@ test.group('Product option availability', (group) => {
   test('disables sold-out options and keeps available combinations reachable', async ({
     visit,
     assert,
+    route,
   }) => {
     const { variants } = await createProductOptions()
-    const page = await visit('/product/option-test')
+    const page = await visit(route('products.show', { handle: 'option-test' }))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     const radio = (name: string) => page.getByRole('radio', { name, exact: true })
@@ -70,9 +71,11 @@ test.group('Product option availability', (group) => {
     assert.deepEqual(errors, [])
   })
 
-  test('allows recovery from a sold-out variant URL', async ({ visit, assert }) => {
+  test('allows recovery from a sold-out variant URL', async ({ visit, assert, route }) => {
     const { variants } = await createProductOptions()
-    const page = await visit(`/product/option-test?variantId=${variants[1].id}`)
+    const page = await visit(
+      route('products.show', { handle: 'option-test' }, { qs: { variantId: variants[1].id } })
+    )
     await page.getByRole('radio', { name: 'Large', exact: true }).waitFor()
     assert.isTrue(await page.getByRole('radio', { name: 'Large', exact: true }).isChecked())
     assert.isFalse(await page.getByRole('button', { name: 'Sold out', exact: true }).isEnabled())
@@ -86,6 +89,7 @@ test.group('Product option availability', (group) => {
   test('keeps the sellable variant identity when legacy option tuples are duplicated', async ({
     visit,
     assert,
+    route,
   }) => {
     const product = await Product.create({
       title: 'Legacy duplicate options',
@@ -123,7 +127,7 @@ test.group('Product option availability', (group) => {
       .query()
       .where('position', 2)
       .firstOrFail()
-    const page = await visit('/product/legacy-duplicate-options')
+    const page = await visit(route('products.show', { handle: 'legacy-duplicate-options' }))
     const blue = page.getByRole('radio', { name: 'Blue', exact: true })
     await blue.waitFor()
     assert.isTrue(await blue.isEnabled())
@@ -144,10 +148,11 @@ test.group('Product option availability', (group) => {
   test('disables all options and quantity when every variant is sold out', async ({
     visit,
     assert,
+    route,
   }) => {
     const { product } = await createProductOptions()
     await product.related('variants').query().update({ availableForSale: false })
-    const page = await visit('/product/option-test')
+    const page = await visit(route('products.show', { handle: 'option-test' }))
     await page.getByRole('radio', { name: 'Red', exact: true }).waitFor()
     for (const name of ['Red', 'Blue', 'Green', 'Small', 'Large']) {
       assert.isFalse(await page.getByRole('radio', { name, exact: true }).isEnabled())

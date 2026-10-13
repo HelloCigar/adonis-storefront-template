@@ -18,6 +18,7 @@ import { UserFactory } from '#database/factories/user_factory'
 import Notification from '#models/checkout/notification'
 import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
 import { mkdir } from 'node:fs/promises'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Guest checkout and store fulfillment', (group) => {
   let adapter: FakePaymentAdapter
@@ -41,13 +42,14 @@ test.group('Guest checkout and store fulfillment', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const variant = await ProductVariantFactory.merge({
       priceAmount: 499,
       inventoryQuantity: 2,
     }).create()
     await variant.load('product')
-    const page = await visit(`/product/${variant.product.handle}`)
+    const page = await visit(route('products.show', { handle: variant.product.handle }))
     const errors: string[] = []
     const requests: { path: string; inertia?: string; navigation: boolean }[] = []
     page.on('pageerror', (error) => errors.push(error.message))
@@ -66,7 +68,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page.getByRole('button', { name: 'Add to cart', exact: true }).click()
     await page.getByRole('button', { name: 'Open cart', exact: true }).click()
     await page.getByRole('button', { name: 'Checkout', exact: true }).click()
-    await page.assertPath('/checkout')
+    await page.assertPath(route('checkout.create'))
     await page.getByRole('heading', { name: 'Checkout', exact: true }).waitFor()
     await page.getByLabel('Email address', { exact: true }).fill('browser@example.com')
     await page.getByLabel('First name', { exact: true }).fill('Guest')
@@ -98,7 +100,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
-    await page.goto(`/seller/orders/${order.id}`)
+    await page.goto(route('seller.orders.show', { id: order.id }))
     await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
     await page.waitForLoadState('networkidle')
     await mkdir('.impeccable/review', { recursive: true })
@@ -127,13 +129,17 @@ test.group('Guest checkout and store fulfillment', (group) => {
     assert.isTrue(
       requests.some(
         (request) =>
-          request.path === '/checkout' && request.inertia === 'true' && !request.navigation
+          request.path === urlFor('checkout.store') &&
+          request.inertia === 'true' &&
+          !request.navigation
       )
     )
     assert.isTrue(
       requests.some(
         (request) =>
-          request.path.endsWith('/shipment') && request.inertia === 'true' && !request.navigation
+          request.path === urlFor('seller.shipments.store', { id: order.id }) &&
+          request.inertia === 'true' &&
+          !request.navigation
       )
     )
     await page
@@ -146,6 +152,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, attempt } = await simulatedCheckout()
     order.lifecycleState = 'review_required'
@@ -163,7 +170,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     })
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     await page
       .getByRole('heading', { name: 'Reconcile the payment checkout', exact: true })
       .waitFor()
@@ -206,6 +213,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const customer = await UserFactory.create()
     await browserContext.loginAs(customer)
@@ -214,11 +222,11 @@ test.group('Guest checkout and store fulfillment', (group) => {
       inventoryQuantity: 2,
     }).create()
     await variant.load('product')
-    const page = await visit(`/product/${variant.product.handle}`)
+    const page = await visit(route('products.show', { handle: variant.product.handle }))
     await page.getByRole('button', { name: 'Add to cart', exact: true }).click()
     await page.getByRole('button', { name: 'Open cart', exact: true }).click()
     await page.getByRole('button', { name: 'Checkout', exact: true }).click()
-    await page.assertPath('/checkout')
+    await page.assertPath(route('checkout.create'))
     await page.getByLabel('First name', { exact: true }).fill('Account')
     await page.getByLabel('Last name', { exact: true }).fill('Buyer')
     await page.getByLabel('Phone number', { exact: true }).fill('09171234567')

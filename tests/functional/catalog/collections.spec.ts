@@ -55,6 +55,7 @@ test.group('Collection queries', (group) => {
   test('paginates published collection products and keeps all vendor options', async ({
     client,
     assert,
+    route,
   }) => {
     const products: Product[] = []
     for (let index = 0; index < 13; index++) {
@@ -69,7 +70,7 @@ test.group('Collection queries', (group) => {
     await createProduct('outside', 'Outside vendor', [10])
     await createCollection([...products, draft, unpublished])
 
-    const first = await client.get('/collection/filtered').withInertia()
+    const first = await client.get(route('collections.show', { handle: 'filtered' })).withInertia()
     first.assertStatus(200)
     const catalogue = first.inertiaProps.catalogue
     assert.deepEqual(
@@ -86,14 +87,18 @@ test.group('Collection queries', (group) => {
       hasNextPage: true,
     })
 
-    const second = await client.get('/collection/filtered?page=2').withInertia()
+    const second = await client
+      .get(route('collections.show', { handle: 'filtered' }, { qs: { page: '2' } }))
+      .withInertia()
     assert.equal(second.inertiaProps.catalogue.products[0].id, products[12].id)
     assert.lengthOf(second.inertiaProps.catalogue.products, 1)
     assert.deepEqual(second.inertiaProps.catalogue.vendors, catalogue.vendors)
     assert.isTrue(second.inertiaProps.catalogue.pageInfo.hasPreviousPage)
     assert.isFalse(second.inertiaProps.catalogue.pageInfo.hasNextPage)
 
-    const beyond = await client.get('/collection/filtered?page=99').withInertia()
+    const beyond = await client
+      .get(route('collections.show', { handle: 'filtered' }, { qs: { page: '99' } }))
+      .withInertia()
     assert.equal(beyond.inertiaProps.catalogue.query.page, 2)
     assert.equal(beyond.inertiaProps.catalogue.products[0].id, products[12].id)
   })
@@ -101,6 +106,7 @@ test.group('Collection queries', (group) => {
   test('combines availability, multiple vendors and the minimum variant price in SQL', async ({
     client,
     assert,
+    route,
   }) => {
     const first = await createProduct('first', 'Alpha', [40, 90])
     const second = await createProduct('second', 'Beta', [60])
@@ -111,7 +117,7 @@ test.group('Collection queries', (group) => {
     await first.related('variants').query().where('position', 0).update({ availableForSale: false })
 
     const response = await client
-      .get('/collection/filtered')
+      .get(route('collections.show', { handle: 'filtered' }))
       .qs({
         available: true,
         vendor: ['Alpha', 'Beta'],
@@ -130,20 +136,26 @@ test.group('Collection queries', (group) => {
     assert.deepEqual(catalogue.query.vendor, ['Alpha', 'Beta'])
     assert.deepEqual(catalogue.vendors, ['Alpha', 'Beta', 'Gamma'])
 
-    const unavailable = await client.get('/collection/filtered?available=false').withInertia()
+    const unavailable = await client
+      .get(route('collections.show', { handle: 'filtered' }, { qs: { available: 'false' } }))
+      .withInertia()
     assert.deepEqual(
       unavailable.inertiaProps.catalogue.products.map((product: { id: string }) => product.id),
       [soldOut.id]
     )
 
-    const empty = await client.get('/collection/filtered?minPrice=100&page=2').withInertia()
+    const empty = await client
+      .get(
+        route('collections.show', { handle: 'filtered' }, { qs: { minPrice: '100', page: '2' } })
+      )
+      .withInertia()
     assert.deepEqual(empty.inertiaProps.catalogue.products, [])
     assert.equal(empty.inertiaProps.catalogue.pageInfo.total, 0)
     assert.equal(empty.inertiaProps.catalogue.query.page, 1)
     assert.deepEqual(empty.inertiaProps.catalogue.vendors, ['Alpha', 'Beta', 'Gamma'])
   })
 
-  test('rejects invalid query values and inverted price ranges', async ({ client }) => {
+  test('rejects invalid query values and inverted price ranges', async ({ client, route }) => {
     await createCollection([])
     for (const query of [
       { page: 0 },
@@ -162,16 +174,29 @@ test.group('Collection queries', (group) => {
       { minPrice: 50, maxPrice: 49 },
       { vendor: Array.from({ length: 51 }, (_, index) => `vendor-${index}`) },
     ]) {
-      const response = await client.get('/collection/filtered').qs(query).accept('json')
+      const response = await client
+        .get(route('collections.show', { handle: 'filtered' }))
+        .qs(query)
+        .accept('json')
       response.assertStatus(422)
     }
   })
 
-  test('returns a consistent catalogue on partial filter visits', async ({ client, assert }) => {
+  test('returns a consistent catalogue on partial filter visits', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const product = await createProduct('filtered-product', 'Alpha', [25])
     await createCollection([product])
     const response = await client
-      .get('/collection/filtered?available=true&minPrice=25')
+      .get(
+        route(
+          'collections.show',
+          { handle: 'filtered' },
+          { qs: { available: 'true', minPrice: '25' } }
+        )
+      )
       .withInertiaPartialReload('collection/[handle]', ['catalogue'])
     response.assertStatus(200)
     assert.equal(response.inertiaProps.catalogue.products[0].id, product.id)

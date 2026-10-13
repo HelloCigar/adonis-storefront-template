@@ -14,6 +14,7 @@ test.group('Product reviews', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const variant = await ProductVariantFactory.merge({ priceAmount: 899 }).create()
     await variant.load('product')
@@ -34,7 +35,7 @@ test.group('Product reviews', (group) => {
     const errors: string[] = []
 
     // A guest sees the empty state and the sign-in prompt.
-    const guest = await visit(`/product/${product.handle}`)
+    const guest = await visit(route('products.show', { handle: product.handle }))
     guest.on('pageerror', (error) => errors.push(error.message))
     const guestSection = guest.locator('#reviews')
     await guestSection.getByText('No reviews yet.', { exact: true }).waitFor()
@@ -42,7 +43,7 @@ test.group('Product reviews', (group) => {
 
     // The eligible customer writes a review and sees it waiting for approval.
     await browserContext.loginAs(customer)
-    const page = await visit(`/product/${product.handle}`)
+    const page = await visit(route('products.show', { handle: product.handle }))
     page.on('pageerror', (error) => errors.push(error.message))
     const section = page.locator('#reviews')
     await section.getByRole('button', { name: 'Write a review', exact: true }).click()
@@ -70,7 +71,7 @@ test.group('Product reviews', (group) => {
     // Staff have no delivered order of their own, so they are told when they could review.
     await browserContext.clearCookies()
     await browserContext.loginAs(staff)
-    const ineligible = await visit(`/product/${product.handle}`)
+    const ineligible = await visit(route('products.show', { handle: product.handle }))
     ineligible.on('pageerror', (error) => errors.push(error.message))
     await ineligible
       .locator('#reviews')
@@ -80,10 +81,10 @@ test.group('Product reviews', (group) => {
       .waitFor()
 
     // Staff find the review from store navigation and approve it.
-    const admin = await visit('/seller/discounts')
+    const admin = await visit(route('seller.discounts.index'))
     admin.on('pageerror', (error) => errors.push(error.message))
     await admin.getByRole('link', { name: 'Reviews', exact: true }).first().click()
-    await admin.assertPath('/seller/reviews')
+    await admin.assertPath(route('seller.reviews.index'))
     const row = admin.getByRole('row').filter({ hasText: 'Brightest lamp I own' })
     await row.getByText(product.title).first().waitFor()
     await row.getByText('maria-browser-review@example.com').first().waitFor()
@@ -98,7 +99,7 @@ test.group('Product reviews', (group) => {
 
     // A guest shopper now sees the approved review with the short author name.
     await browserContext.clearCookies()
-    const shopper = await visit(`/product/${product.handle}`)
+    const shopper = await visit(route('products.show', { handle: product.handle }))
     shopper.on('pageerror', (error) => errors.push(error.message))
     const reviews = shopper.locator('#reviews')
     await reviews.getByText('Brightest lamp I own', { exact: true }).waitFor()
@@ -114,6 +115,7 @@ test.group('Product reviews', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const variant = await ProductVariantFactory.create()
     await variant.load('product')
@@ -148,7 +150,9 @@ test.group('Product reviews', (group) => {
     const errors: string[] = []
 
     await browserContext.loginAs(customer)
-    const page = await visit(`/product/${product.handle}?variantId=${variant.id}`)
+    const page = await visit(
+      route('products.show', { handle: product.handle }, { qs: { variantId: variant.id } })
+    )
     page.on('pageerror', (error) => errors.push(error.message))
     const section = page.locator('#reviews')
 

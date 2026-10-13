@@ -5,6 +5,7 @@ import Product from '#models/catalog/product'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
 import { finishedStoreSetup } from '#tests/helpers/store_setup'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Store management pages', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -13,6 +14,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const seller = await User.create({
       fullName: 'Owner',
@@ -21,7 +23,7 @@ test.group('Store management pages', (group) => {
       role: 'staff',
     })
     await browserContext.loginAs(seller)
-    const page = await visit('/seller/products')
+    const page = await visit(route('seller.products.index'))
     const errors: string[] = []
     const requests: { url: string; inertia?: string; navigation: boolean }[] = []
     page.on('pageerror', (error) => errors.push(error.message))
@@ -42,7 +44,7 @@ test.group('Store management pages', (group) => {
     await creating.getByRole('button', { name: 'Create product', exact: true }).click()
     await page.getByRole('button', { name: 'Add variant', exact: true }).waitFor()
     const product = await Product.findByOrFail('handle', 'browser-lamp')
-    await page.assertPath(`/seller/products/${product.id}`)
+    await page.assertPath(route('seller.products.show', { id: product.id }))
     await page.getByText('No variants yet', { exact: true }).waitFor()
 
     await page.getByRole('button', { name: 'Add variant', exact: true }).click()
@@ -100,12 +102,12 @@ test.group('Store management pages', (group) => {
     await page.getByRole('link', { name: 'Back to products', exact: true }).click()
     await page.getByRole('cell', { name: 'Updated Lamp browser-lamp', exact: true }).waitFor()
     await page.getByRole('cell', { name: 'No variants', exact: true }).click()
-    await page.assertPath(`/seller/products/${product.id}`)
+    await page.assertPath(route('seller.products.show', { id: product.id }))
     await page.getByRole('button', { name: 'More product actions', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Delete product', exact: true }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
     await page.getByText('No products yet', { exact: true }).waitFor()
-    await page.assertPath('/seller/products')
+    await page.assertPath(route('seller.products.index'))
     assert.isNull(await Product.find(product.id))
     assert.deepEqual(errors, [])
     assert.isAtLeast(requests.length, 6)
@@ -120,6 +122,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const seller = await User.create({
       fullName: 'Owner',
@@ -135,7 +138,7 @@ test.group('Store management pages', (group) => {
       }))
     )
     await browserContext.loginAs(seller)
-    const page = await visit('/seller/users')
+    const page = await visit(route('seller.users.index'))
     await page.getByRole('button', { name: /next page/i }).click()
     await page.screenshot({ path: 'tmp/seller-users-page2.png', fullPage: true })
     await page.getByRole('cell', { name: 'Owner', exact: true }).waitFor()
@@ -164,6 +167,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const seller = await User.create({
       email: 'owner@example.com',
@@ -189,7 +193,7 @@ test.group('Store management pages', (group) => {
       currencyCode: 'PHP',
     })
     await browserContext.loginAs(seller)
-    const page = await visit('/seller/orders')
+    const page = await visit(route('seller.orders.index'))
     // A paid, unfulfilled order waits in the default To pack tab, and its row opens the order.
     await page.getByRole('tab', { name: /To pack/, selected: true }).waitFor()
     const row = page.getByRole('row', { name: /MB-1001/ })
@@ -210,7 +214,7 @@ test.group('Store management pages', (group) => {
     const clearedNote = page.waitForResponse(
       (response) =>
         ['PUT', 'PATCH'].includes(response.request().method()) &&
-        new URL(response.url()).pathname === `/seller/orders/${order.id}`
+        new URL(response.url()).pathname === urlFor('seller.orders.update', { id: order.id })
     )
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
     await clearedNote
@@ -226,6 +230,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const admin = await User.create({
       fullName: 'Administrator',
@@ -235,7 +240,7 @@ test.group('Store management pages', (group) => {
     })
     await finishedStoreSetup()
     await browserContext.loginAs(admin)
-    const page = await visit('/dashboard')
+    const page = await visit(route('dashboard'))
     await page.getByRole('link', { name: 'Products', exact: true }).waitFor()
     await page.getByRole('link', { name: 'Users', exact: true }).click()
     await page.getByRole('button', { name: 'Add user', exact: true }).click()
@@ -258,6 +263,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const owner = await User.create({
       fullName: 'Staff',
@@ -266,7 +272,7 @@ test.group('Store management pages', (group) => {
       role: 'staff',
     })
     await browserContext.loginAs(owner)
-    const page = await visit('/dashboard')
+    const page = await visit(route('dashboard'))
     await page.getByRole('link', { name: 'Products', exact: true }).waitFor()
     assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
     await page.getByRole('link', { name: 'Products', exact: true }).click()
@@ -284,6 +290,7 @@ test.group('Store management pages', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const customer = await User.create({
       fullName: 'Customer',
@@ -292,7 +299,7 @@ test.group('Store management pages', (group) => {
       role: 'customer',
     })
     await browserContext.loginAs(customer)
-    const page = await visit('/settings')
+    const page = await visit(route('settings'))
     await page.getByRole('heading', { name: 'Account settings', exact: true }).waitFor()
     assert.equal(await page.getByRole('link', { name: 'Store management', exact: true }).count(), 0)
     assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
@@ -309,6 +316,6 @@ test.group('Store management pages', (group) => {
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
     await page.getByRole('link', { name: 'Security', exact: true }).click()
     await page.getByLabel('Current password', { exact: true }).waitFor()
-    await page.assertPath('/settings/security')
+    await page.assertPath(route('settings.security'))
   })
 })

@@ -14,6 +14,7 @@ import RefundService from '#services/payments/refund_service'
 import OrderNotification from '#mails/checkout/order_notification'
 import { OrderFactory } from '#database/factories/order_factory'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const tracking = {
   carrier: 'Sample Carrier',
@@ -131,36 +132,46 @@ test.group('Delivery confirmation', (group) => {
   test('the staff detail page offers delivery only while the parcel is in transit', async ({
     client,
     assert,
+    route,
   }) => {
     const { order, staff, fulfillment } = await paidOrder()
-    const pending = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const pending = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isFalse(pending.inertiaProps.operations.canDeliver)
 
     await fulfillment.pack(order.id, staff)
     await fulfillment.ship(order.id, staff, tracking)
-    const shipped = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const shipped = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isTrue(shipped.inertiaProps.operations.canDeliver)
     assert.isFalse(shipped.inertiaProps.operations.canCancel)
     assert.isNull(shipped.inertiaProps.order.shipment.deliveredAt)
 
     const customer = await UserFactory.create()
     const denied = await client
-      .post(`/seller/orders/${order.id}/delivery`)
+      .post(urlFor('seller.deliveries.store', { id: order.id }))
       .loginAs(customer)
       .withCsrfToken()
       .accept('json')
     denied.assertStatus(403)
 
     const recorded = await client
-      .post(`/seller/orders/${order.id}/delivery`)
+      .post(urlFor('seller.deliveries.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)
     recorded.assertStatus(302)
-    recorded.assertHeader('location', `/seller/orders/${order.id}`)
+    recorded.assertHeader('location', route('seller.orders.show', { id: order.id }))
     recorded.assertFlashMessage('success', 'Delivery recorded')
 
-    const delivered = await client.get(`/seller/orders/${order.id}`).loginAs(staff).withInertia()
+    const delivered = await client
+      .get(route('seller.orders.show', { id: order.id }))
+      .loginAs(staff)
+      .withInertia()
     assert.isFalse(delivered.inertiaProps.operations.canDeliver)
     assert.equal(delivered.inertiaProps.order.shipment.state, 'delivered')
     assert.isNotNull(delivered.inertiaProps.order.shipment.deliveredAt)
@@ -182,7 +193,7 @@ test.group('Delivery confirmation', (group) => {
   }) => {
     const { order, staff } = await paidOrder()
     const response = await client
-      .post(`/seller/orders/${order.id}/delivery`)
+      .post(urlFor('seller.deliveries.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .accept('json')

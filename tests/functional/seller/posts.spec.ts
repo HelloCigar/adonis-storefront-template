@@ -3,6 +3,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import { DateTime } from 'luxon'
 import User from '#models/account/user'
 import BlogPost from '#models/content/blog_post'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const staff = () =>
   User.create({
@@ -46,22 +47,22 @@ const createPost = (attrs: Partial<BlogPost> & { handle: string }) =>
 test.group('Seller posts', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('only staff can view and manage posts', async ({ client, assert }) => {
+  test('only staff can view and manage posts', async ({ client, assert, route }) => {
     const customer = await User.create({
       email: 'customer@example.com',
       password: 'secret-password',
     })
     const owner = await staff()
 
-    const guest = await client.get('/seller/posts').redirects(0)
+    const guest = await client.get(route('seller.posts.index')).redirects(0)
     guest.assertStatus(302)
-    guest.assertHeader('location', '/login')
+    guest.assertHeader('location', route('session.create'))
 
-    const deniedGet = await client.get('/seller/posts').loginAs(customer).accept('json')
+    const deniedGet = await client.get(route('seller.posts.index')).loginAs(customer).accept('json')
     deniedGet.assertStatus(403)
 
     const deniedPost = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(customer)
       .withCsrfToken()
       .accept('json')
@@ -69,15 +70,15 @@ test.group('Seller posts', (group) => {
     deniedPost.assertStatus(403)
     assert.equal(await countPosts(), 0)
 
-    const page = await client.get('/seller/posts').loginAs(owner).withInertia()
+    const page = await client.get(route('seller.posts.index')).loginAs(owner).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/posts')
     assert.deepEqual(page.inertiaProps.posts, [])
   })
 
-  test('staff see the create page with no post', async ({ client, assert }) => {
+  test('staff see the create page with no post', async ({ client, assert, route }) => {
     const owner = await staff()
-    const page = await client.get('/seller/posts/create').loginAs(owner).withInertia()
+    const page = await client.get(route('seller.posts.create')).loginAs(owner).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/post')
     assert.isNull(page.inertiaProps.post)
@@ -86,10 +87,11 @@ test.group('Seller posts', (group) => {
   test('staff create a draft with normalized content and rendered html', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const response = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -116,7 +118,7 @@ test.group('Seller posts', (group) => {
       )
 
     const post = await BlogPost.findByOrFail('handle', 'spring-arrivals')
-    response.assertRedirectsTo(`/seller/posts/${post.id}/edit`)
+    response.assertRedirectsTo(route('seller.posts.edit', { id: post.id }))
     assert.equal(post.title, 'Spring arrivals')
     assert.equal(post.excerpt, 'What is new this season')
     assert.equal(post.status, 'draft')
@@ -136,11 +138,12 @@ test.group('Seller posts', (group) => {
   test('publishing without a date publishes now and later edits keep the date', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const before = DateTime.utc().minus({ seconds: 5 })
     await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -155,12 +158,12 @@ test.group('Seller posts', (group) => {
     assert.isAtMost(firstPublishedAt.toMillis(), DateTime.utc().plus({ seconds: 5 }).toMillis())
 
     const edited = await client
-      .patch(`/seller/posts/${post.id}`)
+      .patch(urlFor('seller.posts.update', { id: post.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(body({ ...draftPayload, title: 'Spring arrivals (updated)', status: 'published' }))
-    edited.assertRedirectsTo(`/seller/posts/${post.id}/edit`)
+    edited.assertRedirectsTo(route('seller.posts.edit', { id: post.id }))
     await post.refresh()
     assert.equal(post.title, 'Spring arrivals (updated)')
     assert.equal(post.publishedAt!.toMillis(), firstPublishedAt.toMillis())
@@ -169,7 +172,7 @@ test.group('Seller posts', (group) => {
   test('an explicit publish date is stored as given', async ({ client, assert }) => {
     const owner = await staff()
     await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -181,13 +184,14 @@ test.group('Seller posts', (group) => {
   test('publishing an empty document fails validation and creates nothing', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     const response = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
-      .header('referer', '/seller/posts/create')
+      .header('referer', route('seller.posts.create'))
       .redirects(0)
       .json(body({ ...draftPayload, content: emptyContent, status: 'published' }))
     response.assertStatus(302)
@@ -195,7 +199,7 @@ test.group('Seller posts', (group) => {
     assert.equal(await countPosts(), 0)
 
     const draft = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -204,15 +208,15 @@ test.group('Seller posts', (group) => {
     assert.equal(await countPosts(), 1)
   })
 
-  test('rejects a duplicate handle', async ({ client, assert }) => {
+  test('rejects a duplicate handle', async ({ client, assert, route }) => {
     const owner = await staff()
     await createPost({ handle: 'spring-arrivals' })
 
     const duplicate = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
-      .header('referer', '/seller/posts/create')
+      .header('referer', route('seller.posts.create'))
       .redirects(0)
       .json(body(draftPayload))
     duplicate.assertStatus(302)
@@ -226,7 +230,7 @@ test.group('Seller posts', (group) => {
   }) => {
     const owner = await staff()
     await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -262,7 +266,7 @@ test.group('Seller posts', (group) => {
     assert.include(post.contentHtml, '<a href="https://example.com"')
   })
 
-  test('the edit page returns the post with its content', async ({ client, assert }) => {
+  test('the edit page returns the post with its content', async ({ client, assert, route }) => {
     const owner = await staff()
     const content = { type: 'doc', content: [paragraph('Stored text')] }
     const post = await createPost({
@@ -273,24 +277,27 @@ test.group('Seller posts', (group) => {
       authorId: owner.id,
     })
 
-    const page = await client.get(`/seller/posts/${post.id}/edit`).loginAs(owner).withInertia()
+    const page = await client
+      .get(route('seller.posts.edit', { id: post.id }))
+      .loginAs(owner)
+      .withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/post')
     assert.equal(page.inertiaProps.post.id, post.id)
     assert.equal(page.inertiaProps.post.handle, 'stored-post')
     assert.deepEqual(page.inertiaProps.post.content, content)
 
-    const list = await client.get('/seller/posts').loginAs(owner).withInertia()
+    const list = await client.get(route('seller.posts.index')).loginAs(owner).withInertia()
     assert.lengthOf(list.inertiaProps.posts, 1)
     assert.equal(list.inertiaProps.posts[0].authorName, 'Store Staff')
   })
 
-  test('staff update and delete a post', async ({ client, assert }) => {
+  test('staff update and delete a post', async ({ client, assert, route }) => {
     const owner = await staff()
     const post = await createPost({ handle: 'old-handle', authorId: owner.id })
 
     const updated = await client
-      .patch(`/seller/posts/${post.id}`)
+      .patch(urlFor('seller.posts.update', { id: post.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -301,14 +308,17 @@ test.group('Seller posts', (group) => {
           content: { type: 'doc', content: [paragraph('Rewritten')] },
         })
       )
-    updated.assertRedirectsTo(`/seller/posts/${post.id}/edit`)
+    updated.assertRedirectsTo(route('seller.posts.edit', { id: post.id }))
     await post.refresh()
     assert.equal(post.handle, 'new-handle')
     assert.equal(post.contentHtml, '<p>Rewritten</p>')
     assert.equal(post.authorId, owner.id)
 
-    const deleted = await client.delete(`/seller/posts/${post.id}`).loginAs(owner).withCsrfToken()
-    deleted.assertRedirectsTo('/seller/posts')
+    const deleted = await client
+      .delete(urlFor('seller.posts.destroy', { id: post.id }))
+      .loginAs(owner)
+      .withCsrfToken()
+    deleted.assertRedirectsTo(route('seller.posts.index'))
     assert.isNull(await BlogPost.find(post.id))
   })
 
@@ -328,7 +338,7 @@ test.group('Seller posts', (group) => {
       ],
     }
     const response = await client
-      .post('/seller/posts')
+      .post(urlFor('seller.posts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .redirects(0)
@@ -340,14 +350,14 @@ test.group('Seller posts', (group) => {
     assert.equal(post.contentHtml, '<p>Roasted <strong>this week</strong> only.</p>')
   })
 
-  test('content that is not a Tiptap document is rejected', async ({ client, assert }) => {
+  test('content that is not a Tiptap document is rejected', async ({ client, assert, route }) => {
     const owner = await staff()
     for (const content of ['not json', '{"type":"paragraph"}', '[]']) {
       const response = await client
-        .post('/seller/posts')
+        .post(urlFor('seller.posts.store'))
         .loginAs(owner)
         .withCsrfToken()
-        .header('referer', '/seller/posts/create')
+        .header('referer', route('seller.posts.create'))
         .redirects(0)
         .json({ ...draftPayload, content })
       response.assertStatus(302)

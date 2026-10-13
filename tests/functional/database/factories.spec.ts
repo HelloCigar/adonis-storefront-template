@@ -132,6 +132,7 @@ test.group('Initial factories and seeder', (group) => {
   test('seeds the storefront twice without duplicating or overwriting data', async ({
     client,
     assert,
+    route,
   }) => {
     const unrelated = await ProductFactory.merge({
       handle: 'my-own-product',
@@ -189,7 +190,9 @@ test.group('Initial factories and seeder', (group) => {
     )
     assert.isNotNull(order.lineItems[0].imageUrl)
 
-    const response = await client.get('/product/demo-canvas-tote').withInertia()
+    const response = await client
+      .get(route('products.show', { handle: 'demo-canvas-tote' }))
+      .withInertia()
     response.assertStatus(200)
     assert.deepEqual(response.inertiaProps.product.variants[0].selectedOptions, [
       { name: 'Color', value: 'Natural' },

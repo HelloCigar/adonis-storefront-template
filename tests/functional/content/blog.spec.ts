@@ -10,6 +10,7 @@ test.group('Content / blog', (group) => {
   test('lists only published posts, newest first, without article bodies', async ({
     client,
     assert,
+    route,
   }) => {
     const now = DateTime.utc()
     await BlogPostFactory.merge({
@@ -34,7 +35,7 @@ test.group('Content / blog', (group) => {
       publishedAt: now.plus({ days: 1 }),
     }).create()
 
-    const response = await client.get('/blog').withInertia()
+    const response = await client.get(route('blog.index')).withInertia()
     response.assertStatus(200)
     response.assertInertiaComponent('blog/index')
 
@@ -48,7 +49,11 @@ test.group('Content / blog', (group) => {
     }
   })
 
-  test('shows the author display name only, never the author email', async ({ client, assert }) => {
+  test('shows the author display name only, never the author email', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const author = await UserFactory.merge({
       fullName: 'Mina Bunny',
       email: 'mina-author@example.com',
@@ -77,7 +82,7 @@ test.group('Content / blog', (group) => {
       publishedAt: now.minus({ hours: 3 }),
     }).create()
 
-    const response = await client.get('/blog').withInertia()
+    const response = await client.get(route('blog.index')).withInertia()
     response.assertStatus(200)
     const byHandle = Object.fromEntries(
       response.inertiaProps.posts.data.map((post: { handle: string }) => [post.handle, post])
@@ -90,13 +95,17 @@ test.group('Content / blog', (group) => {
     assert.notInclude(serialized, 'mina-author@example.com')
     assert.notInclude(serialized, 'nameless-author@example.com')
 
-    const detail = await client.get('/blog/named').withInertia()
+    const detail = await client.get(route('blog.show', { handle: 'named' })).withInertia()
     detail.assertStatus(200)
     assert.equal(detail.inertiaProps.post.authorName, 'Mina Bunny')
     assert.notInclude(JSON.stringify(detail.inertiaProps), 'mina-author@example.com')
   })
 
-  test('paginates ten posts per page using the page query string', async ({ client, assert }) => {
+  test('paginates ten posts per page using the page query string', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const now = DateTime.utc()
     for (let index = 0; index < 12; index++) {
       await BlogPostFactory.merge({
@@ -106,13 +115,13 @@ test.group('Content / blog', (group) => {
       }).create()
     }
 
-    const first = await client.get('/blog').withInertia()
+    const first = await client.get(route('blog.index')).withInertia()
     first.assertStatus(200)
     first.assertInertiaComponent('blog/index')
     assert.lengthOf(first.inertiaProps.posts.data, 10)
     assert.equal(first.inertiaProps.posts.data[0].handle, 'post-0')
 
-    const second = await client.get('/blog?page=2').withInertia()
+    const second = await client.get(route('blog.index', [], { qs: { page: '2' } })).withInertia()
     second.assertStatus(200)
     second.assertInertiaComponent('blog/index')
     assert.deepEqual(
@@ -121,16 +130,16 @@ test.group('Content / blog', (group) => {
     )
   })
 
-  test('renders an empty list when nothing is published', async ({ client, assert }) => {
+  test('renders an empty list when nothing is published', async ({ client, assert, route }) => {
     await BlogPostFactory.merge({ handle: 'only-draft', publishedAt: null }).create()
 
-    const response = await client.get('/blog').withInertia()
+    const response = await client.get(route('blog.index')).withInertia()
     response.assertStatus(200)
     response.assertInertiaComponent('blog/index')
     assert.deepEqual(response.inertiaProps.posts.data, [])
   })
 
-  test('renders a published post with its title and content', async ({ client, assert }) => {
+  test('renders a published post with its title and content', async ({ client, assert, route }) => {
     await BlogPostFactory.merge({
       handle: 'hello-world',
       title: 'Hello world',
@@ -139,7 +148,7 @@ test.group('Content / blog', (group) => {
       .apply('published')
       .create()
 
-    const response = await client.get('/blog/hello-world').withInertia()
+    const response = await client.get(route('blog.show', { handle: 'hello-world' })).withInertia()
     response.assertStatus(200)
     response.assertInertiaComponent('blog/[handle]')
     assert.equal(response.inertiaProps.post.title, 'Hello world')
@@ -147,7 +156,10 @@ test.group('Content / blog', (group) => {
     assert.equal(response.inertiaProps.post.contentHtml, '<p>Hello there.</p>')
   })
 
-  test('returns 404 for drafts, scheduled posts, and unknown handles', async ({ client }) => {
+  test('returns 404 for drafts, scheduled posts, and unknown handles', async ({
+    client,
+    route,
+  }) => {
     await BlogPostFactory.merge({ handle: 'secret-draft', publishedAt: null }).create()
     await BlogPostFactory.merge({
       handle: 'coming-soon',
@@ -156,7 +168,7 @@ test.group('Content / blog', (group) => {
     }).create()
 
     for (const handle of ['secret-draft', 'coming-soon', 'does-not-exist']) {
-      const response = await client.get(`/blog/${handle}`).withInertia()
+      const response = await client.get(route('blog.show', { handle })).withInertia()
       response.assertStatus(404)
     }
   })

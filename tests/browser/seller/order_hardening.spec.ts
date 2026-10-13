@@ -49,6 +49,7 @@ test.group('Staff order hardening', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, staff } = await confirmedOrder()
     order.number = 'MB-' + 'A'.repeat(64)
@@ -63,7 +64,7 @@ test.group('Staff order hardening', (group) => {
     address.address1 = '東京都 العربية ' + 'AddressWithoutSpaces'.repeat(8)
     await address.save()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
@@ -181,10 +182,11 @@ test.group('Staff order hardening', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, staff } = await confirmedOrder()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
     await page.route(`**/seller/orders/${order.id}/packing`, (request) => request.abort('failed'))
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
@@ -234,10 +236,11 @@ test.group('Staff order hardening', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, staff } = await confirmedOrder()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.getByText('Refund this payment', { exact: true }).click()
     const button = page.getByRole('button', { name: /^Request refund of ₱/ })
     assert.isTrue(await button.isDisabled())
@@ -255,11 +258,12 @@ test.group('Staff order hardening', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     const order = await OrderFactory.create()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.getByText('No items are recorded for this order.', { exact: true }).waitFor()
     await page.getByLabel('Note', { exact: true }).fill('Keep this draft note.')
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
@@ -276,7 +280,7 @@ test.group('Staff order hardening', (group) => {
     const shipment = await Shipment.findByOrFail('orderId', confirmed.order.id)
     shipment.trackingUrl = 'javascript:alert(1)'
     await shipment.save()
-    await page.goto(`/seller/orders/${confirmed.order.id}`)
+    await page.goto(route('seller.orders.show', { id: confirmed.order.id }))
     await page.getByRole('heading', { name: 'Confirm delivery', exact: true }).waitFor()
     assert.equal(await page.getByRole('link', { name: 'Track shipment', exact: true }).count(), 0)
   })
@@ -285,6 +289,7 @@ test.group('Staff order hardening', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const { order, staff } = await confirmedOrder()
     const fulfillment = await app.container.make(FulfillmentService)
@@ -294,7 +299,7 @@ test.group('Staff order hardening', (group) => {
       trackingNumber: 'DELIVER-ME',
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.getByRole('heading', { name: 'Confirm delivery', exact: true }).waitFor()
     await page.getByText('In transit', { exact: true }).first().waitFor()
     await page.getByRole('button', { name: 'Mark as delivered', exact: true }).click()
@@ -313,6 +318,7 @@ test.group('Staff order hardening', (group) => {
   test('captured payment and refund records retain their original currency', async ({
     visit,
     browserContext,
+    route,
   }) => {
     const { order, staff } = await confirmedOrder()
     const payment = await Payment.create({
@@ -342,7 +348,7 @@ test.group('Staff order hardening', (group) => {
     order.reviewReason = 'Review the additional captured payment.'
     await order.save()
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/orders/${order.id}`)
+    const page = await visit(route('seller.orders.show', { id: order.id }))
     const amount = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'USD' }).format(
       150
     )

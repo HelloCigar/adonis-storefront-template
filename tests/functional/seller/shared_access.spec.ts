@@ -5,6 +5,7 @@ import Product from '#models/catalog/product'
 import Collection from '#models/catalog/collection'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const account = (email: string, role: UserRole = 'staff') =>
   User.create({ email, role, fullName: email, password: 'secret-password' })
@@ -23,18 +24,19 @@ test.group('Shared store resource access', (group) => {
   test('staff collaborate on all products while attribution and variant parent associations are preserved', async ({
     client,
     assert,
+    route,
   }) => {
     const first = await account('first@example.com')
     const second = await account('second@example.com')
     const admin = await account('admin@example.com', 'admin')
     const created = await client
-      .post('/seller/products')
+      .post(urlFor('seller.products.store'))
       .loginAs(first)
       .withCsrfToken()
       .accept('json')
       .json({ ...productData, sellerId: second.id, seller_id: second.id })
     const product = await Product.findByOrFail('handle', 'lamp')
-    created.assertRedirectsTo(`/seller/products/${product.id}`)
+    created.assertRedirectsTo(route('seller.products.show', { id: product.id }))
     assert.equal(product.sellerId, first.id)
     const another = await Product.create({ ...productData, handle: 'another', sellerId: second.id })
     const unassigned = await Product.create({ ...productData, handle: 'unassigned' })
@@ -43,18 +45,18 @@ test.group('Shared store resource access', (group) => {
       .create({ title: 'Default', priceAmount: 250, currencyCode: 'PHP', position: 0 })
 
     for (const actor of [first, second, admin]) {
-      const list = await client.get('/seller/products').loginAs(actor).withInertia()
+      const list = await client.get(route('seller.products.index')).loginAs(actor).withInertia()
       assert.sameMembers(
         list.inertiaProps.products.map((item: { id: string }) => item.id),
         [product.id, another.id, unassigned.id]
       )
       const variants = await client
-        .get(`/seller/products/${another.id}`)
+        .get(route('seller.products.show', { id: another.id }))
         .loginAs(actor)
         .withInertia()
       variants.assertStatus(200)
       const mismatched = await client
-        .patch(`/seller/products/${product.id}/variants/${variant.id}`)
+        .patch(urlFor('seller.variants.update', { productId: product.id, id: variant.id }))
         .loginAs(actor)
         .withCsrfToken()
         .accept('json')
@@ -62,26 +64,27 @@ test.group('Shared store resource access', (group) => {
       mismatched.assertStatus(404)
     }
     const updated = await client
-      .patch(`/seller/products/${product.id}`)
+      .patch(urlFor('seller.products.update', { id: product.id }))
       .loginAs(second)
       .withCsrfToken()
       .accept('json')
       .json({ ...productData, title: 'Shared edit', sellerId: second.id })
-    updated.assertRedirectsTo(`/seller/products/${product.id}`)
+    updated.assertRedirectsTo(route('seller.products.show', { id: product.id }))
     await product.refresh()
     assert.equal(product.title, 'Shared edit')
     assert.equal(product.sellerId, first.id)
     const removed = await client
-      .delete(`/seller/products/${unassigned.id}`)
+      .delete(urlFor('seller.products.destroy', { id: unassigned.id }))
       .loginAs(second)
       .withCsrfToken()
-    removed.assertRedirectsTo('/seller/products')
+    removed.assertRedirectsTo(route('seller.products.index'))
     assert.isNull(await Product.find(unassigned.id))
   })
 
   test('staff share collections and can attach products created by any staff member', async ({
     client,
     assert,
+    route,
   }) => {
     const first = await account('first@example.com')
     const second = await account('second@example.com')
@@ -95,25 +98,25 @@ test.group('Shared store resource access', (group) => {
       productIds: [product.id, unassigned.id],
     }
     const created = await client
-      .post('/seller/collections')
+      .post(urlFor('seller.collections.store'))
       .loginAs(second)
       .withCsrfToken()
       .accept('json')
       .json(payload)
-    created.assertRedirectsTo('/seller/collections')
+    created.assertRedirectsTo(route('seller.collections.index'))
     const collection = await Collection.findByOrFail('handle', 'lighting')
     assert.equal(collection.sellerId, second.id)
-    const list = await client.get('/seller/collections').loginAs(first).withInertia()
+    const list = await client.get(route('seller.collections.index')).loginAs(first).withInertia()
     assert.lengthOf(list.inertiaProps.collections, 1)
     assert.sameMembers(list.inertiaProps.collections[0].productIds, [product.id, unassigned.id])
     assert.lengthOf(list.inertiaProps.products, 2)
     const updated = await client
-      .patch(`/seller/collections/${collection.id}`)
+      .patch(urlFor('seller.collections.update', { id: collection.id }))
       .loginAs(first)
       .withCsrfToken()
       .accept('json')
       .json({ ...payload, title: 'Shared collection', productIds: [unassigned.id] })
-    updated.assertRedirectsTo('/seller/collections')
+    updated.assertRedirectsTo(route('seller.collections.index'))
     await collection.refresh()
     assert.equal(collection.title, 'Shared collection')
     assert.equal(collection.sellerId, second.id)
@@ -127,6 +130,7 @@ test.group('Shared store resource access', (group) => {
   test('staff can manage all orders including mixed, unassigned, and empty orders', async ({
     client,
     assert,
+    route,
   }) => {
     const first = await account('first@example.com')
     const second = await account('second@example.com')
@@ -161,16 +165,19 @@ test.group('Shared store resource access', (group) => {
       orders.push(order)
     }
     for (const actor of [first, second]) {
-      const list = await client.get('/seller/orders').loginAs(actor).withInertia()
+      const list = await client.get(route('seller.orders.index')).loginAs(actor).withInertia()
       assert.sameMembers(
         list.inertiaProps.orders.map((item: { id: string }) => item.id),
         orders.map((order) => order.id)
       )
       for (const order of orders) {
-        const detail = await client.get(`/seller/orders/${order.id}`).loginAs(actor).withInertia()
+        const detail = await client
+          .get(route('seller.orders.show', { id: order.id }))
+          .loginAs(actor)
+          .withInertia()
         detail.assertStatus(200)
         const updated = await client
-          .patch(`/seller/orders/${order.id}`)
+          .patch(urlFor('seller.orders.update', { id: order.id }))
           .loginAs(actor)
           .withCsrfToken()
           .accept('json')
@@ -179,7 +186,7 @@ test.group('Shared store resource access', (group) => {
             fulfillmentStatus: 'fulfilled',
             note: 'Shared fulfilment',
           })
-        updated.assertRedirectsTo(`/seller/orders/${order.id}`)
+        updated.assertRedirectsTo(route('seller.orders.show', { id: order.id }))
         await order.refresh()
         assert.equal(order.userId, buyer.id)
         assert.equal(order.totalAmount, 250)

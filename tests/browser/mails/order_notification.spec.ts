@@ -25,13 +25,14 @@ test.group('Order emails carry the saved store details', (group) => {
   test('the payment receipt email is sent under the saved store name', async ({
     visit,
     browserContext,
+    route,
   }) => {
     using fake = mail.fake()
     await savedStoreSettings({ storeName: 'Lantern Goods', contactEmail: 'hello@lantern.test' })
     const { order, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })
 
-    const page = await visit(`/checkout/orders/${order.publicId}`)
+    const page = await visit(route('checkout.orders.show', { publicId: order.publicId! }))
     await page.getByRole('link', { name: 'Pay now', exact: true }).click()
     await page.getByRole('button', { name: 'Simulate successful payment', exact: true }).click()
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()
@@ -45,13 +46,14 @@ test.group('Order emails carry the saved store details', (group) => {
   test('replies to the payment receipt go to the contact email', async ({
     visit,
     browserContext,
+    route,
   }) => {
     using fake = mail.fake()
     await savedStoreSettings({ storeName: 'Lantern Goods', contactEmail: 'hello@lantern.test' })
     const { order, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })
 
-    const page = await visit(`/checkout/orders/${order.publicId}`)
+    const page = await visit(route('checkout.orders.show', { publicId: order.publicId! }))
     await page.getByRole('link', { name: 'Pay now', exact: true }).click()
     await page.getByRole('button', { name: 'Simulate successful payment', exact: true }).click()
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()
@@ -65,13 +67,14 @@ test.group('Order emails carry the saved store details', (group) => {
   test('the payment receipt email body names the saved store', async ({
     visit,
     browserContext,
+    route,
   }) => {
     using fake = mail.fake()
     await savedStoreSettings({ storeName: 'Lantern Goods', contactEmail: 'hello@lantern.test' })
     const { order, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })
 
-    const page = await visit(`/checkout/orders/${order.publicId}`)
+    const page = await visit(route('checkout.orders.show', { publicId: order.publicId! }))
     await page.getByRole('link', { name: 'Pay now', exact: true }).click()
     await page.getByRole('button', { name: 'Simulate successful payment', exact: true }).click()
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()

@@ -5,6 +5,7 @@ import Product from '#models/catalog/product'
 import type ProductVariant from '#models/catalog/product_variant'
 import StockAdjustment from '#models/catalog/stock_adjustment'
 import db from '@adonisjs/lucid/services/db'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const staff = () =>
   User.create({ email: 'stock-staff@example.com', password: 'secret-password', role: 'staff' })
@@ -21,7 +22,7 @@ const variant = (item: Product, values: Partial<ProductVariant> = {}) =>
     ...values,
   })
 const stockUrl = (item: Product, row: ProductVariant) =>
-  `/seller/products/${item.id}/variants/${row.id}/stock`
+  urlFor('seller.stock_adjustments.index', { productId: item.id, variantId: row.id })
 const variantPayload = {
   title: 'Variant',
   sku: null,
@@ -53,7 +54,7 @@ test.group('Stock adjustments', (group) => {
     }
   })
 
-  test('keeps the stock page and adjustments to store staff', async ({ client, assert }) => {
+  test('keeps the stock page and adjustments to store staff', async ({ client, assert, route }) => {
     const customer = await User.create({
       email: 'stock-customer@example.com',
       password: 'secret-password',
@@ -72,7 +73,7 @@ test.group('Stock adjustments', (group) => {
     denied.assertStatus(403)
     const guest = await client.post(stockUrl(item, row)).withCsrfToken().json(body).redirects(0)
     guest.assertStatus(302)
-    guest.assertHeader('location', '/login')
+    guest.assertHeader('location', route('session.create'))
 
     const other = await product('other-stock-product')
     const owner = await staff()
@@ -219,19 +220,23 @@ test.group('Stock adjustments', (group) => {
     assert.equal(held.inventoryQuantity, 4)
   })
 
-  test('logs stock set through the variant form and generation', async ({ client, assert }) => {
+  test('logs stock set through the variant form and generation', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const owner = await staff()
     const item = await product()
     const created = await client
-      .post(`/seller/products/${item.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: item.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json(variantPayload)
-    created.assertRedirectsTo(`/seller/products/${item.id}`)
+    created.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     const row = await item.related('variants').query().firstOrFail()
     const update = (inventoryQuantity: number | null, title = 'Variant') =>
       client
-        .patch(`/seller/products/${item.id}/variants/${row.id}`)
+        .patch(urlFor('seller.variants.update', { productId: item.id, id: row.id }))
         .loginAs(owner)
         .withCsrfToken()
         .json({ ...variantPayload, title, inventoryQuantity })
@@ -241,22 +246,22 @@ test.group('Stock adjustments', (group) => {
       [null, 'Variant'],
     ] as const) {
       const updated = await update(quantity, title)
-      updated.assertRedirectsTo(`/seller/products/${item.id}`)
+      updated.assertRedirectsTo(route('seller.products.show', { id: item.id }))
     }
 
     const untracked = await product('untracked-stock-product')
     const blank = await client
-      .post(`/seller/products/${untracked.id}/variants`)
+      .post(urlFor('seller.variants.store', { productId: untracked.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({ ...variantPayload, inventoryQuantity: null })
-    blank.assertRedirectsTo(`/seller/products/${untracked.id}`)
+    blank.assertRedirectsTo(route('seller.products.show', { id: untracked.id }))
 
     const generated = await product('generated-stock-product')
     generated.optionDefinitions = [{ name: 'Color', values: ['Blue', 'Red'] }]
     await generated.save()
     const generation = await client
-      .post(`/seller/products/${generated.id}/variants/generate`)
+      .post(urlFor('seller.variant_generation.store', { productId: generated.id }))
       .loginAs(owner)
       .withCsrfToken()
       .json({
@@ -266,7 +271,7 @@ test.group('Stock adjustments', (group) => {
         inventoryQuantity: 4,
         availableForSale: true,
       })
-    generation.assertRedirectsTo(`/seller/products/${generated.id}`)
+    generation.assertRedirectsTo(route('seller.products.show', { id: generated.id }))
 
     const entries = await StockAdjustment.query().orderBy('id')
     assert.deepEqual(

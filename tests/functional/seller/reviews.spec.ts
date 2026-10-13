@@ -9,6 +9,7 @@ import { OrderFactory } from '#database/factories/order_factory'
 import { OrderLineItemFactory } from '#database/factories/order_line_item_factory'
 import { ProductFactory } from '#database/factories/product_factory'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const sellerReviewKeys = [
   'id',
@@ -55,20 +56,21 @@ async function deliveredOrder(user: User, product: Product) {
   return order
 }
 
-const reviewUrl = (row: ProductReview | { id: string }) => `/seller/reviews/${row.id}`
+const reviewUrl = (row: ProductReview | { id: string }) =>
+  urlFor('seller.reviews.update', { id: row.id })
 const ids = (items: { id: string }[]) => items.map((item) => item.id)
 
 test.group('Seller reviews | access', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('guests go to login and customers are refused', async ({ client, assert }) => {
+  test('guests go to login and customers are refused', async ({ client, assert, route }) => {
     const product = await publishedProduct()
     const existing = await review(product)
     const customer = await account()
 
-    const guestIndex = await client.get('/seller/reviews').redirects(0)
+    const guestIndex = await client.get(route('seller.reviews.index')).redirects(0)
     guestIndex.assertStatus(302)
-    guestIndex.assertHeader('location', '/login')
+    guestIndex.assertHeader('location', route('session.create'))
 
     const guestUpdate = await client
       .patch(reviewUrl(existing))
@@ -76,9 +78,12 @@ test.group('Seller reviews | access', (group) => {
       .redirects(0)
       .json({ status: 'approved' })
     guestUpdate.assertStatus(302)
-    guestUpdate.assertHeader('location', '/login')
+    guestUpdate.assertHeader('location', route('session.create'))
 
-    const customerIndex = await client.get('/seller/reviews').loginAs(customer).accept('json')
+    const customerIndex = await client
+      .get(route('seller.reviews.index'))
+      .loginAs(customer)
+      .accept('json')
     customerIndex.assertStatus(403)
 
     const customerUpdate = await client
@@ -102,6 +107,7 @@ test.group('Seller reviews | index', (group) => {
   test('defaults to pending reviews, newest first, with counts across all reviews', async ({
     client,
     assert,
+    route,
   }) => {
     const staff = await staffMember()
     const product = await publishedProduct()
@@ -118,7 +124,7 @@ test.group('Seller reviews | index', (group) => {
       createdAt: now,
     })
 
-    const page = await client.get('/seller/reviews').loginAs(staff).withInertia()
+    const page = await client.get(route('seller.reviews.index')).loginAs(staff).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/reviews')
     assert.deepEqual(page.inertiaProps.filters, { status: 'pending' })
@@ -126,7 +132,7 @@ test.group('Seller reviews | index', (group) => {
     assert.deepEqual(page.inertiaProps.counts, { pending: 2, approved: 2, hidden: 1 })
 
     const approvedPage = await client
-      .get('/seller/reviews?status=approved')
+      .get(route('seller.reviews.index', [], { qs: { status: 'approved' } }))
       .loginAs(staff)
       .withInertia()
     approvedPage.assertStatus(200)
@@ -137,13 +143,16 @@ test.group('Seller reviews | index', (group) => {
     assert.deepEqual(approvedPage.inertiaProps.counts, { pending: 2, approved: 2, hidden: 1 })
 
     const hiddenPage = await client
-      .get('/seller/reviews?status=hidden')
+      .get(route('seller.reviews.index', [], { qs: { status: 'hidden' } }))
       .loginAs(staff)
       .withInertia()
     assert.deepEqual(hiddenPage.inertiaProps.filters, { status: 'hidden' })
     assert.deepEqual(ids(hiddenPage.inertiaProps.reviews.data), [hidden.id])
 
-    const allPage = await client.get('/seller/reviews?status=all').loginAs(staff).withInertia()
+    const allPage = await client
+      .get(route('seller.reviews.index', [], { qs: { status: 'all' } }))
+      .loginAs(staff)
+      .withInertia()
     assert.deepEqual(allPage.inertiaProps.filters, { status: 'all' })
     assert.lengthOf(allPage.inertiaProps.reviews.data, 5)
     assert.deepEqual(ids(allPage.inertiaProps.reviews.data), [
@@ -159,6 +168,7 @@ test.group('Seller reviews | index', (group) => {
   test('each item carries the customer email, product, and moderation fields', async ({
     client,
     assert,
+    route,
   }) => {
     const staff = await staffMember()
     const product = await publishedProduct({ title: 'Bunny lamp', handle: 'bunny-lamp-review' })
@@ -177,7 +187,7 @@ test.group('Seller reviews | index', (group) => {
       body: 'Not bright enough for reading.',
     })
 
-    const page = await client.get('/seller/reviews').loginAs(staff).withInertia()
+    const page = await client.get(route('seller.reviews.index')).loginAs(staff).withInertia()
     page.assertStatus(200)
     assert.lengthOf(page.inertiaProps.reviews.data, 1)
     const item = page.inertiaProps.reviews.data[0]
@@ -201,7 +211,7 @@ test.group('Seller reviews | index', (group) => {
     assert.exists(item.createdAt)
   })
 
-  test('pages 25 reviews at a time', async ({ client, assert }) => {
+  test('pages 25 reviews at a time', async ({ client, assert, route }) => {
     const staff = await staffMember()
     const product = await publishedProduct()
     const now = DateTime.utc().startOf('second')
@@ -210,13 +220,16 @@ test.group('Seller reviews | index', (group) => {
       rows.push(await review(product, { createdAt: now.minus({ minutes: index + 1 }) }))
     }
 
-    const first = await client.get('/seller/reviews').loginAs(staff).withInertia()
+    const first = await client.get(route('seller.reviews.index')).loginAs(staff).withInertia()
     assert.lengthOf(first.inertiaProps.reviews.data, 25)
     assert.equal(first.inertiaProps.reviews.data[0].id, rows[0].id)
     assert.equal(first.inertiaProps.reviews.metadata.total, 27)
     assert.equal(first.inertiaProps.reviews.metadata.perPage, 25)
 
-    const second = await client.get('/seller/reviews?page=2').loginAs(staff).withInertia()
+    const second = await client
+      .get(route('seller.reviews.index', [], { qs: { page: '2' } }))
+      .loginAs(staff)
+      .withInertia()
     assert.deepEqual(ids(second.inertiaProps.reviews.data), [rows[25].id, rows[26].id])
     assert.equal(second.inertiaProps.reviews.metadata.currentPage, 2)
   })
@@ -225,11 +238,15 @@ test.group('Seller reviews | index', (group) => {
 test.group('Seller reviews | moderation', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('staff approve and hide a review without changing its text', async ({ client, assert }) => {
+  test('staff approve and hide a review without changing its text', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const staff = await staffMember()
     const product = await publishedProduct()
     const existing = await review(product, { rating: 3, title: 'Okay', body: 'Fine overall.' })
-    const back = '/seller/reviews?status=pending'
+    const back = route('seller.reviews.index', [], { qs: { status: 'pending' } })
 
     const before = DateTime.utc().minus({ seconds: 5 })
     const approve = await client
@@ -257,11 +274,11 @@ test.group('Seller reviews | moderation', (group) => {
       .patch(reviewUrl(existing))
       .loginAs(staff)
       .withCsrfToken()
-      .header('referer', '/seller/reviews?status=approved')
+      .header('referer', route('seller.reviews.index', [], { qs: { status: 'approved' } }))
       .redirects(0)
       .json({ status: 'hidden' })
     hide.assertStatus(302)
-    hide.assertHeader('location', '/seller/reviews?status=approved')
+    hide.assertHeader('location', route('seller.reviews.index', [], { qs: { status: 'approved' } }))
     hide.assertFlashMessage('success', 'Review hidden')
 
     await existing.refresh()
@@ -311,12 +328,12 @@ test.group('Seller reviews | moderation', (group) => {
     response.assertStatus(404)
   })
 
-  test('admins can moderate reviews', async ({ client, assert }) => {
+  test('admins can moderate reviews', async ({ client, assert, route }) => {
     const admin = await account({ role: 'admin' })
     const product = await publishedProduct()
     const existing = await review(product)
 
-    const page = await client.get('/seller/reviews').loginAs(admin).withInertia()
+    const page = await client.get(route('seller.reviews.index')).loginAs(admin).withInertia()
     page.assertStatus(200)
     assert.deepEqual(ids(page.inertiaProps.reviews.data), [existing.id])
 
@@ -324,7 +341,7 @@ test.group('Seller reviews | moderation', (group) => {
       .patch(reviewUrl(existing))
       .loginAs(admin)
       .withCsrfToken()
-      .header('referer', '/seller/reviews')
+      .header('referer', route('seller.reviews.index'))
       .redirects(0)
       .json({ status: 'approved' })
     response.assertStatus(302)
@@ -339,12 +356,15 @@ test.group('Seller reviews | moderation', (group) => {
   test('an approved review appears on the product page; a hidden one does not', async ({
     client,
     assert,
+    route,
   }) => {
     const staff = await staffMember()
     const product = await publishedProduct()
     const existing = await review(product, { rating: 5, title: 'Lovely' })
 
-    const before = await client.get(`/product/${product.handle}`).withInertia()
+    const before = await client
+      .get(route('products.show', { handle: product.handle }))
+      .withInertia()
     assert.deepEqual(before.inertiaProps.reviews.data, [])
 
     await client
@@ -353,7 +373,9 @@ test.group('Seller reviews | moderation', (group) => {
       .withCsrfToken()
       .redirects(0)
       .json({ status: 'approved' })
-    const approved = await client.get(`/product/${product.handle}`).withInertia()
+    const approved = await client
+      .get(route('products.show', { handle: product.handle }))
+      .withInertia()
     assert.deepEqual(ids(approved.inertiaProps.reviews.data), [existing.id])
     assert.equal(approved.inertiaProps.reviewSummary.count, 1)
     assert.equal(approved.inertiaProps.reviewSummary.average, 5)
@@ -364,7 +386,9 @@ test.group('Seller reviews | moderation', (group) => {
       .withCsrfToken()
       .redirects(0)
       .json({ status: 'hidden' })
-    const hidden = await client.get(`/product/${product.handle}`).withInertia()
+    const hidden = await client
+      .get(route('products.show', { handle: product.handle }))
+      .withInertia()
     assert.deepEqual(hidden.inertiaProps.reviews.data, [])
     assert.equal(hidden.inertiaProps.reviewSummary.count, 0)
     assert.isNull(hidden.inertiaProps.reviewSummary.average)

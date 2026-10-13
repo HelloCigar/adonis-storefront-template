@@ -9,9 +9,10 @@ test.group('Account authentication', (group) => {
   test('signs in without losing the password when its visibility changes', async ({
     visit,
     assert,
+    route,
   }) => {
     await User.create({ email: 'auth@example.com', password: 'secret-password', role: 'customer' })
-    const page = await visit('/login')
+    const page = await visit(route('session.create'))
 
     await page.getByLabel('Email', { exact: true }).fill('auth@example.com')
     await page.getByLabel('Password', { exact: true }).fill('secret-password')
@@ -26,19 +27,20 @@ test.group('Account authentication', (group) => {
     )
 
     await page.getByRole('button', { name: 'Sign in', exact: true }).click()
-    await page.assertPath('/account')
+    await page.assertPath(route('account.show'))
   })
 
   test('shows signup validation and creates an account after correction', async ({
     visit,
     assert,
+    route,
   }) => {
     // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
     using mails = mail.fake()
 
-    const page = await visit('/login')
+    const page = await visit(route('session.create'))
     await page.getByRole('link', { name: 'Create an account', exact: true }).click()
-    await page.assertPath('/signup')
+    await page.assertPath(route('new_account.create'))
     await page.getByLabel('Email', { exact: true }).fill('new-auth@example.com')
     await page.getByLabel('Password', { exact: true }).fill('short')
     await page.getByLabel('Confirm password', { exact: true }).fill('different')
@@ -59,7 +61,7 @@ test.group('Account authentication', (group) => {
     )
     await page.getByRole('button', { name: 'Hide confirm password', exact: true }).click()
     await page.getByRole('button', { name: 'Create account', exact: true }).click()
-    await page.assertPath('/account/activate')
+    await page.assertPath(route('email_verifications.create'))
 
     const user = await User.findByOrFail('email', 'new-auth@example.com')
     assert.equal(user.role, 'customer')

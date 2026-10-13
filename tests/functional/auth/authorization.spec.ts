@@ -11,6 +11,7 @@ import MakeStaff from '../../../commands/make_staff.js'
 import MakeSeller from '../../../commands/make_seller.js'
 import StaffRoleMigration from '#database/migrations/1791000000000_use_staff_role_for_single_store'
 import { finishedStoreSetup } from '#tests/helpers/store_setup'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const account = (email: string, role: UserRole = 'customer') =>
   User.create({ email, role, fullName: email, password: 'secret-password' })
@@ -21,70 +22,85 @@ test.group('Single store authorization', (group) => {
   test('signup remains customer-only and login sends each role to its own area', async ({
     client,
     assert,
+    route,
   }) => {
     // @ts-ignore -- the fake keeps the signup mail away from a real mailbox
     using mails = mail.fake()
 
-    const signup = await client.post('/signup').withCsrfToken().redirects(0).json({
-      fullName: 'Customer',
-      email: 'new@example.com',
-      password: 'secret-password',
-      passwordConfirmation: 'secret-password',
-      role: 'admin',
-    })
+    const signup = await client
+      .post(urlFor('new_account.store'))
+      .withCsrfToken()
+      .redirects(0)
+      .json({
+        fullName: 'Customer',
+        email: 'new@example.com',
+        password: 'secret-password',
+        passwordConfirmation: 'secret-password',
+        role: 'admin',
+      })
     signup.assertStatus(302)
-    signup.assertHeader('location', '/account/activate')
+    signup.assertHeader('location', route('email_verifications.create'))
     const registered = await User.findByOrFail('email', 'new@example.com')
     assert.equal(registered.role, 'customer')
     for (const role of ['customer', 'staff', 'admin'] as const) {
       const user = await account(`${role}@example.com`, role)
       const login = await client
-        .post('/login')
+        .post(urlFor('session.store'))
         .withCsrfToken()
         .redirects(0)
         .json({ email: user.email, password: 'secret-password' })
       login.assertStatus(302)
-      login.assertHeader('location', role === 'customer' ? '/account' : '/dashboard')
+      login.assertHeader(
+        'location',
+        role === 'customer' ? route('account.show') : route('dashboard')
+      )
     }
   })
 
   test('customers cannot enter store management and only admins reach real member management', async ({
     client,
     assert,
+    route,
   }) => {
     const customer = await account('customer@example.com')
     const staff = await account('staff@example.com', 'staff')
     const admin = await account('admin@example.com', 'admin')
     // A finished store, so the admin's dashboard request reaches the dashboard, not store setup.
     await finishedStoreSetup()
-    for (const path of ['/dashboard', '/inbox', '/settings/members', '/seller/products']) {
-      const guest = await client.get(path).redirects(0)
+    for (const name of [
+      'dashboard',
+      'inbox',
+      'settings.members',
+      'seller.products.index',
+    ] as const) {
+      const guest = await client.get(route(name)).redirects(0)
       guest.assertStatus(302)
-      guest.assertHeader('location', '/login')
-      const denied = await client.get(path).loginAs(customer).accept('json')
+      guest.assertHeader('location', route('session.create'))
+      const denied = await client.get(route(name)).loginAs(customer).accept('json')
       denied.assertStatus(403)
     }
     for (const actor of [staff, admin]) {
-      for (const path of ['/dashboard', '/inbox', '/seller/products']) {
-        const page = await client.get(path).loginAs(actor).withInertia()
+      for (const name of ['dashboard', 'inbox', 'seller.products.index'] as const) {
+        const page = await client.get(route(name)).loginAs(actor).withInertia()
         page.assertStatus(200)
         assert.isTrue(page.inertiaProps.permissions.manageStore)
         assert.equal(page.inertiaProps.permissions.manageUsers, actor.role === 'admin')
       }
     }
-    const denied = await client.get('/settings/members').loginAs(staff).accept('json')
+    const denied = await client.get(route('settings.members')).loginAs(staff).accept('json')
     denied.assertStatus(403)
-    const members = await client.get('/settings/members').loginAs(admin).redirects(0)
+    const members = await client.get(route('settings.members')).loginAs(admin).redirects(0)
     members.assertStatus(302)
-    members.assertHeader('location', '/seller/users')
+    members.assertHeader('location', route('seller.users.index'))
     await staff.merge({ role: 'customer' }).save()
-    const revoked = await client.get('/dashboard').loginAs(staff).accept('json')
+    const revoked = await client.get(route('dashboard')).loginAs(staff).accept('json')
     revoked.assertStatus(403)
   })
 
   test('personal addresses and orders stay private even from staff and admins', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await account('owner@example.com')
     const address = await owner
@@ -103,19 +119,19 @@ test.group('Single store authorization', (group) => {
     for (const role of ['customer', 'staff', 'admin'] as const) {
       const actor = await account(`${role}@example.com`, role)
       const deniedOrder = await client
-        .get(`/account/orders/${order.id}`)
+        .get(route('orders.show', { id: order.id }))
         .loginAs(actor)
         .withInertia()
       deniedOrder.assertStatus(404)
       const deniedAddress = await client
-        .delete(`/account/addresses/${address.id}`)
+        .delete(urlFor('account.addresses.delete', { id: address.id }))
         .loginAs(actor)
         .withCsrfToken()
         .accept('json')
       deniedAddress.assertStatus(404)
-      const ownSettings = await client.get('/settings').loginAs(actor).withInertia()
+      const ownSettings = await client.get(route('settings')).loginAs(actor).withInertia()
       ownSettings.assertStatus(200)
-      const ownAccount = await client.get('/account').loginAs(actor).withInertia()
+      const ownAccount = await client.get(route('account.show')).loginAs(actor).withInertia()
       ownAccount.assertStatus(200)
     }
     assert.isNotNull(await owner.related('addresses').query().where('id', address.id).first())

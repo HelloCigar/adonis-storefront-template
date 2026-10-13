@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 import DiscountCode from '#models/checkout/discount_code'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 const staff = () =>
   User.create({
@@ -38,7 +39,7 @@ const countDiscounts = async () => {
 test.group('Seller discounts', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('only staff can view and manage discount codes', async ({ client, assert }) => {
+  test('only staff can view and manage discount codes', async ({ client, assert, route }) => {
     const customer = await User.create({
       email: 'customer@example.com',
       password: 'secret-password',
@@ -47,15 +48,18 @@ test.group('Seller discounts', (group) => {
     assert.equal(customer.role, 'customer')
     const owner = await staff()
 
-    const guest = await client.get('/seller/discounts').redirects(0)
+    const guest = await client.get(route('seller.discounts.index')).redirects(0)
     guest.assertStatus(302)
-    guest.assertHeader('location', '/login')
+    guest.assertHeader('location', route('session.create'))
 
-    const deniedGet = await client.get('/seller/discounts').loginAs(customer).accept('json')
+    const deniedGet = await client
+      .get(route('seller.discounts.index'))
+      .loginAs(customer)
+      .accept('json')
     deniedGet.assertStatus(403)
 
     const deniedPost = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(customer)
       .withCsrfToken()
       .accept('json')
@@ -63,22 +67,22 @@ test.group('Seller discounts', (group) => {
     deniedPost.assertStatus(403)
     assert.equal(await countDiscounts(), 0)
 
-    const page = await client.get('/seller/discounts').loginAs(owner).withInertia()
+    const page = await client.get(route('seller.discounts.index')).loginAs(owner).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/discounts')
     assert.deepEqual(page.inertiaProps.discounts, [])
   })
 
-  test('staff create a code stored upper case in centavos', async ({ client, assert }) => {
+  test('staff create a code stored upper case in centavos', async ({ client, assert, route }) => {
     const owner = await staff()
 
     const percent = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(percentPayload)
-    percent.assertRedirectsTo('/seller/discounts')
+    percent.assertRedirectsTo(route('seller.discounts.index'))
     const spring = await DiscountCode.findByOrFail('code', 'SPRING10')
     assert.equal(spring.percentOff, 10)
     assert.isNull(spring.amountOffMinor)
@@ -90,17 +94,17 @@ test.group('Seller discounts', (group) => {
     assert.equal(spring.timesUsed, 0)
 
     const fixed = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json(fixedPayload)
-    fixed.assertRedirectsTo('/seller/discounts')
+    fixed.assertRedirectsTo(route('seller.discounts.index'))
     const less = await DiscountCode.findByOrFail('code', 'LESS100')
     assert.equal(less.amountOffMinor, 10050)
     assert.isNull(less.percentOff)
 
-    const list = await client.get('/seller/discounts').loginAs(owner).withInertia()
+    const list = await client.get(route('seller.discounts.index')).loginAs(owner).withInertia()
     list.assertInertiaComponent('seller/discounts')
     assert.lengthOf(list.inertiaProps.discounts, 2)
     const listed = list.inertiaProps.discounts.find(
@@ -113,6 +117,7 @@ test.group('Seller discounts', (group) => {
   test('rejects duplicate codes, a missing amount and an end before the start', async ({
     client,
     assert,
+    route,
   }) => {
     const owner = await staff()
     await DiscountCode.create({
@@ -127,10 +132,10 @@ test.group('Seller discounts', (group) => {
     assert.equal(await countDiscounts(), 1)
 
     const duplicate = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(owner)
       .withCsrfToken()
-      .header('referer', '/seller/discounts')
+      .header('referer', route('seller.discounts.index'))
       .redirects(0)
       .json(percentPayload)
     duplicate.assertStatus(302)
@@ -138,10 +143,10 @@ test.group('Seller discounts', (group) => {
     assert.equal(await countDiscounts(), 1)
 
     const missingAmount = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(owner)
       .withCsrfToken()
-      .header('referer', '/seller/discounts')
+      .header('referer', route('seller.discounts.index'))
       .redirects(0)
       .json({ ...fixedPayload, code: 'FIXED5', amountOff: null })
     missingAmount.assertStatus(302)
@@ -149,10 +154,10 @@ test.group('Seller discounts', (group) => {
     assert.equal(await countDiscounts(), 1)
 
     const endsFirst = await client
-      .post('/seller/discounts')
+      .post(urlFor('seller.discounts.store'))
       .loginAs(owner)
       .withCsrfToken()
-      .header('referer', '/seller/discounts')
+      .header('referer', route('seller.discounts.index'))
       .redirects(0)
       .json({
         ...percentPayload,
@@ -166,7 +171,7 @@ test.group('Seller discounts', (group) => {
     assert.isNull(await DiscountCode.findBy('code', 'WINDOW10'))
   })
 
-  test('staff update a code and delete only unused codes', async ({ client, assert }) => {
+  test('staff update a code and delete only unused codes', async ({ client, assert, route }) => {
     const owner = await staff()
     const discount = await DiscountCode.create({
       code: 'SPRING10',
@@ -179,12 +184,12 @@ test.group('Seller discounts', (group) => {
     })
 
     const updated = await client
-      .patch(`/seller/discounts/${discount.id}`)
+      .patch(urlFor('seller.discounts.update', { id: discount.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
       .json({ ...percentPayload, code: 'FALL20', percentOff: 20, active: false })
-    updated.assertRedirectsTo('/seller/discounts')
+    updated.assertRedirectsTo(route('seller.discounts.index'))
     await discount.refresh()
     assert.equal(discount.code, 'FALL20')
     assert.equal(discount.percentOff, 20)
@@ -200,7 +205,7 @@ test.group('Seller discounts', (group) => {
       active: true,
     })
     const blocked = await client
-      .delete(`/seller/discounts/${used.id}`)
+      .delete(urlFor('seller.discounts.destroy', { id: used.id }))
       .loginAs(owner)
       .withCsrfToken()
       .accept('json')
@@ -208,10 +213,10 @@ test.group('Seller discounts', (group) => {
     assert.isNotNull(await DiscountCode.find(used.id))
 
     const deleted = await client
-      .delete(`/seller/discounts/${discount.id}`)
+      .delete(urlFor('seller.discounts.destroy', { id: discount.id }))
       .loginAs(owner)
       .withCsrfToken()
-    deleted.assertRedirectsTo('/seller/discounts')
+    deleted.assertRedirectsTo(route('seller.discounts.index'))
     assert.isNull(await DiscountCode.find(discount.id))
   })
 })

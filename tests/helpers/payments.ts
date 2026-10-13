@@ -20,6 +20,7 @@ import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
 import SweepPaymentOperations from '#jobs/payments/sweep_payment_operations'
 import { runQueue } from '#tests/helpers/queue'
 import { ProductVariantFactory } from '#database/factories/product_variant_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 /** Two units at PHP 499 plus PHP 100 shipping. */
 export const orderTotalMinor = 109_800
@@ -97,7 +98,7 @@ export function submitCheckout(
   input: Awaited<ReturnType<typeof cartReady>>['input']
 ) {
   return client
-    .post('/checkout')
+    .post(urlFor('checkout.store'))
     .withSession({ store_cart_token: token })
     .withCsrfToken()
     .form(input)
@@ -164,7 +165,7 @@ export function sendWebhook(
 ) {
   const { rawBody, headers } = adapter.webhook(event)
   return client
-    .post(`/payments/webhooks/${adapter.provider}`)
+    .post(urlFor('payments.webhooks.store', { provider: adapter.provider }))
     .header('content-type', 'application/json')
     .headers(headers)
     .unsafeJson(rawBody)

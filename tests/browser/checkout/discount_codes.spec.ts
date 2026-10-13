@@ -34,6 +34,7 @@ test.group('Discount codes', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const variant = await ProductVariantFactory.merge({
       priceAmount: 499,
@@ -42,7 +43,7 @@ test.group('Discount codes', (group) => {
     await variant.load('product')
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
-    const admin = await visit('/seller/discounts')
+    const admin = await visit(route('seller.discounts.index'))
     const errors: string[] = []
     admin.on('pageerror', (error) => errors.push(error.message))
     await admin.getByRole('button', { name: 'Add discount' }).first().click()
@@ -58,12 +59,12 @@ test.group('Discount codes', (group) => {
     assert.isTrue(code.active)
 
     await browserContext.clearCookies()
-    const page = await visit(`/product/${variant.product.handle}`)
+    const page = await visit(route('products.show', { handle: variant.product.handle }))
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('button', { name: 'Add to cart', exact: true }).click()
     await page.getByRole('button', { name: 'Open cart', exact: true }).click()
     await page.getByRole('button', { name: 'Checkout', exact: true }).click()
-    await page.assertPath('/checkout')
+    await page.assertPath(route('checkout.create'))
     await page.getByLabel('Email address', { exact: true }).fill('discount@example.com')
     await page.getByLabel('Discount code', { exact: true }).fill('NOPE')
     await page.getByLabel('Discount code', { exact: true }).press('Enter')

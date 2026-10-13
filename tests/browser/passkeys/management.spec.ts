@@ -4,6 +4,7 @@ import { createPasskey } from '#tests/helpers/passkeys'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { UserFactory } from '#database/factories/user_factory'
 import PasskeyChangedNotification from '#mails/auth/passkey_changed_notification'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Passkey Management', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -98,7 +99,7 @@ test.group('Passkey Management', (group) => {
     const xsrfToken = decodeURIComponent(cookies.find((c) => c.name === 'XSRF-TOKEN')!.value)
     const headers = { 'X-XSRF-TOKEN': xsrfToken }
 
-    const url = `/settings/passkeys/${otherPasskey.identifier}`
+    const url = urlFor('passkeys.update', { id: String(otherPasskey.identifier) })
     const rename = await page.request.put(url, { headers, data: { name: 'Hijacked' } })
     const remove = await page.request.delete(url, { headers })
 
@@ -127,7 +128,7 @@ test.group('Passkey Management', (group) => {
      * A double click, sent as two parallel requests. Redirects are not
      * followed, so the statuses show which request removed the row.
      */
-    const url = `/settings/passkeys/${passkey.identifier}`
+    const url = urlFor('passkeys.destroy', { id: String(passkey.identifier) })
     const responses = await Promise.all([
       page.request.delete(url, { headers, maxRedirects: 0 }),
       page.request.delete(url, { headers, maxRedirects: 0 }),

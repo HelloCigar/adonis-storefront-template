@@ -17,6 +17,7 @@ import {
   sendWebhook,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 /** Moves the clock past every sweep's one-minute staleness threshold. */
 function waitUntilStale() {
@@ -120,7 +121,7 @@ test.group('Payment operations sweep', (group) => {
     const { order } = await paidOrder(client, provider)
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await client
-      .post(`/seller/orders/${order.id}/refund`)
+      .post(urlFor('seller.refunds.store', { id: order.id }))
       .loginAs(staff)
       .withCsrfToken()
       .redirects(0)

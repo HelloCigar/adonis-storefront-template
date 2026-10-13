@@ -22,7 +22,7 @@ test.group('Invoices carry the saved store details', (group) => {
     }
   })
 
-  test('the invoice names the saved store', async ({ visit, browserContext, assert }) => {
+  test('the invoice names the saved store', async ({ visit, browserContext, assert, route }) => {
     // @ts-ignore -- the fake keeps the receipt mail away from a real mailbox
     using mails = mail.fake()
 
@@ -30,7 +30,7 @@ test.group('Invoices carry the saved store details', (group) => {
     const { order, grant } = await simulatedCheckout()
     await browserContext.setSession({ store_order_grants: { [order.publicId!]: grant } })
 
-    const page = await visit(`/checkout/orders/${order.publicId}`)
+    const page = await visit(route('checkout.orders.show', { publicId: order.publicId! }))
     await page.getByRole('link', { name: 'Pay now', exact: true }).click()
     await page.getByRole('button', { name: 'Simulate successful payment', exact: true }).click()
     await page.getByRole('heading', { name: 'Payment received', exact: true }).waitFor()

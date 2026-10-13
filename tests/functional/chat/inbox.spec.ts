@@ -39,13 +39,17 @@ test.group('Order chat inbox', (group) => {
     return { staff, customer }
   }
 
-  test('customers cannot open the inbox', async ({ client }) => {
+  test('customers cannot open the inbox', async ({ client, route }) => {
     const { customer } = await people()
-    const response = await client.get('/inbox').loginAs(customer).redirects(0)
+    const response = await client.get(route('inbox')).loginAs(customer).redirects(0)
     response.assertStatus(403)
   })
 
-  test('lists confirmed account orders, latest conversation first', async ({ client, assert }) => {
+  test('lists confirmed account orders, latest conversation first', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const { staff, customer } = await people()
     const quiet = await OrderFactory.merge({
       userId: customer.id,
@@ -65,7 +69,7 @@ test.group('Order chat inbox', (group) => {
     await message(busy, staff, 'Packed and ready', 10)
     await message(busy, customer, 'Thanks! When does it ship?', 5)
 
-    const page = await client.get('/inbox').loginAs(staff).withInertia()
+    const page = await client.get(route('inbox')).loginAs(staff).withInertia()
     page.assertStatus(200)
     const threads = page.inertiaProps.threads as {
       orderId: string
@@ -83,7 +87,11 @@ test.group('Order chat inbox', (group) => {
     assert.isNull(threads[2].lastMessage)
     assert.isNull(page.inertiaProps.conversation)
 
-    const unread = await client.get('/inbox').qs({ filter: 'unread' }).loginAs(staff).withInertia()
+    const unread = await client
+      .get(route('inbox'))
+      .qs({ filter: 'unread' })
+      .loginAs(staff)
+      .withInertia()
     assert.deepEqual(
       unread.inertiaProps.threads.map((thread: { orderId: string }) => thread.orderId),
       [busy.id, cancelledWithHistory.id]
@@ -93,6 +101,7 @@ test.group('Order chat inbox', (group) => {
   test('opening a thread loads it in order and marks the customer side read', async ({
     client,
     assert,
+    route,
   }) => {
     const { staff, customer } = await people()
     const order = await OrderFactory.merge({
@@ -103,7 +112,11 @@ test.group('Order chat inbox', (group) => {
     await message(order, staff, 'Hi Casey', 1)
     await message(order, customer, 'Is it shipped?', 0)
 
-    const page = await client.get('/inbox').qs({ order: order.id }).loginAs(staff).withInertia()
+    const page = await client
+      .get(route('inbox'))
+      .qs({ order: order.id })
+      .loginAs(staff)
+      .withInertia()
     const conversation = page.inertiaProps.conversation
     assert.equal(conversation.roomKey, `order:${order.id}`)
     assert.isTrue(conversation.canSend)
@@ -128,6 +141,7 @@ test.group('Order chat inbox', (group) => {
   test('the account holder sees the thread on their order page; others do not', async ({
     client,
     assert,
+    route,
   }) => {
     const { staff, customer } = await people()
     const order = await OrderFactory.merge({
@@ -138,7 +152,10 @@ test.group('Order chat inbox', (group) => {
     }).create()
     await message(order, staff, 'Your order is packed', 0)
 
-    const own = await client.get('/checkout/orders/chat-order').loginAs(customer).withInertia()
+    const own = await client
+      .get(route('checkout.orders.show', { publicId: 'chat-order' }))
+      .loginAs(customer)
+      .withInertia()
     own.assertStatus(200)
     assert.equal(own.inertiaProps.conversation.messages[0].body, 'Your order is packed')
     assert.isTrue(own.inertiaProps.conversation.canSend)
@@ -151,12 +168,19 @@ test.group('Order chat inbox', (group) => {
       source: 'online',
       publicId: 'unpaid-order',
     }).create()
-    const unpaid = await client.get('/checkout/orders/unpaid-order').loginAs(customer).withInertia()
+    const unpaid = await client
+      .get(route('checkout.orders.show', { publicId: 'unpaid-order' }))
+      .loginAs(customer)
+      .withInertia()
     assert.isNull(unpaid.inertiaProps.conversation)
     assert.equal(pending.userId, customer.id)
   })
 
-  test('threads report the fulfillment stage and order total', async ({ client, assert }) => {
+  test('threads report the fulfillment stage and order total', async ({
+    client,
+    assert,
+    route,
+  }) => {
     const { staff, customer } = await people()
     const states = ['pending', 'packing', 'shipped', 'delivered'] as const
     const expected = ['to_pack', 'to_ship', 'in_transit', 'delivered']
@@ -178,7 +202,7 @@ test.group('Order chat inbox', (group) => {
     }).create()
     await message(cancelled, customer, 'Please cancel it', 0)
 
-    const page = await client.get('/inbox').loginAs(staff).withInertia()
+    const page = await client.get(route('inbox')).loginAs(staff).withInertia()
     page.assertStatus(200)
     const threads = page.inertiaProps.threads as {
       orderId: string
@@ -200,6 +224,7 @@ test.group('Order chat inbox', (group) => {
   test('openThread carries the linked order even when the list leaves it out', async ({
     client,
     assert,
+    route,
   }) => {
     const { staff, customer } = await people()
     const cancelled = await OrderFactory.merge({
@@ -210,7 +235,7 @@ test.group('Order chat inbox', (group) => {
     const guest = await OrderFactory.merge({ lifecycleState: 'confirmed' }).create()
 
     const linked = await client
-      .get('/inbox')
+      .get(route('inbox'))
       .qs({ order: cancelled.id })
       .loginAs(staff)
       .withInertia()
@@ -223,12 +248,16 @@ test.group('Order chat inbox', (group) => {
     assert.equal(linked.inertiaProps.openThread.stage, 'cancelled')
     assert.equal(linked.inertiaProps.conversation.roomKey, `order:${cancelled.id}`)
 
-    const forGuest = await client.get('/inbox').qs({ order: guest.id }).loginAs(staff).withInertia()
+    const forGuest = await client
+      .get(route('inbox'))
+      .qs({ order: guest.id })
+      .loginAs(staff)
+      .withInertia()
     forGuest.assertStatus(200)
     assert.isNull(forGuest.inertiaProps.openThread)
     assert.isNull(forGuest.inertiaProps.conversation)
 
-    const plain = await client.get('/inbox').loginAs(staff).withInertia()
+    const plain = await client.get(route('inbox')).loginAs(staff).withInertia()
     assert.isNull(plain.inertiaProps.openThread)
   })
 })

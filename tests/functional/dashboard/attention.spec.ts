@@ -16,6 +16,7 @@ import { OrderFactory } from '#database/factories/order_factory'
 import { ProductFactory } from '#database/factories/product_factory'
 import { ProductVariantFactory } from '#database/factories/product_variant_factory'
 import { UserFactory } from '#database/factories/user_factory'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 /** Whole seconds, so values survive the SQLite round trip unchanged. */
 const ago = (values: { days?: number; hours?: number; minutes?: number }) =>
@@ -26,7 +27,7 @@ const staffUser = () => UserFactory.merge({ role: 'staff' }).create()
 
 /** Opens the dashboard as staff and returns the deferred `attention` prop. */
 async function attention(client: any, staff: User) {
-  const page = await client.get('/dashboard').loginAs(staff).withInertia()
+  const page = await client.get(urlFor('dashboard')).loginAs(staff).withInertia()
   page.assertStatus(200)
   return page.inertiaProps.attention
 }
@@ -394,12 +395,13 @@ test.group('Dashboard attention', (group) => {
   test('skips the attention queries when only the summary is reloaded', async ({
     client,
     assert,
+    route,
   }) => {
     const staff = await staffUser()
     await legacyOrder()
 
     const partial = await client
-      .get('/dashboard')
+      .get(route('dashboard'))
       .loginAs(staff)
       .withInertiaPartialReload('dashboard', ['summary'])
     partial.assertStatus(200)
@@ -407,7 +409,7 @@ test.group('Dashboard attention', (group) => {
     assert.notProperty(partial.inertiaProps, 'attention')
 
     const attentionOnly = await client
-      .get('/dashboard')
+      .get(route('dashboard'))
       .loginAs(staff)
       .withInertiaPartialReload('dashboard', ['attention'])
     assert.notProperty(attentionOnly.inertiaProps, 'summary')

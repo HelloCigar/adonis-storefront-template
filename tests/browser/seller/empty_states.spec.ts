@@ -11,10 +11,11 @@ test.group('Store management empty states', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
-    const page = await visit('/seller/discounts')
+    const page = await visit(route('seller.discounts.index'))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
 
@@ -49,10 +50,11 @@ test.group('Store management empty states', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
-    const page = await visit('/seller/reviews')
+    const page = await visit(route('seller.reviews.index'))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
 

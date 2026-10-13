@@ -10,6 +10,7 @@ import {
   submitCheckout,
   useFakeProvider,
 } from '#tests/helpers/payments'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Checkout submission', (group) => {
   group.each.setup(() => resetCheckoutState())
@@ -17,6 +18,7 @@ test.group('Checkout submission', (group) => {
   test('submitting checkout freezes one order with exact totals and holds its stock', async ({
     client,
     assert,
+    route,
   }) => {
     const provider = useFakeProvider()
     const { variant, token, input } = await cartReady()
@@ -24,7 +26,7 @@ test.group('Checkout submission', (group) => {
     const response = await submitCheckout(client, token, input)
 
     const order = await Order.firstOrFail()
-    response.assertHeader('location', `/checkout/orders/${order.publicId}`)
+    response.assertHeader('location', route('checkout.orders.show', { publicId: order.publicId! }))
     assert.equal(order.totalMinor, orderTotalMinor)
     assert.equal(order.shippingMinor, 10_000)
     await variant.refresh()
@@ -110,17 +112,18 @@ test.group('Checkout submission', (group) => {
   test('an existing cart without a submission key gets one stable key and keeps its lines', async ({
     client,
     assert,
+    route,
   }) => {
     useFakeProvider()
     const { token } = await cartReady()
     await Cart.query().where('token', token).update({ submissionKey: null })
 
     const first = await client
-      .get('/checkout')
+      .get(route('checkout.create'))
       .withSession({ store_cart_token: token })
       .withInertia()
     const second = await client
-      .get('/checkout')
+      .get(route('checkout.create'))
       .withSession({ store_cart_token: token })
       .withInertia()
 
@@ -135,7 +138,7 @@ test.group('Checkout submission', (group) => {
     const { token, input } = await cartReady()
 
     const response = await client
-      .post('/checkout')
+      .post(urlFor('checkout.store'))
       .withSession({ store_cart_token: token })
       .header('accept', 'application/json')
       .form(input)

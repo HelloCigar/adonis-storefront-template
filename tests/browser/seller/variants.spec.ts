@@ -14,6 +14,7 @@ test.group('Managing product options and images', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await User.create({
       email: 'variant-ui@example.com',
@@ -44,7 +45,7 @@ test.group('Managing product options and images', (group) => {
       position: 0,
     })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}`)
+    const page = await visit(route('seller.products.show', { id: product.id }))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     await page.getByRole('button', { name: 'Edit options', exact: true }).click()
@@ -149,7 +150,9 @@ test.group('Managing product options and images', (group) => {
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
     await page.setViewportSize({ width: 1280, height: 900 })
 
-    const shop = await visit(`/product/${product.handle}?variantId=${slate.id}`)
+    const shop = await visit(
+      route('products.show', { handle: product.handle }, { qs: { variantId: slate.id } })
+    )
     await shop.getByRole('button', { name: 'Add to cart', exact: true }).waitFor()
     await shop.getByRole('button', { name: 'Add to cart', exact: true }).click()
     await shop.getByRole('button', { name: 'Open cart', exact: true }).click()
@@ -168,6 +171,7 @@ test.group('Managing product options and images', (group) => {
     visit,
     browserContext,
     assert,
+    route,
   }) => {
     const staff = await User.create({
       email: 'variant-new@example.com',
@@ -176,7 +180,7 @@ test.group('Managing product options and images', (group) => {
     })
     const product = await Product.create({ title: 'New mug', handle: 'new-mug', status: 'draft' })
     await browserContext.loginAs(staff)
-    const page = await visit(`/seller/products/${product.id}`)
+    const page = await visit(route('seller.products.show', { id: product.id }))
     await page.getByRole('button', { name: 'Define options', exact: true }).click()
     await page.getByRole('button', { name: 'Add option', exact: true }).click()
     await page.getByLabel('Option 1 name', { exact: true }).fill('Finish')

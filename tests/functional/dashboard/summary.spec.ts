@@ -7,7 +7,7 @@ import { OrderFactory } from '#database/factories/order_factory'
 test.group('Management dashboard', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('reports real captured sales for the selected range', async ({ client, assert }) => {
+  test('reports real captured sales for the selected range', async ({ client, assert, route }) => {
     const staff = await User.create({ email: 'staff@example.com', role: 'staff', password: 'x' })
     await User.create({ email: 'buyer@example.com', role: 'customer', password: 'x' })
     const now = DateTime.utc()
@@ -32,7 +32,7 @@ test.group('Management dashboard', (group) => {
       processedAt: now.minus({ days: 30 }),
     }).create()
 
-    const page = await client.get('/dashboard').loginAs(staff).withInertia()
+    const page = await client.get(route('dashboard')).loginAs(staff).withInertia()
     page.assertStatus(200)
     const { summary } = page.inertiaProps
     assert.equal(summary.currency, 'PHP')
@@ -48,7 +48,7 @@ test.group('Management dashboard', (group) => {
     )
 
     const week = await client
-      .get('/dashboard')
+      .get(route('dashboard'))
       .qs({ start: '2026-01-01', end: '2026-01-07', period: 'monthly' })
       .loginAs(staff)
       .withInertia()
