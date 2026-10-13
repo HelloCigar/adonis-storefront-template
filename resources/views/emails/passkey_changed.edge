@@ -1,25 +1,29 @@
-@emailLayout({ title })
+@emailLayout({ title, brandName })
   <mj-section>
     <mj-column>
       @if(event === 'added')
         <mj-text mj-class="title">A passkey was added</mj-text>
-        <mj-spacer height="30px" />
+        <mj-spacer height="12px" />
         <mj-text mj-class="text">
           The passkey "{{ passkeyName }}" was just added to your {{ brandName }} account. It can be used to sign in without your password.
         </mj-text>
       @else
         <mj-text mj-class="title">A passkey was removed</mj-text>
-        <mj-spacer height="30px" />
+        <mj-spacer height="12px" />
         <mj-text mj-class="text">
           The passkey "{{ passkeyName }}" was just removed from your {{ brandName }} account. It can no longer be used to sign in.
         </mj-text>
       @end
-      <mj-spacer height="15px" />
+      <mj-spacer height="24px" />
       <mj-text mj-class="help">
         If you didn't make this change, your account may be compromised. Reset your password right away and remove any passkeys you don't recognize, since resetting the password does not remove them.
       </mj-text>
-      <mj-spacer height="15px" />
+      <mj-spacer height="32px" />
       <mj-divider />
+      <mj-spacer height="16px" />
+      <mj-text mj-class="footer">
+        You're receiving this email because the passkeys on your {{ brandName }} account changed.
+      </mj-text>
     </mj-column>
   </mj-section>
 @end

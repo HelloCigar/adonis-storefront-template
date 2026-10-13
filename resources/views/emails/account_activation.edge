@@ -1,19 +1,28 @@
-@emailLayout({ title })
+@emailLayout({ title, brandName })
   <mj-section>
     <mj-column>
       <mj-text mj-class="title">Welcome to {{ brandName }} - just one more step!</mj-text>
-      <mj-spacer height="30px" />
+      <mj-spacer height="12px" />
       <mj-text mj-class="text">
         To get started, we need to confirm your email address, so please click this link to finish creating your account:
       </mj-text>
-      <mj-spacer height="15px" />
+      <mj-spacer height="24px" />
       <mj-button href="{{ verificationLink }}">Verify your email address</mj-button>
-      <mj-spacer height="15px" />
+      <mj-spacer height="24px" />
       <mj-text mj-class="help">
         If you didn't request this email, there's no need to worry. You can safely ignore it.
       </mj-text>
-      <mj-spacer height="15px" />
+      <mj-spacer height="24px" />
+      <mj-text mj-class="help">
+        If the button doesn't work, copy this link into your browser:<br />
+        <a href="{{ verificationLink }}" class="link">{{ verificationLink }}</a>
+      </mj-text>
+      <mj-spacer height="32px" />
       <mj-divider />
+      <mj-spacer height="16px" />
+      <mj-text mj-class="footer">
+        You're receiving this email because someone signed up for {{ brandName }} with this address.
+      </mj-text>
     </mj-column>
   </mj-section>
 @end

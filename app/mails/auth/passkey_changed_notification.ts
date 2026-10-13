@@ -24,16 +24,18 @@ export default class PasskeyChangedNotification extends BaseMail {
 
   async prepare() {
     const settings = await StoreSetting.current()
+    const view = {
+      title: this.subject,
+      // Overrides the mailer's deployment-wide brandName with the name the store saved.
+      brandName: settings.effectiveStoreName,
+      event: this.event,
+      passkeyName: this.passkeyName,
+    }
     this.message
       .from(storeEmail, settings.effectiveStoreName)
       .replyTo(settings.effectiveContactEmail)
       .to(this.user.email)
-      .htmlView('emails/passkey_changed', {
-        title: this.subject,
-        // Overrides the mailer's deployment-wide brandName with the name the store saved.
-        brandName: settings.effectiveStoreName,
-        event: this.event,
-        passkeyName: this.passkeyName,
-      })
+      .htmlView('emails/passkey_changed', view)
+      .textView('emails/passkey_changed_text', view)
   }
 }

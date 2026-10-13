@@ -1,0 +1,16 @@
+{{{ brandName }}}
+
+@if(event === 'added')
+A passkey was added
+
+The passkey "{{{ passkeyName }}}" was just added to your {{{ brandName }}} account. It can be used to sign in without your password.
+@else
+A passkey was removed
+
+The passkey "{{{ passkeyName }}}" was just removed from your {{{ brandName }}} account. It can no longer be used to sign in.
+@end
+
+If you didn't make this change, your account may be compromised. Reset your password right away and remove any passkeys you don't recognize, since resetting the password does not remove them.
+
+{{{ brandName }}}
+You're receiving this email because the passkeys on your {{{ brandName }}} account changed.

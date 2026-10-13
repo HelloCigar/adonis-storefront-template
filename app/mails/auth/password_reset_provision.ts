@@ -19,17 +19,19 @@ export default class PasswordResetProvision extends BaseMail {
 
   async prepare() {
     const settings = await StoreSetting.current()
+    const view = {
+      title: this.subject,
+      // Overrides the mailer's deployment-wide brandName with the name the store saved.
+      brandName: settings.effectiveStoreName,
+      passwordResetLink: urlFor('password_resets.show', [this.token.value!.release()], {
+        prefixUrl: appUrl,
+      }),
+    }
     this.message
       .from(storeEmail, settings.effectiveStoreName)
       .replyTo(settings.effectiveContactEmail)
       .to(this.user.email)
-      .htmlView(this.template, {
-        title: this.subject,
-        // Overrides the mailer's deployment-wide brandName with the name the store saved.
-        brandName: settings.effectiveStoreName,
-        passwordResetLink: urlFor('password_resets.show', [this.token.value!.release()], {
-          prefixUrl: appUrl,
-        }),
-      })
+      .htmlView(this.template, view)
+      .textView(`${this.template}_text`, view)
   }
 }
