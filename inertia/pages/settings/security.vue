@@ -4,12 +4,6 @@ import { Form } from '@adonisjs/inertia/vue'
 import PasskeysSettings from '~/components/account/PasskeysSettings.vue'
 
 defineProps<{ passkeys: Data.Account.Passkey[] }>()
-
-const toast = useToast()
-
-function onSaved() {
-  toast.add({ title: 'Password updated', color: 'success', icon: 'i-lucide-check' })
-}
 </script>
 
 <template>
@@ -23,7 +17,6 @@ function onSaved() {
       route="settings.password.update"
       reset-on-success
       class="flex flex-col gap-4 max-w-xs"
-      @success="onSaved"
     >
       <UFormField name="currentPassword" label="Current password" :error="errors.currentPassword">
         <UInput
