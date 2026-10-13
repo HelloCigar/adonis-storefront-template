@@ -1,4 +1,5 @@
 import { BaseTransformer } from '@adonisjs/core/transformers'
+import type { DateTime } from 'luxon'
 import type Order from '#models/checkout/order'
 import OrderAddressTransformer from '#transformers/checkout/order_address_transformer'
 import OrderLineItemTransformer from '#transformers/checkout/order_line_item_transformer'
@@ -72,14 +73,76 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
         state: notification.state,
         lastError: notification.lastError,
       })),
-      activities: (this.resource.activities ?? []).map((activity) => ({
-        id: activity.id,
-        event: activity.event,
-        createdAt: activity.createdAt,
-        actorId: activity.actorId,
-        actorName: activity.actor ? activity.actor.fullName || activity.actor.email : null,
-        details: activity.details,
-      })),
+      timeline: this.timeline(),
     }
   }
+
+  /** Activity events and customer emails as one history, newest first. */
+  private timeline() {
+    const events = (this.resource.activities ?? []).map((activity) => ({
+      id: `activity:${activity.id}`,
+      type: 'event' as const,
+      title: activityTitles[activity.event] ?? humanize(activity.event),
+      at: moment(activity.createdAt),
+      actor: activity.actor
+        ? activity.actor.fullName || activity.actor.email
+        : activity.actorId
+          ? 'Staff member'
+          : null,
+      details: (activity.details ?? null) as Record<string, unknown> | null,
+      email: null,
+    }))
+    const emails = (this.resource.notifications ?? []).map((notification) => ({
+      id: `email:${notification.id}`,
+      type: 'email' as const,
+      title: `${humanize(notification.kind)} email`,
+      at: moment(notification.sentAt ?? notification.createdAt),
+      actor: null,
+      details: null,
+      email: {
+        notificationId: notification.id,
+        kind: notification.kind,
+        state: notification.state,
+        lastError: notification.lastError,
+      },
+    }))
+    // Times are stored to the second; ULID ids keep creation order within the same second.
+    const ulid = (id: string) => id.slice(id.indexOf(':') + 1)
+    return [...events, ...emails].sort((a, b) =>
+      a.at.raw === b.at.raw
+        ? ulid(b.id).localeCompare(ulid(a.id))
+        : b.at.raw.localeCompare(a.at.raw)
+    )
+  }
 }
+
+const activityTitles: Record<string, string> = {
+  'order.created': 'Order placed',
+  'order.submitted': 'Order placed',
+  'order.confirmed': 'Order confirmed',
+  'order.cancelled': 'Order cancelled',
+  'shipment.packing': 'Packing started',
+  'shipment.shipped': 'Shipment recorded',
+  'shipment.delivered': 'Delivery recorded',
+  'notification.retry_requested': 'Customer update retry requested',
+  'payment.accepted': 'Payment confirmed',
+  'refund.requested': 'Refund requested',
+  'refund.succeeded': 'Refund confirmed',
+  'refund.failed': 'Refund failed',
+  'order.cancellation_requested': 'Cancellation requested',
+}
+
+const humanize = (value: string) =>
+  value
+    .replaceAll('_', ' ')
+    .replaceAll('.', ' ')
+    .replace(/^./, (letter) => letter.toUpperCase())
+
+/** Store time is Philippine time, matching how the rest of the order page shows dates. */
+const moment = (value: DateTime) => ({
+  raw: value.toUTC().toISO()!,
+  formatted: value
+    .setZone('Asia/Manila')
+    .setLocale('en-PH')
+    .toLocaleString({ dateStyle: 'medium', timeStyle: 'short' }),
+})

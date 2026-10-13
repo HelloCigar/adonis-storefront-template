@@ -188,7 +188,11 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
     await page.screenshot({ path: '.impeccable/review/recovery-mobile.png', fullPage: true })
-    await page.getByRole('button', { name: 'Retry receipt', exact: true }).click()
+    await page
+      .getByRole('alert')
+      .filter({ has: page.getByText('Receipt email failed', { exact: true }) })
+      .getByRole('button', { name: 'Retry receipt email', exact: true })
+      .click()
     await page.getByText('Recovery requested', { exact: true }).waitFor()
     await notification.refresh()
     assert.equal(notification.state, 'pending')

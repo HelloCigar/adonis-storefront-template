@@ -22,7 +22,12 @@ const links = computed(
       },
       ...(page.props.permissions.manageStoreSettings
         ? [
-            { label: 'Store', icon: 'i-lucide-store', to: urlFor('settings.store.edit') },
+            {
+              label: 'Store',
+              icon: 'i-lucide-store',
+              to: urlFor('settings.store.edit'),
+              exact: true,
+            },
             {
               label: 'Policies',
               icon: 'i-lucide-scroll-text',
