@@ -176,8 +176,9 @@ test.group('Delivery confirmation', (group) => {
     assert.equal(delivered.inertiaProps.order.shipment.state, 'delivered')
     assert.isNotNull(delivered.inertiaProps.order.shipment.deliveredAt)
     assert.isTrue(
-      delivered.inertiaProps.order.activities.some(
-        (activity: { event: string }) => activity.event === 'shipment.delivered'
+      delivered.inertiaProps.order.timeline.some(
+        (entry: { type: string; title: string }) =>
+          entry.type === 'event' && entry.title === 'Delivery recorded'
       )
     )
     assert.isFalse(
