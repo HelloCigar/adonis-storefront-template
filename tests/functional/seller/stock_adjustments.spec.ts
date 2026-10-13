@@ -1,28 +1,11 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
-import Product from '#models/catalog/product'
-import type ProductVariant from '#models/catalog/product_variant'
 import StockAdjustment from '#models/catalog/stock_adjustment'
 import db from '@adonisjs/lucid/services/db'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { staff, product, variant, stockUrl } from '#tests/helpers/stock_adjustments'
 
-const staff = () =>
-  User.create({ email: 'stock-staff@example.com', password: 'secret-password', role: 'staff' })
-const product = (handle = 'stock-product') =>
-  Product.create({ title: 'Stock product', handle, status: 'draft' })
-const variant = (item: Product, values: Partial<ProductVariant> = {}) =>
-  item.related('variants').create({
-    title: 'Default',
-    priceAmount: 250,
-    currencyCode: 'PHP',
-    inventoryQuantity: 10,
-    availableForSale: true,
-    position: 0,
-    ...values,
-  })
-const stockUrl = (item: Product, row: ProductVariant) =>
-  urlFor('seller.stock_adjustments.index', { productId: item.id, variantId: row.id })
 const variantPayload = {
   title: 'Variant',
   sku: null,

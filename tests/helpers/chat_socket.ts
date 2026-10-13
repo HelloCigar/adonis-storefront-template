@@ -11,13 +11,8 @@ import ChatOrderRoomHandler, { type ChatReply } from '#sockets/chat/order_room_h
 import ChatUserMiddleware from '#middleware/chat/user_middleware'
 import env from '#start/env'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-interface OpenOptions {
-  cookie?: string
-  auth?: Record<string, unknown>
-  origin?: string
-  transport?: 'polling' | 'websocket'
-}
+import type { Group } from '@japa/runner/core'
+import type { ChatOpenOptions, ChatServer } from '#tests/helpers/types'
 
 /**
  * A real chat server wired like the provider: session authentication first, then the
@@ -38,7 +33,7 @@ export async function startChatServer() {
   const sessions: { sessionId: string; store: SessionStoreContract; flashKey: string }[] = []
   const defaultOrigin = env.get('APP_URL') ? new URL(env.get('APP_URL')!).origin : url
 
-  function open(options: OpenOptions = {}) {
+  function open(options: ChatOpenOptions = {}) {
     const socket = io(url, {
       auth: options.auth ?? {},
       extraHeaders: { Cookie: options.cookie ?? '', Origin: options.origin ?? defaultOrigin },
@@ -103,7 +98,7 @@ export async function startChatServer() {
       return { user: account, cookie, session }
     },
 
-    connect(options: OpenOptions = {}) {
+    connect(options: ChatOpenOptions = {}) {
       const socket = open(options)
       return new Promise<Error | undefined>((resolve) => {
         socket.once('connect', () => resolve(undefined))
@@ -125,7 +120,8 @@ export async function startChatServer() {
       for (const socket of sockets.splice(0)) socket.disconnect()
       for (const session of sessions.splice(0)) await session.store.destroy(session.sessionId)
       // Wait for the server to notice, so the next test starts with no sockets.
-      for (let attempt = 0; socketServer.of('/').sockets.size && attempt < 40; attempt++) {
+      const deadline = Date.now() + 1000
+      while (socketServer.of('/').sockets.size && Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, 25))
       }
     },
@@ -136,8 +132,6 @@ export async function startChatServer() {
     },
   }
 }
-
-export type ChatServer = Awaited<ReturnType<typeof startChatServer>>
 
 /** Emits with an acknowledgement and resolves with the `{ ok, data | error }` reply. */
 export function request<T>(socket: Socket, event: string, payload?: unknown) {
@@ -161,4 +155,28 @@ export function nextEvent<T>(socket: Socket, event: string, timeoutMs = 300) {
     }
     socket.once(event, listener)
   })
+}
+
+/**
+ * One chat server for the whole group: started before its first test and closed after its
+ * last, with every socket and login session dropped after each test.
+ */
+export function useChatServer(group: Group) {
+  const running: { server?: ChatServer } = {}
+  const server = () => {
+    if (!running.server) throw new Error('The chat server starts in the group setup')
+    return running.server
+  }
+  group.setup(async () => {
+    running.server = await startChatServer()
+  })
+  group.teardown(() => server().close())
+  group.each.teardown(() => server().disconnectAll())
+
+  return {
+    identities: () => server().identities(),
+    login: ((...args) => server().login(...args)) as ChatServer['login'],
+    connect: ((...args) => server().connect(...args)) as ChatServer['connect'],
+    connected: (cookie: string) => server().connected(cookie),
+  }
 }

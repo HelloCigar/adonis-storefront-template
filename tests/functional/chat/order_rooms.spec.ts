@@ -1,56 +1,32 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import type { ApiClient } from '@japa/api-client'
 import User from '#models/account/user'
 import OrderMessage from '#models/chat/order_message'
 import { OrderFactory } from '#database/factories/order_factory'
-import { nextEvent, request, startChatServer, type ChatServer } from '#tests/helpers/chat_socket'
-
-interface Message {
-  id: string
-  roomKey: string
-  body: string
-  senderName: string
-  senderRole: 'customer' | 'staff'
-  automated: boolean
-  read: boolean
-}
+import { nextEvent, request, useChatServer } from '#tests/helpers/chat_socket'
+import type { ChatRoomMessage } from '#tests/helpers/types'
+import { roomScenario } from '#tests/helpers/order_chat'
 
 test.group('Order chat rooms', (group) => {
-  let chat: ChatServer
-
-  group.setup(async () => {
-    chat = await startChatServer()
-  })
-  group.teardown(() => chat.close())
+  const chat = useChatServer(group)
   group.each.setup(() => testUtils.db().truncate())
-  group.each.teardown(() => chat.disconnectAll())
-
-  async function scenario(client: ApiClient) {
-    const customer = await chat.login(client, 'customer')
-    const staff = await chat.login(client, 'staff')
-    const order = await OrderFactory.merge({
-      userId: customer.user.id,
-      lifecycleState: 'confirmed',
-    }).create()
-    const customerSocket = await chat.connected(customer.cookie)
-    const staffSocket = await chat.connected(staff.cookie)
-    return { customer, staff, order, customerSocket, staffSocket, roomKey: `order:${order.id}` }
-  }
 
   test('customer and staff exchange stored messages on a confirmed order', async ({
     client,
     assert,
   }) => {
-    const { customer, staff, order, customerSocket, staffSocket, roomKey } = await scenario(client)
+    const { customer, staff, order, customerSocket, staffSocket, roomKey } = await roomScenario(
+      chat,
+      client
+    )
     const customerJoin = await request<{ roomKey: string }>(customerSocket, 'order:join', {
       roomKey,
     })
     const staffJoin = await request<{ roomKey: string }>(staffSocket, 'order:join', { roomKey })
     assert.isTrue(customerJoin.ok && staffJoin.ok)
 
-    const delivered = nextEvent<Message>(staffSocket, 'message:new', 2000)
-    const sent = await request<Message>(customerSocket, 'message:send', {
+    const delivered = nextEvent<ChatRoomMessage>(staffSocket, 'message:new', 2000)
+    const sent = await request<ChatRoomMessage>(customerSocket, 'message:send', {
       roomKey,
       body: '  Where is my parcel?  ',
       senderRole: 'staff',
@@ -67,7 +43,7 @@ test.group('Order chat rooms', (group) => {
     const received = await delivered
     assert.equal(received?.id, sent.data.id)
 
-    const reply = await request<Message>(staffSocket, 'message:send', {
+    const reply = await request<ChatRoomMessage>(staffSocket, 'message:send', {
       roomKey,
       body: 'It ships today.',
     })
@@ -92,7 +68,7 @@ test.group('Order chat rooms', (group) => {
     client,
     assert,
   }) => {
-    const { customerSocket, staffSocket } = await scenario(client)
+    const { customerSocket, staffSocket } = await roomScenario(chat, client)
     const stranger = await User.create({
       email: 'other@example.com',
       password: 'secret-password',
@@ -119,7 +95,7 @@ test.group('Order chat rooms', (group) => {
   })
 
   test('a room key is not enough to read or write without joining', async ({ client, assert }) => {
-    const { staffSocket, roomKey } = await scenario(client)
+    const { staffSocket, roomKey } = await roomScenario(chat, client)
     await request(staffSocket, 'order:join', { roomKey })
     await request(staffSocket, 'message:send', { roomKey, body: 'Private note' })
 
@@ -141,7 +117,7 @@ test.group('Order chat rooms', (group) => {
   })
 
   test('messages close when the order leaves the confirmed state', async ({ client, assert }) => {
-    const { order, customerSocket, staffSocket, roomKey } = await scenario(client)
+    const { order, customerSocket, staffSocket, roomKey } = await roomScenario(chat, client)
     await request(customerSocket, 'order:join', { roomKey })
     await request(staffSocket, 'order:join', { roomKey })
 
@@ -162,7 +138,7 @@ test.group('Order chat rooms', (group) => {
   })
 
   test('messages must have text within the length limit', async ({ client, assert }) => {
-    const { customerSocket, roomKey } = await scenario(client)
+    const { customerSocket, roomKey } = await roomScenario(chat, client)
     await request(customerSocket, 'order:join', { roomKey })
     for (const body of ['   ', 42, 'x'.repeat(2001)]) {
       const sent = await request(customerSocket, 'message:send', { roomKey, body })
@@ -176,12 +152,14 @@ test.group('Order chat rooms', (group) => {
     client,
     assert,
   }) => {
-    const { order, customerSocket, staffSocket, roomKey } = await scenario(client)
+    const { order, customerSocket, staffSocket, roomKey } = await roomScenario(chat, client)
     await request(customerSocket, 'order:join', { roomKey })
     for (const body of ['First', 'Second'])
       await request(customerSocket, 'message:send', { roomKey, body })
 
-    const joined = await request<{ messages: Message[] }>(staffSocket, 'order:join', { roomKey })
+    const joined = await request<{ messages: ChatRoomMessage[] }>(staffSocket, 'order:join', {
+      roomKey,
+    })
     assert.isTrue(joined.ok)
     if (!joined.ok) return
     assert.deepEqual(
@@ -204,7 +182,7 @@ test.group('Order chat rooms', (group) => {
     client,
     assert,
   }) => {
-    const { customerSocket, staffSocket, roomKey } = await scenario(client)
+    const { customerSocket, staffSocket, roomKey } = await roomScenario(chat, client)
     await request(customerSocket, 'order:join', { roomKey })
     await request(staffSocket, 'order:join', { roomKey })
 

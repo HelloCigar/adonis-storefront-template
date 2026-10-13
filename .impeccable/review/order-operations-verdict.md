@@ -31,4 +31,4 @@ Action-first hierarchy, explicit blocker explanations, separate customer-update 
 - Impeccable detector: no findings on changed targets.
 - No shipping raster assets were introduced or replaced.
 
-Screenshot data is synthetic browser-test data. Captures: `desktop.png`, `mobile.png`, `recovery-desktop.png`, `recovery-mobile.png`, and supplemental `details-desktop.png` in this directory. The dashboard scrolls internally; the supplemental capture documents the lower record section.
+Screenshot data was synthetic browser-test data. The browser tests no longer write screenshots, so the captures this review used (`desktop.png`, `mobile.png`, `recovery-*.png`, `details-desktop.png`) have been removed.

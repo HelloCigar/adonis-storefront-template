@@ -10,30 +10,8 @@ import { newUlid } from '#models/shared/with_ulid_primary_key'
 import { optionCombinationKey } from '#services/catalog/options_service'
 import { inferLegacyOptionDefinitions } from '#database/migrations/1791150000000_add_product_options'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { staff, product, defaults, payload } from '#tests/helpers/variants'
 
-const staff = () =>
-  User.create({ email: 'variants-staff@example.com', password: 'secret-password', role: 'staff' })
-const product = (optionDefinitions: Product['optionDefinitions'] = []) =>
-  Product.create({
-    title: 'Options product',
-    handle: 'options-product',
-    status: 'draft',
-    optionDefinitions,
-  })
-const defaults = {
-  priceAmount: 250,
-  compareAtPriceAmount: null,
-  currencyCode: 'PHP',
-  inventoryQuantity: 8,
-  availableForSale: true,
-}
-const payload = (options: { name: string; value: string }[] = []) => ({
-  ...defaults,
-  title: 'Variant',
-  sku: null,
-  featuredMediaId: null,
-  options,
-})
 const colorDefinitions = [{ name: 'Color', values: ['Blue', 'Red'] }]
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/vXcAAAAASUVORK5CYII=',

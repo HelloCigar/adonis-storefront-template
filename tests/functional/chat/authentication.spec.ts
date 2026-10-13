@@ -1,19 +1,12 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import { startChatServer, type ChatServer } from '#tests/helpers/chat_socket'
+import { useChatServer } from '#tests/helpers/chat_socket'
 
 test.group('Chat session authentication', (group) => {
-  let chat: ChatServer
-
-  group.setup(async () => {
-    chat = await startChatServer()
-  })
-  group.teardown(() => chat.close())
+  const chat = useChatServer(group)
   group.each.setup(() => testUtils.db().truncate())
-  group.each.teardown(() => chat.disconnectAll())
 
-  const login: ChatServer['login'] = (...args) => chat.login(...args)
-  const connect: ChatServer['connect'] = (...args) => chat.connect(...args)
+  const { login, connect } = chat
 
   test('rejects guests even when they supply a forged user and token', async ({ assert }) => {
     const error = await connect({ auth: { token: 'forged', user: { id: 'admin', role: 'admin' } } })

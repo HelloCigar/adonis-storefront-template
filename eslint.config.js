@@ -1,5 +1,6 @@
 import { configApp } from '@adonisjs/eslint-config'
 import { vue } from '@adonisjs/eslint-config/vue'
+import { astGrep } from '@adonisjs/eslint-ast-grep'
 
 export default configApp(
   {
@@ -26,5 +27,6 @@ export default configApp(
     rules: {
       'prettier/prettier': 'off',
     },
-  }
+  },
+  ...astGrep('@adonisplus/flow/rules')
 )

@@ -3,9 +3,8 @@ import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
 import { QueueManager } from '@adonisjs/queue'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import { useFakeProvider } from '#tests/helpers/payments'
 import InventoryService from '#services/catalog/inventory_service'
 import RecoveryService from '#services/payments/recovery_service'
 import SettlementService from '#services/payments/settlement_service'
@@ -17,19 +16,14 @@ import { ProductVariantFactory } from '#database/factories/product_variant_facto
 import { UserFactory } from '#database/factories/user_factory'
 import Notification from '#models/checkout/notification'
 import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
-import { mkdir } from 'node:fs/promises'
 import { urlFor } from '@adonisjs/core/services/url_builder'
 
 test.group('Guest checkout and store fulfillment', (group) => {
-  let adapter: FakePaymentAdapter
   group.each.setup(async () => {
     const truncate = await testUtils.db().truncate()
-    adapter = new FakePaymentAdapter('browser-sandbox')
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
     QueueManager.fake()
     return async () => {
       QueueManager.restore()
-      app.container.restore(PaymentService)
       const inventory = await app.container.make(InventoryService)
       const loadedStockReservation1 = await StockReservation.query().where('state', 'reserved')
       for (const orderId of new Set(loadedStockReservation1.map((row) => row.orderId)))
@@ -44,6 +38,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('browser-sandbox')])
     const variant = await ProductVariantFactory.merge({
       priceAmount: 499,
       inventoryQuantity: 2,
@@ -103,12 +98,8 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page.goto(route('seller.orders.show', { id: order.id }))
     await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
     await page.waitForLoadState('networkidle')
-    await mkdir('.impeccable/review', { recursive: true })
-    await page.setViewportSize({ width: 1280, height: 900 })
-    await page.screenshot({ path: '.impeccable/review/desktop.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
-    await page.screenshot({ path: '.impeccable/review/mobile.png', fullPage: true })
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.getByRole('button', { name: 'Start packing', exact: true }).click()
     await page.getByRole('heading', { name: 'Add tracking', exact: true }).waitFor()
@@ -142,10 +133,6 @@ test.group('Guest checkout and store fulfillment', (group) => {
           !request.navigation
       )
     )
-    await page
-      .getByRole('heading', { name: 'Order contents', exact: true })
-      .scrollIntoViewIfNeeded()
-    await page.screenshot({ path: '.impeccable/review/details-desktop.png', fullPage: true })
   })
 
   test('staff see dispatch blockers and can recover checkout and customer updates', async ({
@@ -154,6 +141,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     assert,
     route,
   }) => {
+    useFakeProvider([new FakePaymentAdapter('browser-sandbox')])
     const { order, attempt } = await simulatedCheckout()
     order.lifecycleState = 'review_required'
     order.reviewReason = 'Verify the original checkout before dispatch.'
@@ -174,7 +162,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     await page
       .getByRole('heading', { name: 'Reconcile the payment checkout', exact: true })
       .waitFor()
-    await page.getByText(order.reviewReason).waitFor()
+    await page.getByText(order.reviewReason, { exact: false }).waitFor()
     assert.equal(await page.getByRole('button', { name: 'Start packing', exact: true }).count(), 0)
     assert.equal(
       await page.getByRole('button', { name: 'Mark as shipped', exact: true }).count(),
@@ -182,12 +170,8 @@ test.group('Guest checkout and store fulfillment', (group) => {
     )
     await page.getByRole('button', { name: 'Recheck payment with provider', exact: true }).waitFor()
     await page.waitForLoadState('networkidle')
-    await mkdir('.impeccable/review', { recursive: true })
-    await page.setViewportSize({ width: 1280, height: 900 })
-    await page.screenshot({ path: '.impeccable/review/recovery-desktop.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
-    await page.screenshot({ path: '.impeccable/review/recovery-mobile.png', fullPage: true })
     await page.getByRole('button', { name: 'Retry receipt', exact: true }).click()
     await page.getByText('Recovery requested', { exact: true }).waitFor()
     await notification.refresh()
@@ -215,6 +199,7 @@ test.group('Guest checkout and store fulfillment', (group) => {
     assert,
     route,
   }) => {
+    useFakeProvider([new FakePaymentAdapter('browser-sandbox')])
     const customer = await UserFactory.create()
     await browserContext.loginAs(customer)
     const variant = await ProductVariantFactory.merge({

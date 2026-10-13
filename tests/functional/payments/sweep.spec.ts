@@ -16,13 +16,9 @@ import {
   runSweep,
   sendWebhook,
   useFakeProvider,
+  waitUntilStale,
 } from '#tests/helpers/payments'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-/** Moves the clock past every sweep's one-minute staleness threshold. */
-function waitUntilStale() {
-  timeTravel(new Date(Date.now() + 5 * 60_000))
-}
 
 test.group('Payment operations sweep', (group) => {
   group.each.setup(() => resetCheckoutState())

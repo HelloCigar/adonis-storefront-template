@@ -1,15 +1,16 @@
 import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import type User from '#models/account/user'
-import type Product from '#models/catalog/product'
 import ProductReview from '#models/catalog/product_review'
-import Shipment from '#models/checkout/shipment'
-import { OrderFactory } from '#database/factories/order_factory'
-import { OrderLineItemFactory } from '#database/factories/order_line_item_factory'
-import { ProductFactory } from '#database/factories/product_factory'
-import { UserFactory } from '#database/factories/user_factory'
-import { urlFor } from '@adonisjs/core/services/url_builder'
+import {
+  account,
+  staffMember,
+  publishedProduct,
+  review,
+  deliveredOrder,
+  reviewUrl,
+  ids,
+} from '#tests/helpers/seller_reviews'
 
 const sellerReviewKeys = [
   'id',
@@ -25,40 +26,6 @@ const sellerReviewKeys = [
   'createdAt',
   'updatedAt',
 ]
-
-const account = (values: Partial<User> = {}) => UserFactory.merge(values).create()
-const staffMember = () => account({ role: 'staff' })
-const publishedProduct = (values: Partial<Product> = {}) =>
-  ProductFactory.apply('published').merge(values).create()
-
-/** A stored review, written by a fresh account unless `userId` is given. */
-async function review(product: Product, values: Partial<ProductReview> = {}) {
-  let userId = values.userId
-  if (!userId) {
-    const author = await account()
-    userId = author.id
-  }
-  return ProductReview.create({
-    rating: 4,
-    title: 'Nice',
-    body: 'Does the job.',
-    status: 'pending',
-    ...values,
-    productId: product.id,
-    userId,
-  })
-}
-
-async function deliveredOrder(user: User, product: Product) {
-  const order = await OrderFactory.merge({ userId: user.id }).create()
-  await OrderLineItemFactory.merge({ orderId: order.id, productId: product.id }).create()
-  await Shipment.create({ orderId: order.id, state: 'delivered' })
-  return order
-}
-
-const reviewUrl = (row: ProductReview | { id: string }) =>
-  urlFor('seller.reviews.update', { id: row.id })
-const ids = (items: { id: string }[]) => items.map((item) => item.id)
 
 test.group('Seller reviews | access', (group) => {
   group.each.setup(() => testUtils.db().truncate())

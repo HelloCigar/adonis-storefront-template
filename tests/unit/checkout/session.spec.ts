@@ -1,19 +1,7 @@
 import { test } from '@japa/runner'
 import checkout from '#config/checkout'
 import { CheckoutSession } from '#middleware/checkout/checkout_session_middleware'
-
-function memorySession() {
-  const values: Record<string, unknown> = {}
-  return {
-    values,
-    store: {
-      get: (key: string) => values[key],
-      put: (key: string, value: unknown) => {
-        values[key] = value
-      },
-    } as ConstructorParameters<typeof CheckoutSession>[0],
-  }
-}
+import { memorySession } from '#tests/helpers/checkout_session'
 
 test.group('Checkout session', () => {
   test('keeps only the newest grants and refreshes a reopened order', ({ assert }) => {

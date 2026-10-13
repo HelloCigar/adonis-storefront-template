@@ -6,15 +6,7 @@ import StorePolicy from '#models/settings/store_policy'
 import StoreSetting from '#models/settings/store_setting'
 import RichTextService from '#services/content/rich_text_service'
 import type { StorePolicyHandle } from '#values/store_policy_handle'
-
-type SetupStep = NonNullable<StoreSetting['nextSetupStep']>
-
-type StoreSettingsOptions = {
-  storeName?: string
-  contactEmail?: string
-  shippingMinor?: number
-  savedSteps?: SetupStep[]
-}
+import type { StoreSettingsOptions } from '#tests/helpers/types'
 
 const stampColumn = {
   identity: 'identitySavedAt',

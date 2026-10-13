@@ -5,7 +5,6 @@ import Product from '#models/catalog/product'
 import CartLine from '#models/checkout/cart_line'
 import { ProductFactory } from '#database/factories/product_factory'
 import { createFixtureImage } from '#database/fixtures/image'
-import { mkdir } from 'node:fs/promises'
 
 test.group('Managing product options and images', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -63,12 +62,6 @@ test.group('Managing product options and images', (group) => {
     await generation.getByLabel('Price', { exact: true }).fill('899')
     await generation.getByLabel('Stock per variant', { exact: true }).fill('12')
     await page.setViewportSize({ width: 1280, height: 900 })
-    await mkdir('.impeccable/review', { recursive: true })
-    await page.screenshot({
-      path: '.impeccable/review/variants-generation.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
     await generation.getByRole('button', { name: 'Create 5 variants', exact: true }).click()
     await generation.waitFor({ state: 'detached' })
     const variants = await product.related('variants').query().orderBy('position')
@@ -91,11 +84,6 @@ test.group('Managing product options and images', (group) => {
     await imageChoice.focus()
     await imageChoice.press('Space')
     assert.isTrue(await imageChoice.isChecked())
-    await page.screenshot({
-      path: '.impeccable/review/variants-image-picker.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
     await editing.getByRole('button', { name: 'Save', exact: true }).click()
     await editing.waitFor({ state: 'detached' })
     await slate.refresh()
@@ -115,17 +103,7 @@ test.group('Managing product options and images', (group) => {
     await generation.getByRole('button', { name: 'Cancel', exact: true }).click()
     await generation.waitFor({ state: 'detached' })
     await page.getByRole('heading', { name: 'Canvas tote', exact: true }).waitFor()
-    await page.screenshot({
-      path: '.impeccable/review/variants-desktop.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.screenshot({
-      path: '.impeccable/review/variants-mobile.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
     const pageWidth = await page.locator('html').evaluate((element) => element.scrollWidth)
     assert.isAtMost(pageWidth, 390)
     await page.setViewportSize({ width: 1280, height: 900 })
@@ -133,22 +111,10 @@ test.group('Managing product options and images', (group) => {
     await page.getByRole('button', { name: 'Remove option 2', exact: true }).click()
     await page.getByRole('button', { name: 'Save options', exact: true }).click()
     await page.getByText(/Removing Size would give/).waitFor()
-    await page.screenshot({
-      path: '.impeccable/review/variants-removal-error-desktop.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.screenshot({
-      path: '.impeccable/review/variants-removal-error-mobile.png',
-      fullPage: true,
-      animations: 'disabled',
-    })
     await product.refresh()
     assert.lengthOf(product.optionDefinitions, 2)
     assert.lengthOf(await product.related('variants').query(), 6)
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
-    await page.setViewportSize({ width: 1280, height: 900 })
 
     const shop = await visit(
       route('products.show', { handle: product.handle }, { qs: { variantId: slate.id } })

@@ -115,7 +115,6 @@ test.group('Store management pages', (group) => {
       requests.filter((request) => request.inertia !== 'true' || request.navigation),
       []
     )
-    await page.screenshot({ path: 'tmp/seller-products.png', fullPage: true })
   })
 
   test('shows validation, searches and paginates users, and creates a collection', async ({
@@ -140,7 +139,6 @@ test.group('Store management pages', (group) => {
     await browserContext.loginAs(seller)
     const page = await visit(route('seller.users.index'))
     await page.getByRole('button', { name: /next page/i }).click()
-    await page.screenshot({ path: 'tmp/seller-users-page2.png', fullPage: true })
     await page.getByRole('cell', { name: 'Owner', exact: true }).waitFor()
     await page.getByRole('textbox', { name: 'Search users', exact: true }).fill('buyer11')
     await page.getByRole('cell', { name: 'buyer11@example.com', exact: true }).waitFor()
@@ -160,7 +158,6 @@ test.group('Store management pages', (group) => {
     await page.getByLabel('Handle', { exact: true }).fill('desk-friends')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
     await page.getByRole('cell', { name: 'Desk Friends', exact: true }).waitFor()
-    await page.screenshot({ path: 'tmp/seller-collections.png', fullPage: true })
   })
 
   test('opens order details and saves fulfillment changes', async ({
@@ -220,10 +217,8 @@ test.group('Store management pages', (group) => {
     await clearedNote
     await order.refresh()
     assert.isNull(order.note)
-    await page.screenshot({ path: 'tmp/seller-order.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
-    await page.screenshot({ path: 'tmp/seller-order-mobile.png', fullPage: true })
   })
 
   test('admins see store navigation and can create admin accounts', async ({
@@ -256,7 +251,6 @@ test.group('Store management pages', (group) => {
     await page.getByRole('button', { name: /Actions for Administrator/ }).click()
     await page.getByRole('menuitem', { name: 'Edit user', exact: true }).click()
     await page.assertDisabled(page.getByLabel('Role', { exact: true }))
-    await page.screenshot({ path: 'tmp/seller-admin-user.png', fullPage: true })
   })
 
   test('staff see catalog navigation but global user management stays hidden', async ({
@@ -280,10 +274,8 @@ test.group('Store management pages', (group) => {
     assert.equal(await page.getByRole('link', { name: 'Users', exact: true }).count(), 0)
     assert.equal(await page.getByRole('link', { name: 'Members', exact: true }).count(), 0)
     await page.getByRole('link', { name: 'Store management', exact: true }).waitFor()
-    await page.screenshot({ path: 'tmp/store-staff-desktop.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
-    await page.screenshot({ path: 'tmp/store-staff-mobile.png', fullPage: true })
   })
 
   test('customers use storefront account settings and can save their profile', async ({
@@ -310,9 +302,7 @@ test.group('Store management pages', (group) => {
     await customer.refresh()
     assert.equal(customer.fullName, 'Updated Customer')
     assert.equal(customer.role, 'customer')
-    await page.screenshot({ path: 'tmp/customer-settings-desktop.png', fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.screenshot({ path: 'tmp/customer-settings-mobile.png', fullPage: true })
     assert.isTrue(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
     await page.getByRole('link', { name: 'Security', exact: true }).click()
     await page.getByLabel('Current password', { exact: true }).waitFor()

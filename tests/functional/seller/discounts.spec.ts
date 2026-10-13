@@ -3,14 +3,9 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 import DiscountCode from '#models/checkout/discount_code'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { storeStaff } from '#tests/helpers/accounts'
+import { countDiscounts } from '#tests/helpers/seller_discounts'
 
-const staff = () =>
-  User.create({
-    fullName: 'Store Staff',
-    email: 'staff@example.com',
-    password: 'secret-password',
-    role: 'staff',
-  })
 const percentPayload = {
   code: 'spring10',
   description: 'Spring sale',
@@ -31,10 +26,6 @@ const fixedPayload = {
   percentOff: null,
   amountOff: 100.5,
 }
-const countDiscounts = async () => {
-  const codes = await DiscountCode.all()
-  return codes.length
-}
 
 test.group('Seller discounts', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -46,7 +37,7 @@ test.group('Seller discounts', (group) => {
     })
     await customer.refresh()
     assert.equal(customer.role, 'customer')
-    const owner = await staff()
+    const owner = await storeStaff()
 
     const guest = await client.get(route('seller.discounts.index')).redirects(0)
     guest.assertStatus(302)
@@ -74,7 +65,7 @@ test.group('Seller discounts', (group) => {
   })
 
   test('staff create a code stored upper case in centavos', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
 
     const percent = await client
       .post(urlFor('seller.discounts.store'))
@@ -119,7 +110,7 @@ test.group('Seller discounts', (group) => {
     assert,
     route,
   }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     await DiscountCode.create({
       code: 'SPRING10',
       kind: 'percentage',
@@ -172,7 +163,7 @@ test.group('Seller discounts', (group) => {
   })
 
   test('staff update a code and delete only unused codes', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const discount = await DiscountCode.create({
       code: 'SPRING10',
       kind: 'percentage',

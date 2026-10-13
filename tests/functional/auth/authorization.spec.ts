@@ -3,7 +3,7 @@ import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import ace from '@adonisjs/core/services/ace'
 import db from '@adonisjs/lucid/services/db'
-import User, { type UserRole } from '#models/account/user'
+import User from '#models/account/user'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
 import MakeAdmin from '../../../commands/make_admin.js'
@@ -12,9 +12,7 @@ import MakeSeller from '../../../commands/make_seller.js'
 import StaffRoleMigration from '#database/migrations/1791000000000_use_staff_role_for_single_store'
 import { finishedStoreSetup } from '#tests/helpers/store_setup'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-const account = (email: string, role: UserRole = 'customer') =>
-  User.create({ email, role, fullName: email, password: 'secret-password' })
+import { account } from '#tests/helpers/accounts'
 
 test.group('Single store authorization', (group) => {
   group.each.setup(() => testUtils.db().truncate())

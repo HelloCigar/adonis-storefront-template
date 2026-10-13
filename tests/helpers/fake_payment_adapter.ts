@@ -9,6 +9,7 @@ import type {
   WebhookInput,
 } from '#services/payments/payment_service'
 import PaymentException from '#exceptions/payment_exception'
+import type { FakeWebhookEvent, HeldCall } from '#tests/helpers/types'
 
 export default class FakePaymentAdapter implements PaymentAdapter {
   readonly liveMode = false
@@ -112,12 +113,14 @@ export default class FakePaymentAdapter implements PaymentAdapter {
    * delivers the answer read at that moment and `fail()` loses it as a timeout.
    */
   holdNextCall(call: HeldCall) {
-    let reached!: () => void
-    let settle!: (outcome: 'respond' | 'fail') => void
-    const inFlight = new Promise<void>((resolve) => (reached = resolve))
-    const outcome = new Promise<'respond' | 'fail'>((resolve) => (settle = resolve))
-    this.#held = { call, reached, outcome }
-    return { reached: inFlight, respond: () => settle('respond'), fail: () => settle('fail') }
+    const inFlight = Promise.withResolvers<void>()
+    const outcome = Promise.withResolvers<'respond' | 'fail'>()
+    this.#held = { call, reached: inFlight.resolve, outcome: outcome.promise }
+    return {
+      reached: inFlight.promise,
+      respond: () => outcome.resolve('respond'),
+      fail: () => outcome.resolve('fail'),
+    }
   }
 
   async #holdIfAsked<T>(call: HeldCall, response: T) {
@@ -196,16 +199,6 @@ export default class FakePaymentAdapter implements PaymentAdapter {
     return { rawBody, headers: { [signatureHeader]: sign(rawBody) } }
   }
 }
-
-type HeldCall = 'getCheckout' | 'getRefund'
-
-export type FakeWebhookEvent = { id: string } & (
-  | { type: 'checkout.paid'; checkoutId: string }
-  /** `status` is the refund's state when the provider sent this event, if not its current one. */
-  | { type: 'refund.updated'; refundId: string; status?: PaymentRefund['status'] }
-  | { type: 'refund.reconcile'; refundId: string }
-  | { type: 'payment.refunds_changed'; paymentId: string }
-)
 
 const unreachable = () =>
   new PaymentException('Provider timeout', {

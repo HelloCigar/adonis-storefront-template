@@ -7,34 +7,10 @@ import mail from '@adonisjs/mail/services/main'
 import Notification from '#models/checkout/notification'
 import InvoiceService from '#services/checkout/invoice_service'
 import NotificationService from '#services/checkout/notification_service'
-import OrderAccessService from '#services/checkout/order_access_service'
 import OrderNotification from '#mails/checkout/order_notification'
 import { OrderFactory } from '#database/factories/order_factory'
 import { UserFactory } from '#database/factories/user_factory'
-
-async function order(paidAt: DateTime | null = DateTime.utc()) {
-  const publicId = randomUUID()
-  const created = await OrderFactory.merge({
-    publicId,
-    number: `MB-${publicId.replaceAll('-', '').slice(0, 16).toUpperCase()}`,
-    email: 'guest@example.com',
-    source: 'online',
-    lifecycleState: paidAt ? 'confirmed' : 'pending_payment',
-    financialStatus: paidAt ? 'paid' : 'pending',
-    paidAt,
-  })
-    .with('lineItems', 2)
-    .with('addresses', 1)
-    .create()
-  const access = await app.container.make(OrderAccessService)
-  const grant = await access.issue(created.id)
-  return { order: created, grant }
-}
-
-/** Uncompressed text is enough to tell a real PDF from an error page. */
-function isPdf(body: Buffer) {
-  return body.subarray(0, 5).toString() === '%PDF-' && body.includes('%%EOF')
-}
+import { order, isPdf } from '#tests/helpers/invoices'
 
 test.group('Invoices', (group) => {
   group.each.setup(() => testUtils.db().truncate())

@@ -1,17 +1,9 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import mail from '@adonisjs/mail/services/main'
-import User, { type UserRole } from '#models/account/user'
 import Order from '#models/checkout/order'
 import AccessGrant from '#models/checkout/access_grant'
-
-const account = (role: UserRole) =>
-  User.create({
-    email: `${role}@example.com`,
-    role,
-    fullName: role,
-    password: 'secret-password',
-  })
+import { roleAccount } from '#tests/helpers/accounts'
 
 test.group('Email previews', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -22,7 +14,7 @@ test.group('Email previews', (group) => {
     route,
   }) => {
     using fakeMail = mail.fake()
-    const staff = await account('staff')
+    const staff = await roleAccount('staff')
 
     const index = await client.get(route('seller.emails.index')).loginAs(staff).withInertia()
     index.assertStatus(200)
@@ -72,7 +64,7 @@ test.group('Email previews', (group) => {
   })
 
   test('unknown previews are not found', async ({ client, route }) => {
-    const admin = await account('admin')
+    const admin = await roleAccount('admin')
     for (const key of ['missing', 'constructor', 'toString']) {
       const response = await client
         .get(route('seller.emails.show', { email: key }))
@@ -83,7 +75,7 @@ test.group('Email previews', (group) => {
   })
 
   test('customers and guests cannot open email previews', async ({ client, route }) => {
-    const customer = await account('customer')
+    const customer = await roleAccount('customer')
     const denied = await client
       .get(route('seller.emails.show', { email: 'receipt' }))
       .loginAs(customer)

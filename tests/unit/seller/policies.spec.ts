@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import { Bouncer } from '@adonisjs/bouncer'
-import User, { type UserRole } from '#models/account/user'
+import type User from '#models/account/user'
 import Product from '#models/catalog/product'
 import ProductVariant from '#models/catalog/product_variant'
 import Collection from '#models/catalog/collection'
@@ -13,13 +13,7 @@ import ImagePolicy from '#policies/seller/image_policy'
 import CollectionPolicy from '#policies/seller/collection_policy'
 import OrderPolicy from '#policies/seller/order_policy'
 import UserPolicy from '#policies/seller/user_policy'
-
-function actor(role: UserRole, id = '1') {
-  const user = new User()
-  user.id = id
-  user.role = role
-  return user
-}
+import { actor } from '#tests/helpers/policies'
 
 test.group('Shared store policies', () => {
   test('staff and admins share catalogue access while customer and guest access is denied', async ({

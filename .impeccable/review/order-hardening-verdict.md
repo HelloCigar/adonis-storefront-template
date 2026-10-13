@@ -49,7 +49,7 @@ No changes. The documenter checked PRODUCT.md, DESIGN.md, `.impeccable/design.js
 
 ## Evidence
 
-Captures: `desktop.png`, `mobile.png`, `tablet.png`, `dark-desktop.png`, `recovery-desktop.png`, `recovery-mobile.png`, `details-desktop.png`, `details-tablet.png`, `details-mobile.png`, and `error-mobile.png` in this directory. Main captures show the document top; `details-*` deliberately show scrolled order records. These are QA artifacts, not shipping raster assets.
+The browser tests no longer write screenshots, so the captures this review used (`desktop.png`, `mobile.png`, `tablet.png`, `dark-desktop.png`, `recovery-*.png`, `details-*.png`, `error-mobile.png`) have been removed. They were QA artifacts, not shipping raster assets.
 
 The detector ran once on the five changed frontend targets and returned no findings; see `order-hardening-detector.json`. Final browser hardening tests verify rendered primary-label and link contrast, lost-response locking and refresh recovery, retained validation input, refund acknowledgement/repeated clicks, manual empty states, safe tracking links, and original-currency capture/refund amounts.
 

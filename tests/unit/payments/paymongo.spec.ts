@@ -1,23 +1,19 @@
-import { createHmac } from 'node:crypto'
-import { inject } from '@adonisjs/core'
 import { Secret } from '@adonisjs/core/helpers'
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 import PaymentException from '#exceptions/payment_exception'
 import PaymentService, { type CheckoutInput } from '#services/payments/payment_service'
-import PayMongoService, {
-  type PayMongoConfig,
-  type PayMongoFetch,
-} from '#providers/payments/paymongo_service'
+import PayMongoService, { type PayMongoFetch } from '#providers/payments/paymongo_service'
 import DispatcherService from '#services/payments/dispatcher_service'
-
-const config: PayMongoConfig = {
-  secretKey: new Secret('sk_test_fixture'),
-  webhookSecret: new Secret('whsec_fixture'),
-  paymentMethods: ['card', 'gcash', 'qrph'],
-  timeoutMs: 1000,
-  webhookToleranceSeconds: 300,
-}
+import {
+  checkout,
+  config,
+  paidEvent,
+  payment,
+  PaymentConsumer,
+  transport,
+  webhook,
+} from '#tests/helpers/paymongo_fixtures'
 
 const checkoutInput: CheckoutInput = {
   reference: 'ORDER-42',
@@ -37,67 +33,6 @@ const checkoutInput: CheckoutInput = {
   customer: { name: 'Test Customer', email: 'customer@example.com' },
   metadata: { order_id: '42' },
   idempotencyKey: 'order-42-attempt-1',
-}
-
-function payment(status: 'paid' | 'failed' = 'paid', liveMode = false) {
-  return {
-    id: status === 'paid' ? 'pay_paid' : 'pay_failed',
-    type: 'payment',
-    attributes: { amount: 109_800, currency: 'PHP', status, livemode: liveMode },
-  }
-}
-
-function checkout(
-  status: 'active' | 'expired' = 'active',
-  payments = [] as ReturnType<typeof payment>[],
-  liveMode = false
-) {
-  return {
-    id: 'cs_fixture',
-    type: 'checkout_session',
-    attributes: {
-      checkout_url: 'https://checkout.paymongo.com/cs_fixture',
-      reference_number: 'ORDER-42',
-      status,
-      livemode: liveMode,
-      metadata: { order_id: '42' },
-      payments,
-      client_key: 'must-not-escape-adapter',
-    },
-  }
-}
-
-function transport(payload: unknown, status = 200) {
-  const calls: { url: string; options: RequestInit }[] = []
-  const fetcher: PayMongoFetch = async (url, options) => {
-    calls.push({ url: String(url), options: options! })
-    return new Response(JSON.stringify(payload), { status })
-  }
-  return { calls, fetcher }
-}
-
-function webhook(payload: unknown, options: { liveMode?: boolean; timestamp?: number } = {}) {
-  const rawBody = typeof payload === 'string' ? payload : JSON.stringify(payload)
-  const timestamp = options.timestamp ?? Math.floor(Date.now() / 1000)
-  const digest = createHmac('sha256', config.webhookSecret!.release())
-    .update(`${timestamp}.${rawBody}`)
-    .digest('hex')
-  return {
-    rawBody,
-    headers: {
-      'Paymongo-Signature': `t=${timestamp},te=${options.liveMode ? '' : digest},li=${options.liveMode ? digest : ''}`,
-    },
-  }
-}
-
-function paidEvent(liveMode = false) {
-  return {
-    data: {
-      type: 'checkout_session.payment.paid',
-      livemode: liveMode,
-      data: checkout('active', [payment('paid', liveMode)], liveMode),
-    },
-  }
 }
 
 test.group('PayMongo payment adapter', () => {
@@ -524,11 +459,6 @@ test.group('PayMongo payment adapter', () => {
     })
   })
 })
-
-@inject()
-class PaymentConsumer {
-  constructor(public payments: PaymentService) {}
-}
 
 test.group('Payment dependency injection', () => {
   test('resolves the abstract service as a singleton and supports container replacements', async ({
