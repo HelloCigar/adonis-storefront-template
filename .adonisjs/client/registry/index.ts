@@ -258,11 +258,23 @@ const routes = {
     tokens: [{"old":"/account/logout","type":0,"val":"account","end":""},{"old":"/account/logout","type":0,"val":"logout","end":""}],
     types: placeholder as Registry['account.logout']['types'],
   },
-  'account.profile.update': {
-    methods: ["PATCH"],
+  'account.profile.show': {
+    methods: ["GET","HEAD"],
     pattern: '/account/profile',
     tokens: [{"old":"/account/profile","type":0,"val":"account","end":""},{"old":"/account/profile","type":0,"val":"profile","end":""}],
-    types: placeholder as Registry['account.profile.update']['types'],
+    types: placeholder as Registry['account.profile.show']['types'],
+  },
+  'account.security.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/account/security',
+    tokens: [{"old":"/account/security","type":0,"val":"account","end":""},{"old":"/account/security","type":0,"val":"security","end":""}],
+    types: placeholder as Registry['account.security.show']['types'],
+  },
+  'account.addresses.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/account/addresses',
+    tokens: [{"old":"/account/addresses","type":0,"val":"account","end":""},{"old":"/account/addresses","type":0,"val":"addresses","end":""}],
+    types: placeholder as Registry['account.addresses.index']['types'],
   },
   'account.addresses.create': {
     methods: ["POST"],

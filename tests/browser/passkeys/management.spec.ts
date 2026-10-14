@@ -14,7 +14,7 @@ test.group('Passkey Management', (group) => {
     await createPasskey(user, 'Work laptop')
     await browserContext.loginAs(user)
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     const list = page.getByRole('list', { name: 'Passkeys', exact: true })
 
     await page.assertVisible(list.getByText('Work laptop', { exact: true }))
@@ -29,7 +29,7 @@ test.group('Passkey Management', (group) => {
 
     using mailFake = mail.fake()
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await page.getByRole('button', { name: 'Rename', exact: true }).click()
     await page.getByLabel('Passkey name', { exact: true }).fill('Personal phone')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -52,7 +52,7 @@ test.group('Passkey Management', (group) => {
     await createPasskey(user, 'Passkey')
     await browserContext.loginAs(user)
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await page.getByRole('button', { name: 'Rename', exact: true }).click()
     await page.getByLabel('Passkey name', { exact: true }).fill('')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -67,7 +67,7 @@ test.group('Passkey Management', (group) => {
 
     using mailFake = mail.fake()
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await page.getByRole('button', { name: 'Remove', exact: true }).click()
 
     await page.assertVisible(page.getByText('Passkey removed', { exact: true }))
@@ -89,7 +89,7 @@ test.group('Passkey Management', (group) => {
     const otherPasskey = await createPasskey(otherUser, 'Passkey')
     await browserContext.loginAs(user)
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
 
     /**
      * Requests share the browser's cookies, so the session and CSRF
@@ -118,7 +118,7 @@ test.group('Passkey Management', (group) => {
 
     using mailFake = mail.fake()
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
 
     const cookies = await browserContext.cookies()
     const xsrfToken = decodeURIComponent(cookies.find((c) => c.name === 'XSRF-TOKEN')!.value)

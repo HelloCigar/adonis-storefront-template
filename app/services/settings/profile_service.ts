@@ -11,14 +11,19 @@ export default class ProfileService {
    * A changed email stays unverified until confirmed, so the current one keeps signing in.
    * Returns the verification token to mail when the email changed.
    */
-  async update(user: User, { avatar, fullName, email }: Infer<typeof updateProfileValidator>) {
+  async update(
+    user: User,
+    { avatar, firstName, lastName, email }: Infer<typeof updateProfileValidator>
+  ) {
     const attachment = avatar ? await attachmentManager.createFromFile(avatar) : null
     const emailChanged = await db.transaction(async (trx) => {
       // Re-read inside the transaction so a concurrent update cannot double-send verification.
       user.useTransaction(trx)
       await user.refresh()
       if (attachment) user.avatar.set(attachment)
-      user.fullName = fullName
+      user.firstName = firstName
+      user.lastName = lastName ?? null
+      user.fullName = [firstName, lastName].filter(Boolean).join(' ')
 
       const changed = user.hasEmailChanged(email)
       if (changed && user.hasEmailReverted(email)) {

@@ -2,6 +2,7 @@
 import { urlFor } from '~/client'
 import type { Data } from '@generated/data'
 import { t } from '~/utils/store'
+import AccountNav from '~/components/account/AccountNav.vue'
 import AccountOrders from '~/components/account/Orders.vue'
 import { Head } from '@inertiajs/vue3'
 defineProps<{ orders: Data.Checkout.Order[] }>()
@@ -12,14 +13,12 @@ defineProps<{ orders: Data.Checkout.Order[] }>()
     <UBreadcrumb
       :items="[
         { label: t('account.label'), to: urlFor('account.show') },
-        { label: t('account.orders.title') },
+        { label: t('account.nav.orders') },
       ]"
       class="mb-6 lg:mb-8"
     />
 
-    <h1 class="text-4xl lg:text-5xl text-highlighted font-extrabold mb-8 lg:mb-10">
-      {{ t('account.orders.page.title') }}
-    </h1>
+    <AccountNav />
 
     <AccountOrders :orders="orders" />
   </UContainer>

@@ -127,7 +127,10 @@ test.group('Single store authorization', (group) => {
         .withCsrfToken()
         .accept('json')
       deniedAddress.assertStatus(404)
-      const ownSettings = await client.get(route('settings')).loginAs(actor).withInertia()
+      const ownSettings = await client
+        .get(route(role === 'customer' ? 'account.profile.show' : 'settings'))
+        .loginAs(actor)
+        .withInertia()
       ownSettings.assertStatus(200)
       const ownAccount = await client.get(route('account.show')).loginAs(actor).withInertia()
       ownAccount.assertStatus(200)

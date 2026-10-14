@@ -1,0 +1,28 @@
+<script setup lang="ts">
+import { urlFor } from '~/client'
+import type { Data } from '@generated/data'
+import { t } from '~/utils/store'
+import AccountNav from '~/components/account/AccountNav.vue'
+import AccountAddresses from '~/components/account/Addresses.vue'
+import { Head } from '@inertiajs/vue3'
+defineProps<{ customer: Data.Account.User }>()
+</script>
+<template>
+  <Head :title="t('account.addresses.title')" />
+  <UContainer class="py-6 lg:py-8">
+    <UBreadcrumb
+      :items="[
+        { label: t('account.label'), to: urlFor('account.show') },
+        { label: t('account.nav.addresses') },
+      ]"
+      class="mb-6 lg:mb-8"
+    />
+
+    <AccountNav />
+
+    <AccountAddresses
+      :addresses="customer.addresses ?? []"
+      :default-address-id="customer.defaultAddress?.id"
+    />
+  </UContainer>
+</template>

@@ -511,16 +511,40 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/logout_controller').default['show']>>>
     }
   }
-  'account.profile.update': {
-    methods: ["PATCH"]
+  'account.profile.show': {
+    methods: ["GET","HEAD"]
     pattern: '/account/profile'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/account/profile').storefrontProfileValidator)>>
+      body: {}
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/account/profile').storefrontProfileValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/profile_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/profile_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/profile_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/profile_controller').default['show']>>>
+    }
+  }
+  'account.security.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/account/security'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/security_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/security_controller').default['show']>>>
+    }
+  }
+  'account.addresses.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/account/addresses'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/addresses_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/addresses_controller').default['index']>>>
     }
   }
   'account.addresses.create': {

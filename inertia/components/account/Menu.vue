@@ -134,8 +134,8 @@ watch(
             :to="urlFor('account.show')"
             size="xl"
             class="w-full justify-center mb-4"
-            :label="t('account.menu.profile')"
-            icon="i-lucide-user-round"
+            :label="t('account.menu.overview')"
+            icon="i-lucide-house"
           />
 
           <UButton
@@ -145,6 +145,24 @@ watch(
             class="w-full justify-center text-center mb-4"
             :label="t('account.menu.orders')"
             icon="i-lucide-map-pin-house"
+          />
+
+          <UButton
+            :to="urlFor('account.profile.show')"
+            variant="soft"
+            size="xl"
+            class="w-full justify-center text-center mb-4"
+            :label="t('account.menu.profile')"
+            icon="i-lucide-user-round"
+          />
+
+          <UButton
+            :to="urlFor('account.security.show')"
+            variant="soft"
+            size="xl"
+            class="w-full justify-center text-center mb-4"
+            :label="t('account.menu.security')"
+            icon="i-lucide-shield"
           />
 
           <UButton

@@ -13,7 +13,7 @@ test.group('Change password', (group) => {
     const user = await UserFactory.apply('verified').create()
     await browserContext.loginAs(user)
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await page.getByLabel('Current password', { exact: true }).fill('demo-password')
     await page.getByLabel('New password', { exact: true }).fill('N3w-Purple-Monkey-Dishwasher!')
     await page
@@ -37,7 +37,7 @@ test.group('Change password', (group) => {
     const user = await UserFactory.apply('verified').create()
     await browserContext.loginAs(user)
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await page.getByLabel('Current password', { exact: true }).fill('wrongpassword')
     await page.getByLabel('New password', { exact: true }).fill('N3w-Purple-Monkey-Dishwasher!')
     await page

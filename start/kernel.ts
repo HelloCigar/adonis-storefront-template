@@ -32,6 +32,7 @@ router.use([
 ])
 
 export const middleware = router.named({
+  customerSettings: () => import('#middleware/account/customer_settings_middleware'),
   guest: () => import('#middleware/auth/guest_middleware'),
   auth: () => import('#middleware/auth/auth_middleware'),
   staff: () => import('#middleware/staff/staff_middleware'),

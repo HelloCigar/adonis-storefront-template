@@ -24,6 +24,6 @@ export default class SecurityController {
     const data = await request.validateUsing(updatePasswordValidator)
     await this.profileService.updatePassword(user, data)
     session.flash('success', 'Your password has been updated.')
-    return response.redirect().toRoute('settings.security')
+    return response.redirect().back('/settings/security')
   }
 }

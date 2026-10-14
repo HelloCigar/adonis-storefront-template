@@ -10,10 +10,13 @@ type ExtractProps<T> = Omit<
 declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
     'account/activate': ExtractProps<(typeof import('../../inertia/pages/account/activate.vue'))['default']>
+    'account/addresses': ExtractProps<(typeof import('../../inertia/pages/account/addresses.vue'))['default']>
     'account/index': ExtractProps<(typeof import('../../inertia/pages/account/index.vue'))['default']>
     'account/logout': ExtractProps<(typeof import('../../inertia/pages/account/logout.vue'))['default']>
     'account/orders/[id]': ExtractProps<(typeof import('../../inertia/pages/account/orders/[id].vue'))['default']>
     'account/orders/index': ExtractProps<(typeof import('../../inertia/pages/account/orders/index.vue'))['default']>
+    'account/profile': ExtractProps<(typeof import('../../inertia/pages/account/profile.vue'))['default']>
+    'account/security': ExtractProps<(typeof import('../../inertia/pages/account/security.vue'))['default']>
     'auth/forgot_password': ExtractProps<(typeof import('../../inertia/pages/auth/forgot_password.vue'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.vue'))['default']>
     'auth/reset_password': ExtractProps<(typeof import('../../inertia/pages/auth/reset_password.vue'))['default']>

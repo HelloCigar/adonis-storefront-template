@@ -11,6 +11,6 @@ export default class DefaultAddressController {
     const address = await user.related('addresses').query().where('id', params.id).firstOrFail()
     await bouncer.with('AccountAddressPolicy').authorize('setDefault', address)
     await this.addressService.setDefault(user, address)
-    return response.redirect().toRoute('account.show')
+    return response.redirect().back('/account/addresses')
   }
 }

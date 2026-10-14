@@ -1,3 +1,4 @@
+import AccountLayout from './account.vue'
 import DashboardLayout from './admin.vue'
 import SettingsLayout from './settings.vue'
 import StorefrontLayout from './default.vue'
@@ -5,9 +6,13 @@ import StorefrontLayout from './default.vue'
 const dashboardPages = new Set(['inbox'])
 
 export function resolveLayout(name: string) {
+  if (name.startsWith('account/')) {
+    return [StorefrontLayout, AccountLayout]
+  }
+
   if (
     name === 'index' ||
-    /^(account|checkout|collection|collections|product|pages|policies|blog)\//.test(name)
+    /^(checkout|collection|collections|product|pages|policies|blog)\//.test(name)
   ) {
     return StorefrontLayout
   }
