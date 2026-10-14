@@ -1,6 +1,7 @@
 import User from '#models/account/user'
 import mail from '@adonisjs/mail/services/main'
 import type { HttpContext } from '@adonisjs/core/http'
+import EmailChangeProvision from '#mails/auth/email_change_provision'
 import AccountActivationProvision from '#mails/auth/account_activation_provision'
 
 export default class EmailVerificationsController {
@@ -13,7 +14,11 @@ export default class EmailVerificationsController {
     const token = await user.createEmailVerificationToken(true, '1 minute')
 
     if (token) {
-      await mail.sendLater(new AccountActivationProvision(user, token))
+      await mail.sendLater(
+        user.hasInactiveAccount
+          ? new AccountActivationProvision(user, token)
+          : new EmailChangeProvision(user, token)
+      )
     }
 
     session.flash('success', 'We sent you instructions to verify your email address')
