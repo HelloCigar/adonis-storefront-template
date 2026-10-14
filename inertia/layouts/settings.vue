@@ -40,14 +40,7 @@ const links = computed(
 </script>
 
 <template>
-  <UContainer v-if="!page.props.permissions.manageStore" class="py-8 sm:py-12">
-    <div class="max-w-2xl mx-auto space-y-6">
-      <h1 class="text-2xl font-semibold text-highlighted">Account settings</h1>
-      <UNavigationMenu :items="links" highlight />
-      <slot />
-    </div>
-  </UContainer>
-  <UDashboardPanel v-else id="settings" :ui="{ body: 'lg:py-12' }">
+  <UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }">
     <template #header>
       <UDashboardNavbar title="Settings">
         <template #leading>

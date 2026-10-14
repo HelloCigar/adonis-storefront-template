@@ -14,7 +14,7 @@ test.group('Passkey Registration', (group) => {
 
     using mailFake = mail.fake()
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await addVirtualAuthenticator(page)
     await addPasskey(page)
 
@@ -39,7 +39,7 @@ test.group('Passkey Registration', (group) => {
 
     using mailFake = mail.fake()
 
-    const page = await visit(route('settings.security'))
+    const page = await visit(route('account.security.show'))
     await addVirtualAuthenticator(page)
     await addPasskey(page)
 

@@ -8,6 +8,7 @@ import { useLocalization } from '~/composables/localization'
 import { statusColor, statusLabel } from '~/utils/status'
 import { Head } from '@inertiajs/vue3'
 import OrderChat from '~/components/chat/OrderChat.vue'
+import AccountNav from '~/components/account/AccountNav.vue'
 const props = defineProps<{
   order: Data.Checkout.Order
   conversation?: Data.Chat.Conversation | null
@@ -68,6 +69,8 @@ const addresses = computed(() =>
       ]"
       class="mb-6 lg:mb-8"
     />
+
+    <AccountNav :heading="false" />
 
     <div class="flex flex-wrap items-start justify-between gap-4 mb-8 lg:mb-10">
       <div>

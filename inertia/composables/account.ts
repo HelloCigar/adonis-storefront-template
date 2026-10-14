@@ -4,7 +4,6 @@ import type { VisitOptions } from '@inertiajs/core'
 import type { registry } from '@generated/registry'
 
 type AddressInput = (typeof registry.routes)['account.addresses.create']['types']['body']
-type ProfileInput = (typeof registry.routes)['account.profile.update']['types']['body']
 
 export const useAccount = () => {
   const router = useRouter()
@@ -41,8 +40,6 @@ export const useAccount = () => {
 
   return {
     loading: readonly(loading),
-    updateProfile: (body: ProfileInput) =>
-      save((options) => router.patch({ route: 'account.profile.update' }, body, options)),
     createAddress: ({
       address,
       defaultAddress,

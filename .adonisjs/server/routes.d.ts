@@ -46,7 +46,9 @@ export type ScannedRoutes = {
     'email_verifications.store': { paramsTuple?: []; params?: {} }
     'email_verifications.create': { paramsTuple?: []; params?: {} }
     'account.logout': { paramsTuple?: []; params?: {} }
-    'account.profile.update': { paramsTuple?: []; params?: {} }
+    'account.profile.show': { paramsTuple?: []; params?: {} }
+    'account.security.show': { paramsTuple?: []; params?: {} }
+    'account.addresses.index': { paramsTuple?: []; params?: {} }
     'account.addresses.create': { paramsTuple?: []; params?: {} }
     'account.addresses.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'account.addresses.default': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -151,6 +153,9 @@ export type ScannedRoutes = {
     'account.show': { paramsTuple?: []; params?: {} }
     'email_verifications.create': { paramsTuple?: []; params?: {} }
     'account.logout': { paramsTuple?: []; params?: {} }
+    'account.profile.show': { paramsTuple?: []; params?: {} }
+    'account.security.show': { paramsTuple?: []; params?: {} }
+    'account.addresses.index': { paramsTuple?: []; params?: {} }
     'orders.index': { paramsTuple?: []; params?: {} }
     'orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'chat.images.show': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'id': ParamValue} }
@@ -204,6 +209,9 @@ export type ScannedRoutes = {
     'account.show': { paramsTuple?: []; params?: {} }
     'email_verifications.create': { paramsTuple?: []; params?: {} }
     'account.logout': { paramsTuple?: []; params?: {} }
+    'account.profile.show': { paramsTuple?: []; params?: {} }
+    'account.security.show': { paramsTuple?: []; params?: {} }
+    'account.addresses.index': { paramsTuple?: []; params?: {} }
     'orders.index': { paramsTuple?: []; params?: {} }
     'orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'chat.images.show': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'id': ParamValue} }
@@ -275,7 +283,6 @@ export type ScannedRoutes = {
   }
   PATCH: {
     'cart.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'account.profile.update': { paramsTuple?: []; params?: {} }
     'account.addresses.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'reviews.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

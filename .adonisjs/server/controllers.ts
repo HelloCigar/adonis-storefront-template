@@ -11,6 +11,7 @@ export const controllers = {
     Logout: () => import('#controllers/account/logout_controller'),
     Orders: () => import('#controllers/account/orders_controller'),
     Profile: () => import('#controllers/account/profile_controller'),
+    Security: () => import('#controllers/account/security_controller'),
   },
   auth: {
     EmailVerifications: () => import('#controllers/auth/email_verifications_controller'),

@@ -27,6 +27,6 @@ export default class SettingsController {
       )
     }
     session.flash('success', 'Your profile has been updated.')
-    return response.redirect().toRoute('settings')
+    return response.redirect().back('/settings')
   }
 }

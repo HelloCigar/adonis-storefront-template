@@ -142,8 +142,17 @@ router
       .as('email_verifications.create')
     router.get('/account/logout', [controllers.account.Logout, 'show']).as('account.logout')
     router
-      .patch('/account/profile', [controllers.account.Profile, 'update'])
-      .as('account.profile.update')
+      .get('/account/profile', [controllers.account.Profile, 'show'])
+      .as('account.profile.show')
+      .use(middleware.verifiedAccount())
+    router
+      .get('/account/security', [controllers.account.Security, 'show'])
+      .as('account.security.show')
+      .use(middleware.verifiedAccount())
+    router
+      .get('/account/addresses', [controllers.account.Addresses, 'index'])
+      .as('account.addresses.index')
+      .use(middleware.verifiedAccount())
     router
       .post('/account/addresses', [controllers.account.Addresses, 'store'])
       .as('account.addresses.create')
@@ -209,7 +218,10 @@ router
           .as('settings.store.update')
       })
       .use(middleware.staff())
-    router.get('/settings', [controllers.settings.Settings, 'index']).as('settings')
+    router
+      .get('/settings', [controllers.settings.Settings, 'index'])
+      .as('settings')
+      .use(middleware.customerSettings({ redirectTo: 'account.profile.show' }))
     router.post('/settings', [controllers.settings.Settings, 'update']).as('settings.update')
     router
       .delete('/settings/avatar', [controllers.settings.Avatar, 'destroy'])
@@ -218,6 +230,7 @@ router
     router
       .get('/settings/security', [controllers.settings.Security, 'show'])
       .as('settings.security')
+      .use(middleware.customerSettings({ redirectTo: 'account.security.show' }))
     router
       .post('/settings/security', [controllers.settings.Security, 'update'])
       .as('settings.password.update')

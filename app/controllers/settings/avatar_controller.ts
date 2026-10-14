@@ -10,6 +10,6 @@ export default class AvatarController {
     await bouncer.with('AccountUserPolicy').authorize('update', auth.getUserOrFail())
     await this.profileService.removeAvatar(auth.getUserOrFail())
     session.flash('success', 'Your avatar has been removed.')
-    return response.redirect().toRoute('settings')
+    return response.redirect().back('/settings')
   }
 }

@@ -93,9 +93,13 @@ export interface ApiDefinition {
     show: typeof routes['account.show']
     logout: typeof routes['account.logout']
     profile: {
-      update: typeof routes['account.profile.update']
+      show: typeof routes['account.profile.show']
+    }
+    security: {
+      show: typeof routes['account.security.show']
     }
     addresses: {
+      index: typeof routes['account.addresses.index']
       create: typeof routes['account.addresses.create']
       update: typeof routes['account.addresses.update']
       default: typeof routes['account.addresses.default']

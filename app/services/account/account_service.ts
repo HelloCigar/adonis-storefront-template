@@ -1,6 +1,4 @@
 import User from '#models/account/user'
-import type { Infer } from '@vinejs/vine/types'
-import type { storefrontProfileValidator } from '#validators/account/profile'
 
 export default class AccountService {
   loadCustomer(userId: string) {
@@ -12,11 +10,5 @@ export default class AccountService {
         query.preload('lineItems').preload('addresses').orderBy('processed_at', 'desc').limit(1)
       })
       .firstOrFail()
-  }
-
-  async updateProfile(user: User, data: Infer<typeof storefrontProfileValidator>) {
-    user.merge({ firstName: data.firstName ?? null, lastName: data.lastName ?? null })
-    user.fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || null
-    await user.save()
   }
 }
