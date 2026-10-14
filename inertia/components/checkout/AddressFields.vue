@@ -1,5 +1,9 @@
 <script setup lang="ts">
-defineProps<{ prefix: 'shipping' | 'billing'; errors: Record<string, string> }>()
+defineProps<{
+  prefix: 'shipping' | 'billing'
+  errors: Record<string, string>
+  values?: Partial<Record<string, unknown>>
+}>()
 const fields = [
   { key: 'firstName', label: 'First name', autocomplete: 'given-name' },
   { key: 'lastName', label: 'Last name', autocomplete: 'family-name' },
@@ -35,6 +39,7 @@ const fields = [
         :type="field.type || 'text'"
         :autocomplete="`${prefix} ${field.autocomplete}`"
         :required="!field.optional"
+        :default-value="(values?.[field.key] as string | null) ?? undefined"
         class="w-full"
       />
     </UFormField>
