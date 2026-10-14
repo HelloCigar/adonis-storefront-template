@@ -2,6 +2,9 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* Swatches in the theme picker (components/theme/Colors.vue) build these class names at runtime. */
+@source inline("bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,old-neutral,stone,taupe,mauve,mist,olive}-500");
+
 @theme {
   --font-sans: 'Bricolage Grotesque', sans-serif;
 }

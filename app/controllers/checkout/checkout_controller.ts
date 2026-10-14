@@ -8,6 +8,7 @@ import { checkoutValidator } from '#validators/checkout/checkout'
 import CheckoutException from '#exceptions/checkout_exception'
 import PaymentException from '#exceptions/payment_exception'
 import QuoteTransformer from '#transformers/checkout/quote_transformer'
+import CustomerAddressTransformer from '#transformers/account/customer_address_transformer'
 
 @inject()
 export default class CheckoutController {
@@ -27,9 +28,17 @@ export default class CheckoutController {
       if (!(cause instanceof CheckoutException)) throw cause
       error = cause.message
     }
+    // Signed-in customers pick from their saved addresses, default first.
+    const addresses = auth.user
+      ? await auth.user.related('addresses').query().orderBy('created_at', 'asc')
+      : []
+    const defaultAddressId = auth.user?.defaultAddressId ?? null
+    addresses.sort((a, b) => Number(b.id === defaultAddressId) - Number(a.id === defaultAddressId))
     return inertia.render('checkout/index', {
       quote: quote ? QuoteTransformer.transform(quote) : null,
       checkoutError: error,
+      savedAddresses: CustomerAddressTransformer.transform(addresses),
+      defaultAddressId,
     })
   }
 

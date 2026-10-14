@@ -3,7 +3,7 @@ import { urlFor } from '~/client'
 import { usePage } from '@inertiajs/vue3'
 import Logo from '~/components/logo.vue'
 import FlashToasts from '~/components/flash_toasts.vue'
-import ThemeToggle from '~/components/theme_toggle.vue'
+import ThemePicker from '~/components/theme/Picker.vue'
 
 const page = usePage()
 </script>
@@ -14,7 +14,7 @@ const page = usePage()
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <Logo :size="28" />
         <div class="flex items-center gap-2">
-          <ThemeToggle />
+          <ThemePicker />
           <template v-if="page.props.user">
             <UButton :to="urlFor('dashboard')" label="Dashboard" size="sm" />
           </template>

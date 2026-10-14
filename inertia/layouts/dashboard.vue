@@ -2,7 +2,7 @@
 import Logo from '~/components/logo.vue'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import FlashToasts from '~/components/flash_toasts.vue'
-import ThemeToggle from '~/components/theme_toggle.vue'
+import ThemePicker from '~/components/theme/Picker.vue'
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import ThemeToggle from '~/components/theme_toggle.vue'
     <header class="flex h-15 items-center border-b border-default bg-default px-8">
       <Logo :size="28" />
       <div class="ml-auto flex items-center gap-2">
-        <ThemeToggle />
+        <ThemePicker />
         <Form route="session.destroy">
           <UButton
             type="submit"

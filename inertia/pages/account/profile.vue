@@ -3,6 +3,7 @@ import { urlFor } from '~/client'
 import { t } from '~/utils/store'
 import AccountNav from '~/components/account/AccountNav.vue'
 import ProfileForm from '~/components/settings/ProfileForm.vue'
+import AppearanceCard from '~/components/settings/AppearanceCard.vue'
 import { Head } from '@inertiajs/vue3'
 </script>
 <template>
@@ -20,6 +21,7 @@ import { Head } from '@inertiajs/vue3'
 
     <div class="max-w-2xl">
       <ProfileForm />
+      <AppearanceCard />
     </div>
   </UContainer>
 </template>

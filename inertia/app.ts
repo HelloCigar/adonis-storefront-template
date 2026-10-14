@@ -7,6 +7,8 @@ import { TuyauProvider } from '@adonisjs/inertia/vue'
 import { createApp, createSSRApp, type DefineComponent, h } from 'vue'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import { resolveLayout } from './layouts/resolve'
+// Applies the visitor's saved theme colours before the first render.
+import './composables/theme'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Your store'
 

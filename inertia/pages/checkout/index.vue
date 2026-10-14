@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, usePage } from '@inertiajs/vue3'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
@@ -7,10 +7,32 @@ import { urlFor } from '~/client'
 import AddressFields from '~/components/checkout/AddressFields.vue'
 import CheckoutSteps from '~/components/checkout/Steps.vue'
 import OrderSummary from '~/components/checkout/OrderSummary.vue'
-defineProps<{ quote: Data.Checkout.Quote | null; checkoutError: string | null }>()
+const props = defineProps<{
+  quote: Data.Checkout.Quote | null
+  checkoutError: string | null
+  savedAddresses: Data.Account.CustomerAddress[]
+  defaultAddressId: string | null
+}>()
 const page = usePage()
 const sameBilling = ref(true)
 const summaryOpen = ref(false)
+const shippingChoice = ref(props.savedAddresses[0]?.id ?? 'new')
+const shippingValues = computed(() =>
+  props.savedAddresses.find((address) => address.id === shippingChoice.value)
+)
+const addressChoices = computed(() => [
+  ...props.savedAddresses.map((address) => ({
+    value: address.id,
+    label: address.formatted[0],
+    description: [
+      address.formatted.slice(1, -1).join(', '),
+      address.id === props.defaultAddressId ? 'Default' : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  })),
+  { value: 'new', label: 'Use a new address' },
+])
 const money = (amount: number) =>
   new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount / 100)
 </script>
@@ -23,7 +45,9 @@ const money = (amount: number) =>
     >
       <UIcon name="i-lucide-arrow-left" />Continue shopping
     </Link>
-    <div class="flex flex-col gap-4 mb-8 md:flex-row md:items-end md:justify-between">
+    <div
+      class="flex flex-col gap-4 mb-8 md:flex-row md:items-end md:justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_24rem]"
+    >
       <div>
         <h1 class="text-3xl font-semibold text-highlighted mb-2">Checkout</h1>
         <p class="text-muted">Enter your delivery details. No account is required.</p>
@@ -112,7 +136,20 @@ const money = (amount: number) =>
               Delivery within the Philippines · {{ money(quote.shippingMinor) }} per order
             </p>
           </template>
-          <AddressFields prefix="shipping" :errors="errors" />
+          <URadioGroup
+            v-if="savedAddresses.length"
+            v-model="shippingChoice"
+            :items="addressChoices"
+            variant="card"
+            legend="Saved addresses"
+            class="mb-5"
+          />
+          <AddressFields
+            :key="shippingChoice"
+            prefix="shipping"
+            :errors="errors"
+            :values="shippingValues"
+          />
           <UFormField
             label="Order note"
             name="note"
