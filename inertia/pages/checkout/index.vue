@@ -23,7 +23,9 @@ const money = (amount: number) =>
     >
       <UIcon name="i-lucide-arrow-left" />Continue shopping
     </Link>
-    <div class="flex flex-col gap-4 mb-8 md:flex-row md:items-end md:justify-between">
+    <div
+      class="flex flex-col gap-4 mb-8 md:flex-row md:items-end md:justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_24rem]"
+    >
       <div>
         <h1 class="text-3xl font-semibold text-highlighted mb-2">Checkout</h1>
         <p class="text-muted">Enter your delivery details. No account is required.</p>
