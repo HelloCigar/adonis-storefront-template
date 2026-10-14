@@ -21,7 +21,7 @@ watch(
       toast.add({
         id: 'flash',
         title: flash.success,
-        color: 'success',
+        color: 'primary',
         icon: 'i-lucide-circle-check',
       })
     }
