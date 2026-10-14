@@ -17,6 +17,20 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 const state = reactive<Partial<Schema>>({ email: undefined, subscribeNewsletter: false })
 const open = ref(false)
+const accountLinks = computed(() => [
+  { label: t('account.menu.overview'), to: urlFor('account.show'), icon: 'i-lucide-house' },
+  { label: t('account.menu.orders'), to: urlFor('orders.index'), icon: 'i-lucide-map-pin-house' },
+  {
+    label: t('account.menu.profile'),
+    to: urlFor('account.profile.show'),
+    icon: 'i-lucide-user-round',
+  },
+  {
+    label: t('account.menu.security'),
+    to: urlFor('account.security.show'),
+    icon: 'i-lucide-shield',
+  },
+])
 const onSubmit = (event: FormSubmitEvent<Schema>) =>
   router.visit({
     route: 'session.create',
@@ -53,9 +67,12 @@ watch(
     />
 
     <template #content>
-      <div class="p-5">
-        <div class="flex justify-between">
-          <p class="text-lg lg:text-xl text-highlighted font-semibold pe-10 mb-6">
+      <div :class="isLoggedIn ? 'w-60 p-2' : 'p-5'">
+        <div class="flex justify-between" :class="{ 'items-center ps-2.5 pb-1': isLoggedIn }">
+          <p
+            class="text-highlighted font-semibold"
+            :class="isLoggedIn ? 'text-sm' : 'text-lg lg:text-xl pe-10 mb-6'"
+          >
             <span v-if="!isLoggedIn">
               {{ t('account.signIn.title') }}
             </span>
@@ -130,46 +147,26 @@ watch(
         </template>
 
         <template v-else>
-          <UButton
-            :to="urlFor('account.show')"
-            size="xl"
-            class="w-full justify-center mb-4"
-            :label="t('account.menu.overview')"
-            icon="i-lucide-house"
-          />
+          <nav class="flex flex-col gap-0.5">
+            <UButton
+              v-for="link in accountLinks"
+              :key="link.label"
+              :to="link.to"
+              :label="link.label"
+              :icon="link.icon"
+              variant="ghost"
+              color="neutral"
+              class="w-full"
+            />
+          </nav>
 
-          <UButton
-            :to="urlFor('orders.index')"
-            variant="soft"
-            size="xl"
-            class="w-full justify-center text-center mb-4"
-            :label="t('account.menu.orders')"
-            icon="i-lucide-map-pin-house"
-          />
-
-          <UButton
-            :to="urlFor('account.profile.show')"
-            variant="soft"
-            size="xl"
-            class="w-full justify-center text-center mb-4"
-            :label="t('account.menu.profile')"
-            icon="i-lucide-user-round"
-          />
-
-          <UButton
-            :to="urlFor('account.security.show')"
-            variant="soft"
-            size="xl"
-            class="w-full justify-center text-center mb-4"
-            :label="t('account.menu.security')"
-            icon="i-lucide-shield"
-          />
+          <USeparator class="my-2" />
 
           <UButton
             :to="urlFor('account.logout')"
-            variant="outline"
-            size="xl"
-            class="w-full justify-center text-center"
+            variant="ghost"
+            color="neutral"
+            class="w-full"
             :label="t('account.logout')"
             icon="i-lucide-log-out"
           />
