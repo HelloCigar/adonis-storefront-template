@@ -1,22 +1,15 @@
 import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import { QueueManager } from '@adonisjs/queue'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
-import { resetCheckoutState } from '#tests/helpers/payments'
+import { resetCheckoutState, useFakeProvider } from '#tests/helpers/payments'
 import { setupConfirmedOrder, setupOrderEmail } from '#tests/helpers/orders'
 
 test.group('Staff order operations', (group) => {
-  let adapter: FakePaymentAdapter
   group.each.setup(async () => {
     const reset = await resetCheckoutState()
-    adapter = new FakePaymentAdapter('order-operations-page')
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
     QueueManager.fake()
     return async () => {
       QueueManager.restore()
-      app.container.restore(PaymentService)
       await reset()
     }
   })
@@ -27,6 +20,7 @@ test.group('Staff order operations', (group) => {
     route,
     db,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-operations-page')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     const email = await setupOrderEmail(order, { kind: 'shipment', state: 'failed' })
     await browserContext.loginAs(staff)
@@ -39,7 +33,7 @@ test.group('Staff order operations', (group) => {
       .click()
     await page.assertNotExists(notice)
     const entry = page
-      .getByRole('region', { name: 'Order activity' })
+      .getByRole('region', { name: 'Order activity', exact: true })
       .getByRole('listitem')
       .filter({ has: page.locator('[data-timeline-title]', { hasText: /^Shipment email$/ }) })
     await page.assertVisible(entry.getByText('Queued', { exact: true }))

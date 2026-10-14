@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { DateTime } from 'luxon'
 import type { ApiClient } from '@japa/api-client'
-import { getActiveTestOrFail } from '@japa/runner'
+import { getActiveTestOrFail, timeTravel } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
@@ -15,7 +15,8 @@ import type User from '#models/account/user'
 import Attempt from '#models/payments/attempt'
 import Order from '#models/checkout/order'
 import StockReservation from '#models/checkout/stock_reservation'
-import FakePaymentAdapter, { type FakeWebhookEvent } from '#tests/helpers/fake_payment_adapter'
+import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import type { FakeWebhookEvent } from '#tests/helpers/types'
 import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
 import SweepPaymentOperations from '#jobs/payments/sweep_payment_operations'
 import { runQueue } from '#tests/helpers/queue'
@@ -181,4 +182,9 @@ export async function runSweep() {
 export async function runOutboxRelay() {
   await PublishWorkflowOutbox.dispatch({}).run()
   await runQueue(['maintenance'])
+}
+
+/** Moves the clock past every sweep's one-minute staleness threshold. */
+export function waitUntilStale() {
+  timeTravel(new Date(Date.now() + 5 * 60_000))
 }

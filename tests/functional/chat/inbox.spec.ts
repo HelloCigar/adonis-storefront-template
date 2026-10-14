@@ -1,46 +1,16 @@
-import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import { DateTime } from 'luxon'
-import User from '#models/account/user'
 import type Order from '#models/checkout/order'
 import OrderMessage from '#models/chat/order_message'
 import Shipment from '#models/checkout/shipment'
 import { OrderFactory } from '#database/factories/order_factory'
-
-function message(order: Order, sender: User, body: string, minutesAgo = 0) {
-  return OrderMessage.create({
-    publicId: randomUUID(),
-    orderId: order.id,
-    senderId: sender.id,
-    senderRole: sender.id === order.userId ? 'customer' : 'staff',
-    senderName: sender.fullName ?? sender.email,
-    body,
-    createdAt: DateTime.now().minus({ minutes: minutesAgo }),
-  })
-}
+import { chatMessage, inboxPeople } from '#tests/helpers/order_chat'
 
 test.group('Order chat inbox', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  async function people() {
-    const staff = await User.create({
-      email: 'staff@example.com',
-      fullName: 'Sam Staff',
-      password: 'x',
-      role: 'staff',
-    })
-    const customer = await User.create({
-      email: 'buyer@example.com',
-      fullName: 'Casey Customer',
-      password: 'x',
-      role: 'customer',
-    })
-    return { staff, customer }
-  }
-
   test('customers cannot open the inbox', async ({ client, route }) => {
-    const { customer } = await people()
+    const { customer } = await inboxPeople()
     const response = await client.get(route('inbox')).loginAs(customer).redirects(0)
     response.assertStatus(403)
   })
@@ -50,7 +20,7 @@ test.group('Order chat inbox', (group) => {
     assert,
     route,
   }) => {
-    const { staff, customer } = await people()
+    const { staff, customer } = await inboxPeople()
     const quiet = await OrderFactory.merge({
       userId: customer.id,
       lifecycleState: 'confirmed',
@@ -65,9 +35,9 @@ test.group('Order chat inbox', (group) => {
     }).create()
     await OrderFactory.merge({ userId: customer.id, lifecycleState: 'pending_payment' }).create()
     await OrderFactory.merge({ lifecycleState: 'confirmed' }).create()
-    await message(cancelledWithHistory, customer, 'About my refund', 30)
-    await message(busy, staff, 'Packed and ready', 10)
-    await message(busy, customer, 'Thanks! When does it ship?', 5)
+    await chatMessage(cancelledWithHistory, customer, 'About my refund', 30)
+    await chatMessage(busy, staff, 'Packed and ready', 10)
+    await chatMessage(busy, customer, 'Thanks! When does it ship?', 5)
 
     const page = await client.get(route('inbox')).loginAs(staff).withInertia()
     page.assertStatus(200)
@@ -103,14 +73,14 @@ test.group('Order chat inbox', (group) => {
     assert,
     route,
   }) => {
-    const { staff, customer } = await people()
+    const { staff, customer } = await inboxPeople()
     const order = await OrderFactory.merge({
       userId: customer.id,
       lifecycleState: 'confirmed',
     }).create()
-    await message(order, customer, 'Hello?', 2)
-    await message(order, staff, 'Hi Casey', 1)
-    await message(order, customer, 'Is it shipped?', 0)
+    await chatMessage(order, customer, 'Hello?', 2)
+    await chatMessage(order, staff, 'Hi Casey', 1)
+    await chatMessage(order, customer, 'Is it shipped?', 0)
 
     const page = await client
       .get(route('inbox'))
@@ -143,14 +113,14 @@ test.group('Order chat inbox', (group) => {
     assert,
     route,
   }) => {
-    const { staff, customer } = await people()
+    const { staff, customer } = await inboxPeople()
     const order = await OrderFactory.merge({
       userId: customer.id,
       lifecycleState: 'confirmed',
       source: 'online',
       publicId: 'chat-order',
     }).create()
-    await message(order, staff, 'Your order is packed', 0)
+    await chatMessage(order, staff, 'Your order is packed', 0)
 
     const own = await client
       .get(route('checkout.orders.show', { publicId: 'chat-order' }))
@@ -181,7 +151,7 @@ test.group('Order chat inbox', (group) => {
     assert,
     route,
   }) => {
-    const { staff, customer } = await people()
+    const { staff, customer } = await inboxPeople()
     const states = ['pending', 'packing', 'shipped', 'delivered'] as const
     const expected = ['to_pack', 'to_ship', 'in_transit', 'delivered']
     const orders: Order[] = []
@@ -200,7 +170,7 @@ test.group('Order chat inbox', (group) => {
       lifecycleState: 'cancelled',
       source: 'online',
     }).create()
-    await message(cancelled, customer, 'Please cancel it', 0)
+    await chatMessage(cancelled, customer, 'Please cancel it', 0)
 
     const page = await client.get(route('inbox')).loginAs(staff).withInertia()
     page.assertStatus(200)
@@ -226,7 +196,7 @@ test.group('Order chat inbox', (group) => {
     assert,
     route,
   }) => {
-    const { staff, customer } = await people()
+    const { staff, customer } = await inboxPeople()
     const cancelled = await OrderFactory.merge({
       userId: customer.id,
       lifecycleState: 'cancelled',

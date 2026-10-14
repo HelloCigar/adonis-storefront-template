@@ -1,15 +1,8 @@
 import { test } from '@japa/runner'
 import RichTextService from '#services/content/rich_text_service'
+import { imageHtml, linkHtml, paragraph, render, text } from '#tests/helpers/rich_text'
 
 const service = new RichTextService()
-const render = (...content: unknown[]) =>
-  service.toHtml(service.normalize({ type: 'doc', content }))
-const text = (value: string, marks?: unknown[]) => ({
-  type: 'text',
-  text: value,
-  ...(marks ? { marks } : {}),
-})
-const paragraph = (...content: unknown[]) => ({ type: 'paragraph', content })
 
 test.group('RichTextService blocks', () => {
   test('renders paragraphs, headings, lists, blockquotes and code blocks', ({ assert }) => {
@@ -151,10 +144,6 @@ test.group('RichTextService marks and escaping', () => {
 })
 
 test.group('RichTextService URL safety', () => {
-  const linkHtml = (href: string) =>
-    render(paragraph(text('l', [{ type: 'link', attrs: { href } }])))
-  const imageHtml = (src: string) => render({ type: 'image', attrs: { src } })
-
   test('drops javascript: link hrefs however they are disguised', ({ assert }) => {
     const hrefs = [
       'javascript:alert(1)',

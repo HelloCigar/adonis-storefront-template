@@ -2,30 +2,24 @@ import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { QueueManager } from '@adonisjs/queue'
-import { mkdir } from 'node:fs/promises'
 import { DateTime } from 'luxon'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
 import FulfillmentService from '#services/checkout/fulfillment_service'
 import RefundObservation from '#models/payments/refund_observation'
 import RefundOperation from '#models/payments/refund_operation'
 import Payment from '#models/payments/payment'
 import Shipment from '#models/checkout/shipment'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import { useFakeProvider } from '#tests/helpers/payments'
 import { setupConfirmedOrder } from '#tests/helpers/orders'
 import { UserFactory } from '#database/factories/user_factory'
 import { OrderFactory } from '#database/factories/order_factory'
 
 test.group('Staff order hardening', (group) => {
-  let adapter: FakePaymentAdapter
   group.each.setup(async () => {
     const truncate = await testUtils.db().truncate()
-    adapter = new FakePaymentAdapter('order-hardening')
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
     QueueManager.fake()
     return async () => {
       QueueManager.restore()
-      app.container.restore(PaymentService)
       await truncate()
     }
   })
@@ -36,6 +30,7 @@ test.group('Staff order hardening', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     order.number = 'MB-' + 'A'.repeat(64)
     order.email = 'long-customer-name.' + 'b'.repeat(64) + '@example.com'
@@ -93,7 +88,6 @@ test.group('Staff order hardening', (group) => {
     }
     assert.isAtLeast(contrast(actionColors.label, actionColors.fill), 4.5)
     assert.isAtLeast(contrast(actionColors.link, actionColors.ground), 4.5)
-    await mkdir('.impeccable/review', { recursive: true })
     const scrollTop = () =>
       page.evaluate(`(() => {
         document.querySelectorAll('*').forEach(element => {
@@ -102,16 +96,15 @@ test.group('Staff order hardening', (group) => {
         window.scrollTo(0, 0)
       })()`)
     for (const viewport of [
-      { width: 1280, height: 900, file: 'desktop.png' },
-      { width: 768, height: 1024, file: 'tablet.png' },
-      { width: 390, height: 844, file: 'mobile.png' },
+      { width: 1280, height: 900 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
     ]) {
       await page.setViewportSize(viewport)
       await scrollTop()
       assert.isTrue(
         await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
       )
-      await page.screenshot({ path: `.impeccable/review/${viewport.file}`, fullPage: true })
       await page
         .getByRole('heading', { name: 'Order contents', exact: true })
         .scrollIntoViewIfNeeded()
@@ -122,14 +115,8 @@ test.group('Staff order hardening', (group) => {
       assert.isTrue(
         await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
       )
-      await page.screenshot({ path: `.impeccable/review/details-${viewport.file}`, fullPage: true })
-      await page.getByRole('heading', { name: 'Pack items', exact: true }).scrollIntoViewIfNeeded()
     }
-    await page.emulateMedia({ colorScheme: 'dark' })
     await page.setViewportSize({ width: 1280, height: 900 })
-    await scrollTop()
-    await page.screenshot({ path: '.impeccable/review/dark-desktop.png', fullPage: true })
-    await page.emulateMedia({ colorScheme: 'light' })
     const payment = await Payment.findByOrFail('orderId', order.id)
     await RefundObservation.create({
       provider: payment.provider,
@@ -153,15 +140,14 @@ test.group('Staff order hardening', (group) => {
     )
     await page.keyboard.press('Escape')
     for (const viewport of [
-      { width: 1280, height: 900, file: 'recovery-desktop.png' },
-      { width: 390, height: 844, file: 'recovery-mobile.png' },
+      { width: 1280, height: 900 },
+      { width: 390, height: 844 },
     ]) {
       await page.setViewportSize(viewport)
       await scrollTop()
       assert.isTrue(
         await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
       )
-      await page.screenshot({ path: `.impeccable/review/${viewport.file}`, fullPage: true })
     }
     assert.isEmpty(errors)
   })
@@ -172,6 +158,7 @@ test.group('Staff order hardening', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
@@ -196,10 +183,11 @@ test.group('Staff order hardening', (group) => {
     assert.equal(await page.evaluate('document.activeElement?.getAttribute("name")'), 'carrier')
     await page
       .getByRole('status')
-      .getByText('Packing started. Add the carrier and tracking number to record the shipment.')
+      .getByText('Packing started. Add the carrier and tracking number to record the shipment.', {
+        exact: true,
+      })
       .waitFor({ state: 'attached' })
     await page.setViewportSize({ width: 1280, height: 900 })
-    await page.screenshot({ path: '.impeccable/review/dispatch-desktop.png', fullPage: true })
     await page.getByLabel('Carrier', { exact: true }).fill('  ')
     await page.getByLabel('Tracking number', { exact: true }).fill('KEEP-MY-TRACKING')
     await page.getByRole('button', { name: 'Mark as shipped', exact: true }).click()
@@ -216,8 +204,6 @@ test.group('Staff order hardening', (group) => {
     const shipment = await Shipment.findByOrFail('orderId', order.id)
     assert.equal(shipment.state, 'packing')
     await page.getByText('Order is being packed', { exact: true }).waitFor({ state: 'hidden' })
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.screenshot({ path: '.impeccable/review/error-mobile.png', fullPage: true })
   })
 
   test('refunds require acknowledgement and a repeated click creates one durable operation', async ({
@@ -226,6 +212,7 @@ test.group('Staff order hardening', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
@@ -252,6 +239,7 @@ test.group('Staff order hardening', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     const order = await OrderFactory.create()
     await browserContext.loginAs(staff)
@@ -283,6 +271,7 @@ test.group('Staff order hardening', (group) => {
     assert,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     const fulfillment = await app.container.make(FulfillmentService)
     await fulfillment.pack(order.id, staff)
@@ -303,8 +292,6 @@ test.group('Staff order hardening', (group) => {
     )
     const shipment = await Shipment.findByOrFail('orderId', order.id)
     assert.equal(shipment.state, 'delivered')
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.screenshot({ path: '.impeccable/review/delivered-mobile.png', fullPage: true })
   })
 
   test('captured payment and refund records retain their original currency', async ({
@@ -312,6 +299,7 @@ test.group('Staff order hardening', (group) => {
     browserContext,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     const payment = await Payment.create({
       orderId: order.id,

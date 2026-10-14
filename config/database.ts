@@ -1,5 +1,11 @@
+import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/lucid'
+
+/**
+ * Parallel test runs (`node ace test:shards`) each get their own database file.
+ */
+const testShardSuffix = env.get('TEST_SHARD') ? `-${env.get('TEST_SHARD')}` : ''
 
 const dbConfig = defineConfig({
   /**
@@ -22,7 +28,7 @@ const dbConfig = defineConfig({
         /**
          * Database file location.
          */
-        filename: app.tmpPath(app.inTest ? 'test.sqlite3' : 'db.sqlite3'),
+        filename: app.tmpPath(app.inTest ? `test${testShardSuffix}.sqlite3` : 'db.sqlite3'),
       },
 
       /**

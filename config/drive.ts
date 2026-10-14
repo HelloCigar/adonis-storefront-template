@@ -23,7 +23,11 @@ const driveConfig = defineConfig({
       visibility: 'private',
     }),
     fs: services.fs({
-      location: app.inTest ? app.tmpPath('test-attachments') : app.makePath('storage/attachments'),
+      location: app.inTest
+        ? app.tmpPath(
+            env.get('TEST_SHARD') ? `test-attachments-${env.get('TEST_SHARD')}` : 'test-attachments'
+          )
+        : app.makePath('storage/attachments'),
       serveFiles: false,
       visibility: 'private',
     }),

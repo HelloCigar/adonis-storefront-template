@@ -22,26 +22,30 @@ test.group('Store management empty states', (group) => {
     // Nothing exists yet: explain discounts and offer to add one, without an empty table.
     const empty = page.getByTestId('list-empty')
     await empty.getByText('Create your first discount code', { exact: true }).waitFor()
-    assert.equal(await page.getByRole('textbox', { name: 'Search discounts' }).count(), 0)
+    assert.equal(
+      await page.getByRole('textbox', { name: 'Search discounts', exact: true }).count(),
+      0
+    )
     assert.equal(await page.getByRole('table').count(), 0)
-    await page.screenshot({ path: 'tmp/empty-discounts-first-run.png', fullPage: true })
 
     await empty.getByRole('button', { name: 'Add discount', exact: true }).click()
     const dialog = page.getByRole('dialog')
-    await dialog.getByLabel('Code').fill('welcome10')
-    await dialog.getByLabel('Percent off').fill('10')
+    await dialog.getByLabel('Code', { exact: true }).fill('welcome10')
+    await dialog.getByLabel('Percent off', { exact: true }).fill('10')
     await dialog.getByRole('button', { name: 'Save', exact: true }).click()
     await dialog.waitFor({ state: 'hidden' })
     await page.getByText('WELCOME10', { exact: true }).waitFor()
     await empty.waitFor({ state: 'detached' })
 
     // A search that hides every code says so and offers a way back.
-    await page.getByRole('textbox', { name: 'Search discounts' }).fill('summer')
+    await page.getByRole('textbox', { name: 'Search discounts', exact: true }).fill('summer')
     await page.getByText('No discounts match', { exact: true }).waitFor()
-    await page.screenshot({ path: 'tmp/empty-discounts-no-matches.png', fullPage: true })
     await page.getByRole('button', { name: 'Clear filters', exact: true }).click()
     await page.getByText('WELCOME10', { exact: true }).waitFor()
-    assert.equal(await page.getByRole('textbox', { name: 'Search discounts' }).inputValue(), '')
+    assert.equal(
+      await page.getByRole('textbox', { name: 'Search discounts', exact: true }).inputValue(),
+      ''
+    )
 
     assert.deepEqual(errors, [])
   })
@@ -74,7 +78,6 @@ test.group('Store management empty states', (group) => {
     await page.reload()
     await page.getByText('You’re all caught up', { exact: true }).waitFor()
     await page.getByRole('tablist').waitFor()
-    await page.screenshot({ path: 'tmp/empty-reviews-caught-up.png', fullPage: true })
 
     assert.deepEqual(errors, [])
   })

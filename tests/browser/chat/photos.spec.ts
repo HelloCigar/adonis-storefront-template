@@ -49,21 +49,23 @@ test.group('Order chat photos', (group) => {
     page.on('pageerror', (error) => errors.push(error.message))
     // The customer's messages sit on the other side under their name and initials.
     const customerMessage = page.locator('[data-from="theirs"]')
-    await customerMessage.getByText('Can I get a shipping label?').waitFor()
+    await customerMessage.getByText('Can I get a shipping label?', { exact: true }).waitFor()
     await customerMessage.getByText('CC', { exact: true }).waitFor()
     await customerMessage.getByText('Casey Customer', { exact: true }).waitFor()
     await page.getByText('Today', { exact: true }).waitFor()
 
     const chooser = page.waitForEvent('filechooser')
-    await page.getByRole('button', { name: 'Add photos' }).click()
+    await page.getByRole('button', { name: 'Add photos', exact: true }).click()
     const fileChooser = await chooser
     await fileChooser.setFiles({ name: 'label.png', mimeType: 'image/png', buffer: png })
-    await page.getByRole('img', { name: 'label.png' }).waitFor()
-    await page.getByPlaceholder('Reply to the customer…').fill('Here is your shipping label')
-    await page.getByRole('button', { name: 'Remove label.png' }).waitFor()
-    await page.getByRole('button', { name: 'Send prompt' }).click()
+    await page.getByRole('img', { name: 'label.png', exact: true }).waitFor()
+    await page
+      .getByPlaceholder('Reply to the customer…', { exact: true })
+      .fill('Here is your shipping label')
+    await page.getByRole('button', { name: 'Remove label.png', exact: true }).waitFor()
+    await page.getByRole('button', { name: 'Send prompt', exact: true }).click()
 
-    await page.getByText('Here is your shipping label').waitFor()
+    await page.getByText('Here is your shipping label', { exact: true }).waitFor()
     const message = await OrderMessage.query()
       .where('order_id', order.id)
       .where('sender_role', 'staff')
@@ -82,22 +84,27 @@ test.group('Order chat photos', (group) => {
         return image.naturalWidth > 0
       })
     )
-    assert.equal(await page.getByRole('button', { name: 'Remove label.png' }).count(), 0)
+    assert.equal(
+      await page.getByRole('button', { name: 'Remove label.png', exact: true }).count(),
+      0
+    )
     // The photo opens in a viewer on the page.
-    await page.getByRole('button', { name: 'View label.png' }).click()
-    const viewer = page.getByRole('dialog', { name: 'label.png' })
-    await viewer.getByRole('img', { name: 'label.png' }).waitFor()
-    await viewer.getByRole('button', { name: 'Close' }).click()
+    await page.getByRole('button', { name: 'View label.png', exact: true }).click()
+    const viewer = page.getByRole('dialog', { name: 'label.png', exact: true })
+    await viewer.getByRole('img', { name: 'label.png', exact: true }).waitFor()
+    await viewer.getByRole('button', { name: 'Close', exact: true }).click()
     await viewer.waitFor({ state: 'detached' })
 
     // A photo with an empty text box sends with Enter too.
     const nextChooser = page.waitForEvent('filechooser')
-    await page.getByRole('button', { name: 'Add photos' }).click()
+    await page.getByRole('button', { name: 'Add photos', exact: true }).click()
     const nextFileChooser = await nextChooser
     await nextFileChooser.setFiles({ name: 'receipt.png', mimeType: 'image/png', buffer: png })
-    await page.getByRole('button', { name: 'Remove receipt.png' }).waitFor()
-    await page.getByPlaceholder('Reply to the customer…').press('Enter')
-    await page.getByRole('button', { name: 'Remove receipt.png' }).waitFor({ state: 'detached' })
+    await page.getByRole('button', { name: 'Remove receipt.png', exact: true }).waitFor()
+    await page.getByPlaceholder('Reply to the customer…', { exact: true }).press('Enter')
+    await page
+      .getByRole('button', { name: 'Remove receipt.png', exact: true })
+      .waitFor({ state: 'detached' })
     const photoOnly = await OrderMessage.query()
       .where('order_id', order.id)
       .where('body', '')
@@ -116,7 +123,7 @@ test.group('Order chat photos', (group) => {
         .count(),
       1
     )
-    assert.equal(await page.getByRole('button', { name: 'Copy message' }).count(), 1)
+    assert.equal(await page.getByRole('button', { name: 'Copy message', exact: true }).count(), 1)
     assert.deepEqual(errors, [])
   })
 })

@@ -4,18 +4,9 @@ import { DateTime } from 'luxon'
 import User from '#models/account/user'
 import BlogPost from '#models/content/blog_post'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { storeStaff } from '#tests/helpers/accounts'
+import { paragraph, body, countPosts, createPost } from '#tests/helpers/posts'
 
-const staff = () =>
-  User.create({
-    fullName: 'Store Staff',
-    email: 'staff@example.com',
-    password: 'secret-password',
-    role: 'staff',
-  })
-const paragraph = (value: string) => ({
-  type: 'paragraph',
-  content: [{ type: 'text', text: value }],
-})
 const draftPayload = {
   title: 'Spring arrivals',
   handle: 'spring-arrivals',
@@ -25,24 +16,7 @@ const draftPayload = {
   status: 'draft',
   publishedAt: null as string | null,
 }
-/** The editor sends its document as a JSON string; see app/validators/seller/post.ts. */
-const body = <T extends { content: unknown }>(payload: T) => ({
-  ...payload,
-  content: JSON.stringify(payload.content),
-})
 const emptyContent = { type: 'doc', content: [{ type: 'paragraph' }] }
-const countPosts = async () => {
-  const posts = await BlogPost.all()
-  return posts.length
-}
-const createPost = (attrs: Partial<BlogPost> & { handle: string }) =>
-  BlogPost.create({
-    title: attrs.handle,
-    content: { type: 'doc', content: [] },
-    contentHtml: '',
-    status: 'draft',
-    ...attrs,
-  })
 
 test.group('Seller posts', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -52,7 +26,7 @@ test.group('Seller posts', (group) => {
       email: 'customer@example.com',
       password: 'secret-password',
     })
-    const owner = await staff()
+    const owner = await storeStaff()
 
     const guest = await client.get(route('seller.posts.index')).redirects(0)
     guest.assertStatus(302)
@@ -77,7 +51,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('staff see the create page with no post', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const page = await client.get(route('seller.posts.create')).loginAs(owner).withInertia()
     page.assertStatus(200)
     page.assertInertiaComponent('seller/post')
@@ -89,7 +63,7 @@ test.group('Seller posts', (group) => {
     assert,
     route,
   }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const response = await client
       .post(urlFor('seller.posts.store'))
       .loginAs(owner)
@@ -140,7 +114,7 @@ test.group('Seller posts', (group) => {
     assert,
     route,
   }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const before = DateTime.utc().minus({ seconds: 5 })
     await client
       .post(urlFor('seller.posts.store'))
@@ -170,7 +144,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('an explicit publish date is stored as given', async ({ client, assert }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     await client
       .post(urlFor('seller.posts.store'))
       .loginAs(owner)
@@ -186,7 +160,7 @@ test.group('Seller posts', (group) => {
     assert,
     route,
   }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const response = await client
       .post(urlFor('seller.posts.store'))
       .loginAs(owner)
@@ -209,7 +183,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('rejects a duplicate handle', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     await createPost({ handle: 'spring-arrivals' })
 
     const duplicate = await client
@@ -228,7 +202,7 @@ test.group('Seller posts', (group) => {
     client,
     assert,
   }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     await client
       .post(urlFor('seller.posts.store'))
       .loginAs(owner)
@@ -267,7 +241,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('the edit page returns the post with its content', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const content = { type: 'doc', content: [paragraph('Stored text')] }
     const post = await createPost({
       handle: 'stored-post',
@@ -293,7 +267,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('staff update and delete a post', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const post = await createPost({ handle: 'old-handle', authorId: owner.id })
 
     const updated = await client
@@ -323,7 +297,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('spaces around formatted text survive the round trip', async ({ client, assert }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     const content = {
       type: 'doc',
       content: [
@@ -351,7 +325,7 @@ test.group('Seller posts', (group) => {
   })
 
   test('content that is not a Tiptap document is rejected', async ({ client, assert, route }) => {
-    const owner = await staff()
+    const owner = await storeStaff()
     for (const content of ['not json', '{"type":"paragraph"}', '[]']) {
       const response = await client
         .post(urlFor('seller.posts.store'))

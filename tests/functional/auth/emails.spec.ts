@@ -3,13 +3,7 @@ import mail from '@adonisjs/mail/services/main'
 import testUtils from '@adonisjs/core/services/test_utils'
 import User from '#models/account/user'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-const signup = (email: string) => ({
-  fullName: 'Customer',
-  email,
-  password: 'secret-password',
-  passwordConfirmation: 'secret-password',
-})
+import { signup } from '#tests/helpers/accounts'
 
 test.group('Account emails', (group) => {
   group.each.setup(() => testUtils.db().truncate())

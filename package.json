@@ -14,6 +14,7 @@
     "dev:web": "node ace serve --hmr",
     "dev:worker": "node ace worker:start --queue=maintenance,payments,notifications --concurrency=1",
     "test": "node ace test",
+    "test:shards": "node ace test:shards",
     "lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ && npm run format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check --cache --end-of-line auto \"**/*.{ts,vue}\" \"!database/schema.ts\"",

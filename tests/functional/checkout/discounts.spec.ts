@@ -1,120 +1,34 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
-import testUtils from '@adonisjs/core/services/test_utils'
-import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import CartService from '#services/checkout/cart_service'
-import QuoteService from '#services/checkout/quote_service'
-import CheckoutService from '#services/checkout/checkout_service'
 import RecoveryService from '#services/payments/recovery_service'
 import SettlementService from '#services/payments/settlement_service'
 import FulfillmentService from '#services/checkout/fulfillment_service'
-import InventoryService from '#services/catalog/inventory_service'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
-import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
+import { resetCheckoutState, useFakeProvider } from '#tests/helpers/payments'
 import Attempt from '#models/payments/attempt'
 import Cart from '#models/checkout/cart'
 import DiscountCode from '#models/checkout/discount_code'
 import DiscountRedemption from '#models/checkout/discount_redemption'
-import StockReservation from '#models/checkout/stock_reservation'
 import { UserFactory } from '#database/factories/user_factory'
-import { ProductVariantFactory } from '#database/factories/product_variant_factory'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-const shipping = {
-  firstName: 'Guest',
-  lastName: 'Customer',
-  phoneNumber: '09171234567',
-  address1: '123 Sample Street',
-  city: 'Quezon City',
-  zoneCode: 'Metro Manila',
-  postalCode: '1100',
-  countryCode: 'PH' as const,
-}
-
-function discount(values: Partial<DiscountCode> = {}) {
-  return DiscountCode.create({
-    code: 'SAVE10',
-    kind: 'percentage',
-    percentOff: 10,
-    amountOffMinor: null,
-    minimumSubtotalMinor: 0,
-    usageLimit: null,
-    timesUsed: 0,
-    oncePerCustomer: false,
-    active: true,
-    ...values,
-  })
-}
-
-async function sellable(priceAmount: number, inventoryQuantity = 10) {
-  const variant = await ProductVariantFactory.merge({
-    priceAmount,
-    currencyCode: 'PHP',
-    availableForSale: true,
-    inventoryQuantity,
-  }).create()
-  await variant.load('product')
-  variant.product.status = 'active'
-  variant.product.publishedAt = DateTime.utc()
-  await variant.product.save()
-  return variant
-}
-
-/** A cart with the given lines and code, quoted and ready to submit. */
-async function cartWith(lines: [variantId: string, quantity: number][], code?: string) {
-  const token = randomUUID()
-  const carts = await app.container.make(CartService)
-  for (const [variantId, quantity] of lines) await carts.add(token, undefined, variantId, quantity)
-  if (code) await carts.applyDiscount(token, undefined, code)
-  return { token, ...(await quoted(token)) }
-}
-
-async function quoted(token: string, email = 'guest@example.com') {
-  const carts = await app.container.make(CartService)
-  const quotes = await app.container.make(QuoteService)
-  const quote = await quotes.quote((await carts.load(token))!)
-  const input = {
-    email,
-    shipping,
-    submissionKey: quote.submissionKey,
-    cartVersion: quote.cartVersion,
-    quoteFingerprint: quote.fingerprint,
-  }
-  return { quote, input }
-}
-
-async function submit(token: string, input: Awaited<ReturnType<typeof quoted>>['input']) {
-  const checkout = await app.container.make(CheckoutService)
-  return checkout.submit(token, undefined, input)
-}
-
-async function savedCode(token: string) {
-  const cart = await Cart.findByOrFail('token', token)
-  return cart.discountCode
-}
+import {
+  discount,
+  sellable,
+  cartWith,
+  quoted,
+  submit,
+  savedCode,
+} from '#tests/helpers/checkout_discounts'
 
 test.group('Discount codes at checkout', (group) => {
-  let adapter: FakePaymentAdapter
-  group.each.setup(async () => {
-    const cleanup = await testUtils.db().truncate()
-    adapter = new FakePaymentAdapter()
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
-    return async () => {
-      app.container.restore(PaymentService)
-      const inventory = await app.container.make(InventoryService)
-      const reserved = await StockReservation.query().where('state', 'reserved')
-      for (const orderId of new Set(reserved.map((row) => row.orderId)))
-        await db.transaction((trx) => inventory.release(trx, orderId))
-      await cleanup()
-    }
-  })
+  group.each.setup(() => resetCheckoutState())
 
   test('freezes a percentage discount on the order, its lines and the provider request', async ({
     assert,
   }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     const mug = await sellable(150)
     await discount({ code: 'SAVE10', percentOff: 10 })
@@ -167,6 +81,7 @@ test.group('Discount codes at checkout', (group) => {
   test('sends unevenly discounted lines as one line and leaves out fully discounted ones', async ({
     assert,
   }) => {
+    useFakeProvider()
     const shirt = await sellable(100)
     await discount({ code: 'PESO', kind: 'fixed', percentOff: null, amountOffMinor: 100 })
     const uneven = await cartWith([[shirt.id, 3]], 'peso')
@@ -191,6 +106,7 @@ test.group('Discount codes at checkout', (group) => {
   test('rejects codes that are unknown, off, scheduled, expired, used up or under the minimum', async ({
     assert,
   }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     const now = DateTime.utc()
     await discount({ code: 'OFF', active: false })
@@ -226,6 +142,7 @@ test.group('Discount codes at checkout', (group) => {
   test('a code that stops applying is reported on the quote and never charged', async ({
     assert,
   }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     const code = await discount({ code: 'SAVE10' })
     const { token, input } = await cartWith([[shirt.id, 1]], 'SAVE10')
@@ -248,6 +165,7 @@ test.group('Discount codes at checkout', (group) => {
   })
 
   test('the usage limit holds across carts quoted before the last use', async ({ assert }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     const code = await discount({ code: 'ONCE', usageLimit: 1 })
     const first = await cartWith([[shirt.id, 1]], 'ONCE')
@@ -267,6 +185,7 @@ test.group('Discount codes at checkout', (group) => {
   test('once-per-customer codes allow one active use per email until the order closes unpaid', async ({
     assert,
   }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     const code = await discount({ code: 'WELCOME', oncePerCustomer: true })
     const first = await cartWith([[shirt.id, 1]], 'WELCOME')
@@ -305,6 +224,7 @@ test.group('Discount codes at checkout', (group) => {
   })
 
   test('staff cancelling a paid order returns its use of the code once', async ({ assert }) => {
+    const adapter = useFakeProvider()
     const shirt = await sellable(499)
     const code = await discount({ code: 'SAVE10' })
     const { token, input } = await cartWith([[shirt.id, 2]], 'SAVE10')
@@ -334,6 +254,7 @@ test.group('Discount codes at checkout', (group) => {
   })
 
   test('shoppers apply and remove a code over HTTP', async ({ assert, client, route }) => {
+    useFakeProvider()
     const shirt = await sellable(499)
     await discount({ code: 'SAVE10' })
     const token = randomUUID()

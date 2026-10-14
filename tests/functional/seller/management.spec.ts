@@ -13,14 +13,8 @@ import db from '@adonisjs/lucid/services/db'
 import { ProductFactory } from '#database/factories/product_factory'
 import { createFixtureImage } from '#database/fixtures/image'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { storeOwner } from '#tests/helpers/accounts'
 
-const seller = () =>
-  User.create({
-    fullName: 'Store Owner',
-    email: 'seller@example.com',
-    password: 'secret-password',
-    role: 'staff',
-  })
 const productPayload = {
   title: 'Bunny lamp',
   handle: 'bunny-lamp',
@@ -135,7 +129,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const created = await client
       .post(urlFor('seller.products.store'))
       .loginAs(owner)
@@ -206,7 +200,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const item = await ProductFactory.apply('published', 'withMedia').create()
     item.media.add(await createFixtureImage('second-photo'))
     await item.save()
@@ -240,7 +234,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const customer = await User.create({
       email: 'customer@example.com',
       password: 'secret-password',
@@ -263,7 +257,7 @@ test.group('Seller management', (group) => {
   })
 
   test('redirects the legacy variants page to the product page', async ({ client, route }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const item = await Product.create({ ...productPayload, sellerId: owner.id })
     const response = await client
       .get(route('seller.variants.index', { productId: item.id }))
@@ -278,7 +272,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const created = await client
       .post(urlFor('seller.products.store'))
       .loginAs(owner)
@@ -312,7 +306,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const withMedia = await ProductFactory.apply('published', 'withMedia').create()
     withMedia.media.add(await createFixtureImage('later-photo'))
     await withMedia.save()
@@ -345,7 +339,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const stock = async (
       title: string,
       variants: { quantity: number | null; reserved?: number }[]
@@ -443,7 +437,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const item = await ProductFactory.apply('published').create()
     const rows: [string, number | null, number][] = [
       ['Untracked', null, 0],
@@ -495,7 +489,7 @@ test.group('Seller management', (group) => {
     client,
     assert,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const variant = await product
       .related('variants')
@@ -557,7 +551,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const payload = {
       title: 'Lighting',
@@ -607,7 +601,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const order = await Order.create({
       number: 'MB-1001',
       email: 'buyer@example.com',
@@ -661,7 +655,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     await owner.merge({ role: 'admin' }).save()
     const payload = {
       fullName: 'Buyer',
@@ -731,7 +725,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const product = await Product.create({ ...productPayload, sellerId: owner.id })
     const png = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/vXcAAAAASUVORK5CYII=',
@@ -874,7 +868,7 @@ test.group('Seller management', (group) => {
     assert,
     route,
   }) => {
-    const owner = await seller()
+    const owner = await storeOwner()
     const admin = await User.create({
       fullName: 'Administrator',
       email: 'admin@example.com',

@@ -1,23 +1,9 @@
-import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { DateTime } from 'luxon'
-import type Order from '#models/checkout/order'
-import OrderMessage from '#models/chat/order_message'
 import { OrderFactory } from '#database/factories/order_factory'
 import { UserFactory } from '#database/factories/user_factory'
-
-function customerMessage(order: Order, body: string, readAt: DateTime | null = null) {
-  return OrderMessage.create({
-    publicId: randomUUID(),
-    orderId: order.id,
-    senderId: order.userId,
-    senderRole: 'customer',
-    senderName: 'Casey Customer',
-    body,
-    readAt,
-  })
-}
+import { customerMessage } from '#tests/helpers/order_chat'
 
 test.group('Seller order page chat link', (group) => {
   group.each.setup(() => testUtils.db().truncate())

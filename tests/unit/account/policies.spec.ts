@@ -1,18 +1,12 @@
 import { test } from '@japa/runner'
 import { Bouncer } from '@adonisjs/bouncer'
-import User, { type UserRole } from '#models/account/user'
+import type User from '#models/account/user'
 import CustomerAddress from '#models/account/customer_address'
 import Order from '#models/checkout/order'
 import UserPolicy from '#policies/account/user_policy'
 import AddressPolicy from '#policies/account/address_policy'
 import OrderPolicy from '#policies/account/order_policy'
-
-function actor(id: string, role: UserRole) {
-  const user = new User()
-  user.id = id
-  user.role = role
-  return user
-}
+import { actor } from '#tests/helpers/policies'
 
 test.group('Account ownership policies', () => {
   test('self-service requires ownership for customers, staff, and admins', async ({ assert }) => {
@@ -22,13 +16,13 @@ test.group('Account ownership policies', () => {
     order.userId = '1'
 
     for (const role of ['customer', 'staff', 'admin'] as const) {
-      const account = actor('1', role)
+      const account = actor(role, '1')
       for (const user of [
         null,
         account,
-        actor('2', 'customer'),
-        actor('3', 'staff'),
-        actor('4', 'admin'),
+        actor('customer', '2'),
+        actor('staff', '3'),
+        actor('admin', '4'),
       ]) {
         const bouncer = new Bouncer<User>(user)
         const allowed = user?.id === account.id

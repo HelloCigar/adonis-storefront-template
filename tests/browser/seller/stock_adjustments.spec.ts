@@ -98,7 +98,10 @@ test.group('Adjusting variant stock', (group) => {
 
     await page.getByText('Damaged, lost, or written off', { exact: true }).click()
     await page.getByLabel('Units', { exact: true }).fill('9')
-    await page.getByRole('status').getByText('That removes more than the 5 on hand.').waitFor()
+    await page
+      .getByRole('status')
+      .getByText('That removes more than the 5 on hand.', { exact: true })
+      .waitFor()
     await page.getByRole('button', { name: 'Save adjustment', exact: true }).click()
     await page.getByText(/Stock cannot go below zero/).waitFor()
 

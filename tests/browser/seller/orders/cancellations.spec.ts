@@ -1,28 +1,21 @@
 import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import { QueueManager } from '@adonisjs/queue'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
 import Payment from '#models/payments/payment'
 import RefundObservation from '#models/payments/refund_observation'
 import StockReservation from '#models/checkout/stock_reservation'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
-import { resetCheckoutState } from '#tests/helpers/payments'
+import { resetCheckoutState, useFakeProvider } from '#tests/helpers/payments'
 import { setupConfirmedOrder } from '#tests/helpers/orders'
 import { simulatedCheckout } from '#tests/helpers/simulated_checkout'
 import { UserFactory } from '#database/factories/user_factory'
 import { ProductVariantFactory } from '#database/factories/product_variant_factory'
 
 test.group('Staff order cancellations', (group) => {
-  let adapter: FakePaymentAdapter
   group.each.setup(async () => {
     const reset = await resetCheckoutState()
-    adapter = new FakePaymentAdapter('order-cancellations')
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
     QueueManager.fake()
     return async () => {
       QueueManager.restore()
-      app.container.restore(PaymentService)
       await reset()
     }
   })
@@ -34,6 +27,7 @@ test.group('Staff order cancellations', (group) => {
     assert,
     db,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-cancellations')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     // The checkout consumed one unit; a second line's unit makes two to return.
     const variant = await ProductVariantFactory.create()
@@ -75,6 +69,7 @@ test.group('Staff order cancellations', (group) => {
     route,
     assert,
   }) => {
+    useFakeProvider([new FakePaymentAdapter('order-cancellations')])
     const { order } = await simulatedCheckout()
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     await browserContext.loginAs(staff)
@@ -111,6 +106,7 @@ test.group('Staff order cancellations', (group) => {
       },
     ])
     .run(async ({ visit, browserContext, route, assert }, row) => {
+      const adapter = useFakeProvider([new FakePaymentAdapter('order-cancellations')])
       const { order, staff } = await setupConfirmedOrder({
         adapter,
         stage: 'stage' in row ? row.stage : undefined,

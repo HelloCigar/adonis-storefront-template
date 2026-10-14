@@ -1,25 +1,18 @@
 import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import { QueueManager } from '@adonisjs/queue'
 import { DateTime } from 'luxon'
-import PaymentService from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
-import { resetCheckoutState } from '#tests/helpers/payments'
+import { resetCheckoutState, useFakeProvider } from '#tests/helpers/payments'
 import { setupConfirmedOrder, setupOrderEmail } from '#tests/helpers/orders'
 import { UserFactory } from '#database/factories/user_factory'
 import { OrderFactory } from '#database/factories/order_factory'
 
 test.group('Staff order page', (group) => {
-  let adapter: FakePaymentAdapter
   group.each.setup(async () => {
     const reset = await resetCheckoutState()
-    adapter = new FakePaymentAdapter('order-page')
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
     QueueManager.fake()
     return async () => {
       QueueManager.restore()
-      app.container.restore(PaymentService)
       await reset()
     }
   })
@@ -27,6 +20,7 @@ test.group('Staff order page', (group) => {
   test('the next action leads the page at {width}px')
     .with([{ width: 1280 }, { width: 390 }])
     .run(async ({ visit, browserContext, route, assert }, { width }) => {
+      const adapter = useFakeProvider([new FakePaymentAdapter('order-page')])
       const { order, staff } = await setupConfirmedOrder({ adapter })
       await browserContext.loginAs(staff)
       const page = await visit(route('seller.orders.show', { id: order.id }))
@@ -48,12 +42,13 @@ test.group('Staff order page', (group) => {
     route,
     assert,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-page')])
     const { order, staff } = await setupConfirmedOrder({ adapter, stage: 'packed' })
     const item = await order.related('lineItems').query().firstOrFail()
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.assertVisible(page.getByRole('heading', { name: 'Add tracking', exact: true }))
-    const step = page.getByRole('region', { name: 'Add tracking' })
+    const step = page.getByRole('region', { name: 'Add tracking', exact: true })
     await page.assertVisible(step.getByLabel('Carrier', { exact: true }))
     await page.assertVisible(step.getByText(item.title, { exact: true }))
     assert.equal(await page.getByText('Parcel contents', { exact: true }).count(), 0)
@@ -65,6 +60,7 @@ test.group('Staff order page', (group) => {
       { state: 'sent' as const, flagged: false },
     ])
     .run(async ({ visit, browserContext, route, assert }, { state, flagged }) => {
+      const adapter = useFakeProvider([new FakePaymentAdapter('order-page')])
       const { order, staff } = await setupConfirmedOrder({ adapter })
       await setupOrderEmail(order, { kind: 'shipment', state })
       await browserContext.loginAs(staff)
@@ -90,6 +86,7 @@ test.group('Staff order page', (group) => {
     route,
     assert,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-page')])
     const { order, staff } = await setupConfirmedOrder({ adapter, stage: 'shipped' })
     const sentAt = DateTime.utc().plus({ minutes: 5 })
     await setupOrderEmail(order, {
@@ -100,7 +97,7 @@ test.group('Staff order page', (group) => {
     })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
-    const timeline = page.getByRole('region', { name: 'Order activity' })
+    const timeline = page.getByRole('region', { name: 'Order activity', exact: true })
     const entries = timeline.getByRole('listitem')
     await page.assertVisible(entries.first())
     const titles = await entries.locator('[data-timeline-title]').allInnerTexts()
@@ -121,12 +118,13 @@ test.group('Staff order page', (group) => {
     browserContext,
     route,
   }) => {
+    const adapter = useFakeProvider([new FakePaymentAdapter('order-page')])
     const { order, staff } = await setupConfirmedOrder({ adapter })
     await setupOrderEmail(order, { kind: 'shipment', state: 'failed' })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
     const entry = page
-      .getByRole('region', { name: 'Order activity' })
+      .getByRole('region', { name: 'Order activity', exact: true })
       .getByRole('listitem')
       .filter({ has: page.locator('[data-timeline-title]', { hasText: /^Shipment email$/ }) })
     await page.assertVisible(entry.getByText('Failed', { exact: true }))
@@ -141,6 +139,7 @@ test.group('Staff order page', (group) => {
     route,
     assert,
   }) => {
+    useFakeProvider([new FakePaymentAdapter('order-page')])
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     const order = await OrderFactory.create()
     await browserContext.loginAs(staff)
@@ -162,6 +161,7 @@ test.group('Staff order page', (group) => {
     route,
     assert,
   }) => {
+    useFakeProvider([new FakePaymentAdapter('order-page')])
     const staff = await UserFactory.merge({ role: 'staff' }).create()
     const order = await OrderFactory.create()
     await browserContext.loginAs(staff)

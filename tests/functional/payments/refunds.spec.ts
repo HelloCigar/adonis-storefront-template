@@ -1,148 +1,28 @@
 import { randomUUID } from 'node:crypto'
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
-import testUtils from '@adonisjs/core/services/test_utils'
 import db from '@adonisjs/lucid/services/db'
 import { QueueManager } from '@adonisjs/queue'
 import { DateTime } from 'luxon'
 import Payment from '#models/payments/payment'
-import Attempt from '#models/payments/attempt'
 import RefundObservation from '#models/payments/refund_observation'
 import RefundOperation from '#models/payments/refund_operation'
-import Shipment from '#models/checkout/shipment'
 import WorkflowOutbox from '#models/checkout/workflow_outbox'
 import StockReservation from '#models/checkout/stock_reservation'
 import FulfillmentService from '#services/checkout/fulfillment_service'
-import InventoryService from '#services/catalog/inventory_service'
 import RefundService from '#services/payments/refund_service'
 import SettlementService from '#services/payments/settlement_service'
-import PaymentService, {
-  type CheckoutSession,
-  type PaymentRefund,
-} from '#services/payments/payment_service'
-import DispatcherService from '#services/payments/dispatcher_service'
-import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
-import { OrderFactory } from '#database/factories/order_factory'
-import { UserFactory } from '#database/factories/user_factory'
-import { ProductVariantFactory } from '#database/factories/product_variant_factory'
-
-async function paidOrder(provider: string) {
-  const order = await OrderFactory.merge({
-    source: 'online',
-    lifecycleState: 'confirmed',
-    financialStatus: 'paid',
-    totalMinor: 109800,
-  }).create()
-  const payment = await Payment.create({
-    orderId: order.id,
-    attemptId: null,
-    provider,
-    liveMode: false,
-    externalId: randomUUID(),
-    amountMinor: order.totalMinor!,
-    currency: 'PHP',
-    disposition: 'accepted',
-    capturedAt: DateTime.utc(),
-  })
-  await Shipment.create({ orderId: order.id, state: 'pending' })
-  const staff = await UserFactory.merge({ role: 'staff' }).create()
-  const result: PaymentRefund = {
-    provider,
-    liveMode: false,
-    id: randomUUID(),
-    paymentId: payment.externalId,
-    amount: payment.amountMinor,
-    currency: payment.currency,
-    status: 'succeeded',
-  }
-  return { order, payment, staff, result }
-}
-
-async function pendingOrder(provider: string) {
-  const order = await OrderFactory.merge({
-    publicId: randomUUID(),
-    source: 'online',
-    lifecycleState: 'pending_payment',
-    financialStatus: 'pending',
-    totalMinor: 109800,
-  }).create()
-  const variant = await ProductVariantFactory.merge({
-    availableForSale: true,
-    inventoryQuantity: 2,
-  }).create()
-  const deadline = Date.now() + 900000
-  const inventory = await app.container.make(InventoryService)
-  await db.transaction((trx) =>
-    inventory.reserve(trx, order.id, [{ variantId: variant.id, quantity: 2 }], deadline)
-  )
-  const idempotencyKey = randomUUID()
-  const attempt = await Attempt.create({
-    publicId: randomUUID(),
-    orderId: order.id,
-    provider,
-    liveMode: false,
-    amountMinor: order.totalMinor!,
-    currency: 'PHP',
-    state: 'pending',
-    version: 0,
-    idempotencyKey,
-    externalId: randomUUID(),
-    expiresAtMs: deadline,
-    needsReview: false,
-    requestSnapshot: {
-      reference: order.publicId!,
-      currency: 'PHP',
-      items: [{ name: 'Order', unitAmount: order.totalMinor!, quantity: 1 }],
-      successUrl: 'https://store.example/order',
-      cancelUrl: 'https://store.example/order',
-      idempotencyKey,
-    },
-  })
-  const captureId = randomUUID()
-  const checkout: CheckoutSession = {
-    provider,
-    id: attempt.externalId!,
-    liveMode: false,
-    reference: order.publicId,
-    url: 'https://payments.example/checkout',
-    metadata: { attemptId: attempt.publicId },
-    status: 'paid',
-    payments: [{ id: captureId, amount: order.totalMinor!, currency: 'PHP', status: 'paid' }],
-  }
-  const result: PaymentRefund = {
-    provider,
-    liveMode: false,
-    id: randomUUID(),
-    paymentId: captureId,
-    amount: order.totalMinor!,
-    currency: 'PHP',
-    status: 'succeeded',
-  }
-  const staff = await UserFactory.merge({ role: 'staff' }).create()
-  return { order, variant, attempt, checkout, result, staff }
-}
+import { resetCheckoutState, useFakeProvider } from '#tests/helpers/payments'
+import { paidOrder, pendingOrder } from '#tests/helpers/payment_refunds'
 
 test.group('Refund durability', (group) => {
-  let adapter: FakePaymentAdapter
-  group.each.setup(async () => {
-    const cleanup = await testUtils.db().truncate()
-    adapter = new FakePaymentAdapter()
-    app.container.swap(PaymentService, () => new DispatcherService(adapter.provider, [adapter]))
-    return async () => {
-      app.container.restore(PaymentService)
-      const inventory = await app.container.make(InventoryService)
-      const held = await StockReservation.query().where('state', 'reserved')
-      for (const orderId of new Set(held.map((row) => row.orderId))) {
-        await db.transaction((trx) => inventory.release(trx, orderId))
-      }
-      await cleanup()
-    }
-  })
+  group.each.setup(() => resetCheckoutState())
 
   for (const initial of ['missing', 'pending'] as const) {
     test(`an interrupted external refund rolls back its ${initial} observation and balance, then retries once`, async ({
       assert,
     }) => {
+      const adapter = useFakeProvider()
       const { order, staff, result } = await paidOrder(adapter.provider)
       const refunds = await app.container.make(RefundService)
       if (initial === 'pending') await refunds.apply({ ...result, status: 'pending' })
@@ -190,6 +70,7 @@ test.group('Refund durability', (group) => {
   test('unmatched provider facts survive with monotonic success and immutable association', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     const { order, result } = await paidOrder(adapter.provider)
     const refunds = await app.container.make(RefundService)
     const unmatched = { ...result, paymentId: 'unmatched/provider/payment' }
@@ -213,6 +94,7 @@ test.group('Refund durability', (group) => {
   test('verified success updates the balance while a superseded claim cannot complete the operation', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     using queue = QueueManager.fake()
     const { order, staff, result } = await paidOrder(adapter.provider)
     const refunds = await app.container.make(RefundService)
@@ -242,6 +124,7 @@ test.group('Refund durability', (group) => {
   test('an observed pending refund blocks a new mutation and preserves an existing operation replay', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     using queue = QueueManager.fake()
     const { order, payment, staff, result } = await paidOrder(adapter.provider)
     const refunds = await app.container.make(RefundService)
@@ -272,6 +155,7 @@ test.group('Refund durability', (group) => {
   test('a stale success for a distinct refund resource updates its payment without completing the current operation', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     using queue = QueueManager.fake()
     const { order, staff, result } = await paidOrder(adapter.provider)
     const refunds = await app.container.make(RefundService)
@@ -305,6 +189,7 @@ test.group('Refund durability', (group) => {
   test('wrong-currency facts stay visible for review without changing balances or allowing another refund', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     const { order, payment, staff, result } = await paidOrder(adapter.provider)
     const refunds = await app.container.make(RefundService)
     const extra = await Payment.create({
@@ -356,6 +241,7 @@ test.group('Refund durability', (group) => {
   test('a wrong-currency refund arriving before capture binding preserves holds and requires review', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     const { order, variant, attempt, checkout, result, staff } = await pendingOrder(
       adapter.provider
     )
@@ -401,6 +287,7 @@ test.group('Refund durability', (group) => {
   test('a matching-currency refund arriving before capture binding retains the accepted balance semantics', async ({
     assert,
   }) => {
+    const adapter = useFakeProvider()
     using queue = QueueManager.fake()
     const { order, variant, attempt, checkout, result, staff } = await pendingOrder(
       adapter.provider

@@ -1,14 +1,12 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
-import User, { type UserRole } from '#models/account/user'
 import Product from '#models/catalog/product'
 import Collection from '#models/catalog/collection'
 import Order from '#models/checkout/order'
 import { DateTime } from 'luxon'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import { account } from '#tests/helpers/accounts'
 
-const account = (email: string, role: UserRole = 'staff') =>
-  User.create({ email, role, fullName: email, password: 'secret-password' })
 const productData = {
   title: 'Lamp',
   handle: 'lamp',
@@ -26,8 +24,8 @@ test.group('Shared store resource access', (group) => {
     assert,
     route,
   }) => {
-    const first = await account('first@example.com')
-    const second = await account('second@example.com')
+    const first = await account('first@example.com', 'staff')
+    const second = await account('second@example.com', 'staff')
     const admin = await account('admin@example.com', 'admin')
     const created = await client
       .post(urlFor('seller.products.store'))
@@ -86,8 +84,8 @@ test.group('Shared store resource access', (group) => {
     assert,
     route,
   }) => {
-    const first = await account('first@example.com')
-    const second = await account('second@example.com')
+    const first = await account('first@example.com', 'staff')
+    const second = await account('second@example.com', 'staff')
     const product = await Product.create({ ...productData, sellerId: first.id })
     const unassigned = await Product.create({ ...productData, handle: 'unassigned' })
     const payload = {
@@ -132,8 +130,8 @@ test.group('Shared store resource access', (group) => {
     assert,
     route,
   }) => {
-    const first = await account('first@example.com')
-    const second = await account('second@example.com')
+    const first = await account('first@example.com', 'staff')
+    const second = await account('second@example.com', 'staff')
     const buyer = await account('buyer@example.com', 'customer')
     const orders: Order[] = []
     for (const [index, creators] of [

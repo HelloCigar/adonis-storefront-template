@@ -46,14 +46,13 @@ test.group('Discount codes', (group) => {
     const admin = await visit(route('seller.discounts.index'))
     const errors: string[] = []
     admin.on('pageerror', (error) => errors.push(error.message))
-    await admin.getByRole('button', { name: 'Add discount' }).first().click()
+    await admin.getByRole('button', { name: 'Add discount', exact: true }).first().click()
     const dialog = admin.getByRole('dialog')
-    await dialog.getByLabel('Code').fill('welcome20')
-    await dialog.getByLabel('Percent off').fill('20')
+    await dialog.getByLabel('Code', { exact: true }).fill('welcome20')
+    await dialog.getByLabel('Percent off', { exact: true }).fill('20')
     await dialog.getByRole('button', { name: 'Save', exact: true }).click()
     await dialog.waitFor({ state: 'hidden' })
     await admin.getByText('WELCOME20', { exact: true }).waitFor()
-    await admin.screenshot({ path: 'tmp/discounts-admin.png', fullPage: true })
     const code = await DiscountCode.findByOrFail('code', 'WELCOME20')
     assert.equal(code.percentOff, 20)
     assert.isTrue(code.active)
@@ -84,7 +83,6 @@ test.group('Discount codes', (group) => {
       await page.getByLabel('Email address', { exact: true }).inputValue(),
       'discount@example.com'
     )
-    await page.screenshot({ path: 'tmp/discounts-checkout.png', fullPage: true })
 
     await page.getByLabel('First name', { exact: true }).fill('Guest')
     await page.getByLabel('Last name', { exact: true }).fill('Buyer')

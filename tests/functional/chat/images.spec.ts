@@ -5,16 +5,10 @@ import { AttachmentLinkModel, AttachmentModel } from '@jrmc/adonis-attachment/lu
 import User from '#models/account/user'
 import OrderMessage from '#models/chat/order_message'
 import { OrderFactory } from '#database/factories/order_factory'
-import { nextEvent, request, startChatServer, type ChatServer } from '#tests/helpers/chat_socket'
+import { nextEvent, request, useChatServer } from '#tests/helpers/chat_socket'
 import { urlFor } from '@adonisjs/core/services/url_builder'
-
-interface Message {
-  id: string
-  roomKey: string
-  body: string
-  senderRole: 'customer' | 'staff'
-  images: { id: string; url: string; name: string; mimeType: string }[]
-}
+import type { ChatImageMessage } from '#tests/helpers/types'
+import { orderChatPeople } from '#tests/helpers/order_chat'
 
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/vXcAAAAASUVORK5CYII=',
@@ -22,44 +16,21 @@ const png = Buffer.from(
 )
 
 test.group('Order chat images', (group) => {
-  let chat: ChatServer
-
-  group.setup(async () => {
-    chat = await startChatServer()
-  })
-  group.teardown(() => chat.close())
+  const chat = useChatServer(group)
   group.each.setup(() => testUtils.db().truncate())
-  group.each.teardown(() => chat.disconnectAll())
-
-  async function people(lifecycleState: 'confirmed' | 'cancelled' = 'confirmed') {
-    const customer = await User.create({
-      email: 'buyer@example.com',
-      fullName: 'Casey Customer',
-      password: 'secret-password',
-      role: 'customer',
-    })
-    const staff = await User.create({
-      email: 'staff@example.com',
-      fullName: 'Sam Staff',
-      password: 'secret-password',
-      role: 'staff',
-    })
-    const order = await OrderFactory.merge({ userId: customer.id, lifecycleState }).create()
-    return { customer, staff, order }
-  }
 
   test('a photo with a caption is stored and broadcast to the room', async ({
     client,
     assert,
     route,
   }) => {
-    const { customer, staff, order } = await people()
+    const { customer, staff, order } = await orderChatPeople()
     const { cookie } = await chat.login(client, staff)
     const staffSocket = await chat.connected(cookie)
     const roomKey = `order:${order.id}`
     const joined = await request(staffSocket, 'order:join', { roomKey })
     assert.isTrue(joined.ok)
-    const delivered = nextEvent<Message>(staffSocket, 'message:new', 2000)
+    const delivered = nextEvent<ChatImageMessage>(staffSocket, 'message:new', 2000)
 
     const response = await client
       .post(urlFor('chat.messages.store', { orderId: order.id }))
@@ -99,10 +70,12 @@ test.group('Order chat images', (group) => {
       .loginAs(staff)
       .withInertia()
     assert.deepEqual(
-      inbox.inertiaProps.conversation.messages.map((item: Message) => item.images.length),
+      inbox.inertiaProps.conversation.messages.map((item: ChatImageMessage) => item.images.length),
       [1]
     )
-    const thread = await request<{ messages: Message[] }>(staffSocket, 'order:join', { roomKey })
+    const thread = await request<{ messages: ChatImageMessage[] }>(staffSocket, 'order:join', {
+      roomKey,
+    })
     assert.isTrue(thread.ok && thread.data.messages[0].images[0].id === link.attachmentId)
   })
 
@@ -111,7 +84,7 @@ test.group('Order chat images', (group) => {
     assert,
     route,
   }) => {
-    const { customer, staff, order } = await people()
+    const { customer, staff, order } = await orderChatPeople()
     const stranger = await User.create({
       email: 'stranger@example.com',
       password: 'secret-password',
@@ -158,7 +131,7 @@ test.group('Order chat images', (group) => {
     client,
     assert,
   }) => {
-    const { customer, order } = await people()
+    const { customer, order } = await orderChatPeople()
     const upload = (orderId: string) =>
       client
         .post(urlFor('chat.messages.store', { orderId }))

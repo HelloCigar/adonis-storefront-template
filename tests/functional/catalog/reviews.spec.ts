@@ -2,15 +2,20 @@ import { DateTime } from 'luxon'
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
 import type User from '#models/account/user'
-import type Product from '#models/catalog/product'
 import ProductReview from '#models/catalog/product_review'
-import Shipment from '#models/checkout/shipment'
-import type { ShipmentState } from '#services/checkout/state_service'
-import { OrderFactory } from '#database/factories/order_factory'
-import { OrderLineItemFactory } from '#database/factories/order_line_item_factory'
 import { ProductFactory } from '#database/factories/product_factory'
-import { UserFactory } from '#database/factories/user_factory'
 import { urlFor } from '@adonisjs/core/services/url_builder'
+import {
+  publishedProduct,
+  account,
+  purchase,
+  review,
+  countReviews,
+  storeUrl,
+  reviewUrl,
+  productPath,
+  errorFields,
+} from '#tests/helpers/product_reviews'
 
 const storeMessage = 'Thanks for your review. It will appear once the store approves it.'
 const updateMessage = 'Review updated. It will appear again once the store approves it.'
@@ -24,60 +29,6 @@ const publicReviewKeys = [
   'createdAt',
   'updatedAt',
 ]
-
-const publishedProduct = (values: Partial<Product> = {}) =>
-  ProductFactory.apply('published').merge(values).create()
-const account = (values: Partial<User> = {}) => UserFactory.merge(values).create()
-
-/**
- * An order with one line for the product and a shipment in the given state. A null user is a
- * guest order that has not been claimed.
- */
-async function purchase(
-  user: User | null,
-  product: Product,
-  state: ShipmentState = 'delivered',
-  placedAt: DateTime = DateTime.utc(),
-  email?: string
-) {
-  const order = await OrderFactory.merge({
-    userId: user?.id ?? null,
-    processedAt: placedAt,
-    createdAt: placedAt,
-    ...(email ? { email } : {}),
-  }).create()
-  await OrderLineItemFactory.merge({ orderId: order.id, productId: product.id }).create()
-  await Shipment.create({ orderId: order.id, state })
-  return order
-}
-
-/** A stored review, written by a fresh account unless `userId` is given. */
-async function review(product: Product, values: Partial<ProductReview> = {}) {
-  let userId = values.userId
-  if (!userId) {
-    const author = await account()
-    userId = author.id
-  }
-  return ProductReview.create({
-    rating: 5,
-    title: null,
-    body: null,
-    status: 'approved',
-    ...values,
-    productId: product.id,
-    userId,
-  })
-}
-
-const countReviews = async () => {
-  const rows = await ProductReview.all()
-  return rows.length
-}
-const storeUrl = (product: Product) => urlFor('reviews.store', { productId: product.id })
-const reviewUrl = (row: ProductReview | { id: string }) => urlFor('reviews.update', { id: row.id })
-const productPath = (product: Product) => urlFor('products.show', { handle: product.handle })
-const errorFields = (body: { errors?: { field: string }[] }) =>
-  (body.errors ?? []).map((error) => error.field)
 
 test.group('Product reviews | writing', (group) => {
   group.each.setup(() => testUtils.db().truncate())

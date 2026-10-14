@@ -1,31 +1,7 @@
 import { test } from '@japa/runner'
-import RefundObservation from '#models/payments/refund_observation'
 import MoneyService from '#services/checkout/money_service'
 import BalanceService from '#services/payments/balance_service'
-
-const payment = {
-  provider: 'balance-test',
-  liveMode: false,
-  externalId: 'pay_1',
-  amountMinor: 59_900,
-  currency: 'PHP',
-}
-
-function observation(
-  state: 'pending' | 'succeeded' | 'failed',
-  amountMinor: number,
-  currency = 'PHP'
-) {
-  return new RefundObservation().merge({
-    provider: payment.provider,
-    liveMode: payment.liveMode,
-    externalPaymentId: payment.externalId,
-    externalId: `ref_${state}_${amountMinor}_${currency}`,
-    state,
-    amountMinor,
-    currency,
-  })
-}
+import { observation, payment } from '#tests/helpers/payment_balance'
 
 test.group('Payment balance', () => {
   const balances = new BalanceService(new MoneyService())
