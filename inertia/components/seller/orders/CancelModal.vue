@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Form } from '@adonisjs/inertia/vue'
+import type { HttpResponse } from '@inertiajs/core'
 import type { Data } from '@generated/data'
 import { useOrderInteraction } from './interaction'
 import { orderLabel, orderMoney } from './presentation'
 
-const props = defineProps<{ order: Data.Seller.Order; operations: Data.Seller.OrderOperations }>()
+const props = defineProps<{
+  order: Data.Seller.Order
+  operations: Data.Seller.OrderOperations
+}>()
+const open = defineModel<boolean>('open', { required: true })
 const { locked, callbacks, requestOptions } = useOrderInteraction()
 const confirmed = ref(false)
 watch(
@@ -14,6 +19,9 @@ watch(
     confirmed.value = false
   }
 )
+watch(open, (value) => {
+  if (value) confirmed.value = false
+})
 
 const preview = computed(() => props.operations.cancellation)
 const money = (amountMinor: number, currency: string) => orderMoney(amountMinor / 100, currency)
@@ -48,44 +56,55 @@ const confirmation = computed(() =>
     ? `I confirm cancelling this order and refunding ${refundTotal.value}.`
     : 'I confirm cancelling this order.'
 )
+// A failed or uncertain request closes the dialog so the page-level alert is visible.
+const options = {
+  ...requestOptions,
+  onHttpException: (response: HttpResponse) => {
+    open.value = false
+    return requestOptions.onHttpException(response)
+  },
+  onNetworkError: () => {
+    open.value = false
+    return requestOptions.onNetworkError()
+  },
+}
 </script>
 
 <template>
-  <section aria-labelledby="order-cancel-title" class="border-t border-default pt-5">
-    <h2 id="order-cancel-title" class="text-base font-semibold text-highlighted">Cancel order</h2>
-    <p v-if="operations.cancelBlocker" class="mt-2 text-sm text-default">
-      {{ operations.cancelBlocker }}
-    </p>
-    <p v-else-if="operations.cancellationPending" class="mt-2 text-sm text-default">
-      Cancellation is already requested. Refresh status to check the confirmed outcome.
-    </p>
-    <details v-else-if="preview" class="mt-2">
-      <summary
-        class="cursor-pointer text-sm font-medium text-error w-fit focus-visible:outline-2 focus-visible:outline-error"
-      >
-        Review what cancelling does
-      </summary>
-      <ul
-        class="mt-3 mb-4 max-w-prose list-disc space-y-1.5 pl-5 text-sm text-default marker:text-muted"
-      >
-        <li v-for="line in consequences" :key="line">{{ line }}</li>
-      </ul>
-      <UCheckbox v-model="confirmed" :label="confirmation" :disabled="locked" class="mb-4" />
+  <UModal v-model:open="open" title="Cancel this order?" description="Review what cancelling does.">
+    <template #body>
       <Form
         v-slot="{ processing }"
         v-bind="callbacks"
-        :options="requestOptions"
+        :options="options"
         disable-while-processing
         route="seller.cancellations.store"
         :params="{ id: order.id }"
-        ><UButton
-          type="submit"
-          :label="refundTotal ? `Cancel and refund ${refundTotal}` : 'Cancel order'"
-          color="error"
-          variant="soft"
-          :loading="processing"
-          :disabled="processing || locked || !confirmed"
-      /></Form>
-    </details>
-  </section>
+        class="space-y-4"
+        @success="open = false"
+      >
+        <ul class="max-w-prose list-disc space-y-1.5 pl-5 text-sm text-default marker:text-muted">
+          <li v-for="line in consequences" :key="line">{{ line }}</li>
+        </ul>
+        <UCheckbox v-model="confirmed" :label="confirmation" :disabled="locked" />
+        <div class="flex justify-end gap-2">
+          <UButton
+            type="button"
+            label="Keep order"
+            color="neutral"
+            variant="outline"
+            :disabled="processing"
+            @click="open = false"
+          />
+          <UButton
+            type="submit"
+            :label="refundTotal ? `Cancel and refund ${refundTotal}` : 'Cancel order'"
+            color="error"
+            :loading="processing"
+            :disabled="processing || locked || !confirmed"
+          />
+        </div>
+      </Form>
+    </template>
+  </UModal>
 </template>

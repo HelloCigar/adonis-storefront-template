@@ -10,7 +10,7 @@ import Payment from '#models/payments/payment'
 import Shipment from '#models/checkout/shipment'
 import FakePaymentAdapter from '#tests/helpers/fake_payment_adapter'
 import { useFakeProvider } from '#tests/helpers/payments'
-import { confirmedOrder } from '#tests/helpers/confirmed_order'
+import { setupConfirmedOrder } from '#tests/helpers/orders'
 import { UserFactory } from '#database/factories/user_factory'
 import { OrderFactory } from '#database/factories/order_factory'
 
@@ -31,7 +31,7 @@ test.group('Staff order hardening', (group) => {
     route,
   }) => {
     const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
-    const { order, staff } = await confirmedOrder(adapter)
+    const { order, staff } = await setupConfirmedOrder({ adapter })
     order.number = 'MB-' + 'A'.repeat(64)
     order.email = 'long-customer-name.' + 'b'.repeat(64) + '@example.com'
     await order.save()
@@ -133,9 +133,12 @@ test.group('Staff order hardening', (group) => {
       .waitFor()
     await page.getByRole('link', { name: 'Go to refund records', exact: true }).waitFor()
     assert.equal(await page.getByRole('button', { name: 'Start packing', exact: true }).count(), 0)
-    await page
-      .getByText('A refund is already in progress for this payment.', { exact: true })
-      .waitFor()
+    await page.getByRole('button', { name: 'More actions', exact: true }).click()
+    assert.isTrue(await page.getByRole('menuitem', { name: /^Refund/ }).isDisabled())
+    await page.assertVisible(
+      page.getByText('A refund is already in progress for this payment.', { exact: true })
+    )
+    await page.keyboard.press('Escape')
     for (const viewport of [
       { width: 1280, height: 900 },
       { width: 390, height: 844 },
@@ -156,7 +159,7 @@ test.group('Staff order hardening', (group) => {
     route,
   }) => {
     const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
-    const { order, staff } = await confirmedOrder(adapter)
+    const { order, staff } = await setupConfirmedOrder({ adapter })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
     await page.getByRole('heading', { name: 'Pack items', exact: true }).waitFor()
@@ -210,19 +213,23 @@ test.group('Staff order hardening', (group) => {
     route,
   }) => {
     const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
-    const { order, staff } = await confirmedOrder(adapter)
+    const { order, staff } = await setupConfirmedOrder({ adapter })
     await browserContext.loginAs(staff)
     const page = await visit(route('seller.orders.show', { id: order.id }))
-    await page.getByText('Refund this payment', { exact: true }).click()
+    await page.getByRole('button', { name: 'More actions', exact: true }).click()
+    await page.getByRole('menuitem', { name: /^Refund/ }).click()
     const button = page.getByRole('button', { name: /^Request refund of ₱/ })
     assert.isTrue(await button.isDisabled())
     await page
       .getByRole('checkbox', { name: /^I confirm refunding ₱.+ to this payment\.$/ })
       .check()
     await button.click({ clickCount: 2 })
-    await page
-      .getByText('A refund is already in progress for this payment.', { exact: true })
-      .waitFor()
+    await page.assertNotVisible(page.getByRole('dialog'))
+    await page.getByRole('button', { name: 'More actions', exact: true }).click()
+    assert.isTrue(await page.getByRole('menuitem', { name: /^Refund/ }).isDisabled())
+    await page.assertVisible(
+      page.getByText('A refund is already in progress for this payment.', { exact: true })
+    )
     assert.lengthOf(await RefundOperation.query().where('orderId', order.id), 1)
   })
 
@@ -243,7 +250,7 @@ test.group('Staff order hardening', (group) => {
     await page.getByText('Order updated', { exact: true }).waitFor()
     await order.refresh()
     assert.equal(order.note, 'Keep this draft note.')
-    const confirmed = await confirmedOrder(adapter)
+    const confirmed = await setupConfirmedOrder({ adapter })
     const fulfillment = await app.container.make(FulfillmentService)
     await fulfillment.pack(confirmed.order.id, confirmed.staff)
     await fulfillment.ship(confirmed.order.id, confirmed.staff, {
@@ -265,7 +272,7 @@ test.group('Staff order hardening', (group) => {
     route,
   }) => {
     const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
-    const { order, staff } = await confirmedOrder(adapter)
+    const { order, staff } = await setupConfirmedOrder({ adapter })
     const fulfillment = await app.container.make(FulfillmentService)
     await fulfillment.pack(order.id, staff)
     await fulfillment.ship(order.id, staff, {
@@ -293,7 +300,7 @@ test.group('Staff order hardening', (group) => {
     route,
   }) => {
     const adapter = useFakeProvider([new FakePaymentAdapter('order-hardening')])
-    const { order, staff } = await confirmedOrder(adapter)
+    const { order, staff } = await setupConfirmedOrder({ adapter })
     const payment = await Payment.create({
       orderId: order.id,
       provider: adapter.provider,
