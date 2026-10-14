@@ -9,6 +9,14 @@ const fileRef = ref<HTMLInputElement>()
 const name = ref(page.props.user?.fullName ?? '')
 const previewUrl = ref<string | null>(null)
 const avatarUrl = computed(() => previewUrl.value ?? page.props.user?.avatarUrl ?? undefined)
+const resending = ref(false)
+const cancelling = ref(false)
+const verifiedEmail = computed(() => page.props.user?.email ?? '')
+const pendingEmail = computed(() =>
+  page.props.user?.unverifiedEmail && page.props.user.unverifiedEmail !== page.props.user.email
+    ? page.props.user.unverifiedEmail
+    : null
+)
 
 function onFileChange(event: Event) {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
@@ -31,6 +39,31 @@ function removeAvatar() {
     { route: 'settings.avatar.destroy' },
     {
       onSuccess: clearPreview,
+    }
+  )
+}
+
+function resendLink() {
+  router.post(
+    { route: 'email_verifications.store' },
+    {},
+    {
+      preserveScroll: true,
+      onStart: () => (resending.value = true),
+      onFinish: () => (resending.value = false),
+    }
+  )
+}
+
+/** Submitting the verified email reverts the pending change. */
+function cancelChange() {
+  router.post(
+    { route: 'settings.update' },
+    { fullName: page.props.user?.fullName ?? name.value, email: verifiedEmail.value },
+    {
+      preserveScroll: true,
+      onStart: () => (cancelling.value = true),
+      onFinish: () => (cancelling.value = false),
     }
   )
 }
@@ -84,13 +117,50 @@ onUnmounted(() => {
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
+          :key="pendingEmail ?? verifiedEmail"
           name="email"
           type="email"
-          :default-value="page.props.user?.email ?? ''"
+          :default-value="pendingEmail ?? verifiedEmail"
           autocomplete="email"
           class="w-full sm:w-72"
         />
       </UFormField>
+      <UAlert
+        v-if="pendingEmail"
+        color="neutral"
+        variant="subtle"
+        icon="i-lucide-mail-check"
+        title="Verify your new email address to switch to it."
+        :ui="{ description: 'wrap-anywhere' }"
+        class="mt-4"
+      >
+        <template #description>
+          We sent a link to <strong class="text-highlighted">{{ pendingEmail }}</strong
+          >. You'll keep signing in with {{ verifiedEmail }} until it's confirmed.
+        </template>
+        <template #actions>
+          <UButton
+            type="button"
+            size="xs"
+            color="neutral"
+            variant="outline"
+            :label="resending ? 'Sending…' : 'Resend link'"
+            :loading="resending"
+            :disabled="resending"
+            @click="resendLink"
+          />
+          <UButton
+            type="button"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            :label="cancelling ? 'Cancelling…' : 'Cancel change'"
+            :loading="cancelling"
+            :disabled="cancelling"
+            @click="cancelChange"
+          />
+        </template>
+      </UAlert>
       <USeparator />
       <UFormField
         name="avatar"

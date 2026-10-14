@@ -4,6 +4,8 @@ import app from '@adonisjs/core/services/app'
 import { AttachmentModel } from '@jrmc/adonis-attachment/lucid'
 import hash from '@adonisjs/core/services/hash'
 import User from '#models/account/user'
+import mail from '@adonisjs/mail/services/main'
+import EmailChangeProvision from '#mails/auth/email_change_provision'
 import { backfillUserAvatars } from '#database/migrations/1790488097086_backfill_user_avatars'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -19,6 +21,7 @@ test.group('Account settings', (group) => {
       email: 'profile@example.com',
       password: 'secret-password',
     })
+    using mailFake = mail.fake()
 
     const response = await client
       .post(urlFor('settings.update'))
@@ -29,7 +32,31 @@ test.group('Account settings', (group) => {
     response.assertRedirectsTo(route('settings'))
     await user.refresh()
     assert.equal(user.fullName, 'New Name')
-    assert.equal(user.email, 'new@example.com')
+    assert.equal(user.email, 'profile@example.com')
+    assert.equal(user.unverifiedEmail, 'new@example.com')
+    mailFake.mails.assertQueued(EmailChangeProvision, ({ message }) =>
+      message.hasTo('new@example.com')
+    )
+  })
+
+  test('a new email becomes the sign-in email once verified', async ({ client, assert }) => {
+    const user = await User.create({
+      fullName: 'Switch Name',
+      email: 'switch@example.com',
+      password: 'secret-password',
+    })
+    user.unverifiedEmail = 'switched@example.com'
+    await user.save()
+    const token = await user.createEmailVerificationToken()
+
+    const response = await client
+      .put(urlFor('email_verifications.update', [token.value!.release()]))
+      .withCsrfToken()
+
+    response.assertRedirectsTo(urlFor('session.create'))
+    await user.refresh()
+    assert.equal(user.email, 'switched@example.com')
+    assert.isNull(user.unverifiedEmail)
   })
 
   test('creates, replaces, and removes an avatar without accepting invalid files', async ({

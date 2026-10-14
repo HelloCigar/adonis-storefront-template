@@ -1,0 +1,32 @@
+@emailLayout({ title, brandName })
+  <mj-section>
+    <mj-column>
+      <mj-text mj-class="title">Update email address</mj-text>
+      <mj-spacer height="12px" />
+      <mj-text mj-class="text">
+        Follow this link to confirm the update of your {{ brandName }} email address from {{ oldEmail }} to {{ newEmail }}:
+      </mj-text>
+      <mj-spacer height="24px" />
+      <mj-button href="{{ verificationLink }}">Verify your email address</mj-button>
+      <mj-spacer height="24px" />
+      <mj-text mj-class="help">
+        If you didn't request this email, there's no need to worry. You can safely ignore it.
+      </mj-text>
+      <mj-spacer height="8px" />
+      <mj-text mj-class="help">
+        To keep your account secure, please don't forward this email to anyone.
+      </mj-text>
+      <mj-spacer height="24px" />
+      <mj-text mj-class="help">
+        If the button doesn't work, copy this link into your browser:<br />
+        <a href="{{ verificationLink }}" class="link">{{ verificationLink }}</a>
+      </mj-text>
+      <mj-spacer height="32px" />
+      <mj-divider />
+      <mj-spacer height="16px" />
+      <mj-text mj-class="footer">
+        You're receiving this email because someone asked to use this address for a {{ brandName }} account.
+      </mj-text>
+    </mj-column>
+  </mj-section>
+@end
