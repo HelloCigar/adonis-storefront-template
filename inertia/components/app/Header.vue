@@ -7,6 +7,7 @@ import AccountMenu from '~/components/account/Menu.vue'
 import AppLocaleSelect from '~/components/app/LocaleSelect.vue'
 import AppLogo from '~/components/app/Logo.vue'
 import CartModal from '~/components/cart/Modal.vue'
+import ThemePicker from '~/components/theme/Picker.vue'
 import SearchModal from '~/components/search/Modal.vue'
 const { data: items } = useMenu('main-menu')
 const page = usePage()
@@ -40,7 +41,7 @@ const storeName = computed(() => page.props.storeName)
 
       <CartModal />
 
-      <UColorModeButton />
+      <ThemePicker />
     </template>
   </UHeader>
 </template>

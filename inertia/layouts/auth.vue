@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import { Link } from '@adonisjs/inertia/vue'
 import FlashToasts from '~/components/flash_toasts.vue'
 import PasskeySignals from '~/components/passkey_signals.vue'
-import ThemeToggle from '~/components/theme_toggle.vue'
+import ThemePicker from '~/components/theme/Picker.vue'
 
 const page = usePage()
 const storeName = computed(() => page.props.storeName)
@@ -22,7 +22,7 @@ const storeName = computed(() => page.props.storeName)
           <UIcon name="i-lucide-shopping-bag" class="size-6 text-primary" />
           {{ storeName }}
         </Link>
-        <ThemeToggle />
+        <ThemePicker />
       </header>
       <main class="mx-auto my-auto w-full max-w-sm py-10 sm:py-12">
         <slot />
