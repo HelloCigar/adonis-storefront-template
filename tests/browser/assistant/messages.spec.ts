@@ -143,4 +143,21 @@ test.group('Shopping assistant messages', (group) => {
       suggestions.getByRole('button', { name: 'How much is shipping?', exact: true })
     )
   })
+
+  test('a product the assistant looks up is shown as a card', async ({ visit, route }) => {
+    await ProductFactory.apply('published', 'withMedia')
+      .merge({ title: 'Brass Lamp', handle: 'brass-lamp' })
+      .with('variants', 1, (variant) => variant.merge({ priceAmount: 1250 }))
+      .create()
+    const { model } = await assistantOn()
+    model.callTool('getProduct', { handle: 'brass-lamp' }, 'It is made of solid brass.')
+
+    const page = await visit(route('home'))
+    await page.getByRole('button', { name: 'Open shopping assistant', exact: true }).click()
+    await sendMessage(page, 'Tell me about the brass lamp')
+
+    const card = page.getByTestId('assistant-product-card')
+    await page.assertVisible(card.getByRole('link', { name: 'Brass Lamp', exact: true }))
+    await page.assertVisible(card.getByText('₱1,250.00', { exact: true }))
+  })
 })

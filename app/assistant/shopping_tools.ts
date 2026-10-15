@@ -1,11 +1,29 @@
 import { tool } from 'ai'
 import Collection from '#models/catalog/collection'
+import Product from '#models/catalog/product'
+import BlogPost from '#models/content/blog_post'
+import StoreSetting from '#models/settings/store_setting'
+import checkout from '#config/checkout'
+import storefront from '#config/storefront'
 import type CatalogueService from '#services/catalog/catalogue_service'
+import type ReviewService from '#services/catalog/review_service'
+import type ContentService from '#services/content/content_service'
+import type BlogService from '#services/content/blog_service'
+import CollectionTransformer from '#transformers/catalog/collection_transformer'
+import ContentTransformer from '#transformers/content/content_transformer'
+import BlogPostTransformer from '#transformers/content/blog_post_transformer'
+import { toMajor } from '#models/shared/money'
 import AssistantProductTransformer from '#transformers/assistant/assistant_product_transformer'
 import { serializer } from '#providers/api_provider'
 import {
   conversationContext,
   getMyOrderInput,
+  getProductInput,
+  getStoreInfoInput,
+  listCollectionsInput,
+  readContentInput,
+  readPolicyInput,
+  searchContentInput,
   proposeAddToCartInput,
   listMyOrdersInput,
   offerSuggestionsInput,
@@ -24,6 +42,21 @@ import { assistantLimits } from '#values/assistant'
 /** What the shopping tools read through: the storefront's own query paths. */
 export type ShoppingToolDeps = {
   catalogue: CatalogueService
+  reviews: ReviewService
+  content: ContentService
+  blog: BlogService
+}
+
+const currency = new Intl.NumberFormat('en-PH', { style: 'currency', currency: checkout.currency })
+
+/** The storefront's not-found lookups (unpublished, unknown) become a plain answer for the model. */
+async function unlessMissing<Value>(lookup: () => Promise<Value>) {
+  try {
+    return await lookup()
+  } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 404) return null
+    throw error
+  }
 }
 
 /** What the shopper's order page shows: the order itself, plus its shipment's tracking. */
@@ -72,6 +105,113 @@ export function shoppingTools(deps: ShoppingToolDeps) {
         return serializer.serializeWithoutWrapping(
           AssistantProductTransformer.transform(products.slice(0, 6))
         )
+      },
+    }),
+
+    getProduct: tool({
+      description:
+        'Get one product by its handle: description, every variant with its options, price and whether it is in stock, and a summary of approved reviews.',
+      inputSchema: getProductInput,
+      execute: async ({ handle }) => {
+        const product = await Product.query()
+          .where('handle', handle)
+          .withScopes((scopes) => scopes.published())
+          .preload('variants', (query) => query.orderBy('position', 'asc'))
+          .first()
+        if (!product) return { found: false as const }
+        const summary = await deps.reviews.summary(product.id)
+        const top = await deps.reviews.approvedFor(product.id, 1, 3)
+        const detail = await serializer.serializeWithoutWrapping(
+          AssistantProductTransformer.transform(product, { summary, top: top.all() }).useVariant(
+            'forDetail'
+          )
+        )
+        return { found: true as const, product: detail }
+      },
+    }),
+
+    listCollections: tool({
+      description: "List the store's collections with their handles.",
+      inputSchema: listCollectionsInput,
+      execute: async () => {
+        const collections = await deps.catalogue.newestCollections()
+        return {
+          collections: await serializer.serializeWithoutWrapping(
+            CollectionTransformer.transform(collections)
+          ),
+        }
+      },
+    }),
+
+    getStoreInfo: tool({
+      description:
+        "The store's name, contact email, flat shipping fee per order, and the titles of its policies.",
+      inputSchema: getStoreInfoInput,
+      execute: async () => {
+        const settings = await StoreSetting.current()
+        const fee = toMajor(settings.shippingFeeMinor)
+        const policies = await deps.content.policies()
+        return {
+          storeName: settings.effectiveStoreName,
+          contactEmail: settings.effectiveContactEmail,
+          shippingFee: { raw: fee, formatted: currency.format(fee) },
+          policies: policies.map((policy) => ({ handle: policy.handle, title: policy.title })),
+        }
+      },
+    }),
+
+    readPolicy: tool({
+      description: 'Read the full text of one store policy by its handle.',
+      inputSchema: readPolicyInput,
+      execute: async ({ handle }) => {
+        const policy = await unlessMissing(() => deps.content.findPolicyOrFail(handle))
+        if (!policy) return { found: false as const }
+        return {
+          found: true as const,
+          policy: await serializer.serializeWithoutWrapping(ContentTransformer.transform(policy)),
+        }
+      },
+    }),
+
+    searchContent: tool({
+      description: "Search the store's published blog posts and pages by title.",
+      inputSchema: searchContentInput,
+      execute: async ({ query }) => {
+        const pattern = '%' + query.replace(/[\\%_]/g, '\\$&') + '%'
+        const posts = await BlogPost.query()
+          .withScopes((scopes) => scopes.published())
+          .where((builder) => builder.whereILike('title', pattern).orWhereILike('excerpt', pattern))
+          .preload('author')
+          .limit(5)
+        const needle = query.toLowerCase()
+        const pages = storefront.pages.filter((page) => page.title.toLowerCase().includes(needle))
+        return {
+          posts: await serializer.serializeWithoutWrapping(BlogPostTransformer.transform(posts)),
+          pages: pages.map((page) => ({ handle: page.handle, title: page.title })),
+        }
+      },
+    }),
+
+    readContent: tool({
+      description: 'Read the full text of one published blog post or page by its handle.',
+      inputSchema: readContentInput,
+      execute: async ({ kind, handle }) => {
+        if (kind === 'blog_post') {
+          const post = await unlessMissing(() => deps.blog.findPublishedOrFail(handle))
+          if (!post) return { found: false as const }
+          return {
+            found: true as const,
+            content: await serializer.serializeWithoutWrapping(
+              BlogPostTransformer.transform(post).useVariant('forDetailedView')
+            ),
+          }
+        }
+        const page = await unlessMissing(async () => deps.content.findPageOrFail(handle))
+        if (!page) return { found: false as const }
+        return {
+          found: true as const,
+          content: await serializer.serializeWithoutWrapping(ContentTransformer.transform(page)),
+        }
       },
     }),
 

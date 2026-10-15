@@ -22,6 +22,12 @@ type AssistantTools = {
     input: { query: string; collection?: string }
     output: Data.Assistant.AssistantProduct[]
   }
+  getProduct: {
+    input: { handle: string }
+    output:
+      | { found: false }
+      | { found: true; product: Data.Assistant.AssistantProduct.Variants['forDetail'] }
+  }
   offerSuggestions: { input: Record<string, never>; output: { offered: true } }
   listMyOrders: {
     input: Record<string, never>

@@ -11,6 +11,9 @@ import {
 import AssistantModelProvider from '#assistant/model_provider'
 import { shoppingTools } from '#assistant/shopping_tools'
 import CatalogueService from '#services/catalog/catalogue_service'
+import ReviewService from '#services/catalog/review_service'
+import ContentService from '#services/content/content_service'
+import BlogService from '#services/content/blog_service'
 import AssistantMessage from '#models/assistant/assistant_message'
 import StoreSetting from '#models/settings/store_setting'
 import Collection from '#models/catalog/collection'
@@ -26,7 +29,10 @@ import type { AssistantTurn } from '../../../types/assistant.js'
 export default class ShoppingAssistantService {
   constructor(
     private models: AssistantModelProvider,
-    private catalogue: CatalogueService
+    private catalogue: CatalogueService,
+    private reviews: ReviewService,
+    private content: ContentService,
+    private blog: BlogService
   ) {}
 
   async reply(turn: AssistantTurn): Promise<ReadableStream<UIMessageChunk>> {
@@ -43,7 +49,12 @@ export default class ShoppingAssistantService {
       await conversation.touch(turn.text)
     }
 
-    const tools = shoppingTools({ catalogue: this.catalogue })
+    const tools = shoppingTools({
+      catalogue: this.catalogue,
+      reviews: this.reviews,
+      content: this.content,
+      blog: this.blog,
+    })
     const history = await conversation.related('messages').query().orderBy('id')
     const messages = await validateUIMessages<UIMessage>({
       messages: history.map((message) => message.toUIMessage()),

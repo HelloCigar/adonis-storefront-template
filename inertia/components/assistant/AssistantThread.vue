@@ -37,6 +37,14 @@ const submit = async () => {
               v-else-if="part.type === 'tool-searchProducts' && part.state === 'output-available'"
               :products="part.output"
             />
+            <AssistantProductCards
+              v-else-if="
+                part.type === 'tool-getProduct' &&
+                part.state === 'output-available' &&
+                part.output.found
+              "
+              :products="[part.output.product]"
+            />
             <Link
               v-else-if="part.type === 'data-checkout'"
               route="checkout.create"

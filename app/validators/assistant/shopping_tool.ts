@@ -6,6 +6,27 @@ export const searchProductsInput = vine.create({
   collection: vine.string().trim().maxLength(255).optional(),
 })
 
+export const getProductInput = vine.create({
+  handle: vine.string().trim().maxLength(255),
+})
+
+export const listCollectionsInput = vine.create({})
+
+export const getStoreInfoInput = vine.create({})
+
+export const readPolicyInput = vine.create({
+  handle: vine.string().trim().maxLength(255),
+})
+
+export const searchContentInput = vine.create({
+  query: vine.string().trim().minLength(1).maxLength(200),
+})
+
+export const readContentInput = vine.create({
+  kind: vine.enum(['blog_post', 'page'] as const),
+  handle: vine.string().trim().maxLength(255),
+})
+
 export const offerSuggestionsInput = vine.create({})
 
 export const listMyOrdersInput = vine.create({})

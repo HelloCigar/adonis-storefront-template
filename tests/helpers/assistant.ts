@@ -2,6 +2,8 @@ import { DateTime } from 'luxon'
 import type { Page } from 'playwright'
 import { useFake } from '@japa/plugin-adonisjs/helpers'
 import limiter from '@adonisjs/limiter/services/main'
+import type { ApiClient } from '@japa/api-client'
+import { urlFor } from '@adonisjs/core/services/url_builder'
 import type User from '#models/account/user'
 import AssistantModelProvider from '#assistant/model_provider'
 import AssistantConversation from '#models/assistant/assistant_conversation'
@@ -163,4 +165,26 @@ export async function exhaustAssistantMessages(user: User) {
   const messages = limiter.use({ requests: 30, duration: '1 hour' })
   const key = `assistant_messages_assistant_messages_user_${user.id}`
   await messages.consume(key, 30)
+}
+
+/**
+ * A visitor's message to the assistant over HTTP, in a fresh conversation. Resolves once the
+ * streamed reply has finished, so every tool the scripted model called has returned.
+ */
+export async function askAssistant(client: ApiClient, text: string) {
+  const started = await client
+    .post(urlFor('assistant.conversations.store'))
+    .withCsrfToken()
+    .header('Accept', 'application/json')
+  const conversation: { data: { id: string } } = started.body()
+  const reply = await client
+    .post(
+      urlFor('assistant.conversations.messages.store', { conversationId: conversation.data.id })
+    )
+    .withSession(started.session())
+    .withCsrfToken()
+    .header('Accept', 'application/json')
+    .json({ kind: 'message', text, page: null })
+  reply.assertStatus(200)
+  return reply
 }
