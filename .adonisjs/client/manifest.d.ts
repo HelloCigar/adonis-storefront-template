@@ -5,6 +5,7 @@
 
 /// <reference path="../../adonisrc.ts" />
 /// <reference path="../../config/agent.ts" />
+/// <reference path="../../config/assistant.ts" />
 /// <reference path="../../config/attachment.ts" />
 /// <reference path="../../config/auth.ts" />
 /// <reference path="../../config/checkout.ts" />

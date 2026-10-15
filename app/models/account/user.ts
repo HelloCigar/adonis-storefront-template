@@ -12,6 +12,7 @@ import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Cart from '#models/checkout/cart'
 import CustomerAddress from '#models/account/customer_address'
 import Order from '#models/checkout/order'
+import AssistantConversation from '#models/assistant/assistant_conversation'
 import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 
 export const userRoles = ['customer', 'staff', 'admin'] as const
@@ -61,6 +62,9 @@ export default class User extends compose(
 
   @hasMany(() => Order, { foreignKey: 'userId' })
   declare orders: HasMany<typeof Order>
+
+  @hasMany(() => AssistantConversation, { foreignKey: 'userId' })
+  declare assistantConversations: HasMany<typeof AssistantConversation>
 
   get initials() {
     const [first, last] = this.fullName ? this.fullName.split(' ') : this.email.split('@')

@@ -25,6 +25,7 @@ router.use([
   () => import('@adonisjs/core/bodyparser_middleware'),
   () => import('@adonisjs/session/session_middleware'),
   () => import('#middleware/checkout/checkout_session_middleware'),
+  () => import('#middleware/assistant/assistant_session_middleware'),
   () => import('@adonisjs/shield/shield_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
   () => import('#middleware/auth/silent_auth_middleware'),
@@ -32,6 +33,7 @@ router.use([
 ])
 
 export const middleware = router.named({
+  assistantAvailable: () => import('#middleware/assistant/assistant_available_middleware'),
   customerSettings: () => import('#middleware/account/customer_settings_middleware'),
   guest: () => import('#middleware/auth/guest_middleware'),
   auth: () => import('#middleware/auth/auth_middleware'),

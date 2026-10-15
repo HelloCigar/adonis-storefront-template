@@ -4,6 +4,7 @@ import { Form } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import StoreIdentityFields from '~/components/settings/StoreIdentityFields.vue'
 import ShippingFeeField from '~/components/settings/ShippingFeeField.vue'
+import ShoppingAssistantSettingField from '~/components/settings/ShoppingAssistantSettingField.vue'
 
 defineProps<{ settings: Data.Settings.StoreSetting }>()
 </script>
@@ -36,4 +37,15 @@ defineProps<{ settings: Data.Settings.StoreSetting }>()
       <ShippingFeeField :shipping-fee="settings.shippingFee" :error="errors.shippingFee" />
     </UPageCard>
   </Form>
+  <section class="mt-8">
+    <UPageCard
+      title="Shopping assistant"
+      description="An AI assistant on the storefront. It answers from your store's public content and each shopper's own orders."
+      variant="naked"
+      class="mb-4"
+    />
+    <UPageCard variant="subtle">
+      <ShoppingAssistantSettingField :shopping-assistant="settings.shoppingAssistant" />
+    </UPageCard>
+  </section>
 </template>

@@ -162,6 +162,42 @@ const routes = {
     tokens: [{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"_dev","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"paymongo","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":0,"val":"checkouts","end":""},{"old":"/_dev/paymongo/checkouts/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['payments.simulations.store']['types'],
   },
+  'assistant.conversations.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/assistant/conversations',
+    tokens: [{"old":"/assistant/conversations","type":0,"val":"assistant","end":""},{"old":"/assistant/conversations","type":0,"val":"conversations","end":""}],
+    types: placeholder as Registry['assistant.conversations.index']['types'],
+  },
+  'assistant.conversations.store': {
+    methods: ["POST"],
+    pattern: '/assistant/conversations',
+    tokens: [{"old":"/assistant/conversations","type":0,"val":"assistant","end":""},{"old":"/assistant/conversations","type":0,"val":"conversations","end":""}],
+    types: placeholder as Registry['assistant.conversations.store']['types'],
+  },
+  'assistant.conversations.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/assistant/conversations/:id',
+    tokens: [{"old":"/assistant/conversations/:id","type":0,"val":"assistant","end":""},{"old":"/assistant/conversations/:id","type":0,"val":"conversations","end":""},{"old":"/assistant/conversations/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['assistant.conversations.show']['types'],
+  },
+  'assistant.conversations.destroy': {
+    methods: ["DELETE"],
+    pattern: '/assistant/conversations/:id',
+    tokens: [{"old":"/assistant/conversations/:id","type":0,"val":"assistant","end":""},{"old":"/assistant/conversations/:id","type":0,"val":"conversations","end":""},{"old":"/assistant/conversations/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['assistant.conversations.destroy']['types'],
+  },
+  'assistant.conversations.messages.store': {
+    methods: ["POST"],
+    pattern: '/assistant/conversations/:conversationId/messages',
+    tokens: [{"old":"/assistant/conversations/:conversationId/messages","type":0,"val":"assistant","end":""},{"old":"/assistant/conversations/:conversationId/messages","type":0,"val":"conversations","end":""},{"old":"/assistant/conversations/:conversationId/messages","type":1,"val":"conversationId","end":""},{"old":"/assistant/conversations/:conversationId/messages","type":0,"val":"messages","end":""}],
+    types: placeholder as Registry['assistant.conversations.messages.store']['types'],
+  },
+  'assistant.proposals.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/assistant/proposals/:id',
+    tokens: [{"old":"/assistant/proposals/:id","type":0,"val":"assistant","end":""},{"old":"/assistant/proposals/:id","type":0,"val":"proposals","end":""},{"old":"/assistant/proposals/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['assistant.proposals.update']['types'],
+  },
   'email_verifications.show': {
     methods: ["GET","HEAD"],
     pattern: '/email-verifications/:token',
@@ -395,6 +431,12 @@ const routes = {
     pattern: '/settings/store/policies',
     tokens: [{"old":"/settings/store/policies","type":0,"val":"settings","end":""},{"old":"/settings/store/policies","type":0,"val":"store","end":""},{"old":"/settings/store/policies","type":0,"val":"policies","end":""}],
     types: placeholder as Registry['settings.store_policies.update']['types'],
+  },
+  'settings.shopping_assistant.update': {
+    methods: ["PUT"],
+    pattern: '/settings/store/assistant',
+    tokens: [{"old":"/settings/store/assistant","type":0,"val":"settings","end":""},{"old":"/settings/store/assistant","type":0,"val":"store","end":""},{"old":"/settings/store/assistant","type":0,"val":"assistant","end":""}],
+    types: placeholder as Registry['settings.shopping_assistant.update']['types'],
   },
   'settings.store.edit': {
     methods: ["GET","HEAD"],

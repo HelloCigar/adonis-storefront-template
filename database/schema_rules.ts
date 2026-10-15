@@ -41,6 +41,15 @@ export default {
         },
       },
     },
+    assistant_messages: {
+      columns: {
+        // JSON text holding AI SDK UI message parts; the model narrows and parses it.
+        parts: {
+          tsType: 'unknown[]',
+          decorators: [{ name: '@column' }],
+        },
+      },
+    },
     products: {
       columns: {
         option_definitions: {

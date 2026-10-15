@@ -40,6 +40,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   PAYMONGO_TIMEOUT_MS: Env.schema.number.optional(),
   PAYMONGO_WEBHOOK_TOLERANCE_SECONDS: Env.schema.number.optional(),
 
+  // Shopping assistant (without the chosen provider's key the assistant can't be switched on)
+  ASSISTANT_PROVIDER: Env.schema.enum.optional(['gateway', 'openai'] as const),
+  ASSISTANT_MODEL: Env.schema.string.optional(),
+  AI_GATEWAY_API_KEY: Env.schema.secret.optional(),
+  OPENAI_API_KEY: Env.schema.secret.optional(),
+
   /*
   |----------------------------------------------------------
   | Variables for configuring @adonisjs/queue

@@ -16,6 +16,10 @@ export default class StoreSettingPolicy extends BasePolicy {
     return user.role === 'admin'
   }
 
+  updateShoppingAssistant(user: User): AuthorizerResponse {
+    return user.role === 'admin'
+  }
+
   dismissChecklist(user: User): AuthorizerResponse {
     return user.role === 'admin'
   }

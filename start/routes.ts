@@ -12,6 +12,8 @@ import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 
 import {
+  assistantConversationThrottle,
+  assistantMessageThrottle,
   chatImageThrottle,
   checkoutThrottle,
   discountThrottle,
@@ -86,6 +88,26 @@ router
 router
   .post('/_dev/paymongo/checkouts/:id', [FakePayMongoController, 'store'])
   .as('payments.simulations.store')
+
+router
+  .group(() => {
+    router
+      .resource('conversations', controllers.assistant.AssistantConversations)
+      .only(['index', 'store', 'show', 'destroy'])
+      .use(['index', 'destroy'], middleware.auth())
+      .use(['store'], assistantConversationThrottle)
+    router
+      .resource('conversations.messages', controllers.assistant.AssistantMessages)
+      .only(['store'])
+      .params({ conversations: 'conversationId' })
+      .use(['store'], assistantMessageThrottle)
+    router.resource('proposals', controllers.assistant.AssistantProposals).only(['update'])
+  })
+  .prefix('/assistant')
+  .as('assistant')
+  .where('id', ulid)
+  .where('conversationId', ulid)
+  .use(middleware.assistantAvailable())
 
 router
   .get('email-verifications/:token', [controllers.auth.EmailVerifications, 'show'])
@@ -210,6 +232,12 @@ router
         router
           .put('/settings/store/policies', [controllers.settings.StorePolicies, 'update'])
           .as('settings.store_policies.update')
+        router
+          .put('/settings/store/assistant', [
+            controllers.settings.ShoppingAssistantSettings,
+            'update',
+          ])
+          .as('settings.shopping_assistant.update')
         router
           .get('/settings/store', [controllers.settings.StoreSettings, 'edit'])
           .as('settings.store.edit')
