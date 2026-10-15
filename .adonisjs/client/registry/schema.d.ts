@@ -319,6 +319,78 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#providers/payments/fake_paymongo_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'assistant.conversations.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/assistant/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['index']>>>
+    }
+  }
+  'assistant.conversations.store': {
+    methods: ["POST"]
+    pattern: '/assistant/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['store']>>>
+    }
+  }
+  'assistant.conversations.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/assistant/conversations/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['show']>>>
+    }
+  }
+  'assistant.conversations.destroy': {
+    methods: ["DELETE"]
+    pattern: '/assistant/conversations/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_conversations_controller').default['destroy']>>>
+    }
+  }
+  'assistant.conversations.messages.store': {
+    methods: ["POST"]
+    pattern: '/assistant/conversations/:conversationId/messages'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/assistant/assistant_message').storeAssistantMessageValidator)>>
+      paramsTuple: [ParamValue]
+      params: { conversationId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/assistant/assistant_message').storeAssistantMessageValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_messages_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_messages_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'assistant.proposals.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/assistant/proposals/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/assistant/assistant_proposal').updateAssistantProposalValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/assistant/assistant_proposal').updateAssistantProposalValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_proposals_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_proposals_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'email_verifications.show': {
     methods: ["GET","HEAD"]
     pattern: '/email-verifications/:token'
@@ -785,6 +857,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/settings/store_policy').storePoliciesValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/store_policies_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'settings.shopping_assistant.update': {
+    methods: ["PUT"]
+    pattern: '/settings/store/assistant'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/settings/shopping_assistant_setting').updateShoppingAssistantSettingValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/settings/shopping_assistant_setting').updateShoppingAssistantSettingValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/shopping_assistant_settings_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/shopping_assistant_settings_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'settings.store.edit': {

@@ -62,6 +62,20 @@ export interface ApiDefinition {
       store: typeof routes['payments.simulations.store']
     }
   }
+  assistant: {
+    conversations: {
+      index: typeof routes['assistant.conversations.index']
+      store: typeof routes['assistant.conversations.store']
+      show: typeof routes['assistant.conversations.show']
+      destroy: typeof routes['assistant.conversations.destroy']
+      messages: {
+        store: typeof routes['assistant.conversations.messages.store']
+      }
+    }
+    proposals: {
+      update: typeof routes['assistant.proposals.update']
+    }
+  }
   emailVerifications: {
     show: typeof routes['email_verifications.show']
     update: typeof routes['email_verifications.update']
@@ -138,6 +152,9 @@ export interface ApiDefinition {
     storePolicies: {
       edit: typeof routes['settings.store_policies.edit']
       update: typeof routes['settings.store_policies.update']
+    }
+    shoppingAssistant: {
+      update: typeof routes['settings.shopping_assistant.update']
     }
     store: {
       edit: typeof routes['settings.store.edit']

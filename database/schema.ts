@@ -373,6 +373,63 @@ export class AgentToolCallSchema extends BaseModel {
   declare toolType: string
 }
 
+export class AssistantConversationSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'lastMessageAt', 'title', 'updatedAt', 'userId'] as const
+  $columns = AssistantConversationSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column.dateTime()
+  declare lastMessageAt: DateTime
+  @column()
+  declare title: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: string | null
+}
+
+export class AssistantMessageSchema extends BaseModel {
+  static $columns = ['conversationId', 'createdAt', 'id', 'parts', 'role'] as const
+  $columns = AssistantMessageSchema.$columns
+  @column()
+  declare conversationId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare parts: unknown[]
+  @column()
+  declare role: string
+}
+
+export class AssistantProposalSchema extends BaseModel {
+  static $columns = ['addedAt', 'conversationId', 'createdAt', 'currencyCode', 'dismissedAt', 'expiresAt', 'id', 'productVariantId', 'quantity', 'unitPriceAmount'] as const
+  $columns = AssistantProposalSchema.$columns
+  @column.dateTime()
+  declare addedAt: DateTime | null
+  @column()
+  declare conversationId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare currencyCode: string
+  @column.dateTime()
+  declare dismissedAt: DateTime | null
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare productVariantId: string
+  @column()
+  declare quantity: number
+  @column()
+  declare unitPriceAmount: number
+}
+
 export class BlogPostSchema extends BaseModel {
   static $columns = ['authorId', 'badge', 'content', 'contentHtml', 'createdAt', 'excerpt', 'handle', 'id', 'publishedAt', 'status', 'title', 'updatedAt'] as const
   $columns = BlogPostSchema.$columns
@@ -1288,7 +1345,7 @@ export class StorePolicySchema extends BaseModel {
 }
 
 export class StoreSettingSchema extends BaseModel {
-  static $columns = ['checklistDismissedAt', 'contactEmail', 'createdAt', 'id', 'identitySavedAt', 'policiesSavedAt', 'policiesTickedAt', 'productTickedAt', 'setupCompletedAt', 'shippingMinor', 'shippingSavedAt', 'staffTickedAt', 'storeName', 'updatedAt'] as const
+  static $columns = ['checklistDismissedAt', 'contactEmail', 'createdAt', 'id', 'identitySavedAt', 'policiesSavedAt', 'policiesTickedAt', 'productTickedAt', 'setupCompletedAt', 'shippingMinor', 'shippingSavedAt', 'shoppingAssistantEnabled', 'staffTickedAt', 'storeName', 'updatedAt'] as const
   $columns = StoreSettingSchema.$columns
   @column.dateTime()
   declare checklistDismissedAt: DateTime | null
@@ -1312,6 +1369,8 @@ export class StoreSettingSchema extends BaseModel {
   declare shippingMinor: number | null
   @column.dateTime()
   declare shippingSavedAt: DateTime | null
+  @column({ consume: (value)=>Boolean(value) })
+  declare shoppingAssistantEnabled: boolean
   @column.dateTime()
   declare staffTickedAt: DateTime | null
   @column()

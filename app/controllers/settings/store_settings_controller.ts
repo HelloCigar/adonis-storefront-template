@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import AssistantModelProvider from '#assistant/model_provider'
 import StoreSetting from '#models/settings/store_setting'
 import StoreSettingPolicy from '#policies/settings/store_setting_policy'
 import MoneyService from '#services/checkout/money_service'
@@ -7,11 +8,14 @@ import StoreSettingTransformer from '#transformers/settings/store_setting_transf
 import { storeSettingsValidator } from '#validators/settings/store_setting'
 
 export default class StoreSettingsController {
-  async edit({ inertia, bouncer }: HttpContext) {
+  @inject()
+  async edit({ inertia, bouncer }: HttpContext, provider: AssistantModelProvider) {
     await bouncer.with(StoreSettingPolicy).authorize('update')
     const settings = await StoreSetting.current()
     return inertia.render('settings/store', {
-      settings: StoreSettingTransformer.transform(settings),
+      settings: StoreSettingTransformer.transform(settings, {
+        assistantConfigured: provider.isConfigured(),
+      }),
     })
   }
 

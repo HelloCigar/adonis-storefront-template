@@ -1,6 +1,7 @@
 import type StoreSetting from '#models/settings/store_setting'
 import type { PaymentRefund } from '#services/payments/payment_service'
 import type { startChatServer, useChatServer } from '#tests/helpers/chat_socket'
+import type { MockLanguageModelV4 } from 'ai/test'
 
 /**
  * A Signal API call captured by "recordPasskeySignals"
@@ -93,3 +94,18 @@ export interface QueueRow {
   nextStep: string
   waitingSince: string | null
 }
+
+/** What the scripted shopping assistant model received on one call. */
+export type ScriptedModelCall = Parameters<MockLanguageModelV4['doStream']>[0]
+
+/** One chunk the scripted shopping assistant model streams back. */
+export type ScriptedStreamPart =
+  Awaited<ReturnType<MockLanguageModelV4['doStream']>>['stream'] extends ReadableStream<infer Part>
+    ? Part
+    : never
+
+/** One step a test scripts for the shopping assistant model. */
+export type ScriptedModelStep =
+  | { kind: 'text'; text: string }
+  | { kind: 'tools'; toolName: string; inputs: Record<string, unknown>[] }
+  | { kind: 'fail' }

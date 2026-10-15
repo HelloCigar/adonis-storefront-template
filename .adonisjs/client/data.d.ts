@@ -9,6 +9,10 @@ import type { InferSharedProps, InferFlashData } from '@adonisjs/inertia/types'
 import type AccountCustomerAddressTransformer from '#transformers/account/customer_address_transformer'
 import type AccountPasskeyTransformer from '#transformers/account/passkey_transformer'
 import type AccountUserTransformer from '#transformers/account/user_transformer'
+import type AssistantAssistantConversationTransformer from '#transformers/assistant/assistant_conversation_transformer'
+import type AssistantAssistantMessageTransformer from '#transformers/assistant/assistant_message_transformer'
+import type AssistantAssistantProductTransformer from '#transformers/assistant/assistant_product_transformer'
+import type AssistantAssistantProposalTransformer from '#transformers/assistant/assistant_proposal_transformer'
 import type CatalogCollectionCatalogueTransformer from '#transformers/catalog/collection_catalogue_transformer'
 import type CatalogCollectionTransformer from '#transformers/catalog/collection_transformer'
 import type CatalogProductTransformer from '#transformers/catalog/product_transformer'
@@ -60,6 +64,24 @@ export namespace Data {
     export type User = InferData<AccountUserTransformer>
     export namespace User {
       export type Variants = InferVariants<AccountUserTransformer>
+    }
+  }
+  export namespace Assistant {
+    export type AssistantConversation = InferData<AssistantAssistantConversationTransformer>
+    export namespace AssistantConversation {
+      export type Variants = InferVariants<AssistantAssistantConversationTransformer>
+    }
+    export type AssistantMessage = InferData<AssistantAssistantMessageTransformer>
+    export namespace AssistantMessage {
+      export type Variants = InferVariants<AssistantAssistantMessageTransformer>
+    }
+    export type AssistantProduct = InferData<AssistantAssistantProductTransformer>
+    export namespace AssistantProduct {
+      export type Variants = InferVariants<AssistantAssistantProductTransformer>
+    }
+    export type AssistantProposal = InferData<AssistantAssistantProposalTransformer>
+    export namespace AssistantProposal {
+      export type Variants = InferVariants<AssistantAssistantProposalTransformer>
     }
   }
   export namespace Catalog {

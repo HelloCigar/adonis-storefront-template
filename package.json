@@ -43,7 +43,8 @@
     "#database/*": "./database/*.js",
     "#tests/*": "./tests/*.js",
     "#start/*": "./start/*.js",
-    "#config/*": "./config/*.js"
+    "#config/*": "./config/*.js",
+    "#assistant/*": "./app/assistant/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.4.0",
@@ -92,6 +93,7 @@
     "@adonisplus/flow": "^0.5.1",
     "@adonisplus/persona": "^0.4.2",
     "@ai-sdk/openai": "^4.0.84",
+    "@ai-sdk/vue": "^4.0.128",
     "@aws-sdk/client-s3": "^3.1148.0",
     "@aws-sdk/s3-request-presigner": "^3.1148.0",
     "@iconify-json/lucide": "^1.2.116",

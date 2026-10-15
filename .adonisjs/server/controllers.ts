@@ -13,6 +13,11 @@ export const controllers = {
     Profile: () => import('#controllers/account/profile_controller'),
     Security: () => import('#controllers/account/security_controller'),
   },
+  assistant: {
+    AssistantConversations: () => import('#controllers/assistant/assistant_conversations_controller'),
+    AssistantMessages: () => import('#controllers/assistant/assistant_messages_controller'),
+    AssistantProposals: () => import('#controllers/assistant/assistant_proposals_controller'),
+  },
   auth: {
     EmailVerifications: () => import('#controllers/auth/email_verifications_controller'),
     NewAccount: () => import('#controllers/auth/new_account_controller'),
@@ -79,6 +84,7 @@ export const controllers = {
     Passkeys: () => import('#controllers/settings/passkeys_controller'),
     Security: () => import('#controllers/settings/security_controller'),
     Settings: () => import('#controllers/settings/settings_controller'),
+    ShoppingAssistantSettings: () => import('#controllers/settings/shopping_assistant_settings_controller'),
     StorePolicies: () => import('#controllers/settings/store_policies_controller'),
     StoreSettings: () => import('#controllers/settings/store_settings_controller'),
   },

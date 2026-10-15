@@ -12,6 +12,7 @@ import SearchResultTransformer from '#transformers/catalog/search_result_transfo
 import { searchValidator } from '#validators/catalog/search'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
 import StoreSetting from '#models/settings/store_setting'
+import AssistantModelProvider from '#assistant/model_provider'
 import StoreSettingPolicy from '#policies/settings/store_setting_policy'
 import type { PasskeySignal } from '@adonisplus/persona/passkeys/types'
 
@@ -20,7 +21,8 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
   constructor(
     private cartService: CartService,
     private catalogueService: CatalogueService,
-    private contentService: ContentService
+    private contentService: ContentService,
+    private assistantModels: AssistantModelProvider
   ) {
     super()
   }
@@ -54,6 +56,14 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
           ? await ctx.bouncer.with(StoreSettingPolicy).allows('update')
           : false,
       }),
+      assistant: async () => {
+        const settings = await StoreSetting.current()
+        return {
+          available: settings.shoppingAssistantEnabled && this.assistantModels.isConfigured(),
+          // Only the id; whether this browser may still open it is checked when it loads.
+          conversationId: ctx.assistantSession?.currentConversationId() ?? null,
+        }
+      },
       policies: async () => ContentTransformer.transform(await this.contentService.policies()),
       cart: async () => {
         const cart = await this.cartService.load(ctx.checkoutSession?.cartToken())

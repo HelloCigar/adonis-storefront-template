@@ -8,6 +8,7 @@
 |
 */
 
+import type { HttpContext } from '@adonisjs/core/http'
 import limiter from '@adonisjs/limiter/services/main'
 
 /** Sign-in requests across all emails, limiting credential stuffing from one client. */
@@ -40,4 +41,21 @@ export const chatImageThrottle = limiter.define('chat_images', (ctx) =>
     .allowRequests(10)
     .every('1 minute')
     .usingKey(`chat_images_${ctx.auth.user?.id ?? ctx.request.ip()}`)
+)
+
+/** Per signed-in shopper, or per browser (a random visitor token in the session) when signed out. */
+function assistantKey(prefix: string, ctx: HttpContext) {
+  return ctx.auth.user
+    ? `${prefix}_user_${ctx.auth.user.id}`
+    : `${prefix}_visitor_${ctx.assistantSession.visitorToken()}`
+}
+
+/** Shopping assistant messages: 30 an hour per signed-in shopper, or per browser when signed out. */
+export const assistantMessageThrottle = limiter.define('assistant_messages', (ctx) =>
+  limiter.allowRequests(30).every('1 hour').usingKey(assistantKey('assistant_messages', ctx))
+)
+
+/** New assistant conversations, so empty ones can't be created without limit. */
+export const assistantConversationThrottle = limiter.define('assistant_conversations', (ctx) =>
+  limiter.allowRequests(20).every('1 hour').usingKey(assistantKey('assistant_conversations', ctx))
 )
