@@ -129,7 +129,11 @@ const period = computed<Period>({
               :class="{ 'opacity-60': loading }"
               :aria-busy="loading"
             >
-              <HomeStats :stats="summary.stats" :currency="summary.currency" />
+              <HomeStats
+                :stats="summary.stats"
+                :chart="summary.chart"
+                :currency="summary.currency"
+              />
               <HomeChart
                 :chart="summary.chart"
                 :period="summary.query.period"

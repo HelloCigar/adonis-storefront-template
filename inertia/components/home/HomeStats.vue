@@ -7,8 +7,13 @@ import { orderMoney } from '~/components/seller/orders/presentation'
 
 const props = defineProps<{
   stats: Data.Dashboard.Summary['stats']
+  chart: Data.Dashboard.Summary['chart']
   currency: string
 }>()
+
+/** One figure per chart bucket, for a card's sparkline. */
+const trend = (value: (bucket: Data.Dashboard.Summary['chart'][number]) => number) =>
+  props.chart.map((bucket) => ({ date: bucket.date, value: value(bucket) }))
 
 const page = usePage()
 const ordersUrl = computed(() =>
@@ -21,6 +26,7 @@ const cards = computed(() => [
     icon: 'i-lucide-circle-dollar-sign',
     value: orderMoney(props.stats.grossSales.value, props.currency),
     change: props.stats.grossSales.change,
+    trend: trend((bucket) => bucket.amount),
     to: ordersUrl.value,
   },
   {
@@ -28,6 +34,7 @@ const cards = computed(() => [
     icon: 'i-lucide-shopping-cart',
     value: props.stats.paidOrders.value.toLocaleString('en-PH'),
     change: props.stats.paidOrders.change,
+    trend: trend((bucket) => bucket.orders),
     to: ordersUrl.value,
   },
   {
@@ -35,6 +42,7 @@ const cards = computed(() => [
     icon: 'i-lucide-receipt',
     value: orderMoney(props.stats.averageOrder.value, props.currency),
     change: props.stats.averageOrder.change,
+    trend: trend((bucket) => (bucket.orders ? bucket.amount / bucket.orders : 0)),
     to: ordersUrl.value,
   },
   {
@@ -42,6 +50,7 @@ const cards = computed(() => [
     icon: 'i-lucide-users',
     value: props.stats.newCustomers.value.toLocaleString('en-PH'),
     change: props.stats.newCustomers.change,
+    trend: trend((bucket) => bucket.customers),
     to: page.props.permissions.manageUsers ? urlFor('seller.users.index') : undefined,
   },
 ])
@@ -78,6 +87,23 @@ const cards = computed(() => [
         >
           {{ card.change > 0 ? '+' : '' }}{{ card.change }}%
         </UBadge>
+      </div>
+
+      <!-- Decorative: the card is a link, so the chart must not add a focus stop inside it. -->
+      <div class="w-full" inert aria-hidden="true">
+        <UChart
+          type="area"
+          curve="monotone"
+          :data="card.trend"
+          index="date"
+          :categories="[{ key: 'value', label: card.title, color: 'primary' }]"
+          :height="56"
+          :x-axis="false"
+          :y-axis="false"
+          :grid="false"
+          :legend="false"
+          :tooltip="false"
+        />
       </div>
     </UPageCard>
   </UPageGrid>

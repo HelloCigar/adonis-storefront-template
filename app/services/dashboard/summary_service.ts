@@ -91,29 +91,54 @@ export default class SummaryService {
    * Buckets the range's captured sales, with each bucket's `previous` holding sales from one
    * range-length earlier. Earlier orders shift forward by that length before bucketing, so
    * weekly and monthly buckets line up with the range rather than the earlier calendar.
+   * `orders` and `customers` count the range's captured orders and customer sign-ups.
    */
   private async chart(start: DateTime, until: DateTime, length: Duration, period: DashboardPeriod) {
     const unit = bucketUnits[period]
-    const buckets = new Map<string, { amount: number; previous: number }>()
+    const empty = () => ({ amount: 0, previous: 0, orders: 0, customers: 0 })
+    const buckets = new Map<string, ReturnType<typeof empty>>()
     for (let cursor = start.startOf(unit); cursor < until; cursor = cursor.plus({ [unit]: 1 })) {
-      buckets.set(cursor.toISODate()!, { amount: 0, previous: 0 })
+      buckets.set(cursor.toISODate()!, empty())
     }
+    const bucketFor = (at: DateTime) => {
+      const key = at.startOf(unit).toISODate()!
+      if (!buckets.has(key)) buckets.set(key, empty())
+      return buckets.get(key)!
+    }
+    const storeTime = (value: string) => DateTime.fromSQL(value, { zone: 'utc' }).setZone(storeZone)
+
     const { from, until: to } = this.window(start.minus(length), until)
-    const rows: { processed_at: string; total_minor: number }[] = await db
-      .from('orders')
-      .select('processed_at', 'total_minor')
-      .whereIn('financial_status', capturedStatuses)
-      .where('processed_at', '>=', from)
-      .where('processed_at', '<', to)
-    for (const row of rows) {
-      const processedAt = DateTime.fromSQL(row.processed_at, { zone: 'utc' }).setZone(storeZone)
-      const earlier = processedAt < start
-      const key = (earlier ? processedAt.plus(length) : processedAt).startOf(unit).toISODate()!
-      const bucket = buckets.get(key) ?? { amount: 0, previous: 0 }
-      bucket[earlier ? 'previous' : 'amount'] += Number(row.total_minor) / 100
-      buckets.set(key, bucket)
+    const current = this.window(start, until)
+    const [orders, customers]: [
+      { processed_at: string; total_minor: number }[],
+      { created_at: string }[],
+    ] = await Promise.all([
+      db
+        .from('orders')
+        .select('processed_at', 'total_minor')
+        .whereIn('financial_status', capturedStatuses)
+        .where('processed_at', '>=', from)
+        .where('processed_at', '<', to),
+      db
+        .from('users')
+        .select('created_at')
+        .where('role', 'customer')
+        .where('created_at', '>=', current.from)
+        .where('created_at', '<', current.until),
+    ])
+    for (const row of orders) {
+      const processedAt = storeTime(row.processed_at)
+      const amount = Number(row.total_minor) / 100
+      if (processedAt < start) {
+        bucketFor(processedAt.plus(length)).previous += amount
+      } else {
+        const bucket = bucketFor(processedAt)
+        bucket.amount += amount
+        bucket.orders += 1
+      }
     }
-    return [...buckets].map(([date, { amount, previous }]) => ({ date, amount, previous }))
+    for (const row of customers) bucketFor(storeTime(row.created_at)).customers += 1
+    return [...buckets].map(([date, bucket]) => ({ date, ...bucket }))
   }
 
   private async recentOrders({ from, until }: Window) {
