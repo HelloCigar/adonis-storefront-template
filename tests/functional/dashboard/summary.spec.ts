@@ -61,4 +61,44 @@ test.group('Management dashboard', (group) => {
     assert.lengthOf(week.inertiaProps.summary.chart, 7)
     assert.equal(week.inertiaProps.summary.stats.grossSales.value, 0)
   })
+
+  test('lines up the previous period with the chart buckets', async ({ client, assert, route }) => {
+    const staff = await User.create({ email: 'staff@example.com', role: 'staff', password: 'x' })
+    const storeDay = (day: string) => DateTime.fromISO(`${day}T12:00`, { zone: 'Asia/Manila' })
+    await OrderFactory.merge({
+      financialStatus: 'paid',
+      totalMinor: 40000,
+      processedAt: storeDay('2026-01-12'),
+    }).create()
+    await OrderFactory.merge({
+      financialStatus: 'paid',
+      totalMinor: 25000,
+      processedAt: storeDay('2026-01-03'),
+    }).create()
+    await OrderFactory.merge({
+      financialStatus: 'voided',
+      totalMinor: 90000,
+      processedAt: storeDay('2026-01-05'),
+    }).create()
+
+    const page = await client
+      .get(route('dashboard'))
+      .qs({ start: '2026-01-08', end: '2026-01-14', period: 'daily' })
+      .loginAs(staff)
+      .withInertia()
+    const { summary } = page.inertiaProps
+
+    assert.lengthOf(summary.chart, 7)
+    assert.deepEqual(
+      summary.chart
+        .filter((bucket: { previous: number }) => bucket.previous)
+        .map((bucket: { date: string; previous: number }) => [bucket.date, bucket.previous]),
+      [['2026-01-10', 250]]
+    )
+    assert.equal(
+      summary.chart.reduce((total: number, bucket: { amount: number }) => total + bucket.amount, 0),
+      summary.stats.grossSales.value
+    )
+    assert.equal(summary.stats.grossSales.value, 400)
+  })
 })

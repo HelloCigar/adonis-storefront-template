@@ -68,7 +68,18 @@ export default defineConfig({
   optimizeDeps: {
     // The startup scan misses these dashboard dependencies, so Vite finds them on the first
     // dashboard visit and force-reloads the page, dropping any flash message mid-test.
-    include: ['@unovis/vue', '@internationalized/date'],
+    include: [
+      '@tanstack/charts',
+      '@tanstack/charts/vue',
+      '@tanstack/charts/scales/band',
+      '@tanstack/charts/scales/linear',
+      '@tanstack/charts/scales/ordinal',
+      '@tanstack/charts/scales/point',
+      '@tanstack/charts/crosshair',
+      '@tanstack/charts/mark/decorative',
+      '@tanstack/charts/polar',
+      '@internationalized/date',
+    ],
   },
 
   ssr: {
