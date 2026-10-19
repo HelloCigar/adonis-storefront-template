@@ -39,9 +39,7 @@ yarn-error.log
 # Platform specific
 .DS_Store
 .flow/docs/
-.flow/boards
 .flow/changes
-.flow/states
 .flow/archive
 .claude/skills/flow-*
 .agents/skills/flow-*
