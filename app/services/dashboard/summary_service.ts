@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { DateTime, type Duration } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import Order from '#models/checkout/order'
 import checkout from '#config/checkout'
@@ -33,8 +33,9 @@ export default class SummaryService {
     if (end.diff(start, 'days').days > maxDays) start = end.minus({ days: maxDays })
 
     const until = end.plus({ days: 1 })
+    const length = until.diff(start)
     const current = this.window(start, until)
-    const previous = this.window(start.minus(until.diff(start)), start)
+    const previous = this.window(start.minus(length), start)
     const periods = this.periods(until.diff(start, 'days').days)
     const period = query.period && periods.includes(query.period) ? query.period : periods[0]
 
@@ -43,7 +44,7 @@ export default class SummaryService {
       this.sales(previous),
       this.newCustomers(current),
       this.newCustomers(previous),
-      this.chart(start, until, period),
+      this.chart(start, until, length, period),
       this.recentOrders(current),
     ])
     const average = (sales: { count: number; total: number }) =>
@@ -86,13 +87,18 @@ export default class SummaryService {
     return Number(row?.count ?? 0)
   }
 
-  private async chart(start: DateTime, until: DateTime, period: DashboardPeriod) {
+  /**
+   * Buckets the range's captured sales, with each bucket's `previous` holding sales from one
+   * range-length earlier. Earlier orders shift forward by that length before bucketing, so
+   * weekly and monthly buckets line up with the range rather than the earlier calendar.
+   */
+  private async chart(start: DateTime, until: DateTime, length: Duration, period: DashboardPeriod) {
     const unit = bucketUnits[period]
-    const buckets = new Map<string, number>()
+    const buckets = new Map<string, { amount: number; previous: number }>()
     for (let cursor = start.startOf(unit); cursor < until; cursor = cursor.plus({ [unit]: 1 })) {
-      buckets.set(cursor.toISODate()!, 0)
+      buckets.set(cursor.toISODate()!, { amount: 0, previous: 0 })
     }
-    const { from, until: to } = this.window(start, until)
+    const { from, until: to } = this.window(start.minus(length), until)
     const rows: { processed_at: string; total_minor: number }[] = await db
       .from('orders')
       .select('processed_at', 'total_minor')
@@ -100,13 +106,14 @@ export default class SummaryService {
       .where('processed_at', '>=', from)
       .where('processed_at', '<', to)
     for (const row of rows) {
-      const key = DateTime.fromSQL(row.processed_at, { zone: 'utc' })
-        .setZone(storeZone)
-        .startOf(unit)
-        .toISODate()!
-      buckets.set(key, (buckets.get(key) ?? 0) + Number(row.total_minor) / 100)
+      const processedAt = DateTime.fromSQL(row.processed_at, { zone: 'utc' }).setZone(storeZone)
+      const earlier = processedAt < start
+      const key = (earlier ? processedAt.plus(length) : processedAt).startOf(unit).toISODate()!
+      const bucket = buckets.get(key) ?? { amount: 0, previous: 0 }
+      bucket[earlier ? 'previous' : 'amount'] += Number(row.total_minor) / 100
+      buckets.set(key, bucket)
     }
-    return [...buckets].map(([date, amount]) => ({ date, amount }))
+    return [...buckets].map(([date, { amount, previous }]) => ({ date, amount, previous }))
   }
 
   private async recentOrders({ from, until }: Window) {
