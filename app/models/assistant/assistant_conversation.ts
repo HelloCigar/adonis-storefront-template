@@ -12,6 +12,13 @@ import { sqlDateTime } from '#models/shared/sql_datetime'
 import { withUlidPrimaryKey } from '#models/shared/with_ulid_primary_key'
 import { assistantLimits, type AssistantKind } from '#values/assistant'
 
+/** Calendar days in the dashboard follow the store's zone; stored timestamps are UTC. */
+const storeZone = 'Asia/Manila'
+
+/** The same calendar day in the store's zone. */
+const storeDay = (date: DateTime) =>
+  DateTime.fromObject({ year: date.year, month: date.month, day: date.day }, { zone: storeZone })
+
 /** The admin review list's filters, as the review controller validates them. */
 type ReviewFilters = {
   assistant?: AssistantKind
@@ -52,8 +59,10 @@ export default class AssistantConversation extends compose(
   >((query, filters) => {
     if (filters.assistant) query.where('assistant', filters.assistant)
     if (filters.userId) query.where('user_id', filters.userId)
-    if (filters.from) query.where('last_message_at', '>=', sqlDateTime(filters.from.startOf('day')))
-    if (filters.to) query.where('last_message_at', '<=', sqlDateTime(filters.to.endOf('day')))
+    if (filters.from)
+      query.where('last_message_at', '>=', sqlDateTime(storeDay(filters.from).startOf('day')))
+    if (filters.to)
+      query.where('last_message_at', '<=', sqlDateTime(storeDay(filters.to).endOf('day')))
     if (filters.changesApplied)
       query.whereHas('copilotProposals', (proposals) => proposals.whereNotNull('applied_at'))
     if (filters.unanswered) query.whereNotNull('last_unanswered_at')
@@ -86,6 +95,7 @@ export default class AssistantConversation extends compose(
   async claimFor(user: User) {
     if (this.userId !== null) return
     this.userId = user.id
+    this.participantName = user.fullName || user.email
     await this.save()
   }
 

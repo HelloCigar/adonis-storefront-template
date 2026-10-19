@@ -90,19 +90,23 @@ async function readTools(bouncer: HttpContext['bouncer'], deps: CopilotToolDeps)
         "Search the store's orders by number or customer email, optionally within one stage of the order queue. Returns up to 20 orders, newest first, with their stages and next step.",
       inputSchema: searchOrdersInput,
       execute: async ({ query, stage }) => {
-        const needle = query?.toLowerCase()
+        const found = Order.query()
+          .preload('user')
+          .preload('shipments')
+          .orderBy('processed_at', 'desc')
+          .orderBy('id', 'desc')
+          .limit(20)
         // The queue calls shipped orders "in transit".
         const queueStage = stage === 'shipped' ? 'in_transit' : stage
-        const queue = await deps.queue.list()
-        const items = queue.filter(
-          (item) =>
-            (!queueStage || queueStage === 'all' || item.stages.includes(queueStage)) &&
-            (!needle ||
-              item.order.number.toLowerCase().includes(needle) ||
-              (item.order.email ?? '').toLowerCase().includes(needle))
-        )
+        if (queueStage && queueStage !== 'all') deps.queue.scope(queueStage, found)
+        if (query)
+          found.where((builder) =>
+            builder.whereILike('number', contains(query)).orWhereILike('email', contains(query))
+          )
+        const matches = await found
+        const items = await Promise.all(matches.map((order) => deps.queue.forOrder(order)))
         return serializer.serializeWithoutWrapping(
-          OrderQueueItemTransformer.transform(items.slice(0, 20)),
+          OrderQueueItemTransformer.transform(items),
           resolver
         )
       },

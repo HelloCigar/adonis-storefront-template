@@ -37,7 +37,7 @@ export default class CopilotConversationsController {
     const conversation = await AssistantConversation.create({
       userId: user.id,
       assistant: 'copilot',
-      participantName: user.fullName,
+      participantName: user.fullName || user.email,
       lastMessageAt: DateTime.now(),
     })
     return serialize(CopilotConversationTransformer.transform(conversation))

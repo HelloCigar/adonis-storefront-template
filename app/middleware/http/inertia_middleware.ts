@@ -67,7 +67,8 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
           conversationId: ctx.assistantSession?.currentConversationId() ?? null,
         }
       },
-      copilot: ctx.inertia.once(async () => {
+      // Not a once-prop: switching the copilot on or off must show on the very next page.
+      copilot: async () => {
         const settings = await StoreSetting.current()
         return {
           available:
@@ -75,7 +76,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
             this.assistantModels.isConfigured() &&
             (ctx.bouncer ? await ctx.bouncer.with('SellerAccessPolicy').allows('access') : false),
         }
-      }),
+      },
       policies: async () => ContentTransformer.transform(await this.contentService.policies()),
       cart: async () => {
         const cart = await this.cartService.load(ctx.checkoutSession?.cartToken())

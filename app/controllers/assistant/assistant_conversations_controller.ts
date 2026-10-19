@@ -37,7 +37,7 @@ export default class AssistantConversationsController {
     const conversation = await AssistantConversation.create({
       userId: auth.user?.id ?? null,
       assistant: 'shopping',
-      participantName: auth.user?.fullName ?? null,
+      participantName: auth.user ? auth.user.fullName || auth.user.email : null,
       lastMessageAt: DateTime.now(),
     })
     assistantSession.rememberConversation(conversation.id)
