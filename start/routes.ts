@@ -16,6 +16,8 @@ import {
   assistantMessageThrottle,
   chatImageThrottle,
   checkoutThrottle,
+  copilotConversationThrottle,
+  copilotMessageThrottle,
   discountThrottle,
   loginThrottle,
   passwordResetThrottle,
@@ -120,6 +122,25 @@ router
   .where('id', ulid)
   .where('conversationId', ulid)
   .use(middleware.assistantAvailable())
+
+router
+  .group(() => {
+    router
+      .resource('conversations', controllers.copilot.CopilotConversations)
+      .only(['index', 'store', 'show'])
+      .use(['store'], copilotConversationThrottle)
+    router
+      .resource('conversations.messages', controllers.copilot.CopilotMessages)
+      .only(['store'])
+      .params({ conversations: 'conversationId' })
+      .use(['store'], copilotMessageThrottle)
+    router.resource('proposals', controllers.copilot.CopilotProposals).only(['update'])
+  })
+  .prefix('/copilot')
+  .as('copilot')
+  .where('id', ulid)
+  .where('conversationId', ulid)
+  .use([middleware.auth(), middleware.staff(), middleware.copilotAvailable()])
 
 router
   .get('email-verifications/:token', [controllers.auth.EmailVerifications, 'show'])
@@ -254,6 +275,9 @@ router
           ])
           .as('settings.shopping_assistant.update')
         router
+          .put('/settings/store/copilot', [controllers.settings.DashboardCopilotSettings, 'update'])
+          .as('settings.dashboard_copilot.update')
+        router
           .get('/settings/store', [controllers.settings.StoreSettings, 'edit'])
           .as('settings.store.edit')
         router
@@ -348,6 +372,7 @@ router
       .resource('posts', controllers.seller.Posts)
       .only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
     router.resource('orders', controllers.seller.Orders).only(['index', 'show', 'update'])
+    router.resource('conversations', controllers.seller.Conversations).only(['index', 'show'])
     router.post('/orders/:id/packing', [controllers.seller.Packing, 'store']).as('packing.store')
     router
       .post('/orders/:id/shipment', [controllers.seller.Shipments, 'store'])

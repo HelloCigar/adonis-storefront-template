@@ -26,6 +26,7 @@ import {
   searchContentInput,
   proposeAddToCartInput,
   listMyOrdersInput,
+  noteUnansweredInput,
   offerSuggestionsInput,
   searchProductsInput,
   shopperContext,
@@ -36,6 +37,7 @@ import OrderTransformer from '#transformers/checkout/order_transformer'
 import { DateTime } from 'luxon'
 import ProductVariant from '#models/catalog/product_variant'
 import AssistantProposal from '#models/assistant/assistant_proposal'
+import AssistantConversation from '#models/assistant/assistant_conversation'
 import AssistantProposalTransformer from '#transformers/assistant/assistant_proposal_transformer'
 import { assistantLimits } from '#values/assistant'
 
@@ -275,6 +277,19 @@ export function shoppingTools(deps: ShoppingToolDeps) {
         "Call this when you decline a request that isn't about this store's products, orders, shipping or policies. The shopper is shown suggested questions.",
       inputSchema: offerSuggestionsInput,
       execute: async () => ({ offered: true as const }),
+    }),
+
+    // Admins filter for conversations the assistant couldn't answer.
+    noteUnanswered: tool({
+      description:
+        "Call this whenever you say you don't know, can't find the answer, or decline a request.",
+      inputSchema: noteUnansweredInput,
+      contextSchema: conversationContext,
+      execute: async (_input, { context }) => {
+        const conversation = await AssistantConversation.find(context.conversationId)
+        await conversation?.markUnanswered()
+        return { noted: true as const }
+      },
     }),
   }
 }

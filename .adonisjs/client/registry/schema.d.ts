@@ -427,6 +427,66 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assistant/assistant_proposals_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'copilot.conversations.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/copilot/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['index']>>>
+    }
+  }
+  'copilot.conversations.store': {
+    methods: ["POST"]
+    pattern: '/copilot/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['store']>>>
+    }
+  }
+  'copilot.conversations.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/copilot/conversations/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_conversations_controller').default['show']>>>
+    }
+  }
+  'copilot.conversations.messages.store': {
+    methods: ["POST"]
+    pattern: '/copilot/conversations/:conversationId/messages'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/assistant/copilot_message').storeCopilotMessageValidator)>>
+      paramsTuple: [ParamValue]
+      params: { conversationId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/assistant/copilot_message').storeCopilotMessageValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_messages_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_messages_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'copilot.proposals.update': {
+    methods: ["PUT","PATCH"]
+    pattern: '/copilot/proposals/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/assistant/copilot_proposal').updateCopilotProposalValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/assistant/copilot_proposal').updateCopilotProposalValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_proposals_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/copilot/copilot_proposals_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'email_verifications.show': {
     methods: ["GET","HEAD"]
     pattern: '/email-verifications/:token'
@@ -917,6 +977,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/settings/shopping_assistant_setting').updateShoppingAssistantSettingValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/shopping_assistant_settings_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/shopping_assistant_settings_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'settings.dashboard_copilot.update': {
+    methods: ["PUT"]
+    pattern: '/settings/store/copilot'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/settings/dashboard_copilot_setting').updateDashboardCopilotSettingValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/settings/dashboard_copilot_setting').updateDashboardCopilotSettingValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/settings/dashboard_copilot_settings_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/settings/dashboard_copilot_settings_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'settings.store.edit': {
@@ -1481,6 +1553,30 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/seller/order').orderUpdateValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/orders_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/orders_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.conversations.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/seller/conversation').conversationIndexQueryValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/conversations_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/conversations_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'seller.conversations.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/seller/conversations/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/seller/conversations_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/seller/conversations_controller').default['show']>>>
     }
   }
   'seller.packing.store': {

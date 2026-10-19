@@ -2,6 +2,7 @@ import type Product from '#models/catalog/product'
 import type Collection from '#models/catalog/collection'
 import ProductVariant from '#models/catalog/product_variant'
 import db from '@adonisjs/lucid/services/db'
+import { inTransaction } from '#models/shared/in_transaction'
 import { DateTime } from 'luxon'
 import { errors } from '@vinejs/vine'
 import type { Infer } from '@vinejs/vine/types'
@@ -9,13 +10,19 @@ import type { productCreateValidator } from '#validators/seller/product'
 import type { collectionCreateValidator } from '#validators/seller/collection'
 import InventoryService from '#services/catalog/inventory_service'
 import { inject } from '@adonisjs/core'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 /** Store management for products and collections. Variant and option changes live in SellerVariantService. */
 @inject()
 export default class SellerCatalogueService {
   constructor(private inventory: InventoryService) {}
 
-  async saveProduct(product: Product, payload: Infer<typeof productCreateValidator>) {
+  async saveProduct(
+    product: Product,
+    payload: Infer<typeof productCreateValidator>,
+    options: WriteOptions = {}
+  ) {
+    if (options.client) product.useTransaction(options.client)
     const hasVariants =
       product.$isPersisted && !!(await product.related('variants').query().first())
     product.merge({
@@ -30,9 +37,10 @@ export default class SellerCatalogueService {
 
   async saveCollection(
     collection: Collection,
-    { published, productIds, ...payload }: Infer<typeof collectionCreateValidator>
+    { published, productIds, ...payload }: Infer<typeof collectionCreateValidator>,
+    options: WriteOptions = {}
   ) {
-    return db.transaction(async (trx) => {
+    return inTransaction(options.client, async (trx) => {
       collection.useTransaction(trx)
       collection.merge({
         ...payload,

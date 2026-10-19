@@ -91,6 +91,9 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
           : null,
       details: (activity.details ?? null) as Record<string, unknown> | null,
       email: null,
+      viaCopilot: activity.viaCopilot,
+      // The link outlives nothing: once retention removes the conversation, only the mark stays.
+      copilotConversationId: activity.copilotProposal?.conversationId ?? null,
     }))
     const emails = (this.resource.notifications ?? []).map((notification) => ({
       id: `email:${notification.id}`,
@@ -105,6 +108,8 @@ export default class SellerOrderTransformer extends BaseTransformer<Order> {
         state: notification.state,
         lastError: notification.lastError,
       },
+      viaCopilot: false,
+      copilotConversationId: null,
     }))
     // Times are stored to the second; ULID ids keep creation order within the same second.
     const ulid = (id: string) => id.slice(id.indexOf(':') + 1)

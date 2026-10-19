@@ -15,6 +15,8 @@ export default class SellerStockAdjustmentTransformer extends BaseTransformer<St
         'createdAt',
       ]),
       actorName: actor ? actor.fullName || actor.email : null,
+      viaCopilot: this.resource.viaCopilot,
+      copilotConversationId: this.resource.copilotProposal?.conversationId ?? null,
     }
   }
 }

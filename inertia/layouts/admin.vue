@@ -7,6 +7,8 @@ import FlashToasts from '~/components/flash_toasts.vue'
 import PasskeySignals from '~/components/passkey_signals.vue'
 import StorefrontLayout from '~/layouts/default.vue'
 import { useDashboard } from '~/composables/useDashboard'
+import { provideDashboardCopilot } from '~/composables/dashboardCopilot'
+import DashboardCopilot from '~/components/copilot/DashboardCopilot.vue'
 
 const open = ref(false)
 
@@ -32,7 +34,7 @@ function closeSidebar() {
  * links renders as a collapsible group that starts open.
  */
 const sections = computed(() => {
-  const { manageStore, manageUsers } = page.props.permissions
+  const { manageStore, manageUsers, reviewConversations } = page.props.permissions
 
   const all: SidebarSection[] = [
     {
@@ -86,6 +88,15 @@ const sections = computed(() => {
           : []),
         ...(manageUsers
           ? [{ label: 'Users', icon: 'i-lucide-users', to: urlFor('seller.users.index') }]
+          : []),
+        ...(reviewConversations
+          ? [
+              {
+                label: 'Conversations',
+                icon: 'i-lucide-messages-square',
+                to: urlFor('seller.conversations.index'),
+              },
+            ]
           : []),
       ],
     },
@@ -147,6 +158,8 @@ const groups = computed(() =>
   }))
 )
 
+provideDashboardCopilot()
+
 // Staff keyboard shortcuts (g-h, g-i, g-u, g-s) for the store dashboard.
 if (page.props.permissions.manageStore) useDashboard()
 </script>
@@ -199,6 +212,7 @@ if (page.props.permissions.manageStore) useDashboard()
 
     <slot />
 
+    <DashboardCopilot v-if="page.props.copilot.available" />
     <FlashToasts />
     <PasskeySignals />
   </UDashboardGroup>

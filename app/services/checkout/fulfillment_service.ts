@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
+import { inTransaction } from '#models/shared/in_transaction'
 import Order from '#models/checkout/order'
 import User from '#models/account/user'
 import Shipment from '#models/checkout/shipment'
@@ -15,6 +16,7 @@ import CheckoutException from '#exceptions/checkout_exception'
 import RefundService from '#services/payments/refund_service'
 import BalanceService from '#services/payments/balance_service'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 export type DispatchBlockerCode =
   | 'order_review'
@@ -44,9 +46,9 @@ export default class FulfillmentService {
     private discounts: DiscountService
   ) {}
 
-  async pack(orderId: string, actor: User) {
+  async pack(orderId: string, actor: User, options: WriteOptions = {}) {
     this.staff(actor)
-    return db.transaction(async (trx) => {
+    return inTransaction(options.client, async (trx) => {
       const order = await this.claimOrder(trx, orderId)
       const shipment = await this.shippable(trx, order)
       if (shipment.state === 'packing') return shipment
@@ -54,7 +56,14 @@ export default class FulfillmentService {
       shipment.actorId = actor.id
       shipment.packingAt = DateTime.utc()
       await shipment.save()
-      await this.activities.record(trx, orderId, 'shipment.packing', {}, actor.id)
+      await this.activities.record(
+        trx,
+        orderId,
+        'shipment.packing',
+        {},
+        actor.id,
+        options.copilotProposalId
+      )
       return shipment
     })
   }
@@ -62,12 +71,13 @@ export default class FulfillmentService {
   async ship(
     orderId: string,
     actor: User,
-    details: { carrier: string; trackingNumber: string; trackingUrl?: string }
+    details: { carrier: string; trackingNumber: string; trackingUrl?: string },
+    options: WriteOptions = {}
   ) {
     this.staff(actor)
     if (details.trackingUrl && !['http:', 'https:'].includes(new URL(details.trackingUrl).protocol))
       throw new CheckoutException('Tracking URL must use HTTP or HTTPS', 'E_SHIPMENT_URL', 422)
-    return db.transaction(async (trx) => {
+    return inTransaction(options.client, async (trx) => {
       const order = await this.claimOrder(trx, orderId)
       const current = await Shipment.query({ client: trx }).where('order_id', orderId).firstOrFail()
       if (isDispatched(current.state)) {
@@ -98,7 +108,8 @@ export default class FulfillmentService {
         orderId,
         'shipment.shipped',
         { shipmentId: shipment.id },
-        actor.id
+        actor.id,
+        options.copilotProposalId
       )
       await this.notifications.record(trx, orderId, 'shipment')
       return shipment
@@ -109,9 +120,9 @@ export default class FulfillmentService {
    * Records that the carrier delivered a dispatched parcel. Delivery is a fact staff confirm
    * after shipping, so it skips the dispatch prerequisites and only requires the shipped state.
    */
-  async deliver(orderId: string, actor: User) {
+  async deliver(orderId: string, actor: User, options: WriteOptions = {}) {
     this.staff(actor)
-    return db.transaction(async (trx) => {
+    return inTransaction(options.client, async (trx) => {
       await this.claimOrder(trx, orderId)
       const shipment = await Shipment.query({ client: trx }).where('order_id', orderId).first()
       if (shipment?.state === 'delivered') return shipment
@@ -128,7 +139,8 @@ export default class FulfillmentService {
         orderId,
         'shipment.delivered',
         { shipmentId: shipment.id },
-        actor.id
+        actor.id,
+        options.copilotProposalId
       )
       await this.notifications.record(trx, orderId, 'delivery')
       return shipment

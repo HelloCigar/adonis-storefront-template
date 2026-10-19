@@ -46,6 +46,11 @@ export const controllers = {
     Pages: () => import('#controllers/content/pages_controller'),
     Policies: () => import('#controllers/content/policies_controller'),
   },
+  copilot: {
+    CopilotConversations: () => import('#controllers/copilot/copilot_conversations_controller'),
+    CopilotMessages: () => import('#controllers/copilot/copilot_messages_controller'),
+    CopilotProposals: () => import('#controllers/copilot/copilot_proposals_controller'),
+  },
   dashboard: {
     Dashboard: () => import('#controllers/dashboard/dashboard_controller'),
     Inbox: () => import('#controllers/dashboard/inbox_controller'),
@@ -60,6 +65,7 @@ export const controllers = {
   seller: {
     Cancellations: () => import('#controllers/seller/cancellations_controller'),
     Collections: () => import('#controllers/seller/collections_controller'),
+    Conversations: () => import('#controllers/seller/conversations_controller'),
     Customers: () => import('#controllers/seller/customers_controller'),
     Deliveries: () => import('#controllers/seller/deliveries_controller'),
     Discounts: () => import('#controllers/seller/discounts_controller'),
@@ -81,6 +87,7 @@ export const controllers = {
   },
   settings: {
     Avatar: () => import('#controllers/settings/avatar_controller'),
+    DashboardCopilotSettings: () => import('#controllers/settings/dashboard_copilot_settings_controller'),
     Members: () => import('#controllers/settings/members_controller'),
     PasskeyRegistrationChallenges: () => import('#controllers/settings/passkey_registration_challenges_controller'),
     Passkeys: () => import('#controllers/settings/passkeys_controller'),

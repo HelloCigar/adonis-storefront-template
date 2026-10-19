@@ -55,6 +55,9 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
         manageStoreSettings: ctx.bouncer
           ? await ctx.bouncer.with(StoreSettingPolicy).allows('update')
           : false,
+        reviewConversations: ctx.bouncer
+          ? await ctx.bouncer.with('SellerConversationPolicy').allows('viewAny')
+          : false,
       }),
       assistant: async () => {
         const settings = await StoreSetting.current()
@@ -62,6 +65,16 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
           available: settings.shoppingAssistantEnabled && this.assistantModels.isConfigured(),
           // Only the id; whether this browser may still open it is checked when it loads.
           conversationId: ctx.assistantSession?.currentConversationId() ?? null,
+        }
+      },
+      // Not a once-prop: switching the copilot on or off must show on the very next page.
+      copilot: async () => {
+        const settings = await StoreSetting.current()
+        return {
+          available:
+            settings.dashboardCopilotEnabled &&
+            this.assistantModels.isConfigured() &&
+            (ctx.bouncer ? await ctx.bouncer.with('SellerAccessPolicy').allows('access') : false),
         }
       },
       policies: async () => ContentTransformer.transform(await this.contentService.policies()),

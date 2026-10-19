@@ -25,6 +25,7 @@ export default class StockAdjustmentsController {
       .related('stockAdjustments')
       .query()
       .preload('actor')
+      .preload('copilotProposal')
       .orderBy('id', 'desc')
       .paginate(page, 25)
     return inertia.render('seller/stock', {

@@ -4,6 +4,7 @@ import type { Infer } from '@vinejs/vine/types'
 import DiscountCode from '#models/checkout/discount_code'
 import MoneyService from '#services/checkout/money_service'
 import type { discountValidator } from '#validators/seller/discount'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 export type DiscountPayload = Infer<typeof discountValidator>
 
@@ -15,7 +16,13 @@ export type DiscountPayload = Infer<typeof discountValidator>
 export default class SellerDiscountService {
   constructor(private money: MoneyService) {}
 
-  async save(discount: DiscountCode, payload: DiscountPayload, actorId: string) {
+  async save(
+    discount: DiscountCode,
+    payload: DiscountPayload,
+    actorId: string,
+    options: WriteOptions = {}
+  ) {
+    if (options.client) discount.useTransaction(options.client)
     const startsAt = payload.startsAt?.toUTC() ?? null
     const endsAt = payload.endsAt?.toUTC() ?? null
     if (startsAt && endsAt && endsAt <= startsAt)

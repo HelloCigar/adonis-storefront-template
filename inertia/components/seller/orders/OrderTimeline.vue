@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import type { Data } from '@generated/data'
 import { orderLabel, operationMessage } from './presentation'
 import EmailRetryForm from './EmailRetryForm.vue'
+import ViaCopilot from '~/components/copilot/ViaCopilot.vue'
 
 const props = defineProps<{ order: Data.Seller.Order }>()
 const showAll = ref(false)
@@ -53,6 +54,7 @@ const detailValue = (value: unknown) =>
             variant="subtle"
             size="sm"
           />
+          <ViaCopilot v-if="entry.viaCopilot" :conversation-id="entry.copilotConversationId" />
         </div>
         <p class="text-sm text-muted mt-1">
           {{ entry.at.formatted

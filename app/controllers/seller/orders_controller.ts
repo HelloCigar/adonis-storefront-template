@@ -45,7 +45,9 @@ export default class OrdersController {
         .preload('shipments')
         .preload('refunds')
         .preload('notifications')
-        .preload('activities', (q) => q.orderBy('id', 'desc').limit(100).preload('actor'))
+        .preload('activities', (q) =>
+          q.orderBy('id', 'desc').limit(100).preload('actor').preload('copilotProposal')
+        )
         .firstOrFail()
       return {
         order: snapshot,

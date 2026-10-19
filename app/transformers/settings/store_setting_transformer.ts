@@ -25,6 +25,11 @@ export default class StoreSettingTransformer extends BaseTransformer<StoreSettin
         enabled: this.resource.shoppingAssistantEnabled,
         configured: this.#assistantConfigured,
       },
+      // One AI key serves both assistants.
+      dashboardCopilot: {
+        enabled: this.resource.dashboardCopilotEnabled,
+        configured: this.#assistantConfigured,
+      },
     }
   }
 

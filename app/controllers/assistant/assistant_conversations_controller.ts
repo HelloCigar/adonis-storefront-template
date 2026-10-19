@@ -12,7 +12,10 @@ export default class AssistantConversationsController {
     const conversations = await user
       .related('assistantConversations')
       .query()
-      .withScopes((scopes) => scopes.ownedBy(user.id))
+      .withScopes((scopes) => {
+        scopes.ofAssistant('shopping')
+        scopes.ownedBy(user.id)
+      })
       .limit(50)
     return serialize(AssistantConversationTransformer.transform(conversations))
   }
@@ -33,6 +36,8 @@ export default class AssistantConversationsController {
   async store({ auth, assistantSession, serialize }: HttpContext) {
     const conversation = await AssistantConversation.create({
       userId: auth.user?.id ?? null,
+      assistant: 'shopping',
+      participantName: auth.user ? auth.user.fullName || auth.user.email : null,
       lastMessageAt: DateTime.now(),
     })
     assistantSession.rememberConversation(conversation.id)

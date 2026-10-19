@@ -216,6 +216,36 @@ const routes = {
     tokens: [{"old":"/assistant/proposals/:id","type":0,"val":"assistant","end":""},{"old":"/assistant/proposals/:id","type":0,"val":"proposals","end":""},{"old":"/assistant/proposals/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['assistant.proposals.update']['types'],
   },
+  'copilot.conversations.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/copilot/conversations',
+    tokens: [{"old":"/copilot/conversations","type":0,"val":"copilot","end":""},{"old":"/copilot/conversations","type":0,"val":"conversations","end":""}],
+    types: placeholder as Registry['copilot.conversations.index']['types'],
+  },
+  'copilot.conversations.store': {
+    methods: ["POST"],
+    pattern: '/copilot/conversations',
+    tokens: [{"old":"/copilot/conversations","type":0,"val":"copilot","end":""},{"old":"/copilot/conversations","type":0,"val":"conversations","end":""}],
+    types: placeholder as Registry['copilot.conversations.store']['types'],
+  },
+  'copilot.conversations.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/copilot/conversations/:id',
+    tokens: [{"old":"/copilot/conversations/:id","type":0,"val":"copilot","end":""},{"old":"/copilot/conversations/:id","type":0,"val":"conversations","end":""},{"old":"/copilot/conversations/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['copilot.conversations.show']['types'],
+  },
+  'copilot.conversations.messages.store': {
+    methods: ["POST"],
+    pattern: '/copilot/conversations/:conversationId/messages',
+    tokens: [{"old":"/copilot/conversations/:conversationId/messages","type":0,"val":"copilot","end":""},{"old":"/copilot/conversations/:conversationId/messages","type":0,"val":"conversations","end":""},{"old":"/copilot/conversations/:conversationId/messages","type":1,"val":"conversationId","end":""},{"old":"/copilot/conversations/:conversationId/messages","type":0,"val":"messages","end":""}],
+    types: placeholder as Registry['copilot.conversations.messages.store']['types'],
+  },
+  'copilot.proposals.update': {
+    methods: ["PUT","PATCH"],
+    pattern: '/copilot/proposals/:id',
+    tokens: [{"old":"/copilot/proposals/:id","type":0,"val":"copilot","end":""},{"old":"/copilot/proposals/:id","type":0,"val":"proposals","end":""},{"old":"/copilot/proposals/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['copilot.proposals.update']['types'],
+  },
   'email_verifications.show': {
     methods: ["GET","HEAD"],
     pattern: '/email-verifications/:token',
@@ -461,6 +491,12 @@ const routes = {
     pattern: '/settings/store/assistant',
     tokens: [{"old":"/settings/store/assistant","type":0,"val":"settings","end":""},{"old":"/settings/store/assistant","type":0,"val":"store","end":""},{"old":"/settings/store/assistant","type":0,"val":"assistant","end":""}],
     types: placeholder as Registry['settings.shopping_assistant.update']['types'],
+  },
+  'settings.dashboard_copilot.update': {
+    methods: ["PUT"],
+    pattern: '/settings/store/copilot',
+    tokens: [{"old":"/settings/store/copilot","type":0,"val":"settings","end":""},{"old":"/settings/store/copilot","type":0,"val":"store","end":""},{"old":"/settings/store/copilot","type":0,"val":"copilot","end":""}],
+    types: placeholder as Registry['settings.dashboard_copilot.update']['types'],
   },
   'settings.store.edit': {
     methods: ["GET","HEAD"],
@@ -743,6 +779,18 @@ const routes = {
     pattern: '/seller/orders/:id',
     tokens: [{"old":"/seller/orders/:id","type":0,"val":"seller","end":""},{"old":"/seller/orders/:id","type":0,"val":"orders","end":""},{"old":"/seller/orders/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['seller.orders.update']['types'],
+  },
+  'seller.conversations.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/conversations',
+    tokens: [{"old":"/seller/conversations","type":0,"val":"seller","end":""},{"old":"/seller/conversations","type":0,"val":"conversations","end":""}],
+    types: placeholder as Registry['seller.conversations.index']['types'],
+  },
+  'seller.conversations.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/seller/conversations/:id',
+    tokens: [{"old":"/seller/conversations/:id","type":0,"val":"seller","end":""},{"old":"/seller/conversations/:id","type":0,"val":"conversations","end":""},{"old":"/seller/conversations/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['seller.conversations.show']['types'],
   },
   'seller.packing.store': {
     methods: ["POST"],

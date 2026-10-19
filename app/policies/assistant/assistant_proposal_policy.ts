@@ -13,9 +13,10 @@ export default class AssistantProposalPolicy extends BasePolicy {
   ): AuthorizerResponse {
     const conversation = proposal.conversation
     const reachable =
-      conversation.userId !== null
+      conversation.assistant === 'shopping' &&
+      (conversation.userId !== null
         ? user?.id === conversation.userId
-        : conversation.id === sessionConversationId
+        : conversation.id === sessionConversationId)
     return reachable ? true : AuthorizationResponse.deny('Proposal not found', 404)
   }
 }

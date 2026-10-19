@@ -374,14 +374,20 @@ export class AgentToolCallSchema extends BaseModel {
 }
 
 export class AssistantConversationSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'lastMessageAt', 'title', 'updatedAt', 'userId'] as const
+  static $columns = ['assistant', 'createdAt', 'id', 'lastMessageAt', 'lastUnansweredAt', 'participantName', 'title', 'updatedAt', 'userId'] as const
   $columns = AssistantConversationSchema.$columns
+  @column()
+  declare assistant: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column.dateTime()
   declare lastMessageAt: DateTime
+  @column.dateTime()
+  declare lastUnansweredAt: DateTime | null
+  @column()
+  declare participantName: string | null
   @column()
   declare title: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -555,6 +561,54 @@ export class CollectionSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CopilotProposalItemSchema extends BaseModel {
+  static $columns = ['after', 'before', 'id', 'position', 'proposalId', 'recordId', 'recordLabel', 'recordType'] as const
+  $columns = CopilotProposalItemSchema.$columns
+  @column()
+  declare after: Record<string, unknown>
+  @column()
+  declare before: Record<string, unknown> | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare position: number
+  @column()
+  declare proposalId: string
+  @column()
+  declare recordId: string | null
+  @column()
+  declare recordLabel: string
+  @column()
+  declare recordType: string
+}
+
+export class CopilotProposalSchema extends BaseModel {
+  static $columns = ['action', 'appliedAt', 'conversationId', 'createdAt', 'dismissedAt', 'emailsCustomer', 'expiresAt', 'id', 'refusal', 'refusedAt', 'summary'] as const
+  $columns = CopilotProposalSchema.$columns
+  @column()
+  declare action: string
+  @column.dateTime()
+  declare appliedAt: DateTime | null
+  @column()
+  declare conversationId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare dismissedAt: DateTime | null
+  @column({ consume: (value)=>Boolean(value) })
+  declare emailsCustomer: boolean
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare refusal: string | null
+  @column.dateTime()
+  declare refusedAt: DateTime | null
+  @column()
+  declare summary: string
+}
+
 export class CustomerAddressSchema extends BaseModel {
   static $columns = ['address1', 'address2', 'city', 'company', 'countryCode', 'createdAt', 'firstName', 'id', 'lastName', 'phoneNumber', 'postalCode', 'updatedAt', 'userId', 'zoneCode'] as const
   $columns = CustomerAddressSchema.$columns
@@ -700,10 +754,12 @@ export class OrderAccessGrantSchema extends BaseModel {
 }
 
 export class OrderActivitySchema extends BaseModel {
-  static $columns = ['actorId', 'createdAt', 'details', 'event', 'id', 'orderId', 'source', 'updatedAt'] as const
+  static $columns = ['actorId', 'copilotProposalId', 'createdAt', 'details', 'event', 'id', 'orderId', 'source', 'updatedAt', 'viaCopilot'] as const
   $columns = OrderActivitySchema.$columns
   @column()
   declare actorId: string | null
+  @column()
+  declare copilotProposalId: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -718,6 +774,8 @@ export class OrderActivitySchema extends BaseModel {
   declare source: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column({ consume: (value)=>Boolean(value) })
+  declare viaCopilot: boolean
 }
 
 export class OrderAddressSchema extends BaseModel {
@@ -1282,10 +1340,12 @@ export class ShipmentSchema extends BaseModel {
 }
 
 export class StockAdjustmentSchema extends BaseModel {
-  static $columns = ['actorId', 'createdAt', 'id', 'note', 'productVariantId', 'quantityAfter', 'quantityBefore', 'reason', 'updatedAt'] as const
+  static $columns = ['actorId', 'copilotProposalId', 'createdAt', 'id', 'note', 'productVariantId', 'quantityAfter', 'quantityBefore', 'reason', 'updatedAt', 'viaCopilot'] as const
   $columns = StockAdjustmentSchema.$columns
   @column()
   declare actorId: string | null
+  @column()
+  declare copilotProposalId: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })
@@ -1302,6 +1362,8 @@ export class StockAdjustmentSchema extends BaseModel {
   declare reason: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column({ consume: (value)=>Boolean(value) })
+  declare viaCopilot: boolean
 }
 
 export class StockReservationSchema extends BaseModel {
@@ -1347,7 +1409,7 @@ export class StorePolicySchema extends BaseModel {
 }
 
 export class StoreSettingSchema extends BaseModel {
-  static $columns = ['checklistDismissedAt', 'contactEmail', 'createdAt', 'id', 'identitySavedAt', 'policiesSavedAt', 'policiesTickedAt', 'productTickedAt', 'setupCompletedAt', 'shippingMinor', 'shippingSavedAt', 'shoppingAssistantEnabled', 'staffTickedAt', 'storeName', 'updatedAt'] as const
+  static $columns = ['checklistDismissedAt', 'contactEmail', 'createdAt', 'dashboardCopilotEnabled', 'id', 'identitySavedAt', 'policiesSavedAt', 'policiesTickedAt', 'productTickedAt', 'setupCompletedAt', 'shippingMinor', 'shippingSavedAt', 'shoppingAssistantEnabled', 'staffTickedAt', 'storeName', 'updatedAt'] as const
   $columns = StoreSettingSchema.$columns
   @column.dateTime()
   declare checklistDismissedAt: DateTime | null
@@ -1355,6 +1417,8 @@ export class StoreSettingSchema extends BaseModel {
   declare contactEmail: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column({ consume: (value)=>Boolean(value) })
+  declare dashboardCopilotEnabled: boolean
   @column({ isPrimary: true })
   declare id: number
   @column.dateTime()

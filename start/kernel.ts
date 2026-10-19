@@ -34,6 +34,7 @@ router.use([
 
 export const middleware = router.named({
   assistantAvailable: () => import('#middleware/assistant/assistant_available_middleware'),
+  copilotAvailable: () => import('#middleware/assistant/copilot_available_middleware'),
   customerSettings: () => import('#middleware/account/customer_settings_middleware'),
   guest: () => import('#middleware/auth/guest_middleware'),
   auth: () => import('#middleware/auth/auth_middleware'),

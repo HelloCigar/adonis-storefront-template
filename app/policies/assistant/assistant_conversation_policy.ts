@@ -33,6 +33,7 @@ export default class AssistantConversationPolicy extends BasePolicy {
 
   /** Only signed-in shoppers have a list to delete from, so ownerless conversations can't be. */
   delete(user: User, conversation: AssistantConversation): AuthorizerResponse {
+    if (conversation.assistant !== 'shopping') return notFound()
     return conversation.userId === user.id ? true : notFound()
   }
 }
@@ -42,6 +43,7 @@ function reachable(
   conversation: AssistantConversation,
   sessionConversationId: string | undefined
 ) {
+  if (conversation.assistant !== 'shopping') return notFound()
   if (conversation.userId !== null) return user?.id === conversation.userId ? true : notFound()
   return conversation.id === sessionConversationId ? true : notFound()
 }

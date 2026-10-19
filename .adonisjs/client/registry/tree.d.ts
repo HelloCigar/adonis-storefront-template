@@ -83,6 +83,19 @@ export interface ApiDefinition {
       update: typeof routes['assistant.proposals.update']
     }
   }
+  copilot: {
+    conversations: {
+      index: typeof routes['copilot.conversations.index']
+      store: typeof routes['copilot.conversations.store']
+      show: typeof routes['copilot.conversations.show']
+      messages: {
+        store: typeof routes['copilot.conversations.messages.store']
+      }
+    }
+    proposals: {
+      update: typeof routes['copilot.proposals.update']
+    }
+  }
   emailVerifications: {
     show: typeof routes['email_verifications.show']
     update: typeof routes['email_verifications.update']
@@ -166,6 +179,9 @@ export interface ApiDefinition {
     shoppingAssistant: {
       update: typeof routes['settings.shopping_assistant.update']
     }
+    dashboardCopilot: {
+      update: typeof routes['settings.dashboard_copilot.update']
+    }
     store: {
       edit: typeof routes['settings.store.edit']
       update: typeof routes['settings.store.update']
@@ -244,6 +260,10 @@ export interface ApiDefinition {
       index: typeof routes['seller.orders.index']
       show: typeof routes['seller.orders.show']
       update: typeof routes['seller.orders.update']
+    }
+    conversations: {
+      index: typeof routes['seller.conversations.index']
+      show: typeof routes['seller.conversations.show']
     }
     packing: {
       store: typeof routes['seller.packing.store']
