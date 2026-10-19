@@ -3,6 +3,7 @@ import { signedUrlFor } from '@adonisjs/core/services/url_builder'
 import Cart from '#models/checkout/cart'
 import type User from '#models/account/user'
 import SweepCartReminders from '#jobs/checkout/sweep_cart_reminders'
+import type CartReminder from '#mails/checkout/cart_reminder'
 import { CartFactory } from '#database/factories/cart_factory'
 import { CartLineFactory } from '#database/factories/cart_line_factory'
 import { UserFactory } from '#database/factories/user_factory'
@@ -31,6 +32,21 @@ export async function idleCart(
 export async function sweepCartReminders() {
   await SweepCartReminders.dispatch({})
   await runQueue(['maintenance', 'notifications'])
+}
+
+/** The sent reminder's "Return to your cart" link. */
+export function recoveryLinkIn(sent: CartReminder) {
+  const html = sent.message.toJSON().message.html ?? ''
+  const href = html.match(/href="([^"]*\/store\/cart\/recover\/[^"]*)"/)?.[1]
+  if (!href) throw new Error('The reminder has no cart link')
+  return new URL(href.replaceAll('&amp;', '&'))
+}
+
+/** When a signed link stops working, read from the expiry its signature carries. */
+export function signedLinkExpiry(url: URL) {
+  const [payload] = (url.searchParams.get('signature') ?? '').split('.')
+  const { expiryDate } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
+  return expiryDate ? DateTime.fromISO(expiryDate) : null
 }
 
 /** The signed links a cart reminder carries, relative so browser tests can visit them. */

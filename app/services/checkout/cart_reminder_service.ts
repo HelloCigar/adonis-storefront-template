@@ -1,4 +1,6 @@
 import mail from '@adonisjs/mail/services/main'
+import { DateTime } from 'luxon'
+import checkout from '#config/checkout'
 import Cart from '#models/checkout/cart'
 import CartReminder from '#mails/checkout/cart_reminder'
 import { affectedRows } from '#models/shared/affected_rows'
@@ -38,6 +40,15 @@ export default class CartReminderService {
       )
       .first()
     if (!cart?.user || !cart.user.receivesCartReminders || cart.user.hasInactiveAccount) return
+    // The customer came back after the claim: release it so the next idle spell is reminded.
+    const idleSince = DateTime.utc().minus(checkout.cartReminderDelayMs)
+    if (cart.updatedAt && cart.updatedAt > idleSince) {
+      await Cart.query()
+        .where('id', cart.id)
+        .whereNotNull('reminder_sent_at')
+        .update({ reminderSentAt: null })
+      return
+    }
     const sellable = cart.lines.filter(
       (line) =>
         line.variant.isSellable &&

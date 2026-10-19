@@ -56,8 +56,9 @@ export default class CartReminder extends BaseMail {
       0
     )
     // The cart link lasts as long as the cart; the unsubscribe link outlives the reminder.
+    // A numeric expiresIn is read as milliseconds.
     const cartLifetime = this.cart.expiresAt
-      ? Math.max(Math.floor(this.cart.expiresAt.diff(DateTime.utc()).as('seconds')), 60)
+      ? Math.max(Math.floor(this.cart.expiresAt.diff(DateTime.utc()).as('milliseconds')), 60_000)
       : '7 days'
 
     return {

@@ -8,7 +8,15 @@ import Cart from '#models/checkout/cart'
 import CartReminder from '#mails/checkout/cart_reminder'
 import { UserFactory } from '#database/factories/user_factory'
 import { sellable } from '#tests/helpers/checkout_discounts'
-import { idleCart, sweepCartReminders } from '#tests/helpers/cart_reminders'
+import SweepCartReminders from '#jobs/checkout/sweep_cart_reminders'
+import { sqlDateTime } from '#models/shared/sql_datetime'
+import { runQueue } from '#tests/helpers/queue'
+import {
+  idleCart,
+  recoveryLinkIn,
+  signedLinkExpiry,
+  sweepCartReminders,
+} from '#tests/helpers/cart_reminders'
 
 test.group('Cart reminders', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -29,6 +37,34 @@ test.group('Cart reminders', (group) => {
 
     await sweepCartReminders()
     fake.mails.assertSentCount(CartReminder, 1)
+  })
+
+  test('the cart link keeps working for as long as the cart does', async ({ assert }) => {
+    using fake = mail.fake()
+    const { cart } = await idleCart(5)
+
+    await sweepCartReminders()
+
+    const [sent] = fake.mails.sent((reminder) => reminder instanceof CartReminder)
+    const expiry = signedLinkExpiry(recoveryLinkIn(sent as CartReminder))
+    assert.isNotNull(expiry)
+    assert.closeTo(expiry!.toMillis(), cart.expiresAt!.toMillis(), 60_000)
+  })
+
+  test('a cart touched after the sweep is not reminded until it goes idle again', async ({
+    assert,
+  }) => {
+    using fake = mail.fake()
+    const { cart } = await idleCart(5)
+    await SweepCartReminders.dispatch({})
+    await runQueue(['maintenance'])
+    await Cart.query().where('id', cart.id).update({ updatedAt: sqlDateTime() })
+
+    await runQueue(['notifications'])
+
+    fake.mails.assertNoneSent()
+    await cart.refresh()
+    assert.isNull(cart.reminderSentAt)
   })
 
   test('no reminder for {title}')
