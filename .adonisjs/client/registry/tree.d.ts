@@ -25,9 +25,16 @@ export interface ApiDefinition {
     show: typeof routes['blog.show']
   }
   cart: {
+    recover: typeof routes['cart.recover']
     add: typeof routes['cart.add']
     update: typeof routes['cart.update']
     remove: typeof routes['cart.remove']
+  }
+  cartReminders: {
+    unsubscribe: {
+      show: typeof routes['cart_reminders.unsubscribe.show']
+      store: typeof routes['cart_reminders.unsubscribe.store']
+    }
   }
   checkout: {
     create: typeof routes['checkout.create']
@@ -118,6 +125,9 @@ export interface ApiDefinition {
       update: typeof routes['account.addresses.update']
       default: typeof routes['account.addresses.default']
       delete: typeof routes['account.addresses.delete']
+    }
+    cartReminders: {
+      update: typeof routes['account.cart_reminders.update']
     }
   }
   reviews: {

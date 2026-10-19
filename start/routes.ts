@@ -43,11 +43,23 @@ router.get('/blog', [controllers.content.BlogPosts, 'index']).as('blog.index')
 router.get('/blog/:handle', [controllers.content.BlogPosts, 'show']).as('blog.show')
 router
   .group(() => {
+    router
+      .get('/store/cart/recover/:id', [controllers.storefront.CartRecoveries, 'show'])
+      .as('cart.recover')
     router.post('/store/cart', [controllers.storefront.Cart, 'store']).as('cart.add')
     router.patch('/store/cart/:id', [controllers.storefront.Cart, 'update']).as('cart.update')
     router.delete('/store/cart/:id', [controllers.storefront.Cart, 'destroy']).as('cart.remove')
   })
   .where('id', ulid)
+// Reminder emails link here, so these work signed out; the signature authorises them.
+router
+  .get('/cart-reminders/unsubscribe/:id', [controllers.account.CartReminderUnsubscribes, 'show'])
+  .where('id', ulid)
+  .as('cart_reminders.unsubscribe.show')
+router
+  .post('/cart-reminders/unsubscribe/:id', [controllers.account.CartReminderUnsubscribes, 'store'])
+  .where('id', ulid)
+  .as('cart_reminders.unsubscribe.store')
 router.get('/checkout', [controllers.checkout.Checkout, 'create']).as('checkout.create')
 router
   .post('/checkout', [controllers.checkout.Checkout, 'store'])
@@ -187,6 +199,9 @@ router
     router
       .delete('/account/addresses/:id', [controllers.account.Addresses, 'destroy'])
       .as('account.addresses.delete')
+    router
+      .put('/account/cart-reminders', [controllers.account.CartReminders, 'update'])
+      .as('account.cart_reminders.update')
     router
       .post('/products/:productId/reviews', [controllers.storefront.Reviews, 'store'])
       .where('productId', ulid)

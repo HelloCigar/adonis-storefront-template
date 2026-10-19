@@ -28,6 +28,11 @@ export class CheckoutSession {
     return created
   }
 
+  /** Makes a cart opened from a signed reminder link this visitor's active cart. */
+  restoreCartToken(token: string) {
+    this.store.put('store_cart_token', token)
+  }
+
   /** Starts a fresh cart after a checkout freezes the current one. */
   rotateCartToken() {
     this.store.put('store_cart_token', randomUUID())

@@ -14,6 +14,7 @@ declare module 'vue' {
     AccountAddress: typeof import('./inertia/components/account/Address.vue')['default']
     AccountAddresses: typeof import('./inertia/components/account/Addresses.vue')['default']
     AccountAddressForm: typeof import('./inertia/components/account/AddressForm.vue')['default']
+    AccountCartRemindersCard: typeof import('./inertia/components/account/CartRemindersCard.vue')['default']
     AccountMenu: typeof import('./inertia/components/account/Menu.vue')['default']
     AccountNav: typeof import('./inertia/components/account/AccountNav.vue')['default']
     AccountOrder: typeof import('./inertia/components/account/Order.vue')['default']

@@ -127,6 +127,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/content/blog_posts_controller').default['show']>>>
     }
   }
+  'cart.recover': {
+    methods: ["GET","HEAD"]
+    pattern: '/store/cart/recover/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/storefront/cart_recoveries_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/cart_recoveries_controller').default['show']>>>
+    }
+  }
   'cart.add': {
     methods: ["POST"]
     pattern: '/store/cart'
@@ -161,6 +173,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/storefront/cart_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/storefront/cart_controller').default['destroy']>>>
+    }
+  }
+  'cart_reminders.unsubscribe.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/cart-reminders/unsubscribe/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/cart_reminder_unsubscribes_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/cart_reminder_unsubscribes_controller').default['show']>>>
+    }
+  }
+  'cart_reminders.unsubscribe.store': {
+    methods: ["POST"]
+    pattern: '/cart-reminders/unsubscribe/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/cart_reminder_unsubscribes_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/cart_reminder_unsubscribes_controller').default['store']>>>
     }
   }
   'checkout.create': {
@@ -665,6 +701,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/addresses_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/addresses_controller').default['destroy']>>>
+    }
+  }
+  'account.cart_reminders.update': {
+    methods: ["PUT"]
+    pattern: '/account/cart-reminders'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/account/cart_reminder').updateCartReminderValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/account/cart_reminder').updateCartReminderValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/account/cart_reminders_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/account/cart_reminders_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'reviews.store': {

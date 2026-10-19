@@ -66,6 +66,12 @@ const routes = {
     tokens: [{"old":"/blog/:handle","type":0,"val":"blog","end":""},{"old":"/blog/:handle","type":1,"val":"handle","end":""}],
     types: placeholder as Registry['blog.show']['types'],
   },
+  'cart.recover': {
+    methods: ["GET","HEAD"],
+    pattern: '/store/cart/recover/:id',
+    tokens: [{"old":"/store/cart/recover/:id","type":0,"val":"store","end":""},{"old":"/store/cart/recover/:id","type":0,"val":"cart","end":""},{"old":"/store/cart/recover/:id","type":0,"val":"recover","end":""},{"old":"/store/cart/recover/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['cart.recover']['types'],
+  },
   'cart.add': {
     methods: ["POST"],
     pattern: '/store/cart',
@@ -83,6 +89,18 @@ const routes = {
     pattern: '/store/cart/:id',
     tokens: [{"old":"/store/cart/:id","type":0,"val":"store","end":""},{"old":"/store/cart/:id","type":0,"val":"cart","end":""},{"old":"/store/cart/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['cart.remove']['types'],
+  },
+  'cart_reminders.unsubscribe.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/cart-reminders/unsubscribe/:id',
+    tokens: [{"old":"/cart-reminders/unsubscribe/:id","type":0,"val":"cart-reminders","end":""},{"old":"/cart-reminders/unsubscribe/:id","type":0,"val":"unsubscribe","end":""},{"old":"/cart-reminders/unsubscribe/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['cart_reminders.unsubscribe.show']['types'],
+  },
+  'cart_reminders.unsubscribe.store': {
+    methods: ["POST"],
+    pattern: '/cart-reminders/unsubscribe/:id',
+    tokens: [{"old":"/cart-reminders/unsubscribe/:id","type":0,"val":"cart-reminders","end":""},{"old":"/cart-reminders/unsubscribe/:id","type":0,"val":"unsubscribe","end":""},{"old":"/cart-reminders/unsubscribe/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['cart_reminders.unsubscribe.store']['types'],
   },
   'checkout.create': {
     methods: ["GET","HEAD"],
@@ -335,6 +353,12 @@ const routes = {
     pattern: '/account/addresses/:id',
     tokens: [{"old":"/account/addresses/:id","type":0,"val":"account","end":""},{"old":"/account/addresses/:id","type":0,"val":"addresses","end":""},{"old":"/account/addresses/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['account.addresses.delete']['types'],
+  },
+  'account.cart_reminders.update': {
+    methods: ["PUT"],
+    pattern: '/account/cart-reminders',
+    tokens: [{"old":"/account/cart-reminders","type":0,"val":"account","end":""},{"old":"/account/cart-reminders","type":0,"val":"cart-reminders","end":""}],
+    types: placeholder as Registry['account.cart_reminders.update']['types'],
   },
   'reviews.store': {
     methods: ["POST"],

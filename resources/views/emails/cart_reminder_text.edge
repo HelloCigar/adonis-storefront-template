@@ -1,0 +1,17 @@
+{{{ brandName }}}
+
+Still thinking it over?
+
+{{{ firstName ? `Hi ${firstName}, you` : 'You' }}} left a few things in your cart. We've saved it for you, so you can pick up where you left off.
+
+Return to your cart: {{{ recoverUrl }}}
+
+Your cart
+@each(item in items)
+- {{{ item.title }}}{{{ item.variant ? ` (${item.variant})` : '' }}}: {{{ item.quantity }}} × {{{ item.unitPrice }}} = {{{ item.total }}}
+@end
+Subtotal: {{{ subtotal }}}
+
+{{{ brandName }}}
+You're receiving this email because you left items in your cart.
+Don't want cart reminders? Unsubscribe: {{{ unsubscribeUrl }}}

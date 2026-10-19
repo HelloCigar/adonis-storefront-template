@@ -7,6 +7,8 @@ export const controllers = {
   account: {
     Account: () => import('#controllers/account/account_controller'),
     Addresses: () => import('#controllers/account/addresses_controller'),
+    CartReminderUnsubscribes: () => import('#controllers/account/cart_reminder_unsubscribes_controller'),
+    CartReminders: () => import('#controllers/account/cart_reminders_controller'),
     DefaultAddress: () => import('#controllers/account/default_address_controller'),
     Logout: () => import('#controllers/account/logout_controller'),
     Orders: () => import('#controllers/account/orders_controller'),
@@ -93,6 +95,7 @@ export const controllers = {
   },
   storefront: {
     Cart: () => import('#controllers/storefront/cart_controller'),
+    CartRecoveries: () => import('#controllers/storefront/cart_recoveries_controller'),
     Collections: () => import('#controllers/storefront/collections_controller'),
     Products: () => import('#controllers/storefront/products_controller'),
     Reviews: () => import('#controllers/storefront/reviews_controller'),

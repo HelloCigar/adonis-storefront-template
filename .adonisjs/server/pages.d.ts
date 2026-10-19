@@ -11,6 +11,7 @@ declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
     'account/activate': ExtractProps<(typeof import('../../inertia/pages/account/activate.vue'))['default']>
     'account/addresses': ExtractProps<(typeof import('../../inertia/pages/account/addresses.vue'))['default']>
+    'account/cart_reminders_unsubscribe': ExtractProps<(typeof import('../../inertia/pages/account/cart_reminders_unsubscribe.vue'))['default']>
     'account/index': ExtractProps<(typeof import('../../inertia/pages/account/index.vue'))['default']>
     'account/logout': ExtractProps<(typeof import('../../inertia/pages/account/logout.vue'))['default']>
     'account/orders/[id]': ExtractProps<(typeof import('../../inertia/pages/account/orders/[id].vue'))['default']>

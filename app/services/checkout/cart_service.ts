@@ -7,6 +7,7 @@ import { DateTime } from 'luxon'
 import { errors } from '@vinejs/vine'
 import { randomUUID } from 'node:crypto'
 import { affectedRows } from '#models/shared/affected_rows'
+import { sqlDateTime } from '#models/shared/sql_datetime'
 import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import QuoteService from '#services/checkout/quote_service'
 import DiscountService from '#services/checkout/discount_service'
@@ -47,6 +48,11 @@ export default class CartService {
         .where('id', cart.id)
         .whereNull('submission_key')
         .update({ submissionKey: randomUUID() })
+      await cart.refresh()
+    }
+    // A guest who signs in keeps their cart; it becomes theirs so it can be reminded.
+    if (userId && !cart.userId) {
+      await Cart.query().where('id', cart.id).whereNull('user_id').update({ userId })
       await cart.refresh()
     }
     return cart
@@ -180,12 +186,13 @@ export default class CartService {
     })
   }
 
+  /** Every cart change goes through here, so `updated_at` doubles as the cart's last activity. */
   private async claim(cart: Cart, trx: TransactionClientContract) {
     const changed = await Cart.query({ client: trx })
       .where('id', cart.id)
       .where('status', 'active')
       .where('version', cart.version)
-      .increment('version', 1)
+      .update({ version: db.raw('version + 1'), updatedAt: sqlDateTime() })
     if (affectedRows(changed) !== 1) invalidCart('Your cart changed. Refresh and try again.')
     cart.version++
   }

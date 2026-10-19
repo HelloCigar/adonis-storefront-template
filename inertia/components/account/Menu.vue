@@ -1,21 +1,10 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import { useRouter } from '@adonisjs/inertia/vue'
 import { urlFor } from '~/client'
 import { t } from '~/utils/store'
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { z } from 'zod'
 const page = usePage()
-const router = useRouter()
 const isLoggedIn = computed(() => !!page.props.user)
-const schema = z.object({
-  email: z.email().optional(),
-  subscribeNewsletter: z.boolean().optional(),
-})
-type Schema = z.output<typeof schema>
-const state = reactive<Partial<Schema>>({ email: undefined, subscribeNewsletter: false })
 const open = ref(false)
 const accountLinks = computed(() => [
   { label: t('account.menu.overview'), to: urlFor('account.show'), icon: 'i-lucide-house' },
@@ -31,16 +20,6 @@ const accountLinks = computed(() => [
     icon: 'i-lucide-shield',
   },
 ])
-const onSubmit = (event: FormSubmitEvent<Schema>) =>
-  router.visit({
-    route: 'session.create',
-    qs: {
-      email: event.data.email,
-      returnTo: event.submitter?.hasAttribute('data-return-to-orders')
-        ? urlFor('orders.index')
-        : urlFor('account.show'),
-    },
-  })
 watch(
   () => page.url,
   () => {
@@ -49,12 +28,7 @@ watch(
 )
 </script>
 <template>
-  <UPopover
-    v-model:open="open"
-    :ui="{
-      content: 'mt-1 mr-2 lg:mr-4 max-w-[calc(100vw-1rem)]',
-    }"
-  >
+  <UPopover v-model:open="open" :content="{ align: 'end', collisionPadding: 12 }">
     <UButton
       :icon="isLoggedIn ? 'i-lucide-user-round-check' : 'i-lucide-user-round'"
       variant="ghost"
@@ -67,110 +41,57 @@ watch(
     />
 
     <template #content>
-      <div :class="isLoggedIn ? 'w-60 p-2' : 'p-5'">
-        <div class="flex justify-between" :class="{ 'items-center ps-2.5 pb-1': isLoggedIn }">
-          <p
-            class="text-highlighted font-semibold"
-            :class="isLoggedIn ? 'text-sm' : 'text-lg lg:text-xl pe-10 mb-6'"
+      <div v-if="!isLoggedIn" class="w-72 p-4">
+        <p class="text-sm font-semibold text-highlighted">{{ t('account.menu.title') }}</p>
+        <p class="mt-1 text-sm text-muted text-pretty">{{ t('account.signIn.description') }}</p>
+
+        <UButton
+          :to="urlFor('session.create')"
+          :label="t('account.signIn.action')"
+          block
+          size="lg"
+          class="mt-4 min-h-11 text-highlighted dark:text-inverted"
+        />
+
+        <p class="mt-4 text-center text-sm text-default">
+          {{ t('account.signUp.prompt') }}
+          <ULink
+            :to="urlFor('new_account.create')"
+            class="font-semibold text-highlighted underline underline-offset-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
           >
-            <span v-if="!isLoggedIn">
-              {{ t('account.signIn.title') }}
-            </span>
+            {{ t('account.signUp.action') }}
+          </ULink>
+        </p>
+      </div>
 
-            <span v-else>
-              {{ t('account.menu.title') }}
-            </span>
-          </p>
+      <div v-else class="w-60 p-2">
+        <p class="px-2.5 pt-1.5 pb-2 text-sm font-semibold text-highlighted">
+          {{ t('account.menu.title') }}
+        </p>
 
+        <nav class="flex flex-col gap-0.5">
           <UButton
-            variant="soft"
-            color="neutral"
-            size="sm"
-            :icon="'i-lucide-x'"
-            :ui="{
-              base: 'p-1.5 size-7',
-              label: 'sr-only',
-            }"
-            :label="t('account.menu.close')"
-            @click="open = false"
-          />
-        </div>
-
-        <template v-if="!isLoggedIn">
-          <UForm :schema="schema" :state="state" class="flex flex-col space-y-2" @submit="onSubmit">
-            <UInput
-              v-model="state.email"
-              size="xl"
-              trailing-icon="i-lucide-arrow-right"
-              :placeholder="t('account.profile.email')"
-              :ui="{
-                trailingIcon: 'size-4',
-              }"
-            />
-
-            <UCheckbox
-              v-model="state.subscribeNewsletter"
-              :label="t('account.subscribeNewsletter')"
-              :ui="{
-                label: 'text-sm',
-              }"
-            />
-
-            <div class="mt-4 flex justify-between gap-6">
-              <UButton
-                type="submit"
-                variant="soft"
-                size="xl"
-                trailing-icon="i-lucide-log-in"
-                :ui="{
-                  trailingIcon: 'size-4',
-                }"
-                class="order-2 grow justify-center"
-              >
-                {{ t('account.signIn.action') }}
-              </UButton>
-
-              <UButton
-                type="submit"
-                variant="outline"
-                size="xl"
-                :label="t('account.menu.orders')"
-                trailing-icon="i-lucide-map-pin-house"
-                :ui="{
-                  trailingIcon: 'size-4',
-                }"
-                class="order-1 grow justify-center"
-                data-return-to-orders
-              />
-            </div>
-          </UForm>
-        </template>
-
-        <template v-else>
-          <nav class="flex flex-col gap-0.5">
-            <UButton
-              v-for="link in accountLinks"
-              :key="link.label"
-              :to="link.to"
-              :label="link.label"
-              :icon="link.icon"
-              variant="ghost"
-              color="neutral"
-              class="w-full"
-            />
-          </nav>
-
-          <USeparator class="my-2" />
-
-          <UButton
-            :to="urlFor('account.logout')"
+            v-for="link in accountLinks"
+            :key="link.label"
+            :to="link.to"
+            :label="link.label"
+            :icon="link.icon"
             variant="ghost"
             color="neutral"
             class="w-full"
-            :label="t('account.logout')"
-            icon="i-lucide-log-out"
           />
-        </template>
+        </nav>
+
+        <USeparator class="my-2" />
+
+        <UButton
+          :to="urlFor('account.logout')"
+          variant="ghost"
+          color="neutral"
+          class="w-full"
+          :label="t('account.logout')"
+          icon="i-lucide-log-out"
+        />
       </div>
     </template>
   </UPopover>
