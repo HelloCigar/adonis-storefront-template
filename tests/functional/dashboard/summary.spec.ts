@@ -3,6 +3,7 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import { DateTime } from 'luxon'
 import User from '#models/account/user'
 import { OrderFactory } from '#database/factories/order_factory'
+import { UserFactory } from '#database/factories/user_factory'
 
 test.group('Management dashboard', (group) => {
   group.each.setup(() => testUtils.db().truncate())
@@ -100,5 +101,47 @@ test.group('Management dashboard', (group) => {
       summary.stats.grossSales.value
     )
     assert.equal(summary.stats.grossSales.value, 400)
+  })
+
+  test('counts orders and new customers in each chart bucket', async ({
+    client,
+    assert,
+    route,
+  }) => {
+    const storeDay = (day: string) => DateTime.fromISO(`${day}T12:00`, { zone: 'Asia/Manila' })
+    const staff = await UserFactory.merge({ role: 'staff' }).create()
+    for (const [day, financialStatus] of [
+      ['2026-01-09', 'paid'],
+      ['2026-01-09', 'paid'],
+      ['2026-01-12', 'paid'],
+      ['2026-01-12', 'voided'],
+    ] as const) {
+      await OrderFactory.merge({ financialStatus, processedAt: storeDay(day) }).create()
+    }
+    for (const [day, role] of [
+      ['2026-01-09', 'customer'],
+      ['2026-01-13', 'customer'],
+      ['2026-01-11', 'staff'],
+    ] as const) {
+      await UserFactory.merge({ role, createdAt: storeDay(day) }).create()
+    }
+
+    const page = await client
+      .get(route('dashboard'))
+      .qs({ start: '2026-01-08', end: '2026-01-14', period: 'daily' })
+      .loginAs(staff)
+      .withInertia()
+    const { summary } = page.inertiaProps
+    const counts = (key: 'orders' | 'customers') =>
+      Object.fromEntries(
+        summary.chart
+          .filter((bucket: Record<string, number>) => bucket[key])
+          .map((bucket: Record<string, number | string>) => [bucket.date, bucket[key]])
+      )
+
+    assert.deepEqual(counts('orders'), { '2026-01-09': 2, '2026-01-12': 1 })
+    assert.deepEqual(counts('customers'), { '2026-01-09': 1, '2026-01-13': 1 })
+    assert.equal(summary.stats.paidOrders.value, 3)
+    assert.equal(summary.stats.newCustomers.value, 2)
   })
 })
