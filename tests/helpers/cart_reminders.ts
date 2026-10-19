@@ -36,7 +36,7 @@ export async function sweepCartReminders() {
 
 /** The sent reminder's "Return to your cart" link. */
 export function recoveryLinkIn(sent: CartReminder) {
-  const html = sent.message.toJSON().message.html ?? ''
+  const html = String(sent.message.toJSON().message.html ?? '')
   const href = html.match(/href="([^"]*\/store\/cart\/recover\/[^"]*)"/)?.[1]
   if (!href) throw new Error('The reminder has no cart link')
   return new URL(href.replaceAll('&amp;', '&'))
