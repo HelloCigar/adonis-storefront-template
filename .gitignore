@@ -41,7 +41,6 @@ yarn-error.log
 .flow/docs/
 .flow/boards
 .flow/changes
-.flow/states
 .flow/archive
 .claude/skills/flow-*
 .agents/skills/flow-*
