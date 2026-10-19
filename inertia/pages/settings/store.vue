@@ -5,6 +5,7 @@ import type { Data } from '@generated/data'
 import StoreIdentityFields from '~/components/settings/StoreIdentityFields.vue'
 import ShippingFeeField from '~/components/settings/ShippingFeeField.vue'
 import ShoppingAssistantSettingField from '~/components/settings/ShoppingAssistantSettingField.vue'
+import DashboardCopilotSettingField from '~/components/settings/DashboardCopilotSettingField.vue'
 
 defineProps<{ settings: Data.Settings.StoreSetting }>()
 </script>
@@ -46,6 +47,17 @@ defineProps<{ settings: Data.Settings.StoreSetting }>()
     />
     <UPageCard variant="subtle">
       <ShoppingAssistantSettingField :shopping-assistant="settings.shoppingAssistant" />
+    </UPageCard>
+  </section>
+  <section class="mt-8">
+    <UPageCard
+      title="Copilot"
+      description="An AI copilot on every dashboard page. It answers from what each person can see and proposes changes they confirm."
+      variant="naked"
+      class="mb-4"
+    />
+    <UPageCard variant="subtle">
+      <DashboardCopilotSettingField :dashboard-copilot="settings.dashboardCopilot" />
     </UPageCard>
   </section>
 </template>

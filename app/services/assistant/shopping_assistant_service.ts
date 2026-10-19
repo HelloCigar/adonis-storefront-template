@@ -70,6 +70,7 @@ export default class ShoppingAssistantService {
         listMyOrders: { shopperId: turn.shopper?.id ?? null },
         getMyOrder: { shopperId: turn.shopper?.id ?? null },
         proposeAddToCart: { conversationId: conversation.id },
+        noteUnanswered: { conversationId: conversation.id },
       },
       stopWhen: isStepCount(5),
     })
@@ -136,6 +137,7 @@ export default class ShoppingAssistantService {
     return [
       `You are the shopping assistant for ${settings.effectiveStoreName}, an online store.`,
       'Answer only from what your tools return. Never guess; if the tools do not answer it, say plainly that you do not know.',
+      'Whenever you say you do not know or decline a request, also call noteUnanswered in the same turn.',
       'Reply in the language the shopper writes in. Quote store content such as product names and policy text exactly as written.',
       "Politely decline requests that are not about this store's products, orders, shipping or policies, and call offerSuggestions in the same turn when you decline.",
       'Never mention stock counts or discount codes; availability is only "in stock" or "out of stock".',

@@ -55,6 +55,9 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
         manageStoreSettings: ctx.bouncer
           ? await ctx.bouncer.with(StoreSettingPolicy).allows('update')
           : false,
+        reviewConversations: ctx.bouncer
+          ? await ctx.bouncer.with('SellerConversationPolicy').allows('viewAny')
+          : false,
       }),
       assistant: async () => {
         const settings = await StoreSetting.current()
@@ -64,6 +67,15 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
           conversationId: ctx.assistantSession?.currentConversationId() ?? null,
         }
       },
+      copilot: ctx.inertia.once(async () => {
+        const settings = await StoreSetting.current()
+        return {
+          available:
+            settings.dashboardCopilotEnabled &&
+            this.assistantModels.isConfigured() &&
+            (ctx.bouncer ? await ctx.bouncer.with('SellerAccessPolicy').allows('access') : false),
+        }
+      }),
       policies: async () => ContentTransformer.transform(await this.contentService.policies()),
       cart: async () => {
         const cart = await this.cartService.load(ctx.checkoutSession?.cartToken())

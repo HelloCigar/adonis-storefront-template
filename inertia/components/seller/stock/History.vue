@@ -3,6 +3,7 @@ import { useRouter } from '@adonisjs/inertia/vue'
 import type { Data } from '@generated/data'
 import type { TableColumn } from '@nuxt/ui'
 import { stockReasonLabel } from './reasons'
+import ViaCopilot from '~/components/copilot/ViaCopilot.vue'
 const props = defineProps<{
   productId: string
   variantId: string
@@ -35,7 +36,7 @@ const columns: TableColumn<Data.Seller.StockAdjustment>[] = [
   },
   { id: 'reason', header: 'Reason', cell: ({ row }) => stockReasonLabel(row.original.reason) },
   { id: 'note', header: 'Note' },
-  { id: 'actor', header: 'By', cell: ({ row }) => row.original.actorName ?? 'Former staff' },
+  { id: 'actor', header: 'By' },
 ]
 const visit = (page: number) =>
   router.visit(
@@ -75,6 +76,15 @@ const visit = (page: number) =>
         <span class="block max-w-72 whitespace-normal [overflow-wrap:anywhere] text-default">{{
           row.original.note || '—'
         }}</span>
+      </template>
+      <template #actor-cell="{ row }">
+        <span class="inline-flex flex-wrap items-center gap-2">
+          {{ row.original.actorName ?? 'Former staff' }}
+          <ViaCopilot
+            v-if="row.original.viaCopilot"
+            :conversation-id="row.original.copilotConversationId"
+          />
+        </span>
       </template>
       <template #empty>
         <p class="py-8 text-center text-sm text-muted">No stock changes recorded yet.</p>

@@ -39,6 +39,11 @@ export type ScannedRoutes = {
     'assistant.conversations.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'assistant.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'conversationId': ParamValue} }
     'assistant.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.conversations.index': { paramsTuple?: []; params?: {} }
+    'copilot.conversations.store': { paramsTuple?: []; params?: {} }
+    'copilot.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'conversationId': ParamValue} }
+    'copilot.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'email_verifications.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'email_verifications.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'password_resets.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
@@ -80,6 +85,7 @@ export type ScannedRoutes = {
     'settings.store_policies.edit': { paramsTuple?: []; params?: {} }
     'settings.store_policies.update': { paramsTuple?: []; params?: {} }
     'settings.shopping_assistant.update': { paramsTuple?: []; params?: {} }
+    'settings.dashboard_copilot.update': { paramsTuple?: []; params?: {} }
     'settings.store.edit': { paramsTuple?: []; params?: {} }
     'settings.store.update': { paramsTuple?: []; params?: {} }
     'settings': { paramsTuple?: []; params?: {} }
@@ -127,6 +133,8 @@ export type ScannedRoutes = {
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.conversations.index': { paramsTuple?: []; params?: {} }
+    'seller.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.packing.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.shipments.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.deliveries.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -160,6 +168,8 @@ export type ScannedRoutes = {
     'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'assistant.conversations.index': { paramsTuple?: []; params?: {} }
     'assistant.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.conversations.index': { paramsTuple?: []; params?: {} }
+    'copilot.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'email_verifications.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'password_resets.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
@@ -196,6 +206,8 @@ export type ScannedRoutes = {
     'seller.posts.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.conversations.index': { paramsTuple?: []; params?: {} }
+    'seller.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
     'seller.emails.index': { paramsTuple?: []; params?: {} }
     'seller.emails.show': { paramsTuple: [ParamValue]; params: {'email': ParamValue} }
@@ -220,6 +232,8 @@ export type ScannedRoutes = {
     'payments.simulations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'assistant.conversations.index': { paramsTuple?: []; params?: {} }
     'assistant.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.conversations.index': { paramsTuple?: []; params?: {} }
+    'copilot.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'email_verifications.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'password_resets.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
@@ -256,6 +270,8 @@ export type ScannedRoutes = {
     'seller.posts.edit': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.orders.index': { paramsTuple?: []; params?: {} }
     'seller.orders.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'seller.conversations.index': { paramsTuple?: []; params?: {} }
+    'seller.conversations.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.users.index': { paramsTuple?: []; params?: {} }
     'seller.emails.index': { paramsTuple?: []; params?: {} }
     'seller.emails.show': { paramsTuple: [ParamValue]; params: {'email': ParamValue} }
@@ -272,6 +288,8 @@ export type ScannedRoutes = {
     'payments.simulations.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'assistant.conversations.store': { paramsTuple?: []; params?: {} }
     'assistant.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'conversationId': ParamValue} }
+    'copilot.conversations.store': { paramsTuple?: []; params?: {} }
+    'copilot.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'conversationId': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'passkey_login_challenges.store': { paramsTuple?: []; params?: {} }
@@ -306,6 +324,7 @@ export type ScannedRoutes = {
   PATCH: {
     'cart.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'assistant.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'account.addresses.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'reviews.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -337,12 +356,14 @@ export type ScannedRoutes = {
   }
   PUT: {
     'assistant.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'copilot.proposals.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'email_verifications.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'password_resets.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'account.cart_reminders.update': { paramsTuple?: []; params?: {} }
     'setup.update': { paramsTuple: [ParamValue]; params: {'step': ParamValue} }
     'settings.store_policies.update': { paramsTuple?: []; params?: {} }
     'settings.shopping_assistant.update': { paramsTuple?: []; params?: {} }
+    'settings.dashboard_copilot.update': { paramsTuple?: []; params?: {} }
     'settings.store.update': { paramsTuple?: []; params?: {} }
     'passkeys.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'seller.products.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

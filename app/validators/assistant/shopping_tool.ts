@@ -29,6 +29,8 @@ export const readContentInput = vine.create({
 
 export const offerSuggestionsInput = vine.create({})
 
+export const noteUnansweredInput = vine.create({})
+
 export const listMyOrdersInput = vine.create({})
 
 export const getMyOrderInput = vine.create({

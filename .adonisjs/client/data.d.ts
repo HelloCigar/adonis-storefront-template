@@ -13,6 +13,9 @@ import type AssistantAssistantConversationTransformer from '#transformers/assist
 import type AssistantAssistantMessageTransformer from '#transformers/assistant/assistant_message_transformer'
 import type AssistantAssistantProductTransformer from '#transformers/assistant/assistant_product_transformer'
 import type AssistantAssistantProposalTransformer from '#transformers/assistant/assistant_proposal_transformer'
+import type AssistantCopilotConversationTransformer from '#transformers/assistant/copilot_conversation_transformer'
+import type AssistantCopilotProposalItemTransformer from '#transformers/assistant/copilot_proposal_item_transformer'
+import type AssistantCopilotProposalTransformer from '#transformers/assistant/copilot_proposal_transformer'
 import type CatalogCollectionCatalogueTransformer from '#transformers/catalog/collection_catalogue_transformer'
 import type CatalogCollectionTransformer from '#transformers/catalog/collection_transformer'
 import type CatalogProductTransformer from '#transformers/catalog/product_transformer'
@@ -42,6 +45,7 @@ import type SellerOrderQueueItemTransformer from '#transformers/seller/order_que
 import type SellerOrderTransformer from '#transformers/seller/order_transformer'
 import type SellerPostTransformer from '#transformers/seller/post_transformer'
 import type SellerProductTransformer from '#transformers/seller/product_transformer'
+import type SellerReviewConversationTransformer from '#transformers/seller/review_conversation_transformer'
 import type SellerReviewTransformer from '#transformers/seller/review_transformer'
 import type SellerStockAdjustmentTransformer from '#transformers/seller/stock_adjustment_transformer'
 import type SellerUserTransformer from '#transformers/seller/user_transformer'
@@ -82,6 +86,18 @@ export namespace Data {
     export type AssistantProposal = InferData<AssistantAssistantProposalTransformer>
     export namespace AssistantProposal {
       export type Variants = InferVariants<AssistantAssistantProposalTransformer>
+    }
+    export type CopilotConversation = InferData<AssistantCopilotConversationTransformer>
+    export namespace CopilotConversation {
+      export type Variants = InferVariants<AssistantCopilotConversationTransformer>
+    }
+    export type CopilotProposalItem = InferData<AssistantCopilotProposalItemTransformer>
+    export namespace CopilotProposalItem {
+      export type Variants = InferVariants<AssistantCopilotProposalItemTransformer>
+    }
+    export type CopilotProposal = InferData<AssistantCopilotProposalTransformer>
+    export namespace CopilotProposal {
+      export type Variants = InferVariants<AssistantCopilotProposalTransformer>
     }
   }
   export namespace Catalog {
@@ -212,6 +228,10 @@ export namespace Data {
     export type Product = InferData<SellerProductTransformer>
     export namespace Product {
       export type Variants = InferVariants<SellerProductTransformer>
+    }
+    export type ReviewConversation = InferData<SellerReviewConversationTransformer>
+    export namespace ReviewConversation {
+      export type Variants = InferVariants<SellerReviewConversationTransformer>
     }
     export type Review = InferData<SellerReviewTransformer>
     export namespace Review {

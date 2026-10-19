@@ -1,6 +1,7 @@
 import Product from '#models/catalog/product'
 import ProductVariant from '#models/catalog/product_variant'
 import db from '@adonisjs/lucid/services/db'
+import { inTransaction } from '#models/shared/in_transaction'
 import { DateTime } from 'luxon'
 import { errors } from '@vinejs/vine'
 import type { Infer } from '@vinejs/vine/types'
@@ -15,6 +16,7 @@ import {
 import OptionsService, { optionCombinationKey } from '#services/catalog/options_service'
 import InventoryService from '#services/catalog/inventory_service'
 import { inject } from '@adonisjs/core'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 /** Store management for a product's variants and the option definitions that key them. */
 @inject()
@@ -28,7 +30,8 @@ export default class SellerVariantService {
     product: Product,
     variant: ProductVariant,
     { options, featuredMediaId, ...payload }: Infer<typeof variantCreateValidator>,
-    actorId: string | null
+    actorId: string | null,
+    writeOptions: WriteOptions = {}
   ) {
     if (
       payload.compareAtPriceAmount !== null &&
@@ -47,7 +50,7 @@ export default class SellerVariantService {
         { field: 'options', rule: 'unique', message: 'Option names must be unique.' },
       ])
     }
-    return db.transaction(async (trx) => {
+    return inTransaction(writeOptions.client, async (trx) => {
       // Acquire SQLite's write lock before reading the schema or combinations.
       await this.lockProduct(trx, product.id)
       const currentProduct = await Product.findOrFail(product.id, { client: trx })
@@ -113,6 +116,7 @@ export default class SellerVariantService {
       await this.inventory.record(trx, variant.id, stockBefore, variant.inventoryQuantity, {
         reason: isNew ? 'initial' : 'edited',
         actorId,
+        copilotProposalId: writeOptions.copilotProposalId,
       })
       if (currentProduct.status === 'active' && !currentProduct.publishedAt) {
         currentProduct.publishedAt = DateTime.utc()
@@ -304,10 +308,11 @@ export default class SellerVariantService {
     product: Product,
     variant: ProductVariant,
     { mode, quantity, reason, note }: Infer<typeof stockAdjustmentValidator>,
-    actorId: string | null
+    actorId: string | null,
+    options: WriteOptions = {}
   ) {
     if (mode !== 'set' && quantity < 1) this.stockError('Enter how many units to add or remove.')
-    return db.transaction(async (trx) => {
+    return inTransaction(options.client, async (trx) => {
       // Acquire SQLite's write lock so the on-hand and held counts read below stay current.
       await this.lockProduct(trx, product.id)
       const current = await ProductVariant.findOrFail(variant.id, { client: trx })
@@ -331,6 +336,7 @@ export default class SellerVariantService {
         reason,
         note: note ?? null,
         actorId,
+        copilotProposalId: options.copilotProposalId,
       })
       if (!adjustment)
         this.stockError('Stock changed while you were saving. Review it and try again.')

@@ -101,7 +101,12 @@ export default class InventoryService {
     trx: TransactionClientContract,
     variant: ProductVariant,
     quantityAfter: number,
-    entry: { reason: StockAdjustmentReason; note: string | null; actorId: string | null }
+    entry: {
+      reason: StockAdjustmentReason
+      note: string | null
+      actorId: string | null
+      copilotProposalId?: string
+    }
   ) {
     if (variant.inventoryQuantity === null || !Number.isSafeInteger(quantityAfter)) return null
     const changed = await ProductVariant.query({ client: trx })
@@ -119,7 +124,12 @@ export default class InventoryService {
     variantId: string,
     quantityBefore: number | null,
     quantityAfter: number | null,
-    entry: { reason: StockAdjustmentReason; note?: string | null; actorId: string | null }
+    entry: {
+      reason: StockAdjustmentReason
+      note?: string | null
+      actorId: string | null
+      copilotProposalId?: string
+    }
   ) {
     if (quantityBefore === quantityAfter) return null
     return StockAdjustment.create(
@@ -130,6 +140,8 @@ export default class InventoryService {
         quantityBefore,
         quantityAfter,
         note: entry.note ?? null,
+        viaCopilot: Boolean(entry.copilotProposalId),
+        copilotProposalId: entry.copilotProposalId ?? null,
       },
       { client: trx }
     )

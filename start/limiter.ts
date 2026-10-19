@@ -59,3 +59,16 @@ export const assistantMessageThrottle = limiter.define('assistant_messages', (ct
 export const assistantConversationThrottle = limiter.define('assistant_conversations', (ctx) =>
   limiter.allowRequests(20).every('1 hour').usingKey(assistantKey('assistant_conversations', ctx))
 )
+
+/** Copilot messages: 60 an hour per staff member. */
+export const copilotMessageThrottle = limiter.define('copilot_messages', (ctx) =>
+  limiter.allowRequests(60).every('1 hour').usingKey(`copilot_messages_user_${ctx.auth.user!.id}`)
+)
+
+/** New copilot conversations, so empty ones can't be created without limit. */
+export const copilotConversationThrottle = limiter.define('copilot_conversations', (ctx) =>
+  limiter
+    .allowRequests(20)
+    .every('1 hour')
+    .usingKey(`copilot_conversations_user_${ctx.auth.user!.id}`)
+)

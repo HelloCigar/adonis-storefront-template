@@ -2,6 +2,7 @@ import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import type User from '#models/account/user'
 import ProductReview, { type ReviewStatus } from '#models/catalog/product_review'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 export type ReviewFilter = ReviewStatus | 'all'
 
@@ -27,7 +28,13 @@ export default class SellerReviewService {
   }
 
   /** Records who moderated and when; the review text is never touched. */
-  async moderate(review: ProductReview, status: 'approved' | 'hidden', moderator: User) {
+  async moderate(
+    review: ProductReview,
+    status: 'approved' | 'hidden',
+    moderator: User,
+    options: WriteOptions = {}
+  ) {
+    if (options.client) review.useTransaction(options.client)
     review.merge({ status, moderatedById: moderator.id, moderatedAt: DateTime.now() })
     await review.save()
     return review

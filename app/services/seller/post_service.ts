@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import type BlogPost from '#models/content/blog_post'
 import RichTextService from '#services/content/rich_text_service'
 import type { postValidator } from '#validators/seller/post'
+import type { WriteOptions } from '../../../types/write_options.js'
 
 export type PostPayload = Infer<typeof postValidator>
 
@@ -17,7 +18,8 @@ export default class SellerPostService {
    * always matches `content`. Publishing without a date publishes now and keeps the original
    * date on later edits; a future date schedules the post.
    */
-  async save(post: BlogPost, payload: PostPayload, actorId: string) {
+  async save(post: BlogPost, payload: PostPayload, actorId: string, options: WriteOptions = {}) {
+    if (options.client) post.useTransaction(options.client)
     const content = this.richText.normalize(payload.content)
     const published = payload.status === 'published'
     if (published && !this.richText.hasContent(content))

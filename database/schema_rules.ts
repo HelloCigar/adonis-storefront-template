@@ -50,6 +50,19 @@ export default {
         },
       },
     },
+    copilot_proposal_items: {
+      columns: {
+        // Changed field → raw value; the model parses the JSON text.
+        before: {
+          tsType: 'Record<string, unknown>',
+          decorators: [{ name: '@column' }],
+        },
+        after: {
+          tsType: 'Record<string, unknown>',
+          decorators: [{ name: '@column' }],
+        },
+      },
+    },
     products: {
       columns: {
         option_definitions: {

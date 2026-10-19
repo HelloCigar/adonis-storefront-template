@@ -1,4 +1,6 @@
+import db from '@adonisjs/lucid/services/db'
 import type User from '#models/account/user'
+import AssistantConversation from '#models/assistant/assistant_conversation'
 import { errors } from '@vinejs/vine'
 import type { Infer } from '@vinejs/vine/types'
 import type { userUpdateValidator } from '#validators/seller/user'
@@ -23,6 +25,14 @@ export default class SellerUserService {
         { field: 'delete', rule: 'self', message: 'You cannot delete your own account.' },
       ])
     }
-    await user.delete()
+    // Shoppers' chats go with them; copilot conversations stay for review, their user link nulled.
+    await db.transaction(async (trx) => {
+      await AssistantConversation.query({ client: trx })
+        .where('user_id', user.id)
+        .withScopes((scopes) => scopes.ofAssistant('shopping'))
+        .delete()
+      user.useTransaction(trx)
+      await user.delete()
+    })
   }
 }

@@ -20,6 +20,10 @@ export default class StoreSettingPolicy extends BasePolicy {
     return user.role === 'admin'
   }
 
+  updateDashboardCopilot(user: User): AuthorizerResponse {
+    return user.role === 'admin'
+  }
+
   dismissChecklist(user: User): AuthorizerResponse {
     return user.role === 'admin'
   }
