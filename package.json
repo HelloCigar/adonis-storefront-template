@@ -47,7 +47,7 @@
     "#assistant/*": "./app/assistant/*.js"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.4.0",
+    "@adonisjs/assembler": "^8.6.0",
     "@adonisjs/eslint-ast-grep": "^1.0.0",
     "@adonisjs/eslint-config": "^3.1.0",
     "@adonisjs/prettier-config": "^1.5.0",
