@@ -48,8 +48,14 @@ test.group('Shopping assistant setting', (group) => {
 
     const page = await visit(route('settings.store.edit'))
 
-    await page.assertVisible(page.getByText("AI isn't set up for this store yet.", { exact: true }))
     const toggle = page.getByRole('switch', { name: 'Shopping assistant', exact: true })
     assert.isTrue(await toggle.isDisabled())
+    // The copilot's switch says the same, so read this switch's own help text.
+    const help = await toggle.getAttribute('aria-describedby')
+    assert.isNotNull(help)
+    await page.assertText(
+      `[id="${help!.split(' ').at(-1)}"]`,
+      "AI isn't set up for this store yet."
+    )
   })
 })
