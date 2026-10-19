@@ -44,6 +44,11 @@ export default class User extends compose(
     return { name: this.email, displayName: this.fullName ?? this.email }
   }
 
+  /** Customers get cart reminders until they opt out. */
+  get receivesCartReminders() {
+    return this.cartRemindersOptedOutAt === null
+  }
+
   get isStoreStaff() {
     return this.role === 'staff' || this.role === 'admin'
   }

@@ -10,12 +10,21 @@ const { open, loading, quantity, lines, total } = useCart()
 const page = usePage()
 const router = useRouter()
 const checkout = () => router.visit({ route: 'checkout.create' })
+// Navigating closes the cart, except onto `?cart=open`, where a cart reminder link lands.
 watch(
   () => page.url,
-  () => {
-    open.value = false
-  }
+  (url) => {
+    open.value = new URLSearchParams(url.split('?')[1]).get('cart') === 'open'
+  },
+  { immediate: true }
 )
+// Closing the cart drops the flag, so reloading the page doesn't open it again.
+watch(open, (isOpen) => {
+  const url = new URL(window.location.href)
+  if (isOpen || url.searchParams.get('cart') !== 'open') return
+  url.searchParams.delete('cart')
+  window.history.replaceState(window.history.state, '', url)
+})
 </script>
 <template>
   <USlideover

@@ -3,8 +3,11 @@ import { urlFor } from '~/client'
 import { t } from '~/utils/store'
 import AccountNav from '~/components/account/AccountNav.vue'
 import ProfileForm from '~/components/settings/ProfileForm.vue'
+import CartRemindersCard from '~/components/account/CartRemindersCard.vue'
 import AppearanceCard from '~/components/settings/AppearanceCard.vue'
 import { Head } from '@inertiajs/vue3'
+
+defineProps<{ cartRemindersEnabled: boolean }>()
 </script>
 <template>
   <Head :title="t('account.nav.profile')" />
@@ -21,6 +24,7 @@ import { Head } from '@inertiajs/vue3'
 
     <div class="max-w-2xl">
       <ProfileForm />
+      <CartRemindersCard :enabled="cartRemindersEnabled" />
       <AppearanceCard />
     </div>
   </UContainer>

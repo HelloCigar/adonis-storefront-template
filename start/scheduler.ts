@@ -2,6 +2,7 @@ import app from '@adonisjs/core/services/app'
 import PublishWorkflowOutbox from '#jobs/checkout/publish_workflow_outbox'
 import SweepPaymentOperations from '#jobs/payments/sweep_payment_operations'
 import PurgeAssistantConversations from '#jobs/assistant/purge_assistant_conversations'
+import SweepCartReminders from '#jobs/checkout/sweep_cart_reminders'
 
 // Persisted schedules are processed by queue workers, including after web/worker restarts.
 if (!app.inTest) {
@@ -11,4 +12,5 @@ if (!app.inTest) {
     .id('assistant-conversation-retention')
     .every('1h')
     .run()
+  await SweepCartReminders.schedule({}).id('cart-reminder-sweep').every('15m').run()
 }

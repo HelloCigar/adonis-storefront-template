@@ -481,7 +481,7 @@ export class CartLineSchema extends BaseModel {
 }
 
 export class CartSchema extends BaseModel {
-  static $columns = ['completedAt', 'createdAt', 'currencyCode', 'discountCode', 'email', 'expiresAt', 'id', 'status', 'submissionKey', 'token', 'updatedAt', 'userId', 'version'] as const
+  static $columns = ['completedAt', 'createdAt', 'currencyCode', 'discountCode', 'email', 'expiresAt', 'id', 'reminderSentAt', 'status', 'submissionKey', 'token', 'updatedAt', 'userId', 'version'] as const
   $columns = CartSchema.$columns
   @column.dateTime()
   declare completedAt: DateTime | null
@@ -497,6 +497,8 @@ export class CartSchema extends BaseModel {
   declare expiresAt: DateTime | null
   @column({ isPrimary: true })
   declare id: string
+  @column.dateTime()
+  declare reminderSentAt: DateTime | null
   @column()
   declare status: string
   @column()
@@ -1380,12 +1382,14 @@ export class StoreSettingSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['acceptsMarketing', 'avatarPath', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt', 'webauthnUserHandle'] as const
+  static $columns = ['acceptsMarketing', 'avatarPath', 'cartRemindersOptedOutAt', 'createdAt', 'defaultAddressId', 'email', 'firstName', 'fullName', 'id', 'lastName', 'password', 'phoneNumber', 'role', 'unverifiedEmail', 'updatedAt', 'webauthnUserHandle'] as const
   $columns = UserSchema.$columns
   @column({ consume: (value)=>Boolean(value) })
   declare acceptsMarketing: boolean
   @column()
   declare avatarPath: string | null
+  @column.dateTime()
+  declare cartRemindersOptedOutAt: DateTime | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
